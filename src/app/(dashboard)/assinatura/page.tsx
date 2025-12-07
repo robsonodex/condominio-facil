@@ -71,33 +71,44 @@ export default function AssinaturaPage() {
         setGeneratingPix(true);
 
         try {
-            // In production, this would call the Banco Inter API
-            // For now, we simulate a PIX code
             const valor = subscription?.valor_mensal_cobrado || subscription?.plan?.valor_mensal || 49.90;
 
-            // Simulated PIX code (EMV format)
-            const pixSimulado = `00020126580014br.gov.bcb.pix0136${profile?.email || 'pagamento@condominiofacil.com.br'}5204000053039865406${valor.toFixed(2)}5802BR5925CONDOMINIO FACIL6009SAO PAULO62070503***6304`;
+            // Call PIX API
+            const response = await fetch('/api/pix', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    valor,
+                    descricao: 'Mensalidade Condomínio Fácil',
+                    useRealApi: true, // Try Banco Inter first
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || 'Erro ao gerar PIX');
+            }
 
             // Save to database
-            const { data: paymentData, error } = await supabase
+            const { error } = await supabase
                 .from('payments')
                 .insert({
                     condo_id: condoId,
                     valor: valor,
                     status: 'pendente',
-                    pix_code: pixSimulado,
+                    pix_code: data.pixCode,
+                    txid: data.txid,
                     data_vencimento: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                })
-                .select()
-                .single();
+                });
 
             if (error) throw error;
 
-            setPixCode(pixSimulado);
+            setPixCode(data.pixCode);
             fetchData();
-        } catch (err) {
+        } catch (err: any) {
             console.error('Error generating PIX:', err);
-            alert('Erro ao gerar PIX. Tente novamente.');
+            alert(err.message || 'Erro ao gerar PIX. Tente novamente.');
         } finally {
             setGeneratingPix(false);
         }
