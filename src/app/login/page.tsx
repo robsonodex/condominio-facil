@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Building2, Mail, Lock, ArrowRight, Sparkles } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Building2, Mail, Lock, ArrowRight, Sparkles, CheckCircle } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -14,9 +14,17 @@ export default function LoginPage() {
     const [magicLinkSent, setMagicLinkSent] = useState(false);
     const [error, setError] = useState('');
     const [showMagicLink, setShowMagicLink] = useState(false);
+    const [confirmed, setConfirmed] = useState(false);
 
     const { signIn, signInWithMagicLink } = useAuth();
     const router = useRouter();
+    const searchParams = useSearchParams();
+
+    useEffect(() => {
+        if (searchParams.get('confirmed') === 'true') {
+            setConfirmed(true);
+        }
+    }, [searchParams]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -122,6 +130,13 @@ export default function LoginPage() {
                         </form>
                     ) : (
                         <form onSubmit={handleSubmit} className="space-y-6">
+                            {confirmed && (
+                                <div className="bg-emerald-50 text-emerald-700 text-sm p-3 rounded-lg flex items-center gap-2">
+                                    <CheckCircle className="h-4 w-4" />
+                                    Email confirmado com sucesso! Faça login para continuar.
+                                </div>
+                            )}
+
                             {error && (
                                 <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg">
                                     {error}
