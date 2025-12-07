@@ -1,0 +1,273 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { Card, CardContent, Button, Input, Select, Table, Badge } from '@/components/ui';
+import { Modal } from '@/components/ui/modal';
+import { createClient } from '@/lib/supabase/client';
+import { useUser } from '@/hooks/useUser';
+import { Plus, Search, Home, Edit, Trash2 } from 'lucide-react';
+import { Unit } from '@/types/database';
+
+export default function UnidadesPage() {
+    const { condoId } = useUser();
+    const [units, setUnits] = useState<Unit[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [showModal, setShowModal] = useState(false);
+    const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterBloco, setFilterBloco] = useState('');
+    const [blocos, setBlocos] = useState<string[]>([]);
+    const supabase = createClient();
+
+    useEffect(() => {
+        if (condoId) fetchUnits();
+    }, [condoId]);
+
+    const fetchUnits = async () => {
+        setLoading(true);
+        const { data } = await supabase
+            .from('units')
+            .select('*')
+            .eq('condo_id', condoId)
+            .order('bloco')
+            .order('numero_unidade');
+
+        setUnits(data || []);
+        const uniqueBlocos = [...new Set(data?.map(u => u.bloco).filter(Boolean) as string[])];
+        setBlocos(uniqueBlocos);
+        setLoading(false);
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!confirm('Deseja realmente excluir esta unidade?')) return;
+        await supabase.from('units').delete().eq('id', id);
+        fetchUnits();
+    };
+
+    const filteredUnits = units.filter(u => {
+        const matchesSearch = u.numero_unidade.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            u.bloco?.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesBloco = !filterBloco || u.bloco === filterBloco;
+        return matchesSearch && matchesBloco;
+    });
+
+    const columns = [
+        { key: 'bloco', header: 'Bloco', render: (u: Unit) => u.bloco || '-' },
+        { key: 'numero_unidade', header: 'Número' },
+        { key: 'metragem', header: 'Metragem', render: (u: Unit) => u.metragem ? `${u.metragem}m²` : '-' },
+        { key: 'vaga', header: 'Vaga', render: (u: Unit) => u.vaga || '-' },
+        { key: 'observacoes', header: 'Observações', render: (u: Unit) => u.observacoes || '-' },
+        {
+            key: 'actions',
+            header: '',
+            className: 'text-right',
+            render: (u: Unit) => (
+                <div className="flex gap-2 justify-end">
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setEditingUnit(u); setShowModal(true); }}
+                        className="p-1 hover:bg-gray-100 rounded"
+                    >
+                        <Edit className="h-4 w-4 text-gray-500" />
+                    </button>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); handleDelete(u.id); }}
+                        className="p-1 hover:bg-gray-100 rounded"
+                    >
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                    </button>
+                </div>
+            )
+        },
+    ];
+
+    return (
+        <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900">Unidades</h1>
+                    <p className="text-gray-500">Gerencie os apartamentos/casas do condomínio</p>
+                </div>
+                <Button onClick={() => { setEditingUnit(null); setShowModal(true); }}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Nova Unidade
+                </Button>
+            </div>
+
+            {/* Filters */}
+            <div className="flex flex-wrap gap-4">
+                <div className="relative flex-1 min-w-[200px]">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        placeholder="Buscar por número ou bloco..."
+                        className="pl-10"
+                    />
+                </div>
+                {blocos.length > 0 && (
+                    <Select
+                        value={filterBloco}
+                        onChange={(e) => setFilterBloco(e.target.value)}
+                        options={[
+                            { value: '', label: 'Todos os blocos' },
+                            ...blocos.map(b => ({ value: b, label: b }))
+                        ]}
+                        className="w-40"
+                    />
+                )}
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <Card>
+                    <CardContent className="py-4 text-center">
+                        <Home className="h-8 w-8 mx-auto text-emerald-600 mb-2" />
+                        <p className="text-2xl font-bold text-gray-900">{units.length}</p>
+                        <p className="text-sm text-gray-500">Total de Unidades</p>
+                    </CardContent>
+                </Card>
+                {blocos.map(bloco => (
+                    <Card key={bloco}>
+                        <CardContent className="py-4 text-center">
+                            <p className="text-lg font-bold text-gray-900">{units.filter(u => u.bloco === bloco).length}</p>
+                            <p className="text-sm text-gray-500">{bloco}</p>
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+
+            {/* Table */}
+            <Card>
+                <CardContent className="p-0">
+                    <Table
+                        data={filteredUnits}
+                        columns={columns}
+                        loading={loading}
+                        emptyMessage="Nenhuma unidade cadastrada"
+                    />
+                </CardContent>
+            </Card>
+
+            {/* Modal */}
+            <UnitModal
+                isOpen={showModal}
+                onClose={() => { setShowModal(false); setEditingUnit(null); }}
+                onSuccess={fetchUnits}
+                condoId={condoId}
+                unit={editingUnit}
+            />
+        </div>
+    );
+}
+
+function UnitModal({ isOpen, onClose, onSuccess, condoId, unit }: {
+    isOpen: boolean;
+    onClose: () => void;
+    onSuccess: () => void;
+    condoId: string | null | undefined;
+    unit: Unit | null;
+}) {
+    const [loading, setLoading] = useState(false);
+    const [bloco, setBloco] = useState('');
+    const [numeroUnidade, setNumeroUnidade] = useState('');
+    const [metragem, setMetragem] = useState('');
+    const [vaga, setVaga] = useState('');
+    const [observacoes, setObservacoes] = useState('');
+    const supabase = createClient();
+
+    useEffect(() => {
+        if (unit) {
+            setBloco(unit.bloco || '');
+            setNumeroUnidade(unit.numero_unidade);
+            setMetragem(unit.metragem?.toString() || '');
+            setVaga(unit.vaga || '');
+            setObservacoes(unit.observacoes || '');
+        } else {
+            setBloco('');
+            setNumeroUnidade('');
+            setMetragem('');
+            setVaga('');
+            setObservacoes('');
+        }
+    }, [unit]);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!condoId) return;
+
+        setLoading(true);
+        const data = {
+            condo_id: condoId,
+            bloco: bloco || null,
+            numero_unidade: numeroUnidade,
+            metragem: metragem ? parseFloat(metragem) : null,
+            vaga: vaga || null,
+            observacoes: observacoes || null,
+        };
+
+        if (unit) {
+            await supabase.from('units').update(data).eq('id', unit.id);
+        } else {
+            await supabase.from('units').insert(data);
+        }
+
+        onSuccess();
+        onClose();
+        setLoading(false);
+    };
+
+    return (
+        <Modal isOpen={isOpen} onClose={onClose} title={unit ? 'Editar Unidade' : 'Nova Unidade'} size="md">
+            <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                    <Input
+                        label="Bloco"
+                        value={bloco}
+                        onChange={(e) => setBloco(e.target.value)}
+                        placeholder="Ex: Bloco A"
+                    />
+                    <Input
+                        label="Número da Unidade"
+                        value={numeroUnidade}
+                        onChange={(e) => setNumeroUnidade(e.target.value)}
+                        placeholder="Ex: 101"
+                        required
+                    />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <Input
+                        label="Metragem (m²)"
+                        type="number"
+                        step="0.01"
+                        value={metragem}
+                        onChange={(e) => setMetragem(e.target.value)}
+                        placeholder="Ex: 65.5"
+                    />
+                    <Input
+                        label="Vaga"
+                        value={vaga}
+                        onChange={(e) => setVaga(e.target.value)}
+                        placeholder="Ex: G1-05"
+                    />
+                </div>
+
+                <Input
+                    label="Observações"
+                    value={observacoes}
+                    onChange={(e) => setObservacoes(e.target.value)}
+                    placeholder="Observações sobre a unidade"
+                />
+
+                <div className="flex gap-3 justify-end pt-4">
+                    <Button type="button" variant="ghost" onClick={onClose}>
+                        Cancelar
+                    </Button>
+                    <Button type="submit" loading={loading}>
+                        {unit ? 'Salvar' : 'Criar'}
+                    </Button>
+                </div>
+            </form>
+        </Modal>
+    );
+}
