@@ -234,13 +234,12 @@ CREATE OR REPLACE VIEW invoices_view AS
 SELECT 
   i.*,
   c.nome as condo_nome,
-  c.email as condo_email,
   s.status as subscription_status,
   p.nome_plano
 FROM invoices i
 LEFT JOIN condos c ON i.condo_id = c.id
 LEFT JOIN subscriptions s ON i.subscription_id = s.id
-LEFT JOIN plans p ON s.plan_id = p.id;
+LEFT JOIN plans p ON s.plano_id = p.id;
 
 -- =============================================
 -- 9. FUNÇÃO: GERAR FATURA MENSAL
