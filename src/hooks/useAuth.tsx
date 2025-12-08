@@ -39,13 +39,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 return profileCache[sessionUser.id];
             }
 
-            // Query by ID first, then by email
-            const { data: profileData } = await supabase
+            // Buscar por email (mais confiável)
+            const { data: profileData, error } = await supabase
                 .from('users')
                 .select('*')
-                .or(`id.eq.${sessionUser.id},email.eq.${sessionUser.email}`)
-                .limit(1)
-                .single();
+                .eq('email', sessionUser.email)
+                .maybeSingle();
+
+            if (error) {
+                console.error('Error fetching profile:', error);
+                return null;
+            }
 
             if (profileData) {
                 profileCache[sessionUser.id] = profileData;
