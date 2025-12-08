@@ -229,6 +229,7 @@ function UserModal({ isOpen, onClose, onSuccess, user, condos }: {
     const [loading, setLoading] = useState(false);
     const [nome, setNome] = useState('');
     const [email, setEmail] = useState('');
+    const [senha, setSenha] = useState('');
     const [telefone, setTelefone] = useState('');
     const [role, setRole] = useState('morador');
     const [condoId, setCondoId] = useState('');
@@ -239,6 +240,7 @@ function UserModal({ isOpen, onClose, onSuccess, user, condos }: {
         if (user) {
             setNome(user.nome || '');
             setEmail(user.email || '');
+            setSenha('');
             setTelefone(user.telefone || '');
             setRole(user.role);
             setCondoId(user.condo_id || '');
@@ -246,6 +248,7 @@ function UserModal({ isOpen, onClose, onSuccess, user, condos }: {
         } else {
             setNome('');
             setEmail('');
+            setSenha('');
             setTelefone('');
             setRole('morador');
             setCondoId('');
@@ -258,37 +261,61 @@ function UserModal({ isOpen, onClose, onSuccess, user, condos }: {
         setLoading(true);
 
         try {
-            const data = {
-                nome,
-                email,
-                telefone: telefone || null,
-                role,
-                condo_id: condoId || null,
-                ativo,
-            };
-
-            let error;
-
             if (user) {
-                const result = await supabase.from('users').update(data).eq('id', user.id);
-                error = result.error;
-            } else {
-                const result = await supabase.from('users').insert(data);
-                error = result.error;
-            }
+                // EDIÇÃO - usa Supabase direto
+                const { error } = await supabase.from('users').update({
+                    nome,
+                    telefone: telefone || null,
+                    role,
+                    condo_id: condoId || null,
+                    ativo,
+                }).eq('id', user.id);
 
-            if (error) {
-                // Tratar erros específicos
-                if (error.code === '23505' || error.message?.includes('duplicate')) {
-                    alert(`❌ Já existe um usuário cadastrado com o email "${email}". Por favor, use outro email.`);
-                } else {
-                    alert(`❌ Erro ao salvar: ${error.message}`);
+                if (error) {
+                    alert(`❌ Erro ao atualizar: ${error.message}`);
+                    setLoading(false);
+                    return;
                 }
-                setLoading(false);
-                return;
+
+                alert('✅ Usuário atualizado com sucesso!');
+            } else {
+                // CRIAÇÃO - usa nova API
+                if (!senha || senha.length < 6) {
+                    alert('❌ A senha deve ter pelo menos 6 caracteres.');
+                    setLoading(false);
+                    return;
+                }
+
+                const response = await fetch('/api/admin/users', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        nome,
+                        email,
+                        senha,
+                        telefone: telefone || null,
+                        role,
+                        condo_id: condoId || null,
+                        ativo,
+                    }),
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    alert(`❌ ${result.error || 'Erro ao criar usuário'}`);
+                    setLoading(false);
+                    return;
+                }
+
+                alert(`✅ ${result.message}\n\nO usuário pode fazer login com:\nEmail: ${email}\nSenha: a senha informada`);
+
+                // Abrir login em nova aba
+                if (confirm('Deseja abrir a página de login em uma nova aba?')) {
+                    window.open('/login', '_blank');
+                }
             }
 
-            alert(`✅ Usuário ${user ? 'atualizado' : 'criado'} com sucesso!`);
             onSuccess();
             onClose();
         } catch (err: any) {
@@ -316,6 +343,17 @@ function UserModal({ isOpen, onClose, onSuccess, user, condos }: {
                     required
                     disabled={!!user}
                 />
+
+                {!user && (
+                    <Input
+                        label="Senha"
+                        type="password"
+                        value={senha}
+                        onChange={(e) => setSenha(e.target.value)}
+                        placeholder="Mínimo 6 caracteres"
+                        required
+                    />
+                )}
 
                 <Input
                     label="Telefone"
