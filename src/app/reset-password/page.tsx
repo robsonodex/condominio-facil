@@ -27,9 +27,7 @@ function ResetPasswordContent() {
                 const code = searchParams.get('code');
 
                 if (code) {
-                    console.log('Exchanging code for session...');
                     const { error } = await supabase.auth.exchangeCodeForSession(code);
-                    console.log('Exchange result:', error ? error.message : 'success');
 
                     if (!error && mounted) {
                         setValidSession(true);
@@ -38,7 +36,6 @@ function ResetPasswordContent() {
                     }
                 }
 
-                // Check if already have a session
                 const { data: { session } } = await supabase.auth.getSession();
                 if (session && mounted) {
                     setValidSession(true);
@@ -52,7 +49,6 @@ function ResetPasswordContent() {
             }
         };
 
-        // Timeout de segurança - 10 segundos
         const timeout = setTimeout(() => {
             if (mounted) {
                 setChecking(false);
