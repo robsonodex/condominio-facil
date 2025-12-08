@@ -18,7 +18,7 @@ export function Header({ onMenuClick }: HeaderProps) {
     const [showUserMenu, setShowUserMenu] = useState(false);
 
     const handleSignOut = async () => {
-        await signOut();
+        signOut();
         router.push('/login');
     };
 
