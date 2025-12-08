@@ -39,9 +39,23 @@ export default function AdminUsuariosPage() {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Deseja realmente excluir este usuário?')) return;
-        await supabase.from('users').delete().eq('id', id);
-        fetchUsers();
+        if (!confirm('⚠️ Tem certeza que deseja EXCLUIR PERMANENTEMENTE este usuário?\n\nEsta ação é IRREVERSÍVEL!')) return;
+
+        try {
+            const response = await fetch(`/api/user/delete?id=${id}`, {
+                method: 'DELETE',
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                setUsers(prev => prev.filter(u => u.id !== id));
+                alert('✅ Usuário excluído com sucesso!');
+            } else {
+                alert('❌ Erro ao excluir: ' + (data.error || 'Erro desconhecido'));
+            }
+        } catch (err: any) {
+            alert('❌ Erro ao excluir: ' + err.message);
+        }
     };
 
     const filteredUsers = users.filter(u => {
