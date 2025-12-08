@@ -20,16 +20,16 @@ export async function DELETE(request: NextRequest) {
             );
         }
 
-        // Buscar perfil do usuário logado
+        // Buscar perfil do usuário logado (por email para garantir match)
         const { data: profile } = await supabase
             .from('users')
             .select('id, email, nome, role, condo_id')
-            .eq('id', user.id)
+            .eq('email', user.email)
             .single();
 
         if (!profile) {
             return NextResponse.json(
-                { error: 'Perfil não encontrado.' },
+                { error: 'Perfil não encontrado. Verifique se seu email está cadastrado.' },
                 { status: 404 }
             );
         }

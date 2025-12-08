@@ -259,18 +259,88 @@ npm run lint
 
 ## 10. Manutenção
 
-### Tarefas Diárias (via Supabase pg_cron)
-- `check_overdue_subscriptions()` - Verificar inadimplência
-- Enviar e-mails de cobrança
+### Jobs Automáticos (pg_cron)
 
-### Monitoramento
-- Logs de e-mail em `/admin/emails`
-- Métricas em `/admin`
-- Faturas em `/admin/assinaturas`
+O sistema utiliza pg_cron do Supabase para tarefas automáticas:
+
+| Job | Frequência | Função |
+|-----|------------|--------|
+| `check_overdue_subscriptions` | Diário 1h | Verifica assinaturas vencidas |
+| `update_overdue_financial_entries` | Diário 2h | Marca lançamentos como atrasados |
+| `generate_monthly_invoices` | Diário 3h | Gera faturas mensais |
+| `suspend_expired_trials` | Diário 4h | Suspende testes expirados |
+
+### Configurar pg_cron
+
+```sql
+-- Verificar se pg_cron está habilitado
+SELECT * FROM cron.job;
+
+-- Agendar jobs
+SELECT cron.schedule('check_overdue_subscriptions', '0 1 * * *', 'SELECT check_overdue_subscriptions()');
+SELECT cron.schedule('update_overdue_financial_entries', '0 2 * * *', 'SELECT update_overdue_financial_entries()');
+SELECT cron.schedule('generate_monthly_invoices', '0 3 * * *', 'SELECT generate_monthly_invoices()');
+SELECT cron.schedule('suspend_expired_trials', '0 4 * * *', 'SELECT suspend_expired_trials()');
+```
+
+### RLS (Row Level Security)
+
+A tabela `users` está com RLS **desabilitado** para evitar recursão infinita nas políticas. A segurança é garantida via:
+- Autenticação Supabase Auth
+- Validação em API Routes
+- Middleware de sessão
 
 ---
 
-## 11. Contato
+## 11. APIs de Segurança
+
+### API de Exclusão de Usuário (LGPD)
+
+**Endpoint:** `DELETE /api/user/delete`
+
+**Uso Administrativo:**
+```bash
+DELETE /api/user/delete?id=UUID_DO_USUARIO
+```
+
+**Auto-exclusão (LGPD):**
+```javascript
+await fetch('/api/user/delete', {
+  method: 'DELETE',
+  body: JSON.stringify({ confirmation: 'CONFIRMO EXCLUSAO' })
+});
+```
+
+**Funções PostgreSQL relacionadas:**
+- `hard_delete_user(user_id)` - Exclusão permanente
+- `delete_user_data(user_id)` - Anonimização (preserva histórico)
+
+---
+
+## 12. Monitoramento
+
+- **Logs de e-mail:** `/admin/emails`
+- **Métricas:** `/admin`
+- **Faturas:** `/admin/assinaturas`
+- **Aceites legais:** `/admin/legal`
+
+---
+
+## 13. Arquivos Importantes
+
+| Arquivo | Descrição |
+|---------|-----------|
+| `DOCUMENTATION.md` | Esta documentação técnica |
+| `MANUAL_COMPLETO.md` | Manual do usuário |
+| `VENDAS.md` | Guia de vendas e scripts |
+| `DEPLOY.md` | Guia de deploy |
+| `supabase/schema.sql` | Estrutura do banco |
+| `supabase/saas_complete.sql` | Schema SaaS |
+
+---
+
+## 14. Contato
 
 **Condomínio Fácil** © 2024
 Desenvolvido por Nodex Soluções
+
