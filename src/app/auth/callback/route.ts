@@ -9,23 +9,44 @@ export async function GET(request: Request) {
 
     if (code) {
         const supabase = await createClient();
-        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
-        if (!error) {
+        if (!error && data.session) {
+            // Create response with redirect
+            let redirectUrl = `${origin}${next}`;
+
             // If it's password recovery, redirect to reset password page
             if (type === 'recovery') {
-                return NextResponse.redirect(`${origin}/reset-password`);
+                redirectUrl = `${origin}/reset-password`;
             }
             // If it's an email confirmation, redirect to login with success message
-            if (type === 'signup' || type === 'email_change') {
-                return NextResponse.redirect(`${origin}/login?confirmed=true`);
+            else if (type === 'signup' || type === 'email_change') {
+                redirectUrl = `${origin}/login?confirmed=true`;
             }
-            // For other types, go to dashboard
-            return NextResponse.redirect(`${origin}${next}`);
+
+            const response = NextResponse.redirect(redirectUrl);
+
+            // Set auth cookies in response
+            response.cookies.set('sb-access-token', data.session.access_token, {
+                httpOnly: true,
+                secure: true,
+                sameSite: 'lax',
+                path: '/',
+                maxAge: 60 * 60 * 24 * 7 // 7 days
+            });
+
+            response.cookies.set('sb-refresh-token', data.session.refresh_token, {
+                httpOnly: true,
+                secure: true,
+                sameSite: 'lax',
+                path: '/',
+                maxAge: 60 * 60 * 24 * 30 // 30 days
+            });
+
+            return response;
         }
     }
 
     // Return the user to an error page with instructions
     return NextResponse.redirect(`${origin}/login?error=auth`);
 }
-
