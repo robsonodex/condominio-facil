@@ -25,27 +25,41 @@ function ResetPasswordContent() {
             const { data: { session } } = await supabase.auth.getSession();
             if (session) {
                 setValidSession(true);
-            } else {
-                // Try to exchange the token from URL if present
-                const hashParams = new URLSearchParams(window.location.hash.substring(1));
-                const accessToken = hashParams.get('access_token');
-                const type = hashParams.get('type');
+                setChecking(false);
+                return;
+            }
 
-                if (accessToken && type === 'recovery') {
-                    const { error } = await supabase.auth.setSession({
-                        access_token: accessToken,
-                        refresh_token: hashParams.get('refresh_token') || '',
-                    });
-                    if (!error) {
-                        setValidSession(true);
-                    }
+            // Check for code in query params (new Supabase PKCE flow)
+            const code = searchParams.get('code');
+            if (code) {
+                const { error } = await supabase.auth.exchangeCodeForSession(code);
+                if (!error) {
+                    setValidSession(true);
+                    setChecking(false);
+                    return;
                 }
             }
+
+            // Try to exchange the token from URL hash if present (legacy flow)
+            const hashParams = new URLSearchParams(window.location.hash.substring(1));
+            const accessToken = hashParams.get('access_token');
+            const type = hashParams.get('type');
+
+            if (accessToken && type === 'recovery') {
+                const { error } = await supabase.auth.setSession({
+                    access_token: accessToken,
+                    refresh_token: hashParams.get('refresh_token') || '',
+                });
+                if (!error) {
+                    setValidSession(true);
+                }
+            }
+
             setChecking(false);
         };
 
         checkSession();
-    }, [supabase.auth]);
+    }, [supabase.auth, searchParams]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
