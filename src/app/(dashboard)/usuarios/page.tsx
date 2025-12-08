@@ -206,33 +206,6 @@ export default function UsuariosCondoPage() {
                                             <Badge variant={user.ativo ? 'success' : 'danger'}>
                                                 {user.ativo ? 'Ativo' : 'Inativo'}
                                             </Badge>
-                                        </td>
-                                        <td className="px-4 py-3 text-sm text-gray-500">
-                                            {formatDate(user.created_at)}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <div className="flex gap-2">
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    onClick={() => openEditModal(user)}
-                                                >
-                                                    <Edit2 className="h-4 w-4" />
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant={user.ativo ? 'ghost' : 'primary'}
-                                                    onClick={() => toggleUserStatus(user)}
-                                                >
-                                                    {user.ativo ? 'Desativar' : 'Ativar'}
-                                                </Button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                                {users.length === 0 && (
-                                    <tr>
-                                        <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
                                             Nenhum usuário cadastrado
                                         </td>
                                     </tr>
