@@ -99,24 +99,24 @@ export default function AdminUsuariosPage() {
         { key: 'created_at', header: 'Criado em', render: (u: any) => formatDate(u.created_at) },
         {
             key: 'actions',
-            header: '',
+            header: 'Ações',
             className: 'text-right',
             render: (u: any) => (
                 <div className="flex gap-2 justify-end">
                     <button
                         onClick={(e) => { e.stopPropagation(); setEditingUser(u); setShowModal(true); }}
-                        className="p-1 hover:bg-gray-100 rounded"
+                        className="p-2 hover:bg-gray-100 rounded"
+                        title="Editar"
                     >
                         <Edit className="h-4 w-4 text-gray-500" />
                     </button>
-                    {u.role !== 'superadmin' && (
-                        <button
-                            onClick={(e) => { e.stopPropagation(); handleDelete(u.id); }}
-                            className="p-1 hover:bg-gray-100 rounded"
-                        >
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                        </button>
-                    )}
+                    <button
+                        onClick={(e) => { e.stopPropagation(); handleDelete(u.id); }}
+                        className="p-2 hover:bg-red-50 rounded"
+                        title="Excluir"
+                    >
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                    </button>
                 </div>
             )
         },
