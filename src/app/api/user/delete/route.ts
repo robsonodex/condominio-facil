@@ -42,20 +42,12 @@ export async function DELETE(request: NextRequest) {
 
         // Se há um ID na query string, é exclusão administrativa
         if (targetUserId) {
-            // Apenas superadmin e síndico podem excluir outros usuários
+            // Apenas superadmin e síndico podem excluir usuários
             if (profile.role !== 'superadmin' && profile.role !== 'sindico') {
                 return NextResponse.json({
                     error: 'Acesso negado',
-                    message: 'Apenas administradores podem excluir outros usuários.',
+                    message: 'Apenas administradores podem excluir usuários.',
                 }, { status: 403 });
-            }
-
-            // Não pode excluir a si mesmo via admin
-            if (targetUserId === user.id) {
-                return NextResponse.json({
-                    error: 'Não é possível excluir a própria conta por esta rota',
-                    message: 'Use a opção de exclusão de conta na página de perfil.',
-                }, { status: 400 });
             }
 
             // Buscar o usuário alvo
