@@ -1,15 +1,31 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Card, CardContent, Button, Input, Select, Table, Badge } from '@/components/ui';
+import { useEffect, useState, useMemo } from 'react';
+import { Card, CardContent, Button, Input, Select, Table, Badge, CardSkeleton, TableSkeleton } from '@/components/ui';
 import { Modal } from '@/components/ui/modal';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/hooks/useUser';
-import { Plus, Search, Users, Edit, Trash2, Phone, Mail } from 'lucide-react';
-import { User, Unit, Resident } from '@/types/database';
+import { Plus, Search, Users, Edit, Trash2 } from 'lucide-react';
+import { Unit } from '@/types/database';
+
+// Skeleton for instant feedback
+function MoradoresSkeleton() {
+    return (
+        <div className="space-y-6">
+            <div className="flex justify-between items-center">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900">Moradores</h1>
+                    <p className="text-gray-500">Carregando...</p>
+                </div>
+            </div>
+            <CardSkeleton count={3} />
+            <TableSkeleton rows={5} />
+        </div>
+    );
+}
 
 export default function MoradoresPage() {
-    const { condoId, isSindico, isSuperAdmin } = useUser();
+    const { condoId, isSindico, isSuperAdmin, loading: userLoading } = useUser();
     const [residents, setResidents] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -17,14 +33,32 @@ export default function MoradoresPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterUnit, setFilterUnit] = useState('');
     const [units, setUnits] = useState<Unit[]>([]);
-    const supabase = createClient();
+    const supabase = useMemo(() => createClient(), []);
 
     useEffect(() => {
-        if (condoId) {
-            fetchResidents();
-            fetchUnits();
+        if (!userLoading) {
+            if (condoId) {
+                fetchResidents();
+                fetchUnits();
+            } else if (isSuperAdmin) {
+                fetchAllResidents();
+            } else {
+                setLoading(false);
+            }
         }
-    }, [condoId]);
+    }, [condoId, userLoading, isSuperAdmin]);
+
+    const fetchAllResidents = async () => {
+        setLoading(true);
+        const { data } = await supabase
+            .from('residents')
+            .select('*, user:users(*), unit:units(bloco, numero_unidade), condo:condos(nome)')
+            .order('created_at', { ascending: false })
+            .limit(100);
+
+        setResidents(data || []);
+        setLoading(false);
+    };
 
     const fetchUnits = async () => {
         const { data } = await supabase
@@ -51,7 +85,7 @@ export default function MoradoresPage() {
     const handleDelete = async (id: string) => {
         if (!confirm('Deseja realmente excluir este morador?')) return;
         await supabase.from('residents').delete().eq('id', id);
-        fetchResidents();
+        condoId ? fetchResidents() : fetchAllResidents();
     };
 
     const filteredResidents = residents.filter(r => {
@@ -73,6 +107,13 @@ export default function MoradoresPage() {
                 </div>
             )
         },
+        ...(isSuperAdmin && !condoId ? [{
+            key: 'condo',
+            header: 'Condomínio',
+            render: (r: any) => (
+                <span className="text-sm text-gray-600">{r.condo?.nome || '-'}</span>
+            )
+        }] : []),
         {
             key: 'unit',
             header: 'Unidade',
@@ -129,9 +170,13 @@ export default function MoradoresPage() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">Moradores</h1>
-                    <p className="text-gray-500">Gerencie os moradores do condomínio</p>
+                    <p className="text-gray-500">
+                        {isSuperAdmin && !condoId
+                            ? 'Visualizando todos os moradores do sistema'
+                            : 'Gerencie os moradores do condomínio'}
+                    </p>
                 </div>
-                {(isSindico || isSuperAdmin) && (
+                {(isSindico || (isSuperAdmin && condoId)) && (
                     <Button onClick={() => { setEditingResident(null); setShowModal(true); }}>
                         <Plus className="h-4 w-4 mr-2" />
                         Novo Morador
@@ -141,23 +186,23 @@ export default function MoradoresPage() {
 
             {/* Stats */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                <Card>
+                <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white">
                     <CardContent className="py-4 text-center">
-                        <Users className="h-8 w-8 mx-auto text-emerald-600 mb-2" />
-                        <p className="text-2xl font-bold text-gray-900">{residents.length}</p>
-                        <p className="text-sm text-gray-500">Total de Moradores</p>
+                        <Users className="h-8 w-8 mx-auto mb-2 opacity-80" />
+                        <p className="text-3xl font-bold">{residents.length}</p>
+                        <p className="text-sm text-emerald-100">Total de Moradores</p>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
                     <CardContent className="py-4 text-center">
-                        <p className="text-2xl font-bold text-gray-900">{residents.filter(r => r.tipo === 'proprietario').length}</p>
-                        <p className="text-sm text-gray-500">Proprietários</p>
+                        <p className="text-3xl font-bold">{residents.filter(r => r.tipo === 'proprietario').length}</p>
+                        <p className="text-sm text-blue-100">Proprietários</p>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">
                     <CardContent className="py-4 text-center">
-                        <p className="text-2xl font-bold text-gray-900">{residents.filter(r => r.tipo === 'inquilino').length}</p>
-                        <p className="text-sm text-gray-500">Inquilinos</p>
+                        <p className="text-3xl font-bold">{residents.filter(r => r.tipo === 'inquilino').length}</p>
+                        <p className="text-sm text-purple-100">Inquilinos</p>
                     </CardContent>
                 </Card>
             </div>
@@ -173,15 +218,17 @@ export default function MoradoresPage() {
                         className="pl-10"
                     />
                 </div>
-                <Select
-                    value={filterUnit}
-                    onChange={(e) => setFilterUnit(e.target.value)}
-                    options={[
-                        { value: '', label: 'Todas as unidades' },
-                        ...units.map(u => ({ value: u.id, label: `${u.bloco || ''} ${u.numero_unidade}` }))
-                    ]}
-                    className="w-48"
-                />
+                {condoId && units.length > 0 && (
+                    <Select
+                        value={filterUnit}
+                        onChange={(e) => setFilterUnit(e.target.value)}
+                        options={[
+                            { value: '', label: 'Todas as unidades' },
+                            ...units.map(u => ({ value: u.id, label: `${u.bloco || ''} ${u.numero_unidade}` }))
+                        ]}
+                        className="w-48"
+                    />
+                )}
             </div>
 
             {/* Table */}
@@ -197,14 +244,16 @@ export default function MoradoresPage() {
             </Card>
 
             {/* Modal */}
-            <ResidentModal
-                isOpen={showModal}
-                onClose={() => { setShowModal(false); setEditingResident(null); }}
-                onSuccess={fetchResidents}
-                condoId={condoId}
-                units={units}
-                resident={editingResident}
-            />
+            {condoId && (
+                <ResidentModal
+                    isOpen={showModal}
+                    onClose={() => { setShowModal(false); setEditingResident(null); }}
+                    onSuccess={fetchResidents}
+                    condoId={condoId}
+                    units={units}
+                    resident={editingResident}
+                />
+            )}
         </div>
     );
 }
@@ -252,7 +301,6 @@ function ResidentModal({ isOpen, onClose, onSuccess, condoId, units, resident }:
 
         try {
             if (resident) {
-                // Update existing
                 if (resident.user_id) {
                     await supabase.from('users').update({
                         nome,
@@ -265,9 +313,7 @@ function ResidentModal({ isOpen, onClose, onSuccess, condoId, units, resident }:
                     ativo,
                 }).eq('id', resident.id);
             } else {
-                // Create new user first via auth (simplified - in real app might need invite flow)
-                // For now, create user directly in table
-                const { data: newUser, error: userError } = await supabase.from('users').insert({
+                const { data: newUser } = await supabase.from('users').insert({
                     nome,
                     email,
                     telefone: telefone || null,

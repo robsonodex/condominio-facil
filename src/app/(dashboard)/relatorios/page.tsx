@@ -1,20 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, Button, Input, Select } from '@/components/ui';
+import { useEffect, useState, useMemo } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, Button, Input } from '@/components/ui';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/hooks/useUser';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { FileText, Download, Calendar, DollarSign, TrendingUp, TrendingDown, Users } from 'lucide-react';
-import { FinancialEntry } from '@/types/database';
 
 export default function RelatoriosPage() {
-    const { condoId } = useUser();
+    const { condoId, loading: userLoading } = useUser();
     const [loading, setLoading] = useState(false);
     const [periodoInicio, setPeriodoInicio] = useState('');
     const [periodoFim, setPeriodoFim] = useState('');
     const [reportData, setReportData] = useState<any>(null);
-    const supabase = createClient();
+    const supabase = useMemo(() => createClient(), []);
 
     // Set default period to current month
     useEffect(() => {

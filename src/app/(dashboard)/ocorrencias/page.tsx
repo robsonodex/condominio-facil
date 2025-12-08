@@ -1,18 +1,27 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Card, CardContent, Button, Input, Select, Badge, Table } from '@/components/ui';
+import { useEffect, useState, useMemo } from 'react';
+import { Card, CardContent, Button, Input, Select, Badge, Table, CardSkeleton, TableSkeleton } from '@/components/ui';
 import { Modal } from '@/components/ui/modal';
 import { Textarea } from '@/components/ui/textarea';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/hooks/useUser';
 import { formatDate, formatDateTime, getStatusColor, getStatusLabel, getPriorityColor, getOccurrenceTypeLabel } from '@/lib/utils';
-import { Plus, Search, AlertTriangle, Eye, Edit, Filter, Camera } from 'lucide-react';
-import { Occurrence, Unit, User } from '@/types/database';
-import Link from 'next/link';
+import { Plus, Search, AlertTriangle, Eye } from 'lucide-react';
+import { Unit, User } from '@/types/database';
+
+function OcorrenciasSkeleton() {
+    return (
+        <div className="space-y-6">
+            <div><h1 className="text-2xl font-bold text-gray-900">Ocorrências</h1><p className="text-gray-500">Carregando...</p></div>
+            <CardSkeleton count={4} />
+            <TableSkeleton rows={5} />
+        </div>
+    );
+}
 
 export default function OcorrenciasPage() {
-    const { condoId, isSindico, isSuperAdmin, isPorteiro, isMorador, profile } = useUser();
+    const { condoId, isSindico, isSuperAdmin, isPorteiro, isMorador, profile, loading: userLoading } = useUser();
     const [occurrences, setOccurrences] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -20,11 +29,12 @@ export default function OcorrenciasPage() {
     const [filterStatus, setFilterStatus] = useState('');
     const [filterType, setFilterType] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
-    const supabase = createClient();
+    const supabase = useMemo(() => createClient(), []);
 
     useEffect(() => {
-        if (condoId) fetchOccurrences();
-    }, [condoId, filterStatus, filterType]);
+        if (!userLoading && condoId) fetchOccurrences();
+        else if (!userLoading) setLoading(false);
+    }, [condoId, filterStatus, filterType, userLoading]);
 
     const fetchOccurrences = async () => {
         setLoading(true);
@@ -134,28 +144,28 @@ export default function OcorrenciasPage() {
 
             {/* Stats */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <Card>
+                <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0">
                     <CardContent className="py-4 text-center">
-                        <p className="text-2xl font-bold text-gray-900">{occurrences.length}</p>
-                        <p className="text-sm text-gray-500">Total</p>
+                        <p className="text-2xl font-bold">{occurrences.length}</p>
+                        <p className="text-sm text-purple-100">Total</p>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0">
                     <CardContent className="py-4 text-center">
-                        <p className="text-2xl font-bold text-blue-600">{occurrences.filter(o => o.status === 'aberta').length}</p>
-                        <p className="text-sm text-gray-500">Abertas</p>
+                        <p className="text-2xl font-bold">{occurrences.filter(o => o.status === 'aberta').length}</p>
+                        <p className="text-sm text-blue-100">Abertas</p>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white border-0">
                     <CardContent className="py-4 text-center">
-                        <p className="text-2xl font-bold text-orange-600">{occurrences.filter(o => o.status === 'em_andamento').length}</p>
-                        <p className="text-sm text-gray-500">Em Andamento</p>
+                        <p className="text-2xl font-bold">{occurrences.filter(o => o.status === 'em_andamento').length}</p>
+                        <p className="text-sm text-orange-100">Em Andamento</p>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0">
                     <CardContent className="py-4 text-center">
-                        <p className="text-2xl font-bold text-emerald-600">{occurrences.filter(o => o.status === 'resolvida').length}</p>
-                        <p className="text-sm text-gray-500">Resolvidas</p>
+                        <p className="text-2xl font-bold">{occurrences.filter(o => o.status === 'resolvida').length}</p>
+                        <p className="text-sm text-emerald-100">Resolvidas</p>
                     </CardContent>
                 </Card>
             </div>

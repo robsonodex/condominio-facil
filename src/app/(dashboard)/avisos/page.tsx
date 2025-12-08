@@ -1,27 +1,39 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Card, CardContent, Button, Input, Select, Badge } from '@/components/ui';
+import { useEffect, useState, useMemo } from 'react';
+import { Card, CardContent, Button, Input, Select, Badge, CardSkeleton } from '@/components/ui';
 import { Modal } from '@/components/ui/modal';
 import { Textarea } from '@/components/ui/textarea';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/hooks/useUser';
 import { formatDate, formatDateTime } from '@/lib/utils';
-import { Plus, Bell, Eye, Edit, Trash2, CheckCircle } from 'lucide-react';
+import { Plus, Bell, Eye, Edit, Trash2 } from 'lucide-react';
 import { Notice } from '@/types/database';
 
+function AvisosSkeleton() {
+    return (
+        <div className="space-y-6">
+            <div><h1 className="text-2xl font-bold text-gray-900">Avisos</h1><p className="text-gray-500">Carregando...</p></div>
+            <div className="space-y-4">
+                {[1, 2, 3].map(i => <div key={i} className="bg-gray-200 rounded-xl h-28 animate-pulse"></div>)}
+            </div>
+        </div>
+    );
+}
+
 export default function AvisosPage() {
-    const { condoId, isSindico, isSuperAdmin, isMorador, profile } = useUser();
+    const { condoId, isSindico, isSuperAdmin, isMorador, profile, loading: userLoading } = useUser();
     const [notices, setNotices] = useState<Notice[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [editingNotice, setEditingNotice] = useState<Notice | null>(null);
     const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null);
-    const supabase = createClient();
+    const supabase = useMemo(() => createClient(), []);
 
     useEffect(() => {
-        if (condoId) fetchNotices();
-    }, [condoId]);
+        if (!userLoading && condoId) fetchNotices();
+        else if (!userLoading) setLoading(false);
+    }, [condoId, userLoading]);
 
     const fetchNotices = async () => {
         setLoading(true);

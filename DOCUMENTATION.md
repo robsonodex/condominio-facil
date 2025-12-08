@@ -1,135 +1,222 @@
-# Condomínio Fácil - Documentação Técnica
+# Condomínio Fácil - Manual Completo
 
-## 1. Arquitetura do Sistema
+## 1. Visão Geral
 
-### Stack Tecnológico
-- **Frontend**: Next.js 14 (App Router), React 18, TypeScript
-- **Estilização**: Tailwind CSS
-- **Backend**: Supabase (PostgreSQL, Auth, Realtime)
-- **Deploy**: Vercel
-- **Gráficos**: Recharts
-- **PDF**: jsPDF
+**Condomínio Fácil** é um SaaS para gestão de condomínios com:
+- Dashboard executivo com métricas em tempo real
+- Gestão de moradores, unidades e financeiro
+- Controle de portaria e visitantes
+- Sistema de ocorrências
+- Pagamentos via Mercado Pago (PIX, cartão, boleto)
+- E-mails transacionais automáticos
 
-### Estrutura de Diretórios
+---
+
+## 2. Stack Tecnológico
+
+| Tecnologia | Uso |
+|------------|-----|
+| Next.js 16 | Frontend + API Routes |
+| TypeScript | Tipagem estática |
+| Tailwind CSS | Estilização |
+| Supabase | Banco de dados + Auth |
+| Mercado Pago | Gateway de pagamento |
+| Nodemailer | Envio de e-mails SMTP |
+| Recharts | Gráficos |
+| Vercel | Deploy |
+
+---
+
+## 3. Estrutura do Projeto
+
 ```
 condominio-facil/
 ├── src/
-│   ├── app/                    # App Router (páginas)
-│   │   ├── (dashboard)/        # Área autenticada
-│   │   ├── admin/              # SuperAdmin
-│   │   ├── login/              # Autenticação
-│   │   └── globals.css         # Estilos globais
-│   ├── components/
-│   │   ├── ui/                 # Componentes base
-│   │   └── shared/             # Componentes compartilhados
-│   ├── hooks/                  # Custom hooks (useAuth, useUser)
-│   ├── lib/                    # Utilitários e configs
-│   │   └── supabase/           # Clientes Supabase
-│   └── types/                  # TypeScript types
+│   ├── app/
+│   │   ├── (dashboard)/       # Páginas autenticadas
+│   │   │   ├── dashboard/     # Dashboard principal
+│   │   │   ├── moradores/     # Gestão de moradores
+│   │   │   ├── financeiro/    # Lançamentos financeiros
+│   │   │   ├── avisos/        # Comunicados
+│   │   │   ├── ocorrencias/   # Ocorrências
+│   │   │   ├── unidades/      # Unidades/apartamentos
+│   │   │   ├── usuarios/      # Usuários do condomínio
+│   │   │   ├── portaria/      # Controle de visitantes
+│   │   │   └── relatorios/    # Relatórios
+│   │   ├── admin/             # Painel Super Admin
+│   │   │   ├── usuarios/      # Todos os usuários
+│   │   │   ├── condominios/   # Todos os condomínios
+│   │   │   ├── assinaturas/   # Assinaturas e MRR
+│   │   │   ├── planos/        # Planos
+│   │   │   ├── emails/        # Logs de e-mail
+│   │   │   └── legal/         # Aceites legais
+│   │   ├── api/
+│   │   │   ├── checkout/      # Mercado Pago
+│   │   │   ├── email/         # Envio de e-mails
+│   │   │   └── webhooks/      # Webhooks MP
+│   │   └── (public)/          # Páginas públicas
+│   ├── components/ui/         # Componentes reutilizáveis
+│   ├── hooks/                 # useAuth, useUser
+│   └── lib/supabase/          # Clientes Supabase
 ├── supabase/
-│   ├── schema.sql              # Schema principal
-│   └── notifications.sql       # Schema notificações
-└── vercel.json                 # Config deploy
+│   ├── schema.sql             # Schema principal
+│   └── saas_complete.sql      # Schema SaaS (invoices, etc)
+└── .env.local                 # Variáveis de ambiente
 ```
 
 ---
 
-## 2. Banco de Dados
+## 4. Papéis de Usuário
+
+| Role | Acesso |
+|------|--------|
+| `superadmin` | Painel admin, todos os condomínios |
+| `sindico` | Gestão completa do seu condomínio |
+| `porteiro` | Portaria, visitantes, ocorrências |
+| `morador` | Visualização, criar ocorrências |
+
+---
+
+## 5. Configuração
+
+### 5.1 Variáveis de Ambiente
+
+```env
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJxxx
+
+# App
+NEXT_PUBLIC_APP_URL=https://seudominio.vercel.app
+
+# Mercado Pago
+MERCADOPAGO_ACCESS_TOKEN=APP_USR-xxx
+
+# SMTP (Hostinger)
+SMTP_HOST=smtp.hostinger.com
+SMTP_PORT=465
+SMTP_USER=noreply@seudominio.com.br
+SMTP_PASS=sua_senha
+SMTP_FROM=noreply@seudominio.com.br
+```
+
+### 5.2 Banco de Dados
+
+Execute no Supabase SQL Editor:
+1. `supabase/schema.sql` - Schema principal
+2. `supabase/saas_complete.sql` - Faturas, logs, funções
+
+---
+
+## 6. Integrações
+
+### 6.1 Mercado Pago
+
+**Endpoint:** `/api/checkout`
+
+```json
+POST /api/checkout
+{
+  "condoId": "uuid",
+  "valor": 99.90,
+  "metodoPagamento": "pix|cartao|boleto",
+  "email": "email@exemplo.com",
+  "nome": "Nome"
+}
+```
+
+**Resposta:**
+```json
+{
+  "success": true,
+  "paymentUrl": "https://mercadopago.com/...",
+  "pixCode": "00020126...",
+  "pixQrcode": "base64..."
+}
+```
+
+**Webhook:** `/api/webhooks/mercadopago`
+- Validação HMAC-SHA256
+- Atualiza status de faturas
+- Libera assinaturas
+
+### 6.2 E-mail SMTP
+
+**Endpoint:** `/api/email`
+
+```json
+POST /api/email
+{
+  "tipo": "welcome|invoice|overdue|blocked|payment_confirmed",
+  "destinatario": "email@exemplo.com",
+  "dados": { "nome": "João", ... }
+}
+```
+
+**Templates disponíveis:**
+- `welcome` - Boas-vindas
+- `trial_ending` - Fim do trial
+- `invoice` - Nova fatura
+- `overdue` - Fatura atrasada
+- `blocked` - Acesso bloqueado
+- `payment_confirmed` - Pagamento confirmado
+
+---
+
+## 7. Banco de Dados
 
 ### Tabelas Principais
+
 | Tabela | Descrição |
 |--------|-----------|
-| `condos` | Condomínios cadastrados |
-| `plans` | Planos de assinatura |
-| `users` | Usuários do sistema |
-| `units` | Unidades/apartamentos |
+| `condos` | Condomínios |
+| `users` | Usuários |
+| `units` | Unidades |
 | `residents` | Moradores |
-| `financial_entries` | Lançamentos financeiros |
-| `notices` | Avisos/comunicados |
+| `financial_entries` | Lançamentos |
+| `notices` | Avisos |
 | `occurrences` | Ocorrências |
 | `visitors` | Visitantes |
+| `plans` | Planos |
 | `subscriptions` | Assinaturas |
-| `notifications` | Notificações do sistema |
+| `invoices` | Faturas |
+| `email_logs` | Logs de e-mail |
+| `legal_acceptances` | Aceites legais |
 
-### Row Level Security (RLS)
-Todas as tabelas têm RLS habilitado para garantir isolamento multi-tenant.
+### Funções SQL
 
----
-
-## 3. Papéis de Usuário
-
-| Role | Permissões |
-|------|------------|
-| `superadmin` | Acesso total ao sistema |
-| `sindico` | Gestão do condomínio próprio |
-| `porteiro` | Visitantes e ocorrências |
-| `morador` | Visualização e criação de ocorrências |
+- `check_overdue_subscriptions()` - Verifica inadimplência
+- `release_subscription(condo_id, meses)` - Libera após pagamento
+- `get_admin_metrics()` - Métricas do admin
+- `generate_monthly_invoice(subscription_id)` - Gera fatura
 
 ---
 
-## 4. Como Rodar Localmente
+## 8. Deploy
 
-```bash
-# 1. Clonar o projeto
-git clone https://github.com/seu-usuario/condominio-facil.git
-cd condominio-facil
+### Vercel
 
-# 2. Instalar dependências
-npm install
-
-# 3. Configurar variáveis
-cp env.example .env.local
-# Edite .env.local com suas credenciais Supabase
-
-# 4. Executar SQL no Supabase
-# - supabase/schema.sql
-# - supabase/notifications.sql
-
-# 5. Rodar em desenvolvimento
-npm run dev
-```
-
----
-
-## 5. Deploy
-
-Ver arquivo [DEPLOY.md](./DEPLOY.md) para guia completo.
-
-### Resumo
-1. Conectar repositório ao Vercel
-2. Configurar variáveis de ambiente
+1. Conecte o repositório GitHub
+2. Configure variáveis de ambiente
 3. Deploy automático a cada push
 
----
-
-## 6. Sistema de Notificações
-
-### Tipos de Notificação
-- `aviso` - Avisos gerais
-- `vencimento` - Mensalidade próxima
-- `atraso` - Mensalidade atrasada
-- `sistema` - Notificações do sistema
-
-### Automação
-Executar diariamente a função `create_billing_notifications()` via pg_cron.
+### Variáveis obrigatórias na Vercel:
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `NEXT_PUBLIC_APP_URL`
+- `MERCADOPAGO_ACCESS_TOKEN`
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`
 
 ---
 
-## 7. Manutenção Futura
+## 9. Comandos
 
-### Tarefas Recomendadas
-- [ ] Backups automáticos do banco
-- [ ] Monitoramento de erros (Sentry)
-- [ ] Analytics de uso
-- [ ] Testes automatizados
-
-### Comandos Úteis
 ```bash
-# Build de produção
-npm run build
+# Desenvolvimento
+npm run dev
 
-# Verificar tipos
-npx tsc --noEmit
+# Build
+npm run build
 
 # Lint
 npm run lint
@@ -137,6 +224,20 @@ npm run lint
 
 ---
 
-## 8. Contato
+## 10. Manutenção
 
-Desenvolvido por Condomínio Fácil © 2024
+### Tarefas Diárias (via Supabase pg_cron)
+- `check_overdue_subscriptions()` - Verificar inadimplência
+- Enviar e-mails de cobrança
+
+### Monitoramento
+- Logs de e-mail em `/admin/emails`
+- Métricas em `/admin`
+- Faturas em `/admin/assinaturas`
+
+---
+
+## 11. Contato
+
+**Condomínio Fácil** © 2024
+Desenvolvido por Nodex Soluções

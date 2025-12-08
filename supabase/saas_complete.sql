@@ -34,6 +34,9 @@ CREATE INDEX IF NOT EXISTS idx_invoices_vencimento ON invoices(data_vencimento);
 -- RLS
 ALTER TABLE invoices ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can see invoices of their condo" ON invoices;
+DROP POLICY IF EXISTS "Superadmin can manage all invoices" ON invoices;
+
 CREATE POLICY "Users can see invoices of their condo" ON invoices
   FOR SELECT USING (
     condo_id IN (SELECT condo_id FROM users WHERE id = auth.uid())
@@ -55,6 +58,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE SEQUENCE IF NOT EXISTS invoice_seq START 1;
+
+DROP TRIGGER IF EXISTS set_invoice_number ON invoices;
 
 CREATE TRIGGER set_invoice_number
   BEFORE INSERT ON invoices
@@ -82,6 +87,8 @@ CREATE INDEX IF NOT EXISTS idx_email_logs_tipo ON email_logs(tipo);
 
 ALTER TABLE email_logs ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Superadmin can see all email logs" ON email_logs;
+
 CREATE POLICY "Superadmin can see all email logs" ON email_logs
   FOR SELECT USING (
     EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'superadmin')
@@ -105,6 +112,9 @@ CREATE INDEX IF NOT EXISTS idx_legal_user ON legal_acceptances(user_id);
 CREATE INDEX IF NOT EXISTS idx_legal_tipo ON legal_acceptances(tipo);
 
 ALTER TABLE legal_acceptances ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Superadmin can see all acceptances" ON legal_acceptances;
+DROP POLICY IF EXISTS "Users can insert their own acceptances" ON legal_acceptances;
 
 CREATE POLICY "Superadmin can see all acceptances" ON legal_acceptances
   FOR SELECT USING (

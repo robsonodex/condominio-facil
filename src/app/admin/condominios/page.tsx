@@ -121,29 +121,29 @@ export default function AdminCondominiosPage() {
 
             {/* Stats */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <Card>
+                <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0">
                     <CardContent className="py-4 text-center">
-                        <Building2 className="h-8 w-8 mx-auto text-emerald-600 mb-2" />
-                        <p className="text-2xl font-bold text-gray-900">{condos.length}</p>
-                        <p className="text-sm text-gray-500">Total</p>
+                        <Building2 className="h-8 w-8 mx-auto opacity-80 mb-2" />
+                        <p className="text-2xl font-bold">{condos.length}</p>
+                        <p className="text-sm text-blue-100">Total</p>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0">
                     <CardContent className="py-4 text-center">
-                        <p className="text-2xl font-bold text-emerald-600">{condos.filter(c => c.status === 'ativo').length}</p>
-                        <p className="text-sm text-gray-500">Ativos</p>
+                        <p className="text-2xl font-bold">{condos.filter(c => c.status === 'ativo').length}</p>
+                        <p className="text-sm text-emerald-100">Ativos</p>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0">
                     <CardContent className="py-4 text-center">
-                        <p className="text-2xl font-bold text-purple-600">{condos.filter(c => c.status === 'teste').length}</p>
-                        <p className="text-sm text-gray-500">Em Trial</p>
+                        <p className="text-2xl font-bold">{condos.filter(c => c.status === 'teste').length}</p>
+                        <p className="text-sm text-purple-100">Em Trial</p>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white border-0">
                     <CardContent className="py-4 text-center">
-                        <p className="text-2xl font-bold text-red-600">{condos.filter(c => c.status === 'suspenso').length}</p>
-                        <p className="text-sm text-gray-500">Suspensos</p>
+                        <p className="text-2xl font-bold">{condos.filter(c => c.status === 'suspenso').length}</p>
+                        <p className="text-sm text-red-100">Suspensos</p>
                     </CardContent>
                 </Card>
             </div>

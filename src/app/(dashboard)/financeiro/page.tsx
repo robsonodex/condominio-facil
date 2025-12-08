@@ -6,7 +6,7 @@ import { Modal } from '@/components/ui/modal';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/hooks/useUser';
 import { formatCurrency, formatDate, getStatusColor, getStatusLabel } from '@/lib/utils';
-import { Plus, Download, Filter, DollarSign, TrendingUp, TrendingDown, AlertCircle } from 'lucide-react';
+import { Plus, Download, DollarSign, TrendingUp, TrendingDown, AlertCircle } from 'lucide-react';
 import { FinancialEntry } from '@/types/database';
 
 const CATEGORIAS_RECEITA = [
@@ -38,7 +38,7 @@ const STATUS_OPTIONS = [
 ];
 
 export default function FinanceiroPage() {
-    const { condoId, isMorador, profile } = useUser();
+    const { condoId, isMorador, isSuperAdmin, profile, loading: userLoading } = useUser();
     const [entries, setEntries] = useState<FinancialEntry[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -48,12 +48,46 @@ export default function FinanceiroPage() {
     const supabase = createClient();
 
     useEffect(() => {
-        if (condoId) fetchEntries();
-    }, [condoId, filterType, filterStatus]);
+        if (!userLoading) {
+            if (condoId) {
+                fetchEntries();
+            } else if (isSuperAdmin) {
+                fetchAllEntries();
+            } else {
+                setLoading(false);
+            }
+        }
+    }, [condoId, filterType, filterStatus, userLoading, isSuperAdmin]);
+
+    const fetchAllEntries = async () => {
+        setLoading(true);
+        let query = supabase.from('financial_entries')
+            .select('*, unit:units(bloco, numero_unidade), condo:condos(nome)')
+            .order('data_vencimento', { ascending: false })
+            .limit(100);
+
+        if (filterType) query = query.eq('tipo', filterType);
+        if (filterStatus) query = query.eq('status', filterStatus);
+
+        const { data } = await query;
+        setEntries(data || []);
+        calculateStats(data || []);
+        setLoading(false);
+    };
+
+    const calculateStats = (data: any[]) => {
+        const receitas = data.filter(e => e.tipo === 'receita' && e.status === 'pago').reduce((s, e) => s + Number(e.valor), 0);
+        const despesas = data.filter(e => e.tipo === 'despesa' && e.status === 'pago').reduce((s, e) => s + Number(e.valor), 0);
+        const inadimplencia = data.filter(e => e.tipo === 'receita' && (e.status === 'em_aberto' || e.status === 'atrasado')).reduce((s, e) => s + Number(e.valor), 0);
+        setStats({ receitas, despesas, inadimplencia });
+    };
 
     const fetchEntries = async () => {
         setLoading(true);
-        let query = supabase.from('financial_entries').select('*, unit:units(bloco, numero_unidade)').eq('condo_id', condoId).order('data_vencimento', { ascending: false });
+        let query = supabase.from('financial_entries')
+            .select('*, unit:units(bloco, numero_unidade)')
+            .eq('condo_id', condoId)
+            .order('data_vencimento', { ascending: false });
 
         if (isMorador && profile?.unidade_id) {
             query = query.eq('unidade_id', profile.unidade_id);
@@ -63,28 +97,7 @@ export default function FinanceiroPage() {
 
         const { data } = await query;
         setEntries(data || []);
-
-        // Stats
-        const now = new Date();
-        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
-
-        let statsQuery = supabase.from('financial_entries').select('tipo, status, valor').eq('condo_id', condoId);
-        if (isMorador && profile?.unidade_id) {
-            statsQuery = statsQuery.eq('unidade_id', profile.unidade_id);
-        }
-        const { data: allData } = await statsQuery;
-
-        const monthData = allData?.filter(e => {
-            const d = new Date();
-            return true; // Simplified for performance
-        }) || [];
-
-        const receitas = allData?.filter(e => e.tipo === 'receita' && e.status === 'pago').reduce((s, e) => s + Number(e.valor), 0) || 0;
-        const despesas = allData?.filter(e => e.tipo === 'despesa' && e.status === 'pago').reduce((s, e) => s + Number(e.valor), 0) || 0;
-        const inadimplencia = allData?.filter(e => e.tipo === 'receita' && (e.status === 'em_aberto' || e.status === 'atrasado')).reduce((s, e) => s + Number(e.valor), 0) || 0;
-
-        setStats({ receitas, despesas, inadimplencia });
+        calculateStats(data || []);
         setLoading(false);
     };
 
@@ -96,6 +109,11 @@ export default function FinanceiroPage() {
                 </Badge>
             )
         },
+        ...(isSuperAdmin && !condoId ? [{
+            key: 'condo',
+            header: 'Condomínio',
+            render: (e: any) => <span className="text-sm text-gray-600">{e.condo?.nome || '-'}</span>
+        }] : []),
         {
             key: 'categoria', header: 'Categoria', render: (e: FinancialEntry) => (
                 <span className="capitalize">{e.categoria.replace('_', ' ')}</span>
@@ -132,10 +150,14 @@ export default function FinanceiroPage() {
                         {isMorador ? 'Meus Lançamentos' : 'Financeiro'}
                     </h1>
                     <p className="text-gray-500">
-                        {isMorador ? 'Visualize suas cobranças e pagamentos' : 'Gerencie receitas e despesas do condomínio'}
+                        {isSuperAdmin && !condoId
+                            ? 'Visualizando todos os lançamentos do sistema'
+                            : isMorador
+                                ? 'Visualize suas cobranças e pagamentos'
+                                : 'Gerencie receitas e despesas do condomínio'}
                     </p>
                 </div>
-                {!isMorador && (
+                {!isMorador && condoId && (
                     <div className="flex gap-2">
                         <Button variant="outline" onClick={() => { }}>
                             <Download className="h-4 w-4 mr-2" />
@@ -152,41 +174,41 @@ export default function FinanceiroPage() {
             {/* Stats */}
             {!isMorador && (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <Card>
+                    <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white">
                         <CardContent className="pt-6">
                             <div className="flex items-center gap-4">
-                                <div className="p-3 bg-emerald-100 rounded-lg">
-                                    <TrendingUp className="h-6 w-6 text-emerald-600" />
+                                <div className="p-3 bg-white/20 rounded-lg">
+                                    <TrendingUp className="h-6 w-6" />
                                 </div>
                                 <div>
-                                    <p className="text-sm text-gray-500">Receitas (Pagas)</p>
-                                    <p className="text-xl font-bold text-emerald-600">{formatCurrency(stats.receitas)}</p>
+                                    <p className="text-sm text-emerald-100">Receitas (Pagas)</p>
+                                    <p className="text-2xl font-bold">{formatCurrency(stats.receitas)}</p>
                                 </div>
                             </div>
                         </CardContent>
                     </Card>
-                    <Card>
+                    <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white">
                         <CardContent className="pt-6">
                             <div className="flex items-center gap-4">
-                                <div className="p-3 bg-orange-100 rounded-lg">
-                                    <TrendingDown className="h-6 w-6 text-orange-600" />
+                                <div className="p-3 bg-white/20 rounded-lg">
+                                    <TrendingDown className="h-6 w-6" />
                                 </div>
                                 <div>
-                                    <p className="text-sm text-gray-500">Despesas (Pagas)</p>
-                                    <p className="text-xl font-bold text-orange-600">{formatCurrency(stats.despesas)}</p>
+                                    <p className="text-sm text-orange-100">Despesas (Pagas)</p>
+                                    <p className="text-2xl font-bold">{formatCurrency(stats.despesas)}</p>
                                 </div>
                             </div>
                         </CardContent>
                     </Card>
-                    <Card>
+                    <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white">
                         <CardContent className="pt-6">
                             <div className="flex items-center gap-4">
-                                <div className="p-3 bg-red-100 rounded-lg">
-                                    <AlertCircle className="h-6 w-6 text-red-600" />
+                                <div className="p-3 bg-white/20 rounded-lg">
+                                    <AlertCircle className="h-6 w-6" />
                                 </div>
                                 <div>
-                                    <p className="text-sm text-gray-500">Inadimplência</p>
-                                    <p className="text-xl font-bold text-red-600">{formatCurrency(stats.inadimplencia)}</p>
+                                    <p className="text-sm text-red-100">Inadimplência</p>
+                                    <p className="text-2xl font-bold">{formatCurrency(stats.inadimplencia)}</p>
                                 </div>
                             </div>
                         </CardContent>
@@ -227,12 +249,14 @@ export default function FinanceiroPage() {
             </Card>
 
             {/* New Entry Modal */}
-            <NewEntryModal
-                isOpen={showModal}
-                onClose={() => setShowModal(false)}
-                onSuccess={fetchEntries}
-                condoId={condoId}
-            />
+            {condoId && (
+                <NewEntryModal
+                    isOpen={showModal}
+                    onClose={() => setShowModal(false)}
+                    onSuccess={fetchEntries}
+                    condoId={condoId}
+                />
+            )}
         </div>
     );
 }
@@ -281,7 +305,6 @@ function NewEntryModal({ isOpen, onClose, onSuccess, condoId }: {
         if (!error) {
             onSuccess();
             onClose();
-            // Reset form
             setTipo('receita');
             setCategoria('');
             setDescricao('');

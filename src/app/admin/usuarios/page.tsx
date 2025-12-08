@@ -123,35 +123,35 @@ export default function AdminUsuariosPage() {
 
             {/* Stats */}
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-                <Card>
+                <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0">
                     <CardContent className="py-4 text-center">
-                        <Users className="h-8 w-8 mx-auto text-emerald-600 mb-2" />
-                        <p className="text-2xl font-bold text-gray-900">{users.length}</p>
-                        <p className="text-sm text-gray-500">Total</p>
+                        <Users className="h-8 w-8 mx-auto opacity-80 mb-2" />
+                        <p className="text-2xl font-bold">{users.length}</p>
+                        <p className="text-sm text-emerald-100">Total</p>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0">
                     <CardContent className="py-4 text-center">
-                        <p className="text-2xl font-bold text-gray-900">{users.filter(u => u.role === 'sindico').length}</p>
-                        <p className="text-sm text-gray-500">Síndicos</p>
+                        <p className="text-2xl font-bold">{users.filter(u => u.role === 'sindico').length}</p>
+                        <p className="text-sm text-blue-100">Síndicos</p>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="bg-gradient-to-br from-yellow-500 to-yellow-600 text-white border-0">
                     <CardContent className="py-4 text-center">
-                        <p className="text-2xl font-bold text-gray-900">{users.filter(u => u.role === 'porteiro').length}</p>
-                        <p className="text-sm text-gray-500">Porteiros</p>
+                        <p className="text-2xl font-bold">{users.filter(u => u.role === 'porteiro').length}</p>
+                        <p className="text-sm text-yellow-100">Porteiros</p>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0">
                     <CardContent className="py-4 text-center">
-                        <p className="text-2xl font-bold text-gray-900">{users.filter(u => u.role === 'morador').length}</p>
-                        <p className="text-sm text-gray-500">Moradores</p>
+                        <p className="text-2xl font-bold">{users.filter(u => u.role === 'morador').length}</p>
+                        <p className="text-sm text-purple-100">Moradores</p>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white border-0">
                     <CardContent className="py-4 text-center">
-                        <p className="text-2xl font-bold text-red-600">{users.filter(u => u.role === 'superadmin').length}</p>
-                        <p className="text-sm text-gray-500">Admins</p>
+                        <p className="text-2xl font-bold">{users.filter(u => u.role === 'superadmin').length}</p>
+                        <p className="text-sm text-red-100">Admins</p>
                     </CardContent>
                 </Card>
             </div>

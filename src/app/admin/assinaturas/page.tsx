@@ -74,35 +74,35 @@ export default function AdminAssinaturasPage() {
 
             {/* Stats */}
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-                <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white">
+                <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0">
                     <CardContent className="py-4">
                         <CreditCard className="h-8 w-8 mb-2 opacity-80" />
                         <p className="text-2xl font-bold">{formatCurrency(stats.mrr)}</p>
                         <p className="text-emerald-100 text-sm">MRR (Receita Recorrente)</p>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0">
                     <CardContent className="py-4 text-center">
-                        <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-                        <p className="text-sm text-gray-500">Total</p>
+                        <p className="text-2xl font-bold">{stats.total}</p>
+                        <p className="text-sm text-blue-100">Total</p>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0">
                     <CardContent className="py-4 text-center">
-                        <p className="text-2xl font-bold text-emerald-600">{stats.ativo}</p>
-                        <p className="text-sm text-gray-500">Ativas</p>
+                        <p className="text-2xl font-bold">{stats.ativo}</p>
+                        <p className="text-sm text-purple-100">Ativas</p>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white border-0">
                     <CardContent className="py-4 text-center">
-                        <p className="text-2xl font-bold text-orange-600">{stats.pendente}</p>
-                        <p className="text-sm text-gray-500">Pendentes</p>
+                        <p className="text-2xl font-bold">{stats.pendente}</p>
+                        <p className="text-sm text-orange-100">Pendentes</p>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white border-0">
                     <CardContent className="py-4 text-center">
-                        <p className="text-2xl font-bold text-red-600">{stats.cancelado}</p>
-                        <p className="text-sm text-gray-500">Canceladas</p>
+                        <p className="text-2xl font-bold">{stats.cancelado}</p>
+                        <p className="text-sm text-red-100">Canceladas</p>
                     </CardContent>
                 </Card>
             </div>

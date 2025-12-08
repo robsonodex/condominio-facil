@@ -6,3 +6,4 @@ export { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 export { Modal, ConfirmModal } from './modal';
 export { Table } from './table';
 export { Badge } from './badge';
+export { CardSkeleton, TableSkeleton, PageSkeleton, FilterSkeleton } from './skeleton';

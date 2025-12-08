@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, Button, Input, Select, Modal, Badge } from '@/components/ui';
+import { useEffect, useState, useMemo } from 'react';
+import { Card, CardContent, Button, Input, Select, Modal, Badge, TableSkeleton } from '@/components/ui';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/hooks/useUser';
 import { formatDate, getRoleLabel } from '@/lib/utils';
-import { UserPlus, Edit2, Trash2, Mail, Key } from 'lucide-react';
+import { UserPlus, Edit2, Key } from 'lucide-react';
 
 interface UserItem {
     id: string;
@@ -17,8 +17,17 @@ interface UserItem {
     created_at: string;
 }
 
+function UsuariosSkeleton() {
+    return (
+        <div className="space-y-6">
+            <div><h1 className="text-2xl font-bold text-gray-900">Usuários do Condomínio</h1><p className="text-gray-500">Carregando...</p></div>
+            <TableSkeleton rows={5} />
+        </div>
+    );
+}
+
 export default function UsuariosCondoPage() {
-    const { profile, condoId, isSindico, isSuperAdmin } = useUser();
+    const { profile, condoId, isSindico, isSuperAdmin, loading: userLoading } = useUser();
     const [users, setUsers] = useState<UserItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -32,13 +41,12 @@ export default function UsuariosCondoPage() {
     });
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-    const supabase = createClient();
+    const supabase = useMemo(() => createClient(), []);
 
     useEffect(() => {
-        if (condoId) {
-            fetchUsers();
-        }
-    }, [condoId]);
+        if (!userLoading && condoId) fetchUsers();
+        else if (!userLoading) setLoading(false);
+    }, [condoId, userLoading]);
 
     const fetchUsers = async () => {
         const { data } = await supabase
@@ -147,12 +155,8 @@ export default function UsuariosCondoPage() {
         setFormData({ ...formData, senha: password });
     };
 
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center min-h-[400px]">
-                <div className="animate-spin rounded-full h-8 w-8 border-2 border-emerald-600 border-t-transparent"></div>
-            </div>
-        );
+    if (loading || userLoading) {
+        return <UsuariosSkeleton />;
     }
 
     return (

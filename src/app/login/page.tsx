@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Building2, Mail, Lock, ArrowRight, Sparkles, CheckCircle } from 'lucide-react';
+import { Building2, Mail, Lock, ArrowRight, Sparkles, CheckCircle, Loader2 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 
-export default function LoginPage() {
+function LoginContent() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -211,5 +211,26 @@ export default function LoginPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+function LoadingFallback() {
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-emerald-50 flex items-center justify-center">
+            <div className="text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-200 mx-auto mb-4">
+                    <Loader2 className="h-9 w-9 text-white animate-spin" />
+                </div>
+                <p className="text-gray-600">Carregando...</p>
+            </div>
+        </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={<LoadingFallback />}>
+            <LoginContent />
+        </Suspense>
     );
 }

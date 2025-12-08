@@ -8,32 +8,35 @@ const MP_API_URL = 'https://api.mercadopago.com';
 interface CheckoutRequest {
     condoId: string;
     planId: string;
-    valor: number;
     metodoPagamento: 'pix' | 'cartao' | 'boleto';
-    email: string;
-    nome: string;
     cpfCnpj?: string;
 }
 
 // Create payment preference in Mercado Pago
-async function createMercadoPagoPreference(data: CheckoutRequest) {
+async function createMercadoPagoPreference(
+    condoId: string,
+    valor: number,
+    email: string,
+    nome: string,
+    metodoPagamento: string
+) {
     const body = {
         items: [
             {
                 title: 'Assinatura Condomínio Fácil',
                 quantity: 1,
-                unit_price: data.valor,
+                unit_price: valor,
                 currency_id: 'BRL',
             }
         ],
         payer: {
-            email: data.email,
-            first_name: data.nome,
+            email: email,
+            first_name: nome,
         },
         payment_methods: {
-            excluded_payment_types: data.metodoPagamento === 'pix'
+            excluded_payment_types: metodoPagamento === 'pix'
                 ? [{ id: 'credit_card' }, { id: 'debit_card' }, { id: 'ticket' }]
-                : data.metodoPagamento === 'boleto'
+                : metodoPagamento === 'boleto'
                     ? [{ id: 'credit_card' }, { id: 'debit_card' }]
                     : [],
         },
@@ -43,7 +46,7 @@ async function createMercadoPagoPreference(data: CheckoutRequest) {
             pending: `${process.env.NEXT_PUBLIC_APP_URL}/assinatura?status=pending`,
         },
         auto_return: 'approved',
-        external_reference: data.condoId,
+        external_reference: condoId,
         notification_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/mercadopago`,
     };
 
@@ -66,20 +69,26 @@ async function createMercadoPagoPreference(data: CheckoutRequest) {
 }
 
 // Create PIX payment directly
-async function createPixPayment(data: CheckoutRequest) {
+async function createPixPayment(
+    condoId: string,
+    valor: number,
+    email: string,
+    nome: string,
+    cpfCnpj?: string
+) {
     const body = {
-        transaction_amount: data.valor,
+        transaction_amount: valor,
         description: 'Assinatura Condomínio Fácil',
         payment_method_id: 'pix',
         payer: {
-            email: data.email,
-            first_name: data.nome,
-            identification: data.cpfCnpj ? {
-                type: data.cpfCnpj.length > 11 ? 'CNPJ' : 'CPF',
-                number: data.cpfCnpj.replace(/\D/g, ''),
+            email: email,
+            first_name: nome,
+            identification: cpfCnpj ? {
+                type: cpfCnpj.length > 11 ? 'CNPJ' : 'CPF',
+                number: cpfCnpj.replace(/\D/g, ''),
             } : undefined,
         },
-        external_reference: data.condoId,
+        external_reference: condoId,
         notification_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/mercadopago`,
     };
 
@@ -88,7 +97,7 @@ async function createPixPayment(data: CheckoutRequest) {
         headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${MP_ACCESS_TOKEN}`,
-            'X-Idempotency-Key': `${data.condoId}-${Date.now()}`,
+            'X-Idempotency-Key': `${condoId}-${Date.now()}`,
         },
         body: JSON.stringify(body),
     });
@@ -104,18 +113,101 @@ async function createPixPayment(data: CheckoutRequest) {
 
 export async function POST(request: NextRequest) {
     try {
-        const body: CheckoutRequest = await request.json();
         const supabase = await createClient();
 
-        // Validate required fields
-        if (!body.condoId || !body.valor || !body.email) {
-            return NextResponse.json({ error: 'Dados incompletos' }, { status: 400 });
+        // ========================================
+        // SEGURANÇA 1: Autenticação obrigatória
+        // ========================================
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            return NextResponse.json(
+                { error: 'Não autorizado. Faça login para continuar.' },
+                { status: 401 }
+            );
+        }
+
+        // Buscar perfil do usuário
+        const { data: profile } = await supabase
+            .from('users')
+            .select('id, email, nome, role, condo_id')
+            .eq('id', user.id)
+            .single();
+
+        if (!profile) {
+            return NextResponse.json(
+                { error: 'Perfil não encontrado.' },
+                { status: 403 }
+            );
+        }
+
+        const body: CheckoutRequest = await request.json();
+
+        // ========================================
+        // SEGURANÇA 2: Validação de pertencimento
+        // ========================================
+        // Apenas superadmin pode criar checkout para qualquer condo
+        // Síndico só pode criar para seu próprio condomínio
+        if (profile.role !== 'superadmin') {
+            if (!profile.condo_id || profile.condo_id !== body.condoId) {
+                return NextResponse.json(
+                    { error: 'Sem permissão para este condomínio.' },
+                    { status: 403 }
+                );
+            }
+            if (profile.role !== 'sindico') {
+                return NextResponse.json(
+                    { error: 'Apenas síndicos podem gerenciar pagamentos.' },
+                    { status: 403 }
+                );
+            }
+        }
+
+        // ========================================
+        // SEGURANÇA 3: Buscar valor do plano no banco
+        // (NUNCA confiar no valor do frontend)
+        // ========================================
+        if (!body.planId) {
+            return NextResponse.json(
+                { error: 'Plano não informado.' },
+                { status: 400 }
+            );
+        }
+
+        const { data: plan, error: planError } = await supabase
+            .from('plans')
+            .select('id, nome_plano, valor_mensal, ativo')
+            .eq('id', body.planId)
+            .eq('ativo', true)
+            .single();
+
+        if (planError || !plan) {
+            return NextResponse.json(
+                { error: 'Plano inválido ou inativo.' },
+                { status: 400 }
+            );
+        }
+
+        // Valor SEMPRE vem do banco, nunca do frontend
+        const valorCobrar = Number(plan.valor_mensal);
+
+        // Validar condomínio existe
+        const { data: condo } = await supabase
+            .from('condos')
+            .select('id, nome, email_contato')
+            .eq('id', body.condoId)
+            .single();
+
+        if (!condo) {
+            return NextResponse.json(
+                { error: 'Condomínio não encontrado.' },
+                { status: 404 }
+            );
         }
 
         let paymentResult;
         let invoiceData: any = {
             condo_id: body.condoId,
-            valor: body.valor,
+            valor: valorCobrar,
             status: 'pendente',
             data_vencimento: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
             metodo_pagamento: body.metodoPagamento,
@@ -123,39 +215,63 @@ export async function POST(request: NextRequest) {
 
         // Check if Mercado Pago is configured
         if (MP_ACCESS_TOKEN) {
+            const emailPagador = condo.email_contato || profile.email;
+            const nomePagador = profile.nome;
+
             if (body.metodoPagamento === 'pix') {
                 // Direct PIX payment
-                paymentResult = await createPixPayment(body);
-                invoiceData.gateway_id = paymentResult.id;
+                paymentResult = await createPixPayment(
+                    body.condoId,
+                    valorCobrar,
+                    emailPagador,
+                    nomePagador,
+                    body.cpfCnpj
+                );
+                invoiceData.gateway_id = paymentResult.id?.toString();
+                invoiceData.gateway_payment_id = paymentResult.id?.toString(); // ID único para idempotência
                 invoiceData.pix_code = paymentResult.point_of_interaction?.transaction_data?.qr_code;
                 invoiceData.pix_qrcode = paymentResult.point_of_interaction?.transaction_data?.qr_code_base64;
             } else {
                 // Checkout preference (card/boleto)
-                paymentResult = await createMercadoPagoPreference(body);
+                paymentResult = await createMercadoPagoPreference(
+                    body.condoId,
+                    valorCobrar,
+                    emailPagador,
+                    nomePagador,
+                    body.metodoPagamento
+                );
                 invoiceData.gateway_id = paymentResult.id;
                 invoiceData.gateway_url = paymentResult.init_point;
             }
         } else {
             // Fallback: generate static PIX
             const pixKey = process.env.INTER_PIX_KEY || '57444727000185';
-            invoiceData.pix_code = generateStaticPix(body.valor, pixKey);
+            invoiceData.pix_code = generateStaticPix(valorCobrar, pixKey);
         }
 
         // Save invoice to database
-        const { data: invoice, error } = await supabase
-            .from('invoices')
-            .insert(invoiceData)
-            .select()
-            .single();
+        let invoice = null;
+        try {
+            const { data, error } = await supabase
+                .from('invoices')
+                .insert(invoiceData)
+                .select()
+                .single();
 
-        if (error) {
-            console.error('Database error:', error);
-            throw new Error('Erro ao salvar fatura');
+            if (!error) {
+                invoice = data;
+            } else {
+                console.error('Invoice save error:', error.message);
+            }
+        } catch (dbError: any) {
+            console.error('Invoice save exception:', dbError.message);
         }
 
         return NextResponse.json({
             success: true,
             invoice,
+            valorCobrado: valorCobrar,
+            plano: plan.nome_plano,
             paymentUrl: invoiceData.gateway_url,
             pixCode: invoiceData.pix_code,
             pixQrcode: invoiceData.pix_qrcode,

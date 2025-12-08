@@ -1,15 +1,25 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Card, CardContent, Button, Input, Select, Table, Badge } from '@/components/ui';
+import { useEffect, useState, useMemo } from 'react';
+import { Card, CardContent, Button, Input, Select, Table, CardSkeleton, TableSkeleton } from '@/components/ui';
 import { Modal } from '@/components/ui/modal';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/hooks/useUser';
 import { Plus, Search, Home, Edit, Trash2 } from 'lucide-react';
 import { Unit } from '@/types/database';
 
+function UnidadesSkeleton() {
+    return (
+        <div className="space-y-6">
+            <div><h1 className="text-2xl font-bold text-gray-900">Unidades</h1><p className="text-gray-500">Carregando...</p></div>
+            <CardSkeleton count={4} />
+            <TableSkeleton rows={5} />
+        </div>
+    );
+}
+
 export default function UnidadesPage() {
-    const { condoId } = useUser();
+    const { condoId, loading: userLoading, isSuperAdmin } = useUser();
     const [units, setUnits] = useState<Unit[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -17,11 +27,21 @@ export default function UnidadesPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterBloco, setFilterBloco] = useState('');
     const [blocos, setBlocos] = useState<string[]>([]);
-    const supabase = createClient();
+    const supabase = useMemo(() => createClient(), []);
 
     useEffect(() => {
-        if (condoId) fetchUnits();
-    }, [condoId]);
+        if (!userLoading && condoId) fetchUnits();
+        else if (!userLoading && isSuperAdmin) fetchAllUnits();
+        else if (!userLoading) setLoading(false);
+    }, [condoId, userLoading, isSuperAdmin]);
+
+    const fetchAllUnits = async () => {
+        setLoading(true);
+        const { data } = await supabase.from('units').select('*').order('bloco').order('numero_unidade').limit(100);
+        setUnits(data || []);
+        setBlocos([...new Set(data?.map(u => u.bloco).filter(Boolean) as string[])]);
+        setLoading(false);
+    };
 
     const fetchUnits = async () => {
         setLoading(true);
@@ -119,21 +139,29 @@ export default function UnidadesPage() {
 
             {/* Stats */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <Card>
+                <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0">
                     <CardContent className="py-4 text-center">
-                        <Home className="h-8 w-8 mx-auto text-emerald-600 mb-2" />
-                        <p className="text-2xl font-bold text-gray-900">{units.length}</p>
-                        <p className="text-sm text-gray-500">Total de Unidades</p>
+                        <Home className="h-8 w-8 mx-auto opacity-80 mb-2" />
+                        <p className="text-2xl font-bold">{units.length}</p>
+                        <p className="text-sm text-blue-100">Total de Unidades</p>
                     </CardContent>
                 </Card>
-                {blocos.map(bloco => (
-                    <Card key={bloco}>
-                        <CardContent className="py-4 text-center">
-                            <p className="text-lg font-bold text-gray-900">{units.filter(u => u.bloco === bloco).length}</p>
-                            <p className="text-sm text-gray-500">{bloco}</p>
-                        </CardContent>
-                    </Card>
-                ))}
+                {blocos.slice(0, 3).map((bloco, index) => {
+                    const colors = [
+                        'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0',
+                        'bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0',
+                        'bg-gradient-to-br from-orange-500 to-orange-600 text-white border-0'
+                    ];
+                    const textColors = ['text-emerald-100', 'text-purple-100', 'text-orange-100'];
+                    return (
+                        <Card key={bloco} className={colors[index % 3]}>
+                            <CardContent className="py-4 text-center">
+                                <p className="text-lg font-bold">{units.filter(u => u.bloco === bloco).length}</p>
+                                <p className={`text-sm ${textColors[index % 3]}`}>{bloco}</p>
+                            </CardContent>
+                        </Card>
+                    );
+                })}
             </div>
 
             {/* Table */}

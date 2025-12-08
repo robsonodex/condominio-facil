@@ -1,27 +1,38 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, Button, Input, Select, Table, Badge } from '@/components/ui';
+import { useEffect, useState, useMemo } from 'react';
+import { Card, CardContent, Button, Input, Select, Table, Badge, CardSkeleton, TableSkeleton } from '@/components/ui';
 import { Modal } from '@/components/ui/modal';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/hooks/useUser';
 import { formatDateTime, getVisitorTypeLabel } from '@/lib/utils';
-import { Plus, Search, UserCheck, LogIn, LogOut, Car, Clock } from 'lucide-react';
-import { Visitor, Unit } from '@/types/database';
+import { Plus, Search, UserCheck, LogIn, LogOut, Clock } from 'lucide-react';
+import { Unit } from '@/types/database';
+
+function PortariaSkeleton() {
+    return (
+        <div className="space-y-6">
+            <div><h1 className="text-2xl font-bold text-gray-900">Portaria</h1><p className="text-gray-500">Carregando...</p></div>
+            <CardSkeleton count={4} />
+            <TableSkeleton rows={5} />
+        </div>
+    );
+}
 
 export default function PortariaPage() {
-    const { condoId, profile, isSindico, isSuperAdmin } = useUser();
+    const { condoId, profile, isSindico, isSuperAdmin, loading: userLoading } = useUser();
     const [visitors, setVisitors] = useState<any[]>([]);
     const [presentVisitors, setPresentVisitors] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [viewMode, setViewMode] = useState<'present' | 'history'>('present');
-    const supabase = createClient();
+    const supabase = useMemo(() => createClient(), []);
 
     useEffect(() => {
-        if (condoId) fetchVisitors();
-    }, [condoId]);
+        if (!userLoading && condoId) fetchVisitors();
+        else if (!userLoading) setLoading(false);
+    }, [condoId, userLoading]);
 
     const fetchVisitors = async () => {
         setLoading(true);
@@ -143,29 +154,29 @@ export default function PortariaPage() {
 
             {/* Stats */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white">
+                <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0">
                     <CardContent className="py-4">
                         <UserCheck className="h-8 w-8 mb-2 opacity-80" />
                         <p className="text-3xl font-bold">{presentVisitors.length}</p>
                         <p className="text-emerald-100 text-sm">No condomínio agora</p>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0">
                     <CardContent className="py-4 text-center">
-                        <p className="text-2xl font-bold text-gray-900">{presentVisitors.filter(v => v.tipo === 'visitante').length}</p>
-                        <p className="text-sm text-gray-500">Visitantes</p>
+                        <p className="text-2xl font-bold">{presentVisitors.filter(v => v.tipo === 'visitante').length}</p>
+                        <p className="text-sm text-blue-100">Visitantes</p>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="bg-gradient-to-br from-yellow-500 to-yellow-600 text-white border-0">
                     <CardContent className="py-4 text-center">
-                        <p className="text-2xl font-bold text-gray-900">{presentVisitors.filter(v => v.tipo === 'prestador_servico').length}</p>
-                        <p className="text-sm text-gray-500">Prestadores</p>
+                        <p className="text-2xl font-bold">{presentVisitors.filter(v => v.tipo === 'prestador_servico').length}</p>
+                        <p className="text-sm text-yellow-100">Prestadores</p>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0">
                     <CardContent className="py-4 text-center">
-                        <p className="text-2xl font-bold text-gray-900">{presentVisitors.filter(v => v.tipo === 'entrega').length}</p>
-                        <p className="text-sm text-gray-500">Entregas</p>
+                        <p className="text-2xl font-bold">{presentVisitors.filter(v => v.tipo === 'entrega').length}</p>
+                        <p className="text-sm text-purple-100">Entregas</p>
                     </CardContent>
                 </Card>
             </div>
