@@ -25,27 +25,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<SupabaseUser | null>(null);
     const [profile, setProfile] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
-    const [initialized, setInitialized] = useState(false);
 
     // Memoize supabase client to avoid recreating
     const supabase = useMemo(() => createClient(), []);
 
     // Função para buscar perfil do usuário
     const fetchProfile = useCallback(async (sessionUser: SupabaseUser) => {
-        console.log('=== FETCH PROFILE DEBUG ===');
-        console.log('Session user email:', sessionUser.email);
-        console.log('Session user id:', sessionUser.id);
-
         try {
-            // IGNORAR CACHE SEMPRE para debug
-            // if (profileCache[sessionUser.id]) {
-            //     setProfile(profileCache[sessionUser.id]);
-            //     return profileCache[sessionUser.id];
-            // }
+            // Check cache first
+            if (profileCache[sessionUser.id]) {
+                setProfile(profileCache[sessionUser.id]);
+                return profileCache[sessionUser.id];
+            }
 
-            // Buscar por email (mais confiável)
-            console.log('Querying users table by email:', sessionUser.email);
-
+            // Buscar por email
             const { data: profileData, error } = await supabase
                 .from('users')
                 .select('*')
@@ -53,23 +46,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 .eq('ativo', true)
                 .maybeSingle();
 
-            console.log('Query result:', { profileData, error });
-
             if (error) {
                 console.error('Error fetching profile:', error);
                 return null;
             }
 
             if (profileData) {
-                console.log('Profile found:', profileData);
                 profileCache[sessionUser.id] = profileData;
                 setProfile(profileData);
                 return profileData;
-            } else {
-                console.log('No profile found, NOT creating new one');
-                // NÃO criar automaticamente - retornar null
-                return null;
             }
+
+            return null;
         } catch (error) {
             console.error('Error fetching profile:', error);
             return null;
@@ -102,7 +90,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             } finally {
                 if (isMounted) {
                     setLoading(false);
-                    setInitialized(true);
                 }
             }
         };
@@ -112,8 +99,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
             if (!isMounted) return;
-
-            console.log('Auth event:', event);
 
             if (event === 'SIGNED_OUT') {
                 setUser(null);
@@ -132,7 +117,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
 
             if (event === 'INITIAL_SESSION') {
-                // Already handled by initAuth
                 setLoading(false);
             }
         });
