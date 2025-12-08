@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode, useMemo } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useMemo, useCallback } from 'react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
 import { User } from '@/types/database';
@@ -25,122 +25,137 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<SupabaseUser | null>(null);
     const [profile, setProfile] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
+    const [initialized, setInitialized] = useState(false);
 
     // Memoize supabase client to avoid recreating
     const supabase = useMemo(() => createClient(), []);
 
+    // Função para buscar perfil do usuário
+    const fetchProfile = useCallback(async (sessionUser: SupabaseUser) => {
+        try {
+            // Check cache first
+            if (profileCache[sessionUser.id]) {
+                setProfile(profileCache[sessionUser.id]);
+                return profileCache[sessionUser.id];
+            }
+
+            // Query by ID first, then by email
+            const { data: profileData } = await supabase
+                .from('users')
+                .select('*')
+                .or(`id.eq.${sessionUser.id},email.eq.${sessionUser.email}`)
+                .limit(1)
+                .single();
+
+            if (profileData) {
+                profileCache[sessionUser.id] = profileData;
+                setProfile(profileData);
+                return profileData;
+            } else if (sessionUser.email) {
+                // Auto-create profile only if really needed
+                const { data: newProfile } = await supabase
+                    .from('users')
+                    .insert({
+                        id: sessionUser.id,
+                        email: sessionUser.email,
+                        nome: sessionUser.email.split('@')[0],
+                        role: 'morador',
+                        ativo: true
+                    })
+                    .select()
+                    .single();
+
+                if (newProfile) {
+                    profileCache[sessionUser.id] = newProfile;
+                    setProfile(newProfile);
+                    return newProfile;
+                }
+            }
+            return null;
+        } catch (error) {
+            console.error('Error fetching profile:', error);
+            return null;
+        }
+    }, [supabase]);
+
     useEffect(() => {
-        // Fast initial check using getSession (faster than getUser)
+        let isMounted = true;
+
+        // Fast initial check using getSession
         const initAuth = async () => {
             try {
                 const { data: { session } } = await supabase.auth.getSession();
 
+                if (!isMounted) return;
+
                 if (session?.user) {
                     setUser(session.user);
-
-                    // Check cache first
-                    if (profileCache[session.user.id]) {
-                        setProfile(profileCache[session.user.id]);
-                        setLoading(false);
-                        return;
-                    }
-
-                    // Single optimized query with OR condition
-                    const { data: profileData } = await supabase
-                        .from('users')
-                        .select('*')
-                        .or(`id.eq.${session.user.id},email.eq.${session.user.email}`)
-                        .limit(1)
-                        .single();
-
-                    if (profileData) {
-                        profileCache[session.user.id] = profileData;
-                        setProfile(profileData);
-                    } else if (session.user.email) {
-                        // Auto-create profile only if really needed
-                        const { data: newProfile } = await supabase
-                            .from('users')
-                            .insert({
-                                id: session.user.id,
-                                email: session.user.email,
-                                nome: session.user.email.split('@')[0],
-                                role: 'morador',
-                                ativo: true
-                            })
-                            .select()
-                            .single();
-
-                        if (newProfile) {
-                            profileCache[session.user.id] = newProfile;
-                            setProfile(newProfile);
-                        }
-                    }
+                    await fetchProfile(session.user);
+                } else {
+                    setUser(null);
+                    setProfile(null);
                 }
             } catch (error) {
                 console.error('Auth init error:', error);
+                if (isMounted) {
+                    setUser(null);
+                    setProfile(null);
+                }
             } finally {
-                setLoading(false);
+                if (isMounted) {
+                    setLoading(false);
+                    setInitialized(true);
+                }
             }
         };
 
         initAuth();
 
-        // Handle browser back/forward navigation
-        const handlePopState = () => {
-            // Re-check session when navigating via browser history
-            initAuth();
-        };
-
-        window.addEventListener('popstate', handlePopState);
-
         // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            if (!isMounted) return;
+
+            console.log('Auth event:', event);
+
             if (event === 'SIGNED_OUT') {
                 setUser(null);
                 setProfile(null);
                 profileCache = {};
+                setLoading(false);
                 return;
             }
 
-            if (session?.user) {
-                setUser(session.user);
-
-                // Check cache
-                if (profileCache[session.user.id]) {
-                    setProfile(profileCache[session.user.id]);
-                    return;
+            if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+                if (session?.user) {
+                    setUser(session.user);
+                    await fetchProfile(session.user);
                 }
+                setLoading(false);
+            }
 
-                // Fetch profile
-                const { data: profileData } = await supabase
-                    .from('users')
-                    .select('*')
-                    .or(`id.eq.${session.user.id},email.eq.${session.user.email}`)
-                    .limit(1)
-                    .single();
-
-                if (profileData) {
-                    profileCache[session.user.id] = profileData;
-                    setProfile(profileData);
-                }
-            } else {
-                setUser(null);
-                setProfile(null);
+            if (event === 'INITIAL_SESSION') {
+                // Already handled by initAuth
+                setLoading(false);
             }
         });
 
         return () => {
+            isMounted = false;
             subscription.unsubscribe();
-            window.removeEventListener('popstate', handlePopState);
         };
+    }, [supabase, fetchProfile]);
+
+    const signIn = useCallback(async (email: string, password: string) => {
+        setLoading(true);
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) {
+            setLoading(false);
+        }
+        return { error: error as Error | null };
     }, [supabase]);
 
-    const signIn = async (email: string, password: string) => {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        return { error: error as Error | null };
-    };
-
-    const signUp = async (email: string, password: string, nome: string) => {
+    const signUp = useCallback(async (email: string, password: string, nome: string) => {
+        setLoading(true);
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
@@ -157,17 +172,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             });
         }
 
+        setLoading(false);
         return { error: error as Error | null };
-    };
+    }, [supabase]);
 
-    const signOut = async () => {
+    const signOut = useCallback(async () => {
+        setLoading(true);
         profileCache = {};
         await supabase.auth.signOut();
         setUser(null);
         setProfile(null);
-    };
+        setLoading(false);
+    }, [supabase]);
 
-    const signInWithMagicLink = async (email: string) => {
+    const signInWithMagicLink = useCallback(async (email: string) => {
         const { error } = await supabase.auth.signInWithOtp({
             email,
             options: {
@@ -175,14 +193,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
         });
         return { error: error as Error | null };
-    };
+    }, [supabase]);
 
-    const resetPassword = async (email: string) => {
+    const resetPassword = useCallback(async (email: string) => {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
             redirectTo: `${window.location.origin}/reset-password`
         });
         return { error: error as Error | null };
-    };
+    }, [supabase]);
 
     // Memoize context value to prevent unnecessary re-renders
     const value = useMemo(() => ({
@@ -194,7 +212,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signOut,
         signInWithMagicLink,
         resetPassword
-    }), [user, profile, loading]);
+    }), [user, profile, loading, signIn, signUp, signOut, signInWithMagicLink, resetPassword]);
 
     return (
         <AuthContext.Provider value={value}>
