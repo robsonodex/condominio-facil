@@ -44,10 +44,13 @@ export function Header({ onMenuClick }: HeaderProps) {
 
                 {/* Right side */}
                 <div className="flex items-center gap-2">
-                    {/* Notifications */}
-                    <button className="p-2 rounded-lg hover:bg-gray-100 relative">
-                        <Bell className="h-5 w-5 text-gray-600" />
-                        <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                    {/* Notifications - Em breve */}
+                    <button
+                        className="p-2 rounded-lg hover:bg-gray-100 relative opacity-50 cursor-not-allowed"
+                        title="Notificações em breve"
+                        disabled
+                    >
+                        <Bell className="h-5 w-5 text-gray-400" />
                     </button>
 
                     {/* User menu */}
