@@ -210,26 +210,46 @@ function NoticeModal({ isOpen, onClose, onSuccess, condoId, notice }: {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!condoId) return;
 
-        setLoading(true);
-        const data = {
-            condo_id: condoId,
-            titulo,
-            mensagem,
-            publico_alvo: publicoAlvo,
-            data_expiracao: dataExpiracao || null,
-        };
-
-        if (notice) {
-            await supabase.from('notices').update(data).eq('id', notice.id);
-        } else {
-            await supabase.from('notices').insert(data);
+        if (!condoId) {
+            alert('❌ Você precisa estar vinculado a um condomínio para publicar avisos.');
+            return;
         }
 
-        onSuccess();
-        onClose();
-        setLoading(false);
+        setLoading(true);
+
+        try {
+            const data = {
+                condo_id: condoId,
+                titulo,
+                mensagem,
+                publico_alvo: publicoAlvo,
+                data_expiracao: dataExpiracao || null,
+            };
+
+            let error;
+            if (notice) {
+                const result = await supabase.from('notices').update(data).eq('id', notice.id);
+                error = result.error;
+            } else {
+                const result = await supabase.from('notices').insert(data);
+                error = result.error;
+            }
+
+            if (error) {
+                alert(`❌ Erro ao ${notice ? 'atualizar' : 'publicar'} aviso: ${error.message}`);
+                setLoading(false);
+                return;
+            }
+
+            alert(`✅ Aviso ${notice ? 'atualizado' : 'publicado'} com sucesso!`);
+            onSuccess();
+            onClose();
+        } catch (err: any) {
+            alert(`❌ Erro inesperado: ${err.message}`);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
