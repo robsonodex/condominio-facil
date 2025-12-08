@@ -20,16 +20,9 @@ function ResetPasswordContent() {
     const supabase = createClient();
 
     useEffect(() => {
-        // Check if we have a valid recovery session
+        // Check if we have a valid session
         const checkSession = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-                setValidSession(true);
-                setChecking(false);
-                return;
-            }
-
-            // Check for code in query params (new Supabase PKCE flow)
+            // Check for code in query params first
             const code = searchParams.get('code');
             if (code) {
                 const { error } = await supabase.auth.exchangeCodeForSession(code);
@@ -40,19 +33,10 @@ function ResetPasswordContent() {
                 }
             }
 
-            // Try to exchange the token from URL hash if present (legacy flow)
-            const hashParams = new URLSearchParams(window.location.hash.substring(1));
-            const accessToken = hashParams.get('access_token');
-            const type = hashParams.get('type');
-
-            if (accessToken && type === 'recovery') {
-                const { error } = await supabase.auth.setSession({
-                    access_token: accessToken,
-                    refresh_token: hashParams.get('refresh_token') || '',
-                });
-                if (!error) {
-                    setValidSession(true);
-                }
+            // Check if already have a session
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                setValidSession(true);
             }
 
             setChecking(false);
