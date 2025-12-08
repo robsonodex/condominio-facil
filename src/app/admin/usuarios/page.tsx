@@ -305,8 +305,7 @@ function UserModal({ isOpen, onClose, onSuccess, user, condos }: {
                         label="Condomínio"
                         value={condoId}
                         onChange={(e) => setCondoId(e.target.value)}
-                        options={condos.map(c => ({ value: c.id, label: c.nome }))}
-                        placeholder="Nenhum (Admin)"
+                        options={[{ value: '', label: 'Nenhum (Admin)' }, ...condos.map(c => ({ value: c.id, label: c.nome }))]}
                     />
                 </div>
 
