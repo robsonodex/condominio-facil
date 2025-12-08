@@ -5,7 +5,7 @@ import { Card, CardContent, Button, Input, Select, Modal, Badge, TableSkeleton }
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/hooks/useUser';
 import { formatDate, getRoleLabel } from '@/lib/utils';
-import { UserPlus, Edit2, Key } from 'lucide-react';
+import { UserPlus, Edit2, Key, Trash2 } from 'lucide-react';
 
 interface UserItem {
     id: string;
@@ -127,6 +127,28 @@ export default function UsuariosCondoPage() {
         fetchUsers();
     };
 
+    const deleteUser = async (user: UserItem) => {
+        if (!confirm(`⚠️ Tem certeza que deseja EXCLUIR PERMANENTEMENTE o usuário "${user.nome}"?\n\nEsta ação é IRREVERSÍVEL!`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/user/delete?id=${user.id}`, {
+                method: 'DELETE',
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                setUsers(prev => prev.filter(u => u.id !== user.id));
+                alert('✅ Usuário excluído com sucesso!');
+            } else {
+                alert('❌ Erro ao excluir: ' + (data.error || 'Erro desconhecido'));
+            }
+        } catch (err: any) {
+            alert('❌ Erro ao excluir: ' + err.message);
+        }
+    };
+
     const openEditModal = (user: UserItem) => {
         setEditingUser(user);
         setFormData({
@@ -206,6 +228,43 @@ export default function UsuariosCondoPage() {
                                             <Badge variant={user.ativo ? 'success' : 'danger'}>
                                                 {user.ativo ? 'Ativo' : 'Inativo'}
                                             </Badge>
+                                        </td>
+                                        <td className="px-4 py-3 text-sm text-gray-500">
+                                            {formatDate(user.created_at)}
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <div className="flex gap-2">
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={() => openEditModal(user)}
+                                                    title="Editar"
+                                                >
+                                                    <Edit2 className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant={user.ativo ? 'ghost' : 'primary'}
+                                                    onClick={() => toggleUserStatus(user)}
+                                                >
+                                                    {user.ativo ? 'Desativar' : 'Ativar'}
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                    onClick={() => deleteUser(user)}
+                                                    title="Excluir permanentemente"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {users.length === 0 && (
+                                    <tr>
+                                        <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
                                             Nenhum usuário cadastrado
                                         </td>
                                     </tr>

@@ -20,7 +20,7 @@ export async function DELETE(request: NextRequest) {
             );
         }
 
-        // Buscar perfil do usuário
+        // Buscar perfil do usuário logado
         const { data: profile } = await supabase
             .from('users')
             .select('id, email, nome, role, condo_id')
@@ -34,7 +34,94 @@ export async function DELETE(request: NextRequest) {
             );
         }
 
-        // Verificar se há body com confirmação
+        // ========================================
+        // VERIFICAR: Exclusão administrativa (superadmin/síndico)
+        // ========================================
+        const { searchParams } = new URL(request.url);
+        const targetUserId = searchParams.get('id');
+
+        // Se há um ID na query string, é exclusão administrativa
+        if (targetUserId) {
+            // Apenas superadmin e síndico podem excluir outros usuários
+            if (profile.role !== 'superadmin' && profile.role !== 'sindico') {
+                return NextResponse.json({
+                    error: 'Acesso negado',
+                    message: 'Apenas administradores podem excluir outros usuários.',
+                }, { status: 403 });
+            }
+
+            // Não pode excluir a si mesmo via admin
+            if (targetUserId === user.id) {
+                return NextResponse.json({
+                    error: 'Não é possível excluir a própria conta por esta rota',
+                    message: 'Use a opção de exclusão de conta na página de perfil.',
+                }, { status: 400 });
+            }
+
+            // Buscar o usuário alvo
+            const { data: targetUser } = await supabase
+                .from('users')
+                .select('id, nome, role, condo_id')
+                .eq('id', targetUserId)
+                .single();
+
+            if (!targetUser) {
+                return NextResponse.json({
+                    error: 'Usuário não encontrado',
+                    success: false,
+                }, { status: 404 });
+            }
+
+            // Não pode excluir superadmin
+            if (targetUser.role === 'superadmin') {
+                return NextResponse.json({
+                    error: 'Não é possível excluir um superadmin',
+                    success: false,
+                }, { status: 403 });
+            }
+
+            // Síndico só pode excluir usuários do próprio condomínio
+            if (profile.role === 'sindico' && targetUser.condo_id !== profile.condo_id) {
+                return NextResponse.json({
+                    error: 'Você só pode excluir usuários do seu condomínio',
+                    success: false,
+                }, { status: 403 });
+            }
+
+            // Executar exclusão via função do banco
+            const { data: result, error } = await supabase.rpc('hard_delete_user', {
+                p_user_id: targetUserId,
+            });
+
+            if (error) {
+                console.error('Admin delete error:', error);
+                return NextResponse.json({
+                    error: 'Erro ao excluir usuário',
+                    message: error.message,
+                    success: false,
+                }, { status: 500 });
+            }
+
+            // Verificar resultado da função
+            if (result && result.success === false) {
+                return NextResponse.json({
+                    error: result.error || 'Erro desconhecido',
+                    detail: result.detail,
+                    success: false,
+                }, { status: 500 });
+            }
+
+            console.log(`ADMIN: Usuário ${user.id} (${profile.role}) excluiu usuário ${targetUserId}`);
+
+            return NextResponse.json({
+                success: true,
+                message: 'Usuário excluído permanentemente.',
+            });
+        }
+
+        // ========================================
+        // EXCLUSÃO PRÓPRIA (LGPD) - Requer confirmação
+        // ========================================
         let body: any = {};
         try {
             body = await request.json();
@@ -42,9 +129,6 @@ export async function DELETE(request: NextRequest) {
             // Body vazio é ok
         }
 
-        // ========================================
-        // SEGURANÇA: Confirmação obrigatória
-        // ========================================
         if (body.confirmacao !== 'EXCLUIR MEUS DADOS') {
             return NextResponse.json({
                 error: 'Confirmação necessária',
@@ -53,9 +137,6 @@ export async function DELETE(request: NextRequest) {
             }, { status: 400 });
         }
 
-        // ========================================
-        // VERIFICAR: Superadmin não pode se auto-excluir
-        // ========================================
         if (profile.role === 'superadmin') {
             return NextResponse.json({
                 error: 'Superadmin não pode se auto-excluir',
@@ -63,9 +144,6 @@ export async function DELETE(request: NextRequest) {
             }, { status: 403 });
         }
 
-        // ========================================
-        // VERIFICAR: Síndico com condomínio ativo
-        // ========================================
         if (profile.role === 'sindico' && profile.condo_id) {
             const { data: subscription } = await supabase
                 .from('subscriptions')
@@ -82,9 +160,6 @@ export async function DELETE(request: NextRequest) {
             }
         }
 
-        // ========================================
-        // EXECUTAR: Exclusão/Anonimização de dados
-        // ========================================
         const { data: result, error } = await supabase.rpc('delete_user_data', {
             p_user_id: user.id,
         });
@@ -97,12 +172,8 @@ export async function DELETE(request: NextRequest) {
             }, { status: 500 });
         }
 
-        // ========================================
-        // LOGOUT: Finalizar sessão
-        // ========================================
         await supabase.auth.signOut();
 
-        // Log para auditoria (sem dados pessoais)
         console.log(`LGPD: Usuário ${user.id} solicitou exclusão de dados`);
 
         return NextResponse.json({
