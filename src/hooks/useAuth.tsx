@@ -85,6 +85,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         initAuth();
 
+        // Handle browser back/forward navigation
+        const handlePopState = () => {
+            // Re-check session when navigating via browser history
+            initAuth();
+        };
+
+        window.addEventListener('popstate', handlePopState);
+
         // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
             if (event === 'SIGNED_OUT') {
@@ -121,7 +129,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
         });
 
-        return () => subscription.unsubscribe();
+        return () => {
+            subscription.unsubscribe();
+            window.removeEventListener('popstate', handlePopState);
+        };
     }, [supabase]);
 
     const signIn = async (email: string, password: string) => {

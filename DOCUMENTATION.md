@@ -161,6 +161,39 @@ POST /api/email
 - `blocked` - Acesso bloqueado
 - `payment_confirmed` - Pagamento confirmado
 
+### 6.3 Exclusão de Usuários (LGPD)
+
+**Endpoint:** `/api/user/delete`
+
+**Exclusão Administrativa (Superadmin/Síndico):**
+```bash
+DELETE /api/user/delete?id=UUID_DO_USUARIO
+Authorization: Bearer TOKEN
+```
+
+**Resposta:**
+```json
+{
+  "success": true,
+  "message": "Usuário excluído permanentemente."
+}
+```
+
+**Auto-Exclusão (LGPD):**
+```json
+DELETE /api/user/delete
+{
+  "confirmacao": "EXCLUIR MEUS DADOS"
+}
+```
+
+**Funcionalidades:**
+- Superadmin e síndico podem excluir qualquer usuário
+- Síndico só pode excluir usuários do seu condomínio
+- Exclusão permanente via função `hard_delete_user`
+- Dados relacionados removidos via `ON DELETE CASCADE`
+- Anonimização prévia via função `delete_user_data` (LGPD)
+
 ---
 
 ## 7. Banco de Dados
