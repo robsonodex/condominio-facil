@@ -257,24 +257,45 @@ function UserModal({ isOpen, onClose, onSuccess, user, condos }: {
         e.preventDefault();
         setLoading(true);
 
-        const data = {
-            nome,
-            email,
-            telefone: telefone || null,
-            role,
-            condo_id: condoId || null,
-            ativo,
-        };
+        try {
+            const data = {
+                nome,
+                email,
+                telefone: telefone || null,
+                role,
+                condo_id: condoId || null,
+                ativo,
+            };
 
-        if (user) {
-            await supabase.from('users').update(data).eq('id', user.id);
-        } else {
-            await supabase.from('users').insert(data);
+            let error;
+
+            if (user) {
+                const result = await supabase.from('users').update(data).eq('id', user.id);
+                error = result.error;
+            } else {
+                const result = await supabase.from('users').insert(data);
+                error = result.error;
+            }
+
+            if (error) {
+                // Tratar erros específicos
+                if (error.code === '23505' || error.message?.includes('duplicate')) {
+                    alert(`❌ Já existe um usuário cadastrado com o email "${email}". Por favor, use outro email.`);
+                } else {
+                    alert(`❌ Erro ao salvar: ${error.message}`);
+                }
+                setLoading(false);
+                return;
+            }
+
+            alert(`✅ Usuário ${user ? 'atualizado' : 'criado'} com sucesso!`);
+            onSuccess();
+            onClose();
+        } catch (err: any) {
+            alert(`❌ Erro inesperado: ${err.message}`);
+        } finally {
+            setLoading(false);
         }
-
-        onSuccess();
-        onClose();
-        setLoading(false);
     };
 
     return (
