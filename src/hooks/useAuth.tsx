@@ -32,19 +32,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Função para buscar perfil do usuário
     const fetchProfile = useCallback(async (sessionUser: SupabaseUser) => {
+        console.log('=== FETCH PROFILE DEBUG ===');
+        console.log('Session user email:', sessionUser.email);
+        console.log('Session user id:', sessionUser.id);
+
         try {
-            // Check cache first
-            if (profileCache[sessionUser.id]) {
-                setProfile(profileCache[sessionUser.id]);
-                return profileCache[sessionUser.id];
-            }
+            // IGNORAR CACHE SEMPRE para debug
+            // if (profileCache[sessionUser.id]) {
+            //     setProfile(profileCache[sessionUser.id]);
+            //     return profileCache[sessionUser.id];
+            // }
 
             // Buscar por email (mais confiável)
+            console.log('Querying users table by email:', sessionUser.email);
+
             const { data: profileData, error } = await supabase
                 .from('users')
                 .select('*')
                 .eq('email', sessionUser.email)
+                .eq('ativo', true)
                 .maybeSingle();
+
+            console.log('Query result:', { profileData, error });
 
             if (error) {
                 console.error('Error fetching profile:', error);
@@ -52,30 +61,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
 
             if (profileData) {
+                console.log('Profile found:', profileData);
                 profileCache[sessionUser.id] = profileData;
                 setProfile(profileData);
                 return profileData;
-            } else if (sessionUser.email) {
-                // Auto-create profile only if really needed
-                const { data: newProfile } = await supabase
-                    .from('users')
-                    .insert({
-                        id: sessionUser.id,
-                        email: sessionUser.email,
-                        nome: sessionUser.email.split('@')[0],
-                        role: 'morador',
-                        ativo: true
-                    })
-                    .select()
-                    .single();
-
-                if (newProfile) {
-                    profileCache[sessionUser.id] = newProfile;
-                    setProfile(newProfile);
-                    return newProfile;
-                }
+            } else {
+                console.log('No profile found, NOT creating new one');
+                // NÃO criar automaticamente - retornar null
+                return null;
             }
-            return null;
         } catch (error) {
             console.error('Error fetching profile:', error);
             return null;
