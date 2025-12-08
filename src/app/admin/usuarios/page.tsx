@@ -11,6 +11,7 @@ import { User, Condo } from '@/types/database';
 export default function AdminUsuariosPage() {
     const [users, setUsers] = useState<any[]>([]);
     const [condos, setCondos] = useState<{ id: string; nome: string }[]>([]);
+    const [plans, setPlans] = useState<{ id: string; nome_plano: string; valor_mensal: number }[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [editingUser, setEditingUser] = useState<any>(null);
@@ -21,7 +22,13 @@ export default function AdminUsuariosPage() {
     useEffect(() => {
         fetchUsers();
         fetchCondos();
+        fetchPlans();
     }, []);
+
+    const fetchPlans = async () => {
+        const { data } = await supabase.from('plans').select('id, nome_plano, valor_mensal').eq('ativo', true);
+        setPlans((data as { id: string; nome_plano: string; valor_mensal: number }[]) || []);
+    };
 
     const fetchCondos = async () => {
         const { data } = await supabase.from('condos').select('id, nome');
@@ -214,17 +221,19 @@ export default function AdminUsuariosPage() {
                 onSuccess={fetchUsers}
                 user={editingUser}
                 condos={condos}
+                plans={plans}
             />
         </div>
     );
 }
 
-function UserModal({ isOpen, onClose, onSuccess, user, condos }: {
+function UserModal({ isOpen, onClose, onSuccess, user, condos, plans }: {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
     user: any;
     condos: { id: string; nome: string }[];
+    plans: { id: string; nome_plano: string; valor_mensal: number }[];
 }) {
     const [loading, setLoading] = useState(false);
     const [nome, setNome] = useState('');
@@ -234,6 +243,11 @@ function UserModal({ isOpen, onClose, onSuccess, user, condos }: {
     const [role, setRole] = useState('morador');
     const [condoId, setCondoId] = useState('');
     const [ativo, setAtivo] = useState(true);
+    // Campos extras para síndico
+    const [condoNome, setCondoNome] = useState('');
+    const [planoId, setPlanoId] = useState('');
+    const [periodoTeste, setPeriodoTeste] = useState(true);
+    const [ativarImediatamente, setAtivarImediatamente] = useState(false);
     const supabase = createClient();
 
     useEffect(() => {
@@ -245,6 +259,10 @@ function UserModal({ isOpen, onClose, onSuccess, user, condos }: {
             setRole(user.role);
             setCondoId(user.condo_id || '');
             setAtivo(user.ativo);
+            setCondoNome('');
+            setPlanoId('');
+            setPeriodoTeste(true);
+            setAtivarImediatamente(false);
         } else {
             setNome('');
             setEmail('');
@@ -253,6 +271,10 @@ function UserModal({ isOpen, onClose, onSuccess, user, condos }: {
             setRole('morador');
             setCondoId('');
             setAtivo(true);
+            setCondoNome('');
+            setPlanoId('');
+            setPeriodoTeste(true);
+            setAtivarImediatamente(false);
         }
     }, [user]);
 
@@ -295,8 +317,13 @@ function UserModal({ isOpen, onClose, onSuccess, user, condos }: {
                         senha,
                         telefone: telefone || null,
                         role,
-                        condo_id: condoId || null,
+                        condo_id: role === 'sindico' ? null : condoId || null,
                         ativo,
+                        // Campos extras para síndico
+                        condo_nome: role === 'sindico' ? condoNome : null,
+                        plano_id: role === 'sindico' ? planoId : null,
+                        periodo_teste: role === 'sindico' ? periodoTeste : false,
+                        ativar_imediatamente: role === 'sindico' ? ativarImediatamente : false,
                     }),
                 });
 
@@ -374,13 +401,78 @@ function UserModal({ isOpen, onClose, onSuccess, user, condos }: {
                         ]}
                         required
                     />
-                    <Select
-                        label="Condomínio"
-                        value={condoId}
-                        onChange={(e) => setCondoId(e.target.value)}
-                        options={[{ value: '', label: 'Nenhum (Admin)' }, ...condos.map(c => ({ value: c.id, label: c.nome }))]}
-                    />
+                    {role !== 'sindico' && (
+                        <Select
+                            label="Condomínio"
+                            value={condoId}
+                            onChange={(e) => setCondoId(e.target.value)}
+                            options={[{ value: '', label: 'Nenhum (Admin)' }, ...condos.map(c => ({ value: c.id, label: c.nome }))]}
+                        />
+                    )}
                 </div>
+
+                {/* Campos extras para Síndico */}
+                {role === 'sindico' && !user && (
+                    <div className="space-y-4 p-4 bg-emerald-50 rounded-lg border border-emerald-200">
+                        <p className="text-sm font-medium text-emerald-800">Configuração do Condomínio</p>
+
+                        <Input
+                            label="Nome do Condomínio"
+                            value={condoNome}
+                            onChange={(e) => setCondoNome(e.target.value)}
+                            placeholder="Ex: Residencial Flores"
+                            required
+                        />
+
+                        <Select
+                            label="Plano"
+                            value={planoId}
+                            onChange={(e) => setPlanoId(e.target.value)}
+                            options={[
+                                { value: '', label: 'Selecione um plano' },
+                                ...plans.map(p => ({
+                                    value: p.id,
+                                    label: `${p.nome_plano} - R$ ${p.valor_mensal.toFixed(2)}/mês`
+                                }))
+                            ]}
+                            required
+                        />
+
+                        <div className="flex flex-col gap-2">
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    id="periodoTeste"
+                                    checked={periodoTeste && !ativarImediatamente}
+                                    onChange={(e) => {
+                                        setPeriodoTeste(e.target.checked);
+                                        if (e.target.checked) setAtivarImediatamente(false);
+                                    }}
+                                    className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                                />
+                                <label htmlFor="periodoTeste" className="text-sm text-gray-700">
+                                    Período de teste (7 dias grátis)
+                                </label>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    id="ativarImediatamente"
+                                    checked={ativarImediatamente}
+                                    onChange={(e) => {
+                                        setAtivarImediatamente(e.target.checked);
+                                        if (e.target.checked) setPeriodoTeste(false);
+                                    }}
+                                    className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                                />
+                                <label htmlFor="ativarImediatamente" className="text-sm text-gray-700">
+                                    Ativar imediatamente (sem teste)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 <div className="flex items-center gap-2">
                     <input
