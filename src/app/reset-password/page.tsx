@@ -20,29 +20,51 @@ function ResetPasswordContent() {
     const supabase = createClient();
 
     useEffect(() => {
-        // Check if we have a valid session
+        let mounted = true;
+
         const checkSession = async () => {
-            // Check for code in query params first
-            const code = searchParams.get('code');
-            if (code) {
-                const { error } = await supabase.auth.exchangeCodeForSession(code);
-                if (!error) {
+            try {
+                const code = searchParams.get('code');
+
+                if (code) {
+                    console.log('Exchanging code for session...');
+                    const { error } = await supabase.auth.exchangeCodeForSession(code);
+                    console.log('Exchange result:', error ? error.message : 'success');
+
+                    if (!error && mounted) {
+                        setValidSession(true);
+                        setChecking(false);
+                        return;
+                    }
+                }
+
+                // Check if already have a session
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session && mounted) {
                     setValidSession(true);
+                }
+            } catch (err) {
+                console.error('Session check error:', err);
+            } finally {
+                if (mounted) {
                     setChecking(false);
-                    return;
                 }
             }
-
-            // Check if already have a session
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-                setValidSession(true);
-            }
-
-            setChecking(false);
         };
 
+        // Timeout de segurança - 10 segundos
+        const timeout = setTimeout(() => {
+            if (mounted) {
+                setChecking(false);
+            }
+        }, 10000);
+
         checkSession();
+
+        return () => {
+            mounted = false;
+            clearTimeout(timeout);
+        };
     }, [supabase.auth, searchParams]);
 
     const handleSubmit = async (e: React.FormEvent) => {
