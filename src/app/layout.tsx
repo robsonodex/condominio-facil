@@ -11,6 +11,10 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Condomínio Fácil - Gestão de Condomínios",
   description: "Sistema completo para gestão de condomínios pequenos no Brasil",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({
