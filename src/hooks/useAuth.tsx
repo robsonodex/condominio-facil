@@ -143,7 +143,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
-            options: { data: { nome } }
+            options: {
+                data: { nome },
+                emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboarding/aceite`
+            }
         });
 
         if (!error && data.user) {
