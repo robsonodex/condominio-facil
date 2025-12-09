@@ -95,21 +95,21 @@ export async function POST(request: NextRequest) {
 
             // Calcular datas
             const hoje = new Date();
-            let dataFim: Date;
-            let status: string;
+            let dataRenovacao: Date;
+            let condoStatus: string;
 
             if (ativar_imediatamente) {
-                status = 'ativo';
-                dataFim = new Date(hoje);
-                dataFim.setMonth(dataFim.getMonth() + 1);
+                condoStatus = 'ativo';
+                dataRenovacao = new Date(hoje);
+                dataRenovacao.setMonth(dataRenovacao.getMonth() + 1);
             } else if (periodo_teste) {
-                status = 'teste';
-                dataFim = new Date(hoje);
-                dataFim.setDate(dataFim.getDate() + 7);
+                condoStatus = 'teste'; // Status do CONDO pode ser 'teste'
+                dataRenovacao = new Date(hoje);
+                dataRenovacao.setDate(dataRenovacao.getDate() + 7);
             } else {
-                status = 'ativo';
-                dataFim = new Date(hoje);
-                dataFim.setMonth(dataFim.getMonth() + 1);
+                condoStatus = 'ativo';
+                dataRenovacao = new Date(hoje);
+                dataRenovacao.setMonth(dataRenovacao.getMonth() + 1);
             }
 
             // Criar condomínio
@@ -118,9 +118,9 @@ export async function POST(request: NextRequest) {
                 .insert({
                     nome: condo_nome,
                     plano_id: plano_id,
-                    status: status,
+                    status: condoStatus,
                     data_inicio: hoje.toISOString().split('T')[0],
-                    data_fim_teste: periodo_teste ? dataFim.toISOString().split('T')[0] : null,
+                    data_fim_teste: periodo_teste ? dataRenovacao.toISOString().split('T')[0] : null,
                 })
                 .select('id')
                 .single();
@@ -134,16 +134,17 @@ export async function POST(request: NextRequest) {
 
             finalCondoId = newCondo.id;
 
-            // Criar subscription
+            // Criar subscription (status deve ser 'ativo' ou 'pendente_pagamento')
             const { error: subError } = await supabase
                 .from('subscriptions')
                 .insert({
                     condo_id: newCondo.id,
                     plano_id: plano_id,
-                    status: status,
+                    status: 'ativo', // Subscription sempre começa como 'ativo'
                     data_inicio: hoje.toISOString().split('T')[0],
-                    data_fim: dataFim.toISOString().split('T')[0],
+                    data_renovacao: dataRenovacao.toISOString().split('T')[0],
                     valor_mensal_cobrado: plan?.valor_mensal || 0,
+                    observacoes: periodo_teste ? 'Período de teste - 7 dias' : null,
                 });
 
             if (subError) {
