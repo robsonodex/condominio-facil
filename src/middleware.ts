@@ -39,9 +39,26 @@ export async function middleware(request: NextRequest) {
         try {
             // Ler cookie de aceite legal (setado no login/onboarding)
             // NON-BLOCKING: sem chamadas HTTP/DB, apenas leitura de cookie
+            // Legal acceptance check (skip for superadmin)
             const legalAccepted = request.cookies.get('legal_accepted')?.value === 'true';
 
-            if (!legalAccepted) {
+            // Verificar se é superadmin (não precisa aceitar termos)
+            let isSuperadmin = false;
+            if (user) {
+                const { data: profile, error } = await supabase
+                    .from('users')
+                    .select('role')
+                    .eq('id', user.id)
+                    .single();
+
+                if (error) {
+                    console.error('[MIDDLEWARE_ERROR] Error fetching user role:', error);
+                } else {
+                    isSuperadmin = profile?.role === 'superadmin';
+                }
+            }
+
+            if (!legalAccepted && !isSuperadmin) {
                 // Redirecionar para página de aceite
                 const aceiteUrl = new URL('/onboarding/aceite', request.url);
 
