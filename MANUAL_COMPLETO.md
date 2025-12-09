@@ -164,42 +164,43 @@ O **Condomínio Fácil** é uma plataforma SaaS (Software como Serviço) para ge
 
 ## 💳 Como Receber Pagamentos
 
-### Opção 1: Stripe (Recomendado)
+### Sistema Integrado (Atual)
 
-**Vantagens:**
-- Aceita cartão, débito, PIX
-- Cobrança automática mensal
-- Dashboard completo
-- Webhooks para automação
+O sistema possui duas formas de pagamento integradas:
 
-**Taxas:** ~2.9% + R$ 0,39 por transação
+#### 1. Cobrança por Email (Admin)
+1. Acesse `/admin/assinaturas`
+2. Clique no botão **📧 Cobrar** na assinatura desejada
+3. O sistema envia email automático com link de pagamento
+4. Cliente paga via Mercado Pago (PIX, Cartão ou Boleto)
 
-**Implementação:**
-1. Criar conta em [stripe.com](https://stripe.com)
-2. Configurar produtos (planos)
-3. Integrar checkout no sistema
-4. Configurar webhooks para atualizar status
-
----
-
-### Opção 2: Mercado Pago
-
-**Vantagens:**
-- Muito usado no Brasil
-- PIX, boleto, cartão
-- Bom para público brasileiro
-
-**Taxas:** ~4.99% por transação
+#### 2. Checkout Direto (Síndico)
+O síndico pode pagar diretamente pela página `/assinatura`:
+- **Cartão/PIX/Boleto** → Abre Mercado Pago em nova aba
+- **PIX Direto** → Gera código PIX na hora
 
 ---
 
-### Opção 3: Cobrança Manual (Simples)
+### Configuração do Mercado Pago
 
-Para começar sem integração:
-1. Envie PIX/boleto manualmente por WhatsApp
-2. Quando receber, acesse Admin → Assinaturas
-3. Mude o status para "ativo"
-4. Repita mensalmente
+1. Criar conta em [mercadopago.com.br](https://mercadopago.com.br)
+2. Ir em **Credenciais** e copiar o **Access Token**
+3. Adicionar na Vercel:
+   ```
+   MERCADOPAGO_ACCESS_TOKEN=seu_token_aqui
+   ```
+
+**Taxas:** ~4.99% por transação + IOF
+
+---
+
+### Documentação Adicional
+
+| Documento | Descrição |
+|-----------|-----------|
+| `GUIA_VENDAS.md` | Processo completo de venda para admin e síndico |
+| `MUDANCA_DOMINIO.md` | O que mudar ao trocar de domínio |
+| `DOCUMENTATION.md` | Documentação técnica completa |
 
 ---
 
