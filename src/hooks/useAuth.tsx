@@ -88,6 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     setProfile(null);
                 }
             } finally {
+                // CRITICAL: Always set loading to false
                 if (isMounted) {
                     setLoading(false);
                 }
@@ -125,7 +126,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             isMounted = false;
             subscription.unsubscribe();
         };
-    }, [supabase, fetchProfile]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [supabase]); // Only depend on supabase, not fetchProfile
 
     const signIn = useCallback(async (email: string, password: string) => {
         setLoading(true);
