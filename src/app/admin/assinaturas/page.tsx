@@ -19,16 +19,23 @@ export default function AdminAssinaturasPage() {
 
     const fetchSubscriptions = async () => {
         setLoading(true);
-        let query = supabase
-            .from('subscriptions')
-            .select('*, condo:condos(nome, cidade, estado), plan:plans(nome_plano)')
-            .order('created_at', { ascending: false });
+        try {
+            const params = filterStatus ? `?status=${filterStatus}` : '';
+            const response = await fetch(`/api/admin/subscriptions${params}`);
+            const data = await response.json();
 
-        if (filterStatus) query = query.eq('status', filterStatus);
-
-        const { data } = await query;
-        setSubscriptions(data || []);
-        setLoading(false);
+            if (!response.ok) {
+                console.error('Error fetching subscriptions:', data.error);
+                setSubscriptions([]);
+            } else {
+                setSubscriptions(data.subscriptions || []);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            setSubscriptions([]);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const [sendingInvoice, setSendingInvoice] = useState<string | null>(null);
