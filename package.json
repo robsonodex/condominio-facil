@@ -12,30 +12,31 @@
     "test:e2e:headed": "playwright test --headed"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.0.10",
+    "@supabase/supabase-js": "^2.33.1",
+    "date-fns": "^3.0.6",
+    "jspdf": "^2.5.2",
+    "lucide-react": "^0.462.0",
     "next": "^15.1.4",
+    "nodemailer": "^6.9.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "@supabase/supabase-js": "^2.33.1",
-    "@supabase/ssr": "^0.0.10",
-    "nodemailer": "^6.9.7",
-    "lucide-react": "^0.462.0",
-    "recharts": "^2.15.0",
-    "jspdf": "^2.5.2",
     "react-markdown": "^9.0.1",
-    "tailwind-merge": "^2.2.0",
-    "date-fns": "^3.0.6"
+    "recharts": "^2.15.0",
+    "tailwind-merge": "^2.2.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.41.0",
+    "@tailwindcss/postcss": "^4.1.17",
     "@types/node": "^20",
+    "@types/nodemailer": "^6.4.14",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@types/nodemailer": "^6.4.14",
-    "typescript": "^5",
+    "autoprefixer": "^10.0.1",
     "eslint": "^8",
     "eslint-config-next": "15.1.4",
-    "tailwindcss": "^3.4.1",
     "postcss": "^8",
-    "autoprefixer": "^10.0.1",
-    "@playwright/test": "^1.41.0"
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5"
   }
 }

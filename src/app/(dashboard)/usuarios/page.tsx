@@ -78,35 +78,28 @@ export default function UsuariosCondoPage() {
                 if (updateError) throw updateError;
                 setSuccess('Usuário atualizado com sucesso!');
             } else {
-                // Create new user in Supabase Auth
-                const { data: authData, error: authError } = await supabase.auth.signUp({
-                    email: formData.email,
-                    password: formData.senha,
-                    options: {
-                        data: { nome: formData.nome }
-                    }
+                // CRITICAL FIX: Use API endpoint with service role
+                // This prevents auto-login bug (síndico being logged out)
+                const response = await fetch('/api/usuarios/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: formData.email,
+                        password: formData.senha,
+                        nome: formData.nome,
+                        telefone: formData.telefone || null,
+                        role: formData.role,
+                        condo_id: condoId,
+                    }),
                 });
 
-                if (authError) throw authError;
+                const data = await response.json();
 
-                // Create user profile
-                if (authData.user) {
-                    const { error: profileError } = await supabase
-                        .from('users')
-                        .insert({
-                            id: authData.user.id,
-                            email: formData.email,
-                            nome: formData.nome,
-                            telefone: formData.telefone || null,
-                            role: formData.role,
-                            condo_id: condoId,
-                            ativo: true,
-                        });
-
-                    if (profileError) throw profileError;
+                if (!response.ok) {
+                    throw new Error(data.error || 'Erro ao criar usuário');
                 }
 
-                setSuccess(`Usuário criado! Envie o acesso: ${formData.email} / ${formData.senha}`);
+                setSuccess(`✅ Usuário criado! Acesso: ${formData.email} / ${formData.senha}`);
             }
 
             fetchUsers();
