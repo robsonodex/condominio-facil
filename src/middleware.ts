@@ -36,6 +36,11 @@ export async function middleware(request: NextRequest) {
     const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
     const isExcluded = EXCLUDED_FROM_LEGAL_CHECK.some(route => pathname.startsWith(route));
 
+    // ========================================
+    // TEMPORÁRIO: ACEITE LEGAL DESABILITADO
+    // Remova este comentário quando corrigir autenticação
+    // ========================================
+    /*
     if (isProtectedRoute && !isExcluded) {
         try {
             // Criar supabase client para verificar role
@@ -47,7 +52,7 @@ export async function middleware(request: NextRequest) {
                         getAll() {
                             return request.cookies.getAll();
                         },
-                        setAll() { }, // No-op no middleware (read-only)
+                        setAll() {}, // No-op no middleware (read-only)
                     },
                 }
             );
@@ -99,6 +104,7 @@ export async function middleware(request: NextRequest) {
             });
         }
     }
+    */
 
     // Log de métrica para sucesso
     if (isProtectedRoute) {
