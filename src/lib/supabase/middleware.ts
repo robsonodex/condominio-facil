@@ -35,6 +35,8 @@ export async function updateSession(request: NextRequest) {
         data: { user },
     } = await supabase.auth.getUser();
 
+    // DESABILITADO TEMPORARIAMENTE - estava causando loop de logout
+    /*
     // Protected routes
     const protectedPaths = ['/dashboard', '/admin', '/financeiro', '/moradores', '/unidades', '/avisos', '/ocorrencias', '/portaria', '/relatorios'];
     const isProtectedRoute = protectedPaths.some(path => request.nextUrl.pathname.startsWith(path));
@@ -51,6 +53,7 @@ export async function updateSession(request: NextRequest) {
         url.pathname = '/dashboard';
         return NextResponse.redirect(url);
     }
+    */
 
     return supabaseResponse;
 }
