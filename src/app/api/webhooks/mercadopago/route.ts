@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createClient as createServiceRoleClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 
 // Mercado Pago Webhook
@@ -130,9 +131,35 @@ export async function POST(request: NextRequest) {
         }
 
         const payment = await paymentResponse.json();
-        const supabase = await createClient();
+
+        // Usar service role para contornar RLS
+        const supabaseAdmin = createServiceRoleClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
+
         const condoId = payment.external_reference;
         const paymentIdStr = paymentId.toString();
+
+        // Buscar invoice pelo provider_id ou gateway_id
+        const { data: invoice } = await supabaseAdmin
+            .from('invoices')
+            .select('id, condo_id')
+            .or(`provider_id.eq.${paymentIdStr},gateway_id.eq.${paymentIdStr}`)
+            .single();
+
+        // Registrar log de evento (sempre)
+        await supabaseAdmin
+            .from('payment_logs')
+            .insert({
+                invoice_id: invoice?.id || null,
+                condo_id: condoId || invoice?.condo_id || null,
+                event_type: `payment.${payment.status}`,
+                status: payment.status,
+                provider: 'mercadopago',
+                provider_payment_id: paymentIdStr,
+                raw_payload: payment,
+            });
 
         // ========================================
         // Tratamento COMPLETO de todos os status do Mercado Pago
@@ -143,7 +170,7 @@ export async function POST(request: NextRequest) {
                 // CORREÇÃO: Atualizar por gateway_payment_id, não condo_id
                 // ========================================
                 // Primeiro, tentar atualizar invoice existente pelo gateway_payment_id
-                const { data: invoiceByGateway } = await supabase
+                const { data: invoiceByGateway } = await supabaseAdmin
                     .from('invoices')
                     .update({
                         status: 'pago',
@@ -155,7 +182,7 @@ export async function POST(request: NextRequest) {
 
                 // Se não encontrou por gateway_payment_id, tentar por gateway_id
                 if (!invoiceByGateway) {
-                    await supabase
+                    await supabaseAdmin
                         .from('invoices')
                         .update({
                             status: 'pago',
@@ -168,7 +195,7 @@ export async function POST(request: NextRequest) {
 
                 // Release subscription (activate)
                 if (condoId) {
-                    await supabase.rpc('release_subscription', {
+                    await supabaseAdmin.rpc('release_subscription', {
                         p_condo_id: condoId,
                         p_meses: 1,
                     });
@@ -189,7 +216,7 @@ export async function POST(request: NextRequest) {
             case 'rejected':
             case 'cancelled':
                 // Pagamento rejeitado/cancelado
-                await supabase
+                await supabaseAdmin
                     .from('invoices')
                     .update({ status: 'cancelado' })
                     .eq('gateway_payment_id', paymentIdStr);
@@ -200,14 +227,14 @@ export async function POST(request: NextRequest) {
 
             case 'refunded':
                 // Reembolso - reverter status da assinatura
-                await supabase
+                await supabaseAdmin
                     .from('invoices')
                     .update({ status: 'cancelado' })
                     .eq('gateway_payment_id', paymentIdStr);
 
                 // Bloquear assinatura se foi reembolsado
                 if (condoId) {
-                    await supabase
+                    await supabaseAdmin
                         .from('subscriptions')
                         .update({
                             status: 'suspenso',
@@ -222,13 +249,13 @@ export async function POST(request: NextRequest) {
 
             case 'charged_back':
                 // Chargeback - situação grave, bloquear imediatamente
-                await supabase
+                await supabaseAdmin
                     .from('invoices')
                     .update({ status: 'cancelado' })
                     .eq('gateway_payment_id', paymentIdStr);
 
                 if (condoId) {
-                    await supabase
+                    await supabaseAdmin
                         .from('subscriptions')
                         .update({
                             status: 'suspenso',
