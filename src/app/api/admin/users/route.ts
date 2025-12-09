@@ -2,14 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createClient as createServerClient } from '@/lib/supabase/server';
 
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+export async function GET(request: NextRequest) {
+    return NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
+}
+
 
 export async function POST(request: NextRequest) {
     try {
-        // Verificar se usuário logado é admin
+        // Criar admin client no runtime
+        const supabaseAdmin = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
+
+        // Criar client dentro do POST para evitar error de build
         const supabase = await createServerClient();
         const { data: { user } } = await supabase.auth.getUser();
 
@@ -200,3 +206,4 @@ export async function POST(request: NextRequest) {
         }, { status: 500 });
     }
 }
+

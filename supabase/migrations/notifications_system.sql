@@ -3,23 +3,44 @@
 -- Execute no Supabase SQL Editor
 -- =============================================
 
--- Tabela de notificações
+-- Criar tabela SE NÃO EXISTIR
 CREATE TABLE IF NOT EXISTS notifications (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     condo_id UUID REFERENCES condos(id) ON DELETE CASCADE,
     title VARCHAR(255) NOT NULL,
     message TEXT NOT NULL,
-    type VARCHAR(20) DEFAULT 'info' CHECK (type IN ('info', 'success', 'warning', 'error', 'billing')),
-    read BOOLEAN DEFAULT false,
+    type VARCHAR(20) DEFAULT 'info',
+    is_read BOOLEAN DEFAULT false,
     link VARCHAR(500),
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Índices
+-- Adicionar colunas que podem estar faltando (se a tabela já existia)
+DO $$
+BEGIN
+    -- Adicionar is_read se não existir
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'notifications' AND column_name = 'is_read') THEN
+        ALTER TABLE notifications ADD COLUMN is_read BOOLEAN DEFAULT false;
+    END IF;
+
+    -- Adicionar link se não existir
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'notifications' AND column_name = 'link') THEN
+        ALTER TABLE notifications ADD COLUMN link VARCHAR(500);
+    END IF;
+
+    -- Adicionar type se não existir
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'notifications' AND column_name = 'type') THEN
+        ALTER TABLE notifications ADD COLUMN type VARCHAR(20) DEFAULT 'info';
+    END IF;
+END $$;
+
+-- Índices (IF NOT EXISTS já ignora se existir)
 CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_condo ON notifications(condo_id);
-CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(read);
 CREATE INDEX IF NOT EXISTS idx_notifications_created ON notifications(created_at);
 
 -- RLS

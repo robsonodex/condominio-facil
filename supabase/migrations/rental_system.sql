@@ -5,7 +5,7 @@
 
 -- =============================================
 -- 1. TABELA DE CONTRATOS DE ALUGUEL
--- =============================================
+-ear- =============================================
 CREATE TABLE IF NOT EXISTS rental_contracts (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     condo_id UUID NOT NULL REFERENCES condos(id) ON DELETE CASCADE,
