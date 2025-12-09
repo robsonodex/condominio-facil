@@ -226,32 +226,31 @@ export default function AssinaturaPage() {
                                 </div>
                             </div>
 
-                            {subscription.status !== 'ativo' && (
-                                <div className="space-y-3 pt-4 border-t">
-                                    <p className="text-sm font-medium text-gray-700">Escolha como pagar:</p>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <Button
-                                            onClick={generateMercadoPagoCheckout}
-                                            disabled={generatingCheckout}
-                                            variant="primary"
-                                        >
-                                            <CreditCard className="h-4 w-4 mr-2" />
-                                            {generatingCheckout ? 'Abrindo...' : 'Cartão/PIX/Boleto'}
-                                        </Button>
-                                        <Button
-                                            onClick={generatePixPayment}
-                                            disabled={generatingPix}
-                                            variant="outline"
-                                        >
-                                            <QrCode className="h-4 w-4 mr-2" />
-                                            {generatingPix ? 'Gerando...' : 'PIX Direto'}
-                                        </Button>
-                                    </div>
-                                    <p className="text-xs text-gray-500 text-center">
-                                        Cartão/PIX/Boleto redireciona para o Mercado Pago. PIX Direto gera código na hora.
-                                    </p>
+                            {/* Botões de Pagamento - sempre visíveis */}
+                            <div className="space-y-3 pt-4 border-t">
+                                <p className="text-sm font-medium text-gray-700">Opções de pagamento:</p>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <Button
+                                        onClick={generateMercadoPagoCheckout}
+                                        disabled={generatingCheckout}
+                                        variant="primary"
+                                    >
+                                        <CreditCard className="h-4 w-4 mr-2" />
+                                        {generatingCheckout ? 'Abrindo...' : 'Cartão/PIX/Boleto'}
+                                    </Button>
+                                    <Button
+                                        onClick={generatePixPayment}
+                                        disabled={generatingPix}
+                                        variant="outline"
+                                    >
+                                        <QrCode className="h-4 w-4 mr-2" />
+                                        {generatingPix ? 'Gerando...' : 'PIX Direto'}
+                                    </Button>
                                 </div>
-                            )}
+                                <p className="text-xs text-gray-500 text-center">
+                                    Cartão/PIX/Boleto redireciona para o Mercado Pago. PIX Direto gera código na hora.
+                                </p>
+                            </div>
                         </div>
                     ) : (
                         <p className="text-gray-500">Nenhuma assinatura encontrada</p>
