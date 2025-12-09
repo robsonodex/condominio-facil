@@ -38,16 +38,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 return profileCache[sessionUser.id];
             }
 
-            // Buscar por email
-            const { data: profileData, error } = await supabase
+            // Timeout de 3 segundos
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Profile fetch timeout')), 3000)
+            );
+
+            const profilePromise = supabase
                 .from('users')
                 .select('*')
                 .eq('email', sessionUser.email)
                 .eq('ativo', true)
                 .maybeSingle();
 
+            const { data: profileData, error } = await Promise.race([
+                profilePromise,
+                timeoutPromise
+            ]) as any;
+
             if (error) {
                 console.error('Error fetching profile:', error);
+                // IMPORTANTE: Não bloquear login por erro de profile
                 return null;
             }
 
@@ -60,6 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return null;
         } catch (error) {
             console.error('Error fetching profile:', error);
+            // IMPORTANTE: Não bloquear login
             return null;
         }
     }, [supabase]);
