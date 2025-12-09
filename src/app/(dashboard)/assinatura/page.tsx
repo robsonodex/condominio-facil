@@ -35,6 +35,7 @@ export default function AssinaturaPage() {
     const [payments, setPayments] = useState<Payment[]>([]);
     const [loading, setLoading] = useState(true);
     const [generatingPix, setGeneratingPix] = useState(false);
+    const [generatingCheckout, setGeneratingCheckout] = useState(false);
     const [pixCode, setPixCode] = useState('');
     const [copied, setCopied] = useState(false);
     const supabase = createClient();
@@ -65,6 +66,43 @@ export default function AssinaturaPage() {
 
         setPayments(payData || []);
         setLoading(false);
+    };
+
+    // Checkout Mercado Pago - redireciona para pagamento
+    const generateMercadoPagoCheckout = async () => {
+        if (!subscription || !condoId) return;
+
+        setGeneratingCheckout(true);
+        try {
+            const response = await fetch('/api/checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    condoId: condoId,
+                    planId: (subscription as any).plano_id || (subscription as any).plan?.id,
+                    metodoPagamento: 'cartao'
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Erro ao gerar checkout');
+            }
+
+            // Redirecionar para Mercado Pago
+            if (data.checkout_url) {
+                window.location.href = data.checkout_url;
+            } else if (data.init_point) {
+                window.location.href = data.init_point;
+            } else {
+                throw new Error('URL de checkout não retornada');
+            }
+        } catch (error: any) {
+            alert(`❌ ${error.message}`);
+        } finally {
+            setGeneratingCheckout(false);
+        }
     };
 
     const generatePixPayment = async () => {
@@ -189,14 +227,30 @@ export default function AssinaturaPage() {
                             </div>
 
                             {subscription.status !== 'ativo' && (
-                                <Button
-                                    onClick={generatePixPayment}
-                                    disabled={generatingPix}
-                                    className="w-full"
-                                >
-                                    <QrCode className="h-4 w-4 mr-2" />
-                                    {generatingPix ? 'Gerando...' : 'Gerar PIX para Pagamento'}
-                                </Button>
+                                <div className="space-y-3 pt-4 border-t">
+                                    <p className="text-sm font-medium text-gray-700">Escolha como pagar:</p>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <Button
+                                            onClick={generateMercadoPagoCheckout}
+                                            disabled={generatingCheckout}
+                                            variant="primary"
+                                        >
+                                            <CreditCard className="h-4 w-4 mr-2" />
+                                            {generatingCheckout ? 'Abrindo...' : 'Cartão/PIX/Boleto'}
+                                        </Button>
+                                        <Button
+                                            onClick={generatePixPayment}
+                                            disabled={generatingPix}
+                                            variant="outline"
+                                        >
+                                            <QrCode className="h-4 w-4 mr-2" />
+                                            {generatingPix ? 'Gerando...' : 'PIX Direto'}
+                                        </Button>
+                                    </div>
+                                    <p className="text-xs text-gray-500 text-center">
+                                        Cartão/PIX/Boleto redireciona para o Mercado Pago. PIX Direto gera código na hora.
+                                    </p>
+                                </div>
                             )}
                         </div>
                     ) : (

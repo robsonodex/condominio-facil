@@ -31,6 +31,33 @@ export default function AdminAssinaturasPage() {
         setLoading(false);
     };
 
+    const [sendingInvoice, setSendingInvoice] = useState<string | null>(null);
+
+    const handleSendInvoice = async (subscriptionId: string, condoNome: string) => {
+        if (!confirm(`Enviar cobrança por email para ${condoNome}?`)) return;
+
+        setSendingInvoice(subscriptionId);
+        try {
+            const response = await fetch('/api/billing/send-invoice', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ subscription_id: subscriptionId })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                alert(`❌ ${result.error}`);
+            } else {
+                alert(`✅ ${result.message}`);
+            }
+        } catch (error: any) {
+            alert(`❌ Erro: ${error.message}`);
+        } finally {
+            setSendingInvoice(null);
+        }
+    };
+
     const columns = [
         {
             key: 'condo',
@@ -55,6 +82,20 @@ export default function AdminAssinaturasPage() {
         },
         { key: 'data_inicio', header: 'Início', render: (s: any) => formatDate(s.data_inicio) },
         { key: 'data_renovacao', header: 'Renovação', render: (s: any) => s.data_renovacao ? formatDate(s.data_renovacao) : '-' },
+        {
+            key: 'actions',
+            header: 'Ações',
+            render: (s: any) => (
+                <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleSendInvoice(s.id, s.condo?.nome)}
+                    disabled={sendingInvoice === s.id}
+                >
+                    {sendingInvoice === s.id ? '⏳' : '📧'} Cobrar
+                </Button>
+            )
+        },
     ];
 
     const stats = {
