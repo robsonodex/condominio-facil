@@ -90,13 +90,10 @@ export default function AssinaturaPage() {
                 throw new Error(data.error || 'Erro ao gerar checkout');
             }
 
-            // Redirecionar para Mercado Pago
-            if (data.paymentUrl) {
-                window.location.href = data.paymentUrl;
-            } else if (data.checkout_url) {
-                window.location.href = data.checkout_url;
-            } else if (data.init_point) {
-                window.location.href = data.init_point;
+            // Redirecionar para Mercado Pago em nova aba
+            const url = data.paymentUrl || data.checkout_url || data.init_point;
+            if (url) {
+                window.open(url, '_blank');
             } else {
                 // Se não tem URL, pode ser que o MP não está configurado - mostrar PIX como alternativa
                 throw new Error('Mercado Pago não configurado. Use PIX Direto.');
