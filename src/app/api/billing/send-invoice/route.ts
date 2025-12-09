@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createClient as createServiceRoleClient } from '@supabase/supabase-js';
 import nodemailer from 'nodemailer';
 
 // Mercado Pago Configuration
@@ -38,8 +39,14 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'subscription_id é obrigatório' }, { status: 400 });
         }
 
-        // Buscar dados da subscription com condo, plan e síndico
-        const { data: subscriptionData, error: subError } = await supabase
+        // Usar service role para contornar RLS
+        const supabaseAdmin = createServiceRoleClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
+
+        // Buscar dados da subscription com condo, plan e síndico (usando service role)
+        const { data: subscriptionData, error: subError } = await supabaseAdmin
             .from('subscriptions')
             .select(`
                 id, status, valor_mensal_cobrado, data_renovacao,
@@ -50,6 +57,7 @@ export async function POST(request: NextRequest) {
             .single();
 
         if (subError || !subscriptionData) {
+            console.error('Subscription error:', subError);
             return NextResponse.json({ error: 'Assinatura não encontrada' }, { status: 404 });
         }
 
