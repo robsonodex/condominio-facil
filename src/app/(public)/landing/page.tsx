@@ -26,7 +26,7 @@ const detailedFeatures = [
         icon: BarChart3,
         title: 'Dashboard Intuitivo',
         description: 'Visualize todas as métricas importantes do seu condomínio em tempo real.',
-        screenshot: null, // Será renderizado como gradiente
+        screenshot: '/screenshots/dashboard.png',
         benefits: [
             'Visão geral de inadimplência',
             'Saldo financeiro atualizado',
