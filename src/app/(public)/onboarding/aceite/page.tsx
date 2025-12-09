@@ -81,7 +81,13 @@ export default function AceitePage() {
                 alert('✅ Aceite registrado com sucesso! Você será redirecionado para o sistema.');
                 router.push('/dashboard');
             } else {
-                alert(`❌ Erro: ${data.error}`);
+                // Erro 401 = não autenticado
+                if (res.status === 401) {
+                    alert('❌ Sessão expirada. Você será redirecionado para fazer login novamente.');
+                    router.push('/login?message=Sessão expirada. Faça login para aceitar os termos.');
+                } else {
+                    alert(`❌ Erro: ${data.error || 'Erro ao registrar aceite'}`);
+                }
             }
         } catch (error) {
             alert('Erro ao registrar aceite. Tente novamente.');

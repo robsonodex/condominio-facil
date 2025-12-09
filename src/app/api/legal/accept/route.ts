@@ -7,10 +7,23 @@ export async function POST(request: NextRequest) {
     try {
         const supabase = await createClient();
 
-        // Autenticação obrigatória
-        const { data: { user } } = await supabase.auth.getUser();
+        // Verificar autenticação com logging
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+        console.log('[LEGAL_ACCEPT] Auth check:', {
+            hasUser: !!user,
+            userId: user?.id,
+            email: user?.email,
+            authError: authError?.message
+        });
+
         if (!user) {
-            return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+            console.error('[LEGAL_ACCEPT] User not authenticated');
+            return NextResponse.json({
+                error: 'Não autorizado. Por favor, faça login novamente.',
+                code: 'NOT_AUTHENTICATED',
+                hint: 'Sessão expirou ou cookies bloqueados'
+            }, { status: 401 });
         }
 
         const body = await request.json();
