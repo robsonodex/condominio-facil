@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Buscar dados da subscription com condo, plan e síndico
-        const { data: subscription, error: subError } = await supabase
+        const { data: subscriptionData, error: subError } = await supabase
             .from('subscriptions')
             .select(`
                 id, status, valor_mensal_cobrado, data_renovacao,
@@ -49,19 +49,24 @@ export async function POST(request: NextRequest) {
             .eq('id', subscription_id)
             .single();
 
-        if (subError || !subscription) {
+        if (subError || !subscriptionData) {
             return NextResponse.json({ error: 'Assinatura não encontrada' }, { status: 404 });
         }
+
+        // Cast para evitar erros de tipo do TypeScript
+        const subscription = subscriptionData as any;
+        const condo = subscription.condo;
+        const plan = subscription.plan;
 
         // Buscar síndico do condomínio
         const { data: sindico } = await supabase
             .from('users')
             .select('id, nome, email')
-            .eq('condo_id', subscription.condo.id)
+            .eq('condo_id', condo.id)
             .eq('role', 'sindico')
             .single();
 
-        const emailDestino = sindico?.email || subscription.condo.email_contato;
+        const emailDestino = sindico?.email || condo.email_contato;
         if (!emailDestino) {
             return NextResponse.json({
                 error: 'Nenhum email encontrado para este condomínio'
@@ -69,8 +74,8 @@ export async function POST(request: NextRequest) {
         }
 
         const valor = subscription.valor_mensal_cobrado;
-        const nomeCondo = subscription.condo.nome;
-        const nomePlano = subscription.plan.nome_plano;
+        const nomeCondo = condo.nome;
+        const nomePlano = plan.nome_plano;
 
         // Criar preferência de pagamento no Mercado Pago via API
         const preferenceBody = {
@@ -118,7 +123,7 @@ export async function POST(request: NextRequest) {
             const { data, error: invoiceError } = await supabase
                 .from('invoices')
                 .insert({
-                    condo_id: subscription.condo.id,
+                    condo_id: condo.id,
                     subscription_id: subscription_id,
                     valor: valor,
                     data_vencimento: subscription.data_renovacao,
@@ -198,7 +203,7 @@ export async function POST(request: NextRequest) {
 
         // Registrar log de email
         await supabase.from('email_logs').insert({
-            condo_id: subscription.condo.id,
+            condo_id: condo.id,
             user_id: sindico?.id || null,
             tipo: 'invoice',
             destinatario: emailDestino,
