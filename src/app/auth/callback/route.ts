@@ -18,9 +18,13 @@ export async function GET(request: Request) {
         const { error } = await supabase.auth.exchangeCodeForSession(code);
 
         if (!error) {
+            // Se é confirmação de email (signup ou email_change), redirecionar para aceite legal
             if (type === 'signup' || type === 'email_change') {
-                return NextResponse.redirect(`${origin}/login?confirmed=true`);
+                console.log('[AUTH_CALLBACK] Email confirmed, redirecting to legal acceptance');
+                return NextResponse.redirect(`${origin}/onboarding/aceite`);
             }
+            // Outros tipos: usar parâmetro next ou dashboard como fallback
+            console.log('[AUTH_CALLBACK] Auth successful, redirecting to:', next);
             return NextResponse.redirect(`${origin}${next}`);
         }
     }
