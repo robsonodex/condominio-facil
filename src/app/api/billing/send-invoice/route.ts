@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import MercadoPago, { Preference } from 'mercadopago';
 import nodemailer from 'nodemailer';
 
-// Inicializar Mercado Pago
-const mercadopago = new MercadoPago({
-    accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN!
-});
+// Mercado Pago Configuration
+const MP_ACCESS_TOKEN = process.env.MERCADOPAGO_ACCESS_TOKEN;
+const MP_API_URL = 'https://api.mercadopago.com';
 
 /**
  * POST /api/billing/send-invoice
@@ -74,46 +72,64 @@ export async function POST(request: NextRequest) {
         const nomeCondo = subscription.condo.nome;
         const nomePlano = subscription.plan.nome_plano;
 
-        // Criar preferência de pagamento no Mercado Pago
-        const preference = await mercadopago.preferences.create({
-            body: {
-                items: [{
-                    id: subscription_id,
-                    title: `Mensalidade ${nomePlano} - ${nomeCondo}`,
-                    description: `Assinatura mensal do Condomínio Fácil`,
-                    unit_price: valor,
-                    quantity: 1,
-                    currency_id: 'BRL'
-                }],
-                external_reference: subscription_id,
-                back_urls: {
-                    success: `${process.env.NEXT_PUBLIC_APP_URL}/assinatura?status=sucesso`,
-                    failure: `${process.env.NEXT_PUBLIC_APP_URL}/assinatura?status=falha`,
-                    pending: `${process.env.NEXT_PUBLIC_APP_URL}/assinatura?status=pendente`
-                },
-                auto_return: 'approved',
-                notification_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/mercadopago`,
-                expires: true,
-                expiration_date_from: new Date().toISOString(),
-                expiration_date_to: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-            }
+        // Criar preferência de pagamento no Mercado Pago via API
+        const preferenceBody = {
+            items: [{
+                id: subscription_id,
+                title: `Mensalidade ${nomePlano} - ${nomeCondo}`,
+                description: `Assinatura mensal do Condomínio Fácil`,
+                unit_price: valor,
+                quantity: 1,
+                currency_id: 'BRL'
+            }],
+            external_reference: subscription_id,
+            back_urls: {
+                success: `${process.env.NEXT_PUBLIC_APP_URL}/assinatura?status=sucesso`,
+                failure: `${process.env.NEXT_PUBLIC_APP_URL}/assinatura?status=falha`,
+                pending: `${process.env.NEXT_PUBLIC_APP_URL}/assinatura?status=pendente`
+            },
+            auto_return: 'approved',
+            notification_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/mercadopago`,
+        };
+
+        const mpResponse = await fetch(`${MP_API_URL}/checkout/preferences`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${MP_ACCESS_TOKEN}`,
+            },
+            body: JSON.stringify(preferenceBody),
         });
 
+        if (!mpResponse.ok) {
+            const errorText = await mpResponse.text();
+            console.error('Mercado Pago error:', errorText);
+            return NextResponse.json({
+                error: 'Erro ao criar link de pagamento no Mercado Pago'
+            }, { status: 500 });
+        }
+
+        const preference = await mpResponse.json();
         const linkPagamento = preference.init_point;
 
-        // Criar invoice no banco
-        const { data: invoice, error: invoiceError } = await supabase
-            .from('invoices')
-            .insert({
-                condo_id: subscription.condo.id,
-                subscription_id: subscription_id,
-                valor: valor,
-                data_vencimento: subscription.data_renovacao,
-                status: 'pendente',
-                mercadopago_preference_id: preference.id,
-            })
-            .select()
-            .single();
+        // Criar invoice no banco (ignora erro se tabela não existir)
+        let invoice: any = null;
+        try {
+            const { data, error: invoiceError } = await supabase
+                .from('invoices')
+                .insert({
+                    condo_id: subscription.condo.id,
+                    subscription_id: subscription_id,
+                    valor: valor,
+                    data_vencimento: subscription.data_renovacao,
+                    status: 'pendente',
+                })
+                .select()
+                .single();
+            invoice = data;
+        } catch (e) {
+            console.log('Invoice table may not exist, skipping');
+        }
 
         // Enviar email
         const transporter = nodemailer.createTransport({
