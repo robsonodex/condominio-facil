@@ -1,6 +1,8 @@
 # 🌐 Checklist: Mudança de Domínio
 
-Quando você mudar o domínio da aplicação (ex: de `condominofacil.vercel.app` para `meusistema.com.br`), siga este checklist:
+Este guia foi atualizado para o domínio **meucondominiofacil.com**.
+
+Para instruções detalhadas de migração, veja: **[MIGRACAO_DOMINIO.md](./MIGRACAO_DOMINIO.md)**
 
 ---
 
@@ -10,7 +12,7 @@ Acesse: **Vercel → Settings → Environment Variables**
 
 Atualize:
 ```
-NEXT_PUBLIC_APP_URL=https://seunovodominio.com.br
+NEXT_PUBLIC_APP_URL=https://meucondominiofacil.com
 ```
 
 ---
@@ -20,12 +22,12 @@ NEXT_PUBLIC_APP_URL=https://seunovodominio.com.br
 Acesse: **Supabase → Authentication → URL Configuration**
 
 Atualize:
-- **Site URL**: `https://seunovodominio.com.br`
+- **Site URL**: `https://meucondominiofacil.com`
 - **Redirect URLs**: Adicione:
   ```
-  https://seunovodominio.com.br/**
-  https://seunovodominio.com.br/auth/callback
-  https://seunovodominio.com.br/auth/reset-password
+  https://meucondominiofacil.com/**
+  https://meucondominiofacil.com/auth/callback
+  https://meucondominiofacil.com/auth/reset-password
   ```
 
 ---
@@ -35,24 +37,33 @@ Atualize:
 Acesse: **Mercado Pago → Configurações → Webhooks**
 
 Atualize:
-- **URL de notificação**: `https://seunovodominio.com.br/api/webhooks/mercadopago`
-
-As URLs de retorno (back_urls) são configuradas no código e usam `NEXT_PUBLIC_APP_URL`, então já atualizam automaticamente.
+- **URL de notificação**: `https://meucondominiofacil.com/api/webhooks/mercadopago`
 
 ---
 
-## 4. SMTP / EmailJS (se usar)
+## 4. SMTP / Email
 
-Se tiver templates de email com links fixos, atualize para o novo domínio.
+Configure as variáveis na Vercel:
+```
+SMTP_HOST=smtp.hostinger.com
+SMTP_PORT=465
+SMTP_SECURE=true
+SMTP_USER=contato@meucondominiofacil.com
+SMTP_PASS=SUA_SENHA
+SMTP_FROM=Condomínio Fácil <contato@meucondominiofacil.com>
+```
 
 ---
 
-## 5. Arquivos do Projeto (Opcional)
+## 5. DNS Hostinger
 
-Verifique se há URLs hardcoded em:
-- `VENDAS.md` - Links de demonstração
-- `MANUAL_COMPLETO.md` - URLs de exemplo
-- `README.md` - Links do projeto
+Configure na zona DNS do domínio:
+
+| Tipo | Nome | Valor |
+|------|------|-------|
+| A | @ | 76.76.21.21 |
+| CNAME | www | cname.vercel-dns.com |
+| TXT | _vercel | (copie do dashboard Vercel) |
 
 ---
 
@@ -64,25 +75,19 @@ git commit --allow-empty -m "Trigger redeploy for domain change"
 git push origin master:main
 ```
 
-Ou faça redeploy manual na Vercel.
-
 ---
 
 ## 📋 Checklist Resumido
 
-| Item | Local | Atualizar |
-|------|-------|-----------|
-| ☐ | Vercel | `NEXT_PUBLIC_APP_URL` |
-| ☐ | Supabase | Site URL + Redirect URLs |
-| ☐ | Mercado Pago | URL de Webhook |
-| ☐ | EmailJS/SMTP | Templates com links fixos |
-| ☐ | Documentação | URLs de exemplo |
-| ☐ | Redeploy | Aplicar mudanças |
+| Item | Status |
+|------|--------|
+| ☐ Vercel | `NEXT_PUBLIC_APP_URL` atualizado |
+| ☐ Supabase | Site URL + Redirect URLs |
+| ☐ Mercado Pago | URL de Webhook |
+| ☐ SMTP | Variáveis configuradas |
+| ☐ DNS | Registros A/CNAME/TXT |
+| ☐ Redeploy | Mudanças aplicadas |
 
 ---
 
-## ⚠️ Atenção
-
-- Mantenha o domínio antigo configurado por alguns dias (transição)
-- Teste login, recuperação de senha e pagamentos no novo domínio
-- Emails antigos com links para o domínio antigo continuarão funcionando se mantiver redirecionamento
+Para mais detalhes, consulte **[MIGRACAO_DOMINIO.md](./MIGRACAO_DOMINIO.md)**.
