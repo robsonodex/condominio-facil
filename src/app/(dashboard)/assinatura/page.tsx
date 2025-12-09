@@ -91,12 +91,15 @@ export default function AssinaturaPage() {
             }
 
             // Redirecionar para Mercado Pago
-            if (data.checkout_url) {
+            if (data.paymentUrl) {
+                window.location.href = data.paymentUrl;
+            } else if (data.checkout_url) {
                 window.location.href = data.checkout_url;
             } else if (data.init_point) {
                 window.location.href = data.init_point;
             } else {
-                throw new Error('URL de checkout não retornada');
+                // Se não tem URL, pode ser que o MP não está configurado - mostrar PIX como alternativa
+                throw new Error('Mercado Pago não configurado. Use PIX Direto.');
             }
         } catch (error: any) {
             alert(`❌ ${error.message}`);
