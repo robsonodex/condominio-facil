@@ -112,8 +112,8 @@ export async function POST(request: NextRequest) {
                 dataRenovacao.setMonth(dataRenovacao.getMonth() + 1);
             }
 
-            // Criar condomínio
-            const { data: newCondo, error: condoError } = await supabase
+            // Criar condomínio (usando service role para contornar RLS)
+            const { data: newCondo, error: condoError } = await supabaseAdmin
                 .from('condos')
                 .insert({
                     nome: condo_nome,
@@ -134,8 +134,8 @@ export async function POST(request: NextRequest) {
 
             finalCondoId = newCondo.id;
 
-            // Criar subscription (status deve ser 'ativo' ou 'pendente_pagamento')
-            const { error: subError } = await supabase
+            // Criar subscription (usando service role para contornar RLS)
+            const { error: subError } = await supabaseAdmin
                 .from('subscriptions')
                 .insert({
                     condo_id: newCondo.id,
