@@ -147,6 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
 
         if (!error && data.user) {
+            // Criar perfil no banco
             await supabase.from('users').insert({
                 id: data.user.id,
                 email,
@@ -154,6 +155,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 role: 'morador',
                 ativo: true
             });
+
+            // ========================================
+            // ENVIAR E-MAIL DE BOAS-VINDAS
+            // ========================================
+            try {
+                const appUrl = window.location.origin;
+                await fetch('/api/email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tipo: 'welcome',
+                        destinatario: email,
+                        dados: {
+                            nome: nome,
+                            loginUrl: `${appUrl}/login`
+                        },
+                        userId: data.user.id,
+                        internalCall: true // Permitir envio sem autenticação
+                    }),
+                });
+                console.log('E-mail de boas-vindas enviado para:', email);
+            } catch (emailError) {
+                // Não bloquear registro se e-mail falhar
+                console.error('Erro ao enviar e-mail de boas-vindas:', emailError);
+            }
         }
 
         setLoading(false);

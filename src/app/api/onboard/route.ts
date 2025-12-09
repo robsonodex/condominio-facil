@@ -188,10 +188,14 @@ async function sendWelcomeEmail(params: {
     tempPassword: string | null;
     isNewUser: boolean;
 }) {
+    const maxAttempts = 3;
+    let attempts = 0;
+    let lastError = null;
+
     const transporter = nodemailer.createTransport({
         host: process.env.SMTP_HOST,
         port: parseInt(process.env.SMTP_PORT || '465'),
-        secure: process.env.SMTP_SECURE === 'true',
+        secure: true,
         auth: {
             user: process.env.SMTP_USER,
             pass: process.env.SMTP_PASS,
@@ -243,7 +247,15 @@ async function sendWelcomeEmail(params: {
                 <a href="${appUrl}/login" class="button">Acessar o Sistema</a>
             </center>
             
-            <p>Qualquer dúvida, entre em contato pelo email: contato@meucondominiofacil.com</p>
+            <p>Agora você pode:</p>
+            <ul>
+                <li>Gerenciar moradores e unidades</li>
+                <li>Controlar finanças do condomínio</li>
+                <li>Gerar boletos e PIX via Mercado Pago</li>
+                <li>Registrar ocorrências e portaria</li>
+            </ul>
+            
+            <p>Qualquer dúvida, entre em contato pelo email: <strong>contato@meucondominiofacil.com</strong></p>
         </div>
         <div class="footer">
             <p>© ${new Date().getFullYear()} Condomínio Fácil. Todos os direitos reservados.</p>
@@ -253,10 +265,31 @@ async function sendWelcomeEmail(params: {
 </html>
     `;
 
-    await transporter.sendMail({
-        from: process.env.SMTP_FROM || 'Condomínio Fácil <contato@meucondominiofacil.com>',
-        to: params.to,
-        subject: '🏢 [Condomínio Fácil] Acesso liberado — sua conta',
-        html
-    });
+    // Tentar enviar com retry
+    while (attempts < maxAttempts) {
+        attempts++;
+        try {
+            await transporter.sendMail({
+                from: process.env.SMTP_FROM || 'Condomínio Fácil <noreply@meucondominiofacil.com>',
+                to: params.to,
+                subject: '🏢 Bem-vindo ao Condomínio Fácil - Sua conta foi criada!',
+                html
+            });
+
+            console.log(`E-mail de boas-vindas enviado para ${params.to} (tentativa ${attempts})`);
+            return; // Sucesso
+        } catch (error: any) {
+            lastError = error;
+            console.error(`Tentativa ${attempts} de envio de e-mail falhou:`, error.message);
+
+            if (attempts < maxAttempts) {
+                // Aguardar antes de tentar novamente (backoff exponencial)
+                await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
+            }
+        }
+    }
+
+    // Se chegou aqui, todas as tentativas falharam
+    console.error(`Falha ao enviar e-mail após ${maxAttempts} tentativas:`, lastError);
+    throw new Error(`Falha no envio de e-mail: ${lastError?.message}`);
 }

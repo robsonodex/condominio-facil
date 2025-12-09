@@ -201,6 +201,77 @@ export async function POST(request: NextRequest) {
                     });
                 }
 
+                // ========================================
+                // ENVIAR E-MAIL DE CONFIRMAÇÃO DE PAGAMENTO
+                // ========================================
+                if (condoId) {
+                    try {
+                        // Buscar dados do condomínio e usuário
+                        const { data: condo } = await supabaseAdmin
+                            .from('condos')
+                            .select('nome, email_contato')
+                            .eq('id', condoId)
+                            .single();
+
+                        const { data: sindico } = await supabaseAdmin
+                            .from('users')
+                            .select('nome, email')
+                            .eq('condo_id', condoId)
+                            .eq('role', 'sindico')
+                            .limit(1)
+                            .single();
+
+                        // Buscar subscription ativa
+                        const { data: subscription } = await supabaseAdmin
+                            .from('subscriptions')
+                            .select('data_renovacao, valor_mensal_cobrado')
+                            .eq('condo_id', condoId)
+                            .eq('status', 'ativo')
+                            .single();
+
+                        if (sindico || condo) {
+                            const destinatario = sindico?.email || condo?.email_contato;
+                            const nome = sindico?.nome || 'Síndico';
+
+                            // Verificar se e-mail já foi enviado para evitar duplicata
+                            const { data: emailLog } = await supabaseAdmin
+                                .from('email_logs')
+                                .select('id')
+                                .eq('condo_id', condoId)
+                                .eq('tipo', 'payment_confirmed')
+                                .eq('destinatario', destinatario)
+                                .eq('status', 'enviado')
+                                .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+                                .limit(1);
+
+                            if (!emailLog || emailLog.length === 0) {
+                                // Enviar e-mail de confirmação de pagamento
+                                const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://meucondominiofacil.com';
+                                await fetch(`${appUrl}/api/email`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        tipo: 'payment_confirmed',
+                                        destinatario,
+                                        dados: {
+                                            nome,
+                                            valor: payment.transaction_amount?.toFixed(2) || subscription?.valor_mensal_cobrado?.toFixed(2) || '0.00',
+                                            proximoVencimento: subscription?.data_renovacao || 'a definir',
+                                            dashboardUrl: `${appUrl}/dashboard`
+                                        },
+                                        condoId,
+                                        internalCall: true
+                                    }),
+                                });
+                                console.log(`E-mail de confirmação enviado para ${destinatario}`);
+                            }
+                        }
+                    } catch (emailError) {
+                        console.error('Erro ao enviar e-mail de confirmação:', emailError);
+                        // Não bloquear webhook por erro de e-mail
+                    }
+                }
+
                 // Marcar como processado APÓS sucesso
                 processedPayments.add(idempotencyKey);
 

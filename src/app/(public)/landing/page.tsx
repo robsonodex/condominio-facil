@@ -26,7 +26,7 @@ const detailedFeatures = [
         icon: BarChart3,
         title: 'Dashboard Intuitivo',
         description: 'Visualize todas as métricas importantes do seu condomínio em tempo real.',
-        screenshot: '/screenshots/dashboard.png',
+        screenshot: null, // Será renderizado como gradiente
         benefits: [
             'Visão geral de inadimplência',
             'Saldo financeiro atualizado',
@@ -132,9 +132,9 @@ const plans = [
         features: [
             'Tudo do Profissional',
             'Multi-condomínios',
-            'API de Integração',
             'Suporte 24/7',
             'Treinamento Online',
+            'Consultor Dedicado',
         ],
         notIncluded: [],
         popular: false,
@@ -322,7 +322,7 @@ export default function LandingPage() {
                                 </div>
                                 <div className="flex-1">
                                     <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-gray-200">
-                                        {feature.screenshot !== '/screenshots/dashboard.png' ? (
+                                        {feature.screenshot ? (
                                             <Image
                                                 src={feature.screenshot}
                                                 alt={feature.title}
@@ -428,7 +428,7 @@ export default function LandingPage() {
                                         { name: 'Boletos Mercado Pago', basic: false, pro: true, adv: true },
                                         { name: 'Relatórios Avançados', basic: false, pro: true, adv: true },
                                         { name: 'Multi-condomínios', basic: false, pro: false, adv: true },
-                                        { name: 'API de Integração', basic: false, pro: false, adv: true },
+                                        { name: 'Consultor Dedicado', basic: false, pro: false, adv: true },
                                     ].map((row, index) => (
                                         <tr key={index} className="hover:bg-gray-50">
                                             <td className="px-6 py-4 text-sm text-gray-900">{row.name}</td>
