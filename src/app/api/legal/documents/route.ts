@@ -7,37 +7,37 @@ export async function GET(request: NextRequest) {
     try {
         const supabase = await createClient();
 
-        // Autenticação obrigatória
+        // Documentos legais são públicos - não requer autenticação
+        // Usuário precisa ver os documentos ANTES de aceitar
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-            return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
-        }
-
-        // Buscar plano do usuário
-        const { data: profile } = await supabase
-            .from('users')
-            .select(`
-                id,
-                condo_id,
-                condos (
-                    id,
-                    subscriptions (
-                        plans (
-                            nome_plano
-                        )
-                    )
-                )
-            `)
-            .eq('id', user.id)
-            .single();
 
         let planName = 'Básico'; // Padrão
 
-        // Type assertion para evitar erro de tipagem profunda
-        const profileWithPlan = profile as any;
-        const subscription = profileWithPlan?.condos?.subscriptions?.[0];
-        if (subscription?.plans?.nome_plano) {
-            planName = subscription.plans.nome_plano;
+        // Se usuário estiver autenticado, buscar plano dele
+        if (user) {
+            const { data: profile } = await supabase
+                .from('users')
+                .select(`
+                    id,
+                    condo_id,
+                    condos (
+                        id,
+                        subscriptions (
+                            plans (
+                                nome_plano
+                            )
+                        )
+                    )
+                `)
+                .eq('id', user.id)
+                .single();
+
+            // Type assertion para evitar erro de tipagem profunda
+            const profileWithPlan = profile as any;
+            const subscription = profileWithPlan?.condos?.subscriptions?.[0];
+            if (subscription?.plans?.nome_plano) {
+                planName = subscription.plans.nome_plano;
+            }
         }
 
         // Carregar documentos obrigatórios
