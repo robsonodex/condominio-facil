@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import nodemailer from 'nodemailer';
+import {
+    supportNewTicketEmail,
+    supportNewMessageEmail,
+    supportTicketClosedEmail,
+    supportSLABreachedEmail
+} from '@/lib/emails/support-templates';
+import { legalAcceptanceConfirmedEmail } from '@/lib/emails/legal-templates';
 
 // Hostinger SMTP Configuration
 const SMTP_HOST = process.env.SMTP_HOST || 'smtp.hostinger.com';
@@ -51,13 +58,89 @@ const templates: Record<string, { subject: string; html: (data: any) => string }
     welcome: {
         subject: 'Bem-vindo ao Condomínio Fácil! 🏠',
         html: (data) => `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <h1 style="color: #10b981;">Bem-vindo, ${sanitizeHtml(data.nome)}!</h1>
-                <p>Sua conta no <strong>Condomínio Fácil</strong> foi criada com sucesso.</p>
-                <p>Você tem <strong>7 dias grátis</strong> para testar todas as funcionalidades.</p>
-                <a href="${sanitizeHtml(data.loginUrl)}" style="display: inline-block; background: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 20px;">Acessar Sistema</a>
-                <p style="margin-top: 30px; color: #666;">Qualquer dúvida, responda este email.</p>
-            </div>
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            </head>
+            <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f3f4f6;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+                    <!-- Header -->
+                    <div style="background: linear-gradient(135deg, #059669, #10b981); padding: 40px 20px; text-align: center;">
+                        <h1 style="color: #ffffff; margin: 0; font-size: 28px;">🏠 Condomínio Fácil</h1>
+                    </div>
+                    
+                    <!-- Content -->
+                    <div style="padding: 40px 30px;">
+                        <h2 style="color: #1f2937; margin-top: 0;">Bem-vindo, ${sanitizeHtml(data.nome)}!</h2>
+                        
+                        <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
+                            Sua conta no <strong>Condomínio Fácil</strong> foi criada com sucesso! 🎉
+                        </p>
+                        
+                        <div style="background-color: #ecfdf5; border-left: 4px solid #10b981; padding: 15px; margin: 25px 0;">
+                            <p style="color: #065f46; margin: 0; font-weight: bold;">
+                                ✨ Você tem 7 dias grátis para testar todas as funcionalidades premium!
+                            </p>
+                        </div>
+                        
+                        <!-- CTA Button -->
+                        <div style="text-align: center; margin: 35px 0;">
+                            <a href="${sanitizeHtml(data.loginUrl)}" 
+                               style="display: inline-block; 
+                                      background: #10b981; 
+                                      color: #ffffff; 
+                                      padding: 16px 40px; 
+                                      text-decoration: none; 
+                                      border-radius: 8px; 
+                                      font-weight: bold; 
+                                      font-size: 16px;
+                                      box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);">
+                                Acessar o Sistema →
+                            </a>
+                        </div>
+                        
+                        <!-- Next Steps -->
+                        <div style="margin-top: 30px;">
+                            <h3 style="color: #1f2937; font-size: 18px;">📋 Próximos Passos:</h3>
+                            <ol style="color: #4b5563; line-height: 1.8;">
+                                <li><strong>Faça seu primeiro login</strong> com o email e senha cadastrados</li>
+                                <li><strong>Complete seu perfil</strong> e configure os dados do condomínio</li>
+                                <li><strong>Explore o sistema</strong> - adicione moradores, unidades e muito mais</li>
+                                <li><strong>Escolha seu plano</strong> antes do fim do período de teste</li>
+                            </ol>
+                        </div>
+                        
+                        <!-- Features Highlight -->
+                        <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; margin-top: 30px;">
+                            <h3 style="color: #1f2937; font-size: 18px; margin-top: 0;">🚀 O que você pode fazer:</h3>
+                            <ul style="color: #4b5563; line-height: 1.8; margin-bottom: 0;">
+                                <li>Gerenciar moradores e unidades</li>
+                                <li>Controlar finanças e gerar boletos</li>
+                                <li>Registrar ocorrências e portaria</li>
+                                <li>Acessar relatórios completos</li>
+                            </ul>
+                        </div>
+                        
+                        <!-- Support -->
+                        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+                            <p style="color: #6b7280; font-size: 14px; margin: 0;">
+                                💬 <strong>Precisa de ajuda?</strong><br>
+                                Entre em contato: <a href="mailto:contato@meucondominiofacil.com" style="color: #10b981;">contato@meucondominiofacil.com</a>
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Footer -->
+                    <div style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
+                        <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+                            © ${new Date().getFullYear()} Condomínio Fácil. Todos os direitos reservados.
+                        </p>
+                    </div>
+                </div>
+            </body>
+            </html>
         `,
     },
     trial_ending: {
@@ -121,6 +204,28 @@ const templates: Record<string, { subject: string; html: (data: any) => string }
             </div>
         `,
     },
+    // Support System Templates
+    support_new_ticket: {
+        subject: 'Novo Ticket Criado - Condomínio Fácil',
+        html: (data) => supportNewTicketEmail(data),
+    },
+    support_new_message: {
+        subject: 'Nova Mensagem no Ticket - Condomínio Fácil',
+        html: (data) => supportNewMessageEmail(data),
+    },
+    support_ticket_closed: {
+        subject: 'Ticket Fechado - Condomínio Fácil',
+        html: (data) => supportTicketClosedEmail(data),
+    },
+    support_sla_breached: {
+        subject: '⚠️ SLA Estourado - Condomínio Fácil',
+        html: (data) => supportSLABreachedEmail(data),
+    },
+    // Legal System Templates
+    legal_acceptance_confirmed: {
+        subject: '✅ Seu aceite foi registrado - Condomínio Fácil',
+        html: (data) => legalAcceptanceConfirmedEmail(data),
+    },
 };
 
 // Create transporter
@@ -144,57 +249,10 @@ function createTransporter() {
 export async function POST(request: NextRequest) {
     try {
         const supabase = await createClient();
-
-        // ========================================
-        // SEGURANÇA 1: Autenticação obrigatória
-        // ========================================
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-            return NextResponse.json(
-                { error: 'Não autorizado. Faça login para continuar.' },
-                { status: 401 }
-            );
-        }
-
-        // Buscar perfil do usuário
-        const { data: profile } = await supabase
-            .from('users')
-            .select('id, role, condo_id')
-            .eq('id', user.id)
-            .single();
-
-        if (!profile) {
-            return NextResponse.json(
-                { error: 'Perfil não encontrado.' },
-                { status: 403 }
-            );
-        }
-
-        // ========================================
-        // SEGURANÇA 2: Validação de role
-        // Apenas superadmin, sindico podem enviar emails
-        // ========================================
-        const allowedRoles = ['superadmin', 'sindico'];
-        if (!allowedRoles.includes(profile.role)) {
-            return NextResponse.json(
-                { error: 'Sem permissão para enviar emails.' },
-                { status: 403 }
-            );
-        }
-
-        // ========================================
-        // SEGURANÇA 3: Rate Limiting
-        // ========================================
-        if (!checkRateLimit(user.id)) {
-            return NextResponse.json(
-                { error: 'Limite de envio excedido. Aguarde 1 minuto.' },
-                { status: 429 }
-            );
-        }
-
         const body = await request.json();
-        const { tipo, destinatario, dados, condoId, userId } = body;
+        const { tipo, destinatario, dados, condoId, userId, internalCall } = body;
 
+        // Validar tipo e template
         if (!tipo || !destinatario || !templates[tipo]) {
             return NextResponse.json({ error: 'Tipo de email inválido' }, { status: 400 });
         }
@@ -206,13 +264,65 @@ export async function POST(request: NextRequest) {
         }
 
         // ========================================
-        // SEGURANÇA 4: Validar condoId se não for superadmin
+        // SEGURANÇA: Autenticação OPCIONAL para template welcome
         // ========================================
-        if (profile.role !== 'superadmin' && condoId && condoId !== profile.condo_id) {
-            return NextResponse.json(
-                { error: 'Sem permissão para este condomínio.' },
-                { status: 403 }
-            );
+        let profile = null;
+        let user = null;
+
+        // Templates que NÃO requerem autenticação (chamadas internas)
+        const publicTemplates = ['welcome', 'legal_acceptance_confirmed'];
+        const requiresAuth = !publicTemplates.includes(tipo) || !internalCall;
+
+        if (requiresAuth) {
+            // Autenticação obrigatória
+            const { data: { user: authUser } } = await supabase.auth.getUser();
+            if (!authUser) {
+                return NextResponse.json(
+                    { error: 'Não autorizado. Faça login para continuar.' },
+                    { status: 401 }
+                );
+            }
+            user = authUser;
+
+            // Buscar perfil do usuário
+            const { data: profileData } = await supabase
+                .from('users')
+                .select('id, role, condo_id')
+                .eq('id', user.id)
+                .single();
+
+            if (!profileData) {
+                return NextResponse.json(
+                    { error: 'Perfil não encontrado.' },
+                    { status: 403 }
+                );
+            }
+            profile = profileData;
+
+            // Validação de role
+            const allowedRoles = ['superadmin', 'sindico'];
+            if (!allowedRoles.includes(profile.role)) {
+                return NextResponse.json(
+                    { error: 'Sem permissão para enviar emails.' },
+                    { status: 403 }
+                );
+            }
+
+            // Rate Limiting
+            if (!checkRateLimit(user.id)) {
+                return NextResponse.json(
+                    { error: 'Limite de envio excedido. Aguarde 1 minuto.' },
+                    { status: 429 }
+                );
+            }
+
+            // Validar condoId se não for superadmin
+            if (profile.role !== 'superadmin' && condoId && condoId !== profile.condo_id) {
+                return NextResponse.json(
+                    { error: 'Sem permissão para este condomínio.' },
+                    { status: 403 }
+                );
+            }
         }
 
         const template = templates[tipo];
@@ -220,36 +330,63 @@ export async function POST(request: NextRequest) {
 
         let status = 'enviado';
         let erro = null;
+        let attempts = 0;
+        const maxAttempts = 3;
 
+        // ========================================
+        // RETRY LOGIC: Tentar até 3 vezes
+        // ========================================
         if (transporter) {
-            try {
-                await transporter.sendMail({
-                    from: SMTP_FROM,
-                    to: destinatario,
-                    subject: template.subject,
-                    html: template.html(dados || {}),
-                });
-            } catch (emailError: any) {
-                console.error('Email send error:', emailError.message);
-                status = 'falhou';
-                erro = emailError.message;
+            let sent = false;
+            while (attempts < maxAttempts && !sent) {
+                attempts++;
+                try {
+                    await transporter.sendMail({
+                        from: SMTP_FROM,
+                        to: destinatario,
+                        subject: template.subject,
+                        html: template.html(dados || {}),
+                    });
+                    sent = true;
+                    console.log(`Email enviado com sucesso para ${destinatario} (tentativa ${attempts})`);
+                } catch (emailError: any) {
+                    console.error(`Tentativa ${attempts} falhou:`, emailError.message);
+                    if (attempts >= maxAttempts) {
+                        status = 'falhou';
+                        erro = `Falha após ${maxAttempts} tentativas: ${emailError.message}`;
+                    } else {
+                        // Aguardar antes de tentar novamente (backoff exponencial)
+                        await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
+                    }
+                }
             }
         } else {
             status = 'pendente';
+            erro = 'SMTP não configurado';
         }
 
         // Log email (sem dados sensíveis)
-        await supabase.from('email_logs').insert({
-            condo_id: condoId || profile.condo_id,
-            user_id: userId || user.id,
-            tipo,
-            destinatario,
-            assunto: template.subject,
-            status,
-            erro,
-        });
+        try {
+            await supabase.from('email_logs').insert({
+                condo_id: condoId || profile?.condo_id || null,
+                user_id: userId || user?.id || null,
+                tipo,
+                destinatario,
+                assunto: template.subject,
+                status,
+                erro,
+            });
+        } catch (logError) {
+            console.error('Erro ao registrar log de email:', logError);
+            // Não bloquear por erro de log
+        }
 
-        return NextResponse.json({ success: true, status });
+        return NextResponse.json({
+            success: status === 'enviado',
+            status,
+            attempts,
+            error: erro
+        });
     } catch (error: any) {
         console.error('Email API error:', error.message);
         return NextResponse.json(
