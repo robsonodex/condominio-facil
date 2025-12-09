@@ -69,11 +69,23 @@ export async function POST(request: NextRequest) {
             // Não bloqueia o aceite por falha no email
         }
 
-        return NextResponse.json({
+        // Criar response com cookie de aceite legal
+        const response = NextResponse.json({
             success: true,
             count: result.count,
             plan: result.plan
         });
+
+        // Setar cookie para evitar checks HTTP no middleware
+        response.cookies.set('legal_accepted', 'true', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 60 * 60 * 24 * 365, // 1 ano
+            path: '/'
+        });
+
+        return response;
 
     } catch (error: any) {
         console.error('Accept API error:', error);

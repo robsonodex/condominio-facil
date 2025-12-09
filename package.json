@@ -6,34 +6,30 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "next lint",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed"
   },
   "dependencies": {
-    "@supabase/ssr": "^0.8.0",
-    "@supabase/supabase-js": "^2.86.2",
-    "clsx": "^2.1.1",
-    "date-fns": "^4.1.0",
-    "html2canvas": "^1.4.1",
-    "jspdf": "^3.0.4",
-    "lucide-react": "^0.556.0",
-    "next": "16.0.7",
-    "nodemailer": "^7.0.11",
-    "react": "19.2.0",
-    "react-dom": "19.2.0",
-    "react-markdown": "^10.1.0",
-    "recharts": "^3.5.1",
-    "tailwind-merge": "^3.4.0",
-    "zustand": "^5.0.9"
+    "next": "^15.1.4",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "@supabase/supabase-js": "^2.33.1",
+    "@supabase/ssr": "^0.0.10",
+    "nodemailer": "^6.9.7"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
-    "@types/nodemailer": "^7.0.4",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.0.7",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+    "@types/nodemailer": "^6.4.14",
+    "typescript": "^5",
+    "eslint": "^8",
+    "eslint-config-next": "15.1.4",
+    "tailwindcss": "^3.4.1",
+    "postcss": "^8",
+    "autoprefixer": "^10.0.1",
+    "@playwright/test": "^1.41.0"
   }
 }

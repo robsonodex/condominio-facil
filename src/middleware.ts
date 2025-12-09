@@ -17,40 +17,83 @@ const protectedRoutes = [
     '/admin',
 ];
 
-export async function middleware(request: NextRequest) {
-    // Primeiro, atualizar sessão do Supabase
-    const response = await updateSession(request);
+// Rotas excluídas da verificação de aceite legal (evita loops de redirect)
+const EXCLUDED_FROM_LEGAL_CHECK = [
+    '/onboarding/aceite',
+    '/api/legal',
+    '/api/auth',
+];
 
+export async function middleware(request: NextRequest) {
+    const startTime = Date.now();
     const { pathname } = request.nextUrl;
 
-    // Verificar se é rota protegida que requer aceite legal
+    // 1. Atualizar sessão do Supabase (auth check)
+    const response = await updateSession(request);
+
+    // 2. Verificar se é rota protegida
     const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
+    const isExcluded = EXCLUDED_FROM_LEGAL_CHECK.some(route => pathname.startsWith(route));
 
-    if (isProtectedRoute) {
+    if (isProtectedRoute && !isExcluded) {
         try {
-            // Verificar aceite legal
-            const checkResponse = await fetch(`${request.nextUrl.origin}/api/legal/check`, {
-                headers: {
-                    cookie: request.headers.get('cookie') || '',
-                },
-            });
+            // Ler cookie de aceite legal (setado no login/onboarding)
+            // NON-BLOCKING: sem chamadas HTTP/DB, apenas leitura de cookie
+            const legalAccepted = request.cookies.get('legal_accepted')?.value === 'true';
 
-            if (checkResponse.ok) {
-                const data = await checkResponse.json();
+            if (!legalAccepted) {
+                // Redirecionar para página de aceite
+                const aceiteUrl = new URL('/onboarding/aceite', request.url);
 
-                // Se não aceitou, redirecionar para página de aceite
-                if (!data.accepted) {
-                    const aceiteUrl = new URL('/onboarding/aceite', request.url);
-                    return NextResponse.redirect(aceiteUrl);
-                }
+                // Log de métrica
+                logMiddlewareMetrics({
+                    pathname,
+                    duration: Date.now() - startTime,
+                    redirected: true,
+                    reason: 'legal_not_accepted'
+                });
+
+                return NextResponse.redirect(aceiteUrl);
             }
         } catch (error) {
-            console.error('Middleware error checking legal acceptance:', error);
-            // Em caso de erro, permitir acesso mas logar o erro
+            console.error('[MIDDLEWARE_ERROR] Legal check failed:', error);
+            // Fallback permissivo: permitir acesso em caso de erro
+            logMiddlewareMetrics({
+                pathname,
+                duration: Date.now() - startTime,
+                redirected: false,
+                error: String(error)
+            });
         }
     }
 
+    // Log de métrica para sucesso
+    if (isProtectedRoute) {
+        logMiddlewareMetrics({
+            pathname,
+            duration: Date.now() - startTime,
+            redirected: false,
+            reason: 'success'
+        });
+    }
+
     return response;
+}
+
+// Função de logging de métricas (non-blocking)
+function logMiddlewareMetrics(data: {
+    pathname: string;
+    duration: number;
+    redirected: boolean;
+    reason?: string;
+    error?: string;
+}) {
+    // Log estruturado para Vercel Analytics
+    console.log(JSON.stringify({
+        type: 'MIDDLEWARE_METRICS',
+        ...data,
+        timestamp: new Date().toISOString()
+    }));
 }
 
 export const config = {
