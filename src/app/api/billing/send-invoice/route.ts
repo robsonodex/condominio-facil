@@ -210,13 +210,23 @@ export async function POST(request: NextRequest) {
         });
 
         // Registrar log de email
-        await supabase.from('email_logs').insert({
+        await supabaseAdmin.from('email_logs').insert({
             condo_id: condo.id,
             user_id: sindico?.id || null,
             tipo: 'invoice',
             destinatario: emailDestino,
             assunto: `Cobrança ${nomeCondo} - R$ ${valor.toFixed(2)}`,
             status: 'enviado'
+        });
+
+        // Criar notificação in-app para o síndico
+        await supabaseAdmin.from('notifications').insert({
+            condo_id: condo.id,
+            user_id: sindico?.id || null,
+            title: '💳 Nova Cobrança',
+            message: `Uma cobrança de R$ ${valor.toFixed(2)} foi enviada. Acesse sua assinatura para pagar.`,
+            type: 'billing',
+            link: '/assinatura'
         });
 
         return NextResponse.json({
