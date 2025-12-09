@@ -12,6 +12,7 @@ export default function AdminUsuariosPage() {
     const [users, setUsers] = useState<any[]>([]);
     const [condos, setCondos] = useState<{ id: string; nome: string }[]>([]);
     const [plans, setPlans] = useState<{ id: string; nome_plano: string; valor_mensal: number }[]>([]);
+    const [subscriptions, setSubscriptions] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [editingUser, setEditingUser] = useState<any>(null);
@@ -23,6 +24,7 @@ export default function AdminUsuariosPage() {
         fetchUsers();
         fetchCondos();
         fetchPlans();
+        fetchSubscriptions();
     }, []);
 
     const fetchPlans = async () => {
@@ -33,6 +35,14 @@ export default function AdminUsuariosPage() {
     const fetchCondos = async () => {
         const { data } = await supabase.from('condos').select('id, nome');
         setCondos((data as { id: string; nome: string }[]) || []);
+    };
+
+    const fetchSubscriptions = async () => {
+        const { data } = await supabase
+            .from('subscriptions')
+            .select('id, status, data_renovacao, valor_mensal_cobrado, condo:condos(id, nome), plan:plans(nome_plano)')
+            .order('created_at', { ascending: false });
+        setSubscriptions(data || []);
     };
 
     const fetchUsers = async () => {
@@ -222,18 +232,20 @@ export default function AdminUsuariosPage() {
                 user={editingUser}
                 condos={condos}
                 plans={plans}
+                subscriptions={subscriptions}
             />
         </div>
     );
 }
 
-function UserModal({ isOpen, onClose, onSuccess, user, condos, plans }: {
+function UserModal({ isOpen, onClose, onSuccess, user, condos, plans, subscriptions }: {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
     user: any;
     condos: { id: string; nome: string }[];
     plans: { id: string; nome_plano: string; valor_mensal: number }[];
+    subscriptions: any[];
 }) {
     const [loading, setLoading] = useState(false);
     const [nome, setNome] = useState('');
@@ -248,6 +260,8 @@ function UserModal({ isOpen, onClose, onSuccess, user, condos, plans }: {
     const [planoId, setPlanoId] = useState('');
     const [periodoTeste, setPeriodoTeste] = useState(true);
     const [ativarImediatamente, setAtivarImediatamente] = useState(false);
+    const [usarAssinaturaExistente, setUsarAssinaturaExistente] = useState(false);
+    const [selectedSubscriptionId, setSelectedSubscriptionId] = useState('');
     const supabase = createClient();
 
     useEffect(() => {
@@ -317,13 +331,16 @@ function UserModal({ isOpen, onClose, onSuccess, user, condos, plans }: {
                         senha,
                         telefone: telefone || null,
                         role,
-                        condo_id: role === 'sindico' ? null : condoId || null,
+                        // Para síndico com assinatura existente, usa o condo_id da assinatura
+                        condo_id: role === 'sindico'
+                            ? (usarAssinaturaExistente && condoId ? condoId : null)
+                            : condoId || null,
                         ativo,
-                        // Campos extras para síndico
-                        condo_nome: role === 'sindico' ? condoNome : null,
-                        plano_id: role === 'sindico' ? planoId : null,
-                        periodo_teste: role === 'sindico' ? periodoTeste : false,
-                        ativar_imediatamente: role === 'sindico' ? ativarImediatamente : false,
+                        // Campos extras para síndico (criar nova assinatura)
+                        condo_nome: (role === 'sindico' && !usarAssinaturaExistente) ? condoNome : null,
+                        plano_id: (role === 'sindico' && !usarAssinaturaExistente) ? planoId : null,
+                        periodo_teste: (role === 'sindico' && !usarAssinaturaExistente) ? periodoTeste : false,
+                        ativar_imediatamente: (role === 'sindico' && !usarAssinaturaExistente) ? ativarImediatamente : false,
                     }),
                 });
 
@@ -416,61 +433,117 @@ function UserModal({ isOpen, onClose, onSuccess, user, condos, plans }: {
                     <div className="space-y-4 p-4 bg-emerald-50 rounded-lg border border-emerald-200">
                         <p className="text-sm font-medium text-emerald-800">Configuração do Condomínio</p>
 
-                        <Input
-                            label="Nome do Condomínio"
-                            value={condoNome}
-                            onChange={(e) => setCondoNome(e.target.value)}
-                            placeholder="Ex: Residencial Flores"
-                            required
-                        />
-
-                        <Select
-                            label="Plano"
-                            value={planoId}
-                            onChange={(e) => setPlanoId(e.target.value)}
-                            options={[
-                                { value: '', label: 'Selecione um plano' },
-                                ...plans.map(p => ({
-                                    value: p.id,
-                                    label: `${p.nome_plano} - R$ ${p.valor_mensal.toFixed(2)}/mês`
-                                }))
-                            ]}
-                            required
-                        />
-
-                        <div className="flex flex-col gap-2">
+                        {/* Toggle entre existente e novo */}
+                        <div className="flex items-center gap-4 pb-3 border-b border-emerald-200">
                             <div className="flex items-center gap-2">
                                 <input
-                                    type="checkbox"
-                                    id="periodoTeste"
-                                    checked={periodoTeste && !ativarImediatamente}
-                                    onChange={(e) => {
-                                        setPeriodoTeste(e.target.checked);
-                                        if (e.target.checked) setAtivarImediatamente(false);
-                                    }}
-                                    className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                                    type="radio"
+                                    id="criarNovo"
+                                    name="tipoVinculo"
+                                    checked={!usarAssinaturaExistente}
+                                    onChange={() => setUsarAssinaturaExistente(false)}
+                                    className="text-emerald-600 focus:ring-emerald-500"
                                 />
-                                <label htmlFor="periodoTeste" className="text-sm text-gray-700">
-                                    Período de teste (7 dias grátis)
+                                <label htmlFor="criarNovo" className="text-sm text-gray-700">
+                                    Criar novo condomínio
                                 </label>
                             </div>
-
                             <div className="flex items-center gap-2">
                                 <input
-                                    type="checkbox"
-                                    id="ativarImediatamente"
-                                    checked={ativarImediatamente}
-                                    onChange={(e) => {
-                                        setAtivarImediatamente(e.target.checked);
-                                        if (e.target.checked) setPeriodoTeste(false);
-                                    }}
-                                    className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                                    type="radio"
+                                    id="usarExistente"
+                                    name="tipoVinculo"
+                                    checked={usarAssinaturaExistente}
+                                    onChange={() => setUsarAssinaturaExistente(true)}
+                                    className="text-emerald-600 focus:ring-emerald-500"
                                 />
-                                <label htmlFor="ativarImediatamente" className="text-sm text-gray-700">
-                                    Ativar imediatamente (sem teste)
+                                <label htmlFor="usarExistente" className="text-sm text-gray-700">
+                                    Vincular a assinatura existente
                                 </label>
                             </div>
                         </div>
+
+                        {usarAssinaturaExistente ? (
+                            /* Dropdown de assinaturas existentes */
+                            <Select
+                                label="Selecione a Assinatura"
+                                value={selectedSubscriptionId}
+                                onChange={(e) => {
+                                    setSelectedSubscriptionId(e.target.value);
+                                    const sub = subscriptions.find(s => s.id === e.target.value);
+                                    if (sub?.condo?.id) {
+                                        setCondoId(sub.condo.id);
+                                    }
+                                }}
+                                options={[
+                                    { value: '', label: 'Selecione uma assinatura' },
+                                    ...subscriptions.map(s => ({
+                                        value: s.id,
+                                        label: `${s.condo?.nome || 'Sem condo'} - ${s.plan?.nome_plano || 'Sem plano'} (${s.status})`
+                                    }))
+                                ]}
+                                required
+                            />
+                        ) : (
+                            /* Campos para criar novo */
+                            <>
+                                <Input
+                                    label="Nome do Condomínio"
+                                    value={condoNome}
+                                    onChange={(e) => setCondoNome(e.target.value)}
+                                    placeholder="Ex: Residencial Flores"
+                                    required
+                                />
+
+                                <Select
+                                    label="Plano"
+                                    value={planoId}
+                                    onChange={(e) => setPlanoId(e.target.value)}
+                                    options={[
+                                        { value: '', label: 'Selecione um plano' },
+                                        ...plans.map(p => ({
+                                            value: p.id,
+                                            label: `${p.nome_plano} - R$ ${p.valor_mensal.toFixed(2)}/mês`
+                                        }))
+                                    ]}
+                                    required
+                                />
+
+                                <div className="flex flex-col gap-2">
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="checkbox"
+                                            id="periodoTeste"
+                                            checked={periodoTeste && !ativarImediatamente}
+                                            onChange={(e) => {
+                                                setPeriodoTeste(e.target.checked);
+                                                if (e.target.checked) setAtivarImediatamente(false);
+                                            }}
+                                            className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                                        />
+                                        <label htmlFor="periodoTeste" className="text-sm text-gray-700">
+                                            Período de teste (7 dias grátis)
+                                        </label>
+                                    </div>
+
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="checkbox"
+                                            id="ativarImediatamente"
+                                            checked={ativarImediatamente}
+                                            onChange={(e) => {
+                                                setAtivarImediatamente(e.target.checked);
+                                                if (e.target.checked) setPeriodoTeste(false);
+                                            }}
+                                            className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                                        />
+                                        <label htmlFor="ativarImediatamente" className="text-sm text-gray-700">
+                                            Ativar imediatamente (sem teste)
+                                        </label>
+                                    </div>
+                                </div>
+                            </>
+                        )}
                     </div>
                 )}
 
