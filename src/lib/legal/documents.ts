@@ -115,28 +115,137 @@ export async function loadContractByPlan(
 
 // Carregar todos os documentos obrigatórios para um usuário
 export async function loadRequiredDocuments(
-    planName: string,
+    planName: string = 'Básico',
     version: string = '1.0'
 ): Promise<LegalDocument[]> {
-    const documents: LegalDocument[] = [];
+    const timestamp = new Date().toISOString();
 
-    // Termos de Uso
-    const termos = await loadLegalDocument('termos_uso', version);
-    if (termos) documents.push(termos);
+    return [
+        {
+            type: 'termos_uso',
+            version,
+            updated_at: timestamp,
+            hash: await calculateHash(getTermosUsoContent()),
+            content: getTermosUsoContent()
+        },
+        {
+            type: 'politica_privacidade',
+            version,
+            updated_at: timestamp,
+            hash: await calculateHash(getPoliticaPrivacidadeContent()),
+            content: getPoliticaPrivacidadeContent()
+        },
+        {
+            type: 'contrato_plano',
+            version,
+            updated_at: timestamp,
+            hash: await calculateHash(getContratoPlanoContent(planName)),
+            content: getContratoPlanoContent(planName)
+        },
+        {
+            type: 'politica_cobranca',
+            version,
+            updated_at: timestamp,
+            hash: await calculateHash(getPoliticaCobrancaContent()),
+            content: getPoliticaCobrancaContent()
+        }
+    ];
+}
 
-    // Política de Privacidade
-    const privacidade = await loadLegalDocument('politica_privacidade', version);
-    if (privacidade) documents.push(privacidade);
+// Funções de conteúdo dos documentos
+function getTermosUsoContent(): string {
+    return `# Termos de Uso - Condomínio Fácil
 
-    // Contrato do Plano
-    const contrato = await loadContractByPlan(planName, version);
-    if (contrato) documents.push(contrato);
+## 1. Aceitação dos Termos
+Ao acessar e usar o sistema Condomínio Fácil, você concorda em cumprir estes Termos de Uso.
 
-    // Política de Cobrança (opcional, mas recomendado)
-    const cobranca = await loadLegalDocument('politica_cobranca', version);
-    if (cobranca) documents.push(cobranca);
+## 2. Descrição do Serviço
+Plataforma SaaS para gestão condominial oferecendo gestão financeira, comunicação, controle de acesso e relatórios.
 
-    return documents;
+## 3. Responsabilidades do Usuário
+Você deve fornecer informações precisas, manter a segurança da sua senha e não utilizar o sistema para fins ilícitos.
+
+## 4. Propriedade Intelectual
+Todo o conteúdo é propriedade exclusiva da empresa Condomínio Fácil.
+
+## 5. Limitação de Responsabilidade
+O serviço é fornecido "como está". Não garantimos disponibilidade ininterrupta.
+
+**Data de vigência**: Janeiro de 2024`;
+}
+
+function getPoliticaPrivacidadeContent(): string {
+    return `# Política de Privacidade - Condomínio Fácil
+
+## 1. Introdução
+Coletamos e protegemos seus dados em conformidade com a LGPD (Lei 13.709/2018).
+
+## 2. Dados Coletados
+Dados cadastrais, do condomínio, financeiros e de uso do sistema.
+
+## 3. Finalidade
+Prestação do serviço, comunicação, processamento financeiro e melhorias.
+
+## 4. Segurança
+Criptografia, controle de acesso (RLS), backups e monitoramento.
+
+## 5. Seus Direitos (LGPD)
+Acesso, correção, exclusão e revogação de consentimento. Contato: privacidade@condominiofacil.com.br
+
+**Última atualização**: Janeiro de 2024`;
+}
+
+function getContratoPlanoContent(planName: string): string {
+    const plans: Record<string, { price: string; features: string }> = {
+        'Premium': {
+            price: 'R$ 299,90/mês',
+            features: 'Unidades e usuários ilimitados, 100GB storage, suporte prioritário, relatórios avançados'
+        },
+        'Profissional': {
+            price: 'R$ 149,90/mês',
+            features: 'Até 100 unidades, 20 usuários, 50GB storage, suporte padrão, relatórios completos'
+        },
+        'Básico': {
+            price: 'R$ 79,90/mês',
+            features: 'Até 30 unidades, 5 usuários, 20GB storage, suporte email, relatórios básicos'
+        }
+    };
+
+    const plan = plans[planName] || plans['Básico'];
+
+    return `# Contrato do Plano ${planName}
+
+## 1. Partes
+CONTRATANTE: Seu condomínio | CONTRATADA: Condomínio Fácil Tecnologia Ltda.
+
+## 2. Recursos do Plano ${planName}
+${plan.features}
+
+## 3. Valor e Vigência
+**Valor**: ${plan.price} | **Vigência**: 12 meses (renovação automática)
+
+## 4. SLA
+Disponibilidade 99,5%, backup diário, suporte conforme plano.
+
+**Assinado digitalmente ao aceitar.**`;
+}
+
+function getPoliticaCobrancaContent(): string {
+    return `# Política de Cobrança
+
+## 1. Formas de Pagamento
+Cartão de crédito, boleto (dia 10) e PIX.
+
+## 2. Atraso
+Tolerância de 5 dias. Após 15 dias: suspensão.
+
+## 3. Multas
+Multa 2% + juros 1% ao mês.
+
+## 4. Cancelamento
+Aviso 30 dias, sem reembolso de valores pagos.
+
+**Contato**: financeiro@condominiofacil.com.br`;
 }
 
 // Validar hash de documento
