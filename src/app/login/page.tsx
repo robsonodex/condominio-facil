@@ -33,13 +33,14 @@ function LoginContent() {
 
         const { error } = await signIn(email, password);
 
-
         if (error) {
             setError('Email ou senha inválidos');
             setLoading(false);
         } else {
-            // Redirect direto sem usar router
-            window.location.href = '/dashboard';
+            // Aguardar sessão ser salva antes de redirecionar
+            setTimeout(() => {
+                window.location.href = '/dashboard';
+            }, 500);
         }
     };
 

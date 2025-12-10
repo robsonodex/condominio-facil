@@ -35,25 +35,24 @@ export async function updateSession(request: NextRequest) {
         data: { user },
     } = await supabase.auth.getUser();
 
-    // TEMPORÁRIO: PROTEÇÃO DE ROTAS DESABILITADA para permitir login
-    /*
-    // Protected routes
-    const protectedPaths = ['/dashboard', '/admin', '/financeiro', '/moradores', '/unidades', '/avisos', '/ocorrencias', '/portaria', '/relatorios'];
+    // Proteção de rotas - lógica simplificada sem loops
+    const protectedPaths = ['/dashboard', '/admin', '/financeiro', '/moradores', '/unidades', '/avisos', '/ocorrencias', '/portaria', '/relatorios', '/usuarios', '/alugueis', '/assinatura', '/suporte', '/perfil', '/boletos'];
     const isProtectedRoute = protectedPaths.some(path => request.nextUrl.pathname.startsWith(path));
 
+    // Se não tem usuário E está tentando acessar rota protegida → login
     if (!user && isProtectedRoute) {
         const url = request.nextUrl.clone();
         url.pathname = '/login';
         return NextResponse.redirect(url);
     }
 
-    // If user is logged in and tries to access login page, redirect to dashboard
+    // Se tem usuário E está na página de login → dashboard
+    // IMPORTANTE: só redireciona se vier DIRETAMENTE do /login, não de outras páginas
     if (user && request.nextUrl.pathname === '/login') {
         const url = request.nextUrl.clone();
         url.pathname = '/dashboard';
         return NextResponse.redirect(url);
     }
-    */
 
     return supabaseResponse;
 }

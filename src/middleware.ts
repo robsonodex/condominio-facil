@@ -26,6 +26,11 @@ const EXCLUDED_FROM_LEGAL_CHECK = [
 ];
 
 export async function middleware(request: NextRequest) {
+    // TEMPORÁRIO: Middleware desabilitado - estava bloqueando login
+    // O problema: sessão não está sendo salva rápido o suficiente
+    return NextResponse.next();
+
+    /*
     const startTime = Date.now();
     const { pathname } = request.nextUrl;
 

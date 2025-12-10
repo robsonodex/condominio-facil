@@ -38,26 +38,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 return profileCache[sessionUser.id];
             }
 
-            // Timeout de 3 segundos
-            const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('Profile fetch timeout')), 3000)
-            );
-
-            const profilePromise = supabase
+            // Buscar por email
+            const { data: profileData, error } = await supabase
                 .from('users')
                 .select('*')
                 .eq('email', sessionUser.email)
                 .eq('ativo', true)
                 .maybeSingle();
 
-            const { data: profileData, error } = await Promise.race([
-                profilePromise,
-                timeoutPromise
-            ]) as any;
-
             if (error) {
                 console.error('Error fetching profile:', error);
-                // IMPORTANTE: Não bloquear login por erro de profile
+
                 return null;
             }
 
@@ -70,7 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return null;
         } catch (error) {
             console.error('Error fetching profile:', error);
-            // IMPORTANTE: Não bloquear login
+
             return null;
         }
     }, [supabase]);
@@ -141,12 +132,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, [supabase]); // Only depend on supabase, not fetchProfile
 
     const signIn = useCallback(async (email: string, password: string) => {
+        alert('[signIn] INÍCIO DA FUNÇÃO');
+        alert('[signIn] SUPABASE_URL: ' + process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 30) + '...');
+        alert('[signIn] ANON_KEY existe: ' + (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'SIM' : 'NÃO'));
         setLoading(true);
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) {
+        alert('[signIn] ANTES DE signInWithPassword');
+
+        try {
+            // Timeout de 10 segundos para evitar travamento
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Timeout: Supabase não respondeu em 10s')), 10000)
+            );
+
+            const loginPromise = supabase.auth.signInWithPassword({ email, password });
+
+            const result = await Promise.race([loginPromise, timeoutPromise]) as any;
+            const { error } = result;
+
+            alert('[signIn] DEPOIS DE signInWithPassword - error: ' + (error ? error.message : 'SEM ERRO'));
             setLoading(false);
+            return { error: error as Error | null };
+        } catch (err: any) {
+            alert('[signIn] ERRO CAPTURADO: ' + err.message);
+            setLoading(false);
+            return { error: err as Error };
         }
-        return { error: error as Error | null };
     }, [supabase]);
 
     const signUp = useCallback(async (email: string, password: string, nome: string) => {
