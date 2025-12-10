@@ -27,7 +27,7 @@
 |-------|--------------|----------|-----------------|----------------------|
 | **Básico** | R$ 99,90 | Até 20 | Gestão Financeira, Moradores, Avisos, Suporte Email | R$ 1.198,80 |
 | **Profissional** ⭐ | R$ 179,90 | Até 40 | Tudo do Básico + Ocorrências, Portaria, Boletos MP, Relatórios, Suporte Prioritário | R$ 2.158,80 |
-| **Avançado** | R$ 249,90 | Até 60 | Tudo do Profissional + Multi-condomínios, API, Suporte 24/7, Treinamento | R$ 2.998,80 |
+| **Avançado** | R$ 249,90 | Até 60 | Tudo do Profissional + Multi-condomínios, Suporte 24/7, Treinamento | R$ 2.998,80 |
 
 **🎁 Todos os planos incluem:**
 - ✅ 7 dias grátis para teste
