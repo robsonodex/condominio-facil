@@ -21,7 +21,9 @@ export default function AdminAssinaturasPage() {
         setLoading(true);
         try {
             const params = filterStatus ? `?status=${filterStatus}` : '';
-            const response = await fetch(`/api/admin/subscriptions${params}`);
+            const response = await fetch(`/api/admin/subscriptions${params}`, {
+                credentials: 'include'
+            });
             const data = await response.json();
 
             if (!response.ok) {
