@@ -301,43 +301,51 @@ function ResidentModal({ isOpen, onClose, onSuccess, condoId, units, resident }:
 
         try {
             if (resident) {
-                if (resident.user_id) {
-                    await supabase.from('users').update({
+                // Update via API
+                const response = await fetch('/api/residents', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id: resident.id,
+                        user_id: resident.user_id,
                         nome,
                         telefone: telefone || null,
-                    }).eq('id', resident.user_id);
-                }
-                await supabase.from('residents').update({
-                    unidade_id: unidadeId,
-                    tipo,
-                    ativo,
-                }).eq('id', resident.id);
-            } else {
-                const { data: newUser } = await supabase.from('users').insert({
-                    nome,
-                    email,
-                    telefone: telefone || null,
-                    role: 'morador',
-                    condo_id: condoId,
-                    unidade_id: unidadeId,
-                    ativo: true,
-                }).select().single();
-
-                if (newUser) {
-                    await supabase.from('residents').insert({
-                        user_id: newUser.id,
-                        condo_id: condoId,
                         unidade_id: unidadeId,
                         tipo,
                         ativo,
-                    });
+                    }),
+                });
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error || 'Erro ao atualizar morador');
+                }
+            } else {
+                // Create via API
+                const response = await fetch('/api/residents', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        nome,
+                        email,
+                        telefone: telefone || null,
+                        condo_id: condoId,
+                        unidade_id: unidadeId,
+                        tipo,
+                    }),
+                });
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error || 'Erro ao criar morador');
                 }
             }
 
             onSuccess();
             onClose();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error saving resident:', error);
+            alert(error.message || 'Erro ao salvar morador');
         }
 
         setLoading(false);

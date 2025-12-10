@@ -1,8 +1,10 @@
-import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@supabase/ssr';
 
+// CLIENTE SUPABASE PARA BROWSER
+// Usa createBrowserClient do @supabase/ssr para sincronizar cookies corretamente
+// com o servidor (middleware/API routes)
 export function createClient() {
-    // TESTE: Cliente simples sem SSR para debugar timeout
-    return createSupabaseClient(
+    return createBrowserClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );

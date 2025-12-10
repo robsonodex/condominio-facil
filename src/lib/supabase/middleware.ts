@@ -27,39 +27,12 @@ export async function updateSession(request: NextRequest) {
         }
     );
 
-    // IMPORTANT: Avoid writing any logic between createServerClient and
-    // supabase.auth.getUser(). A simple mistake could make it very hard to debug
-    // issues with users being randomly logged out.
+    // IMPORTANT: Just refresh the session, but DON'T redirect
+    // Let client-side AuthProvider handle authentication state
+    // This prevents redirect loops when cookies are being synced
+    await supabase.auth.getUser();
 
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
-
-    // Proteção de rotas
-    const protectedPaths = [
-        '/dashboard', '/admin', '/financeiro', '/moradores',
-        '/unidades', '/avisos', '/ocorrencias', '/portaria',
-        '/relatorios', '/usuarios', '/alugueis', '/assinatura',
-        '/suporte', '/perfil', '/boletos'
-    ];
-
-    const isProtectedRoute = protectedPaths.some(path => request.nextUrl.pathname.startsWith(path));
-
-    // Se não tem usuário E está tentando acessar rota protegida → login
-    if (!user && isProtectedRoute) {
-        const url = request.nextUrl.clone();
-        url.pathname = '/login';
-        return NextResponse.redirect(url);
-    }
-
-    // Se tem usuário E está na página de login → dashboard
-    //IMPORTANTE: Redirect do login é feito via window.location.href com delay de 500ms
-    // Isso garante que a sessão já foi salva quando middleware verificar
-    if (user && request.nextUrl.pathname === '/login') {
-        const url = request.nextUrl.clone();
-        url.pathname = '/dashboard';
-        return NextResponse.redirect(url);
-    }
-
+    // NEVER redirect from middleware - just pass through
+    // Client-side will handle auth check and redirect if needed
     return supabaseResponse;
 }

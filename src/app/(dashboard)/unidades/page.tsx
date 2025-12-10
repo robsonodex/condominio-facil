@@ -60,8 +60,17 @@ export default function UnidadesPage() {
 
     const handleDelete = async (id: string) => {
         if (!confirm('Deseja realmente excluir esta unidade?')) return;
-        await supabase.from('units').delete().eq('id', id);
-        fetchUnits();
+        try {
+            const response = await fetch(`/api/units?id=${id}`, { method: 'DELETE' });
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Erro ao excluir unidade');
+            }
+            fetchUnits();
+        } catch (error: any) {
+            console.error('Error deleting unit:', error);
+            alert(error.message || 'Erro ao excluir unidade');
+        }
     };
 
     const filteredUnits = units.filter(u => {
@@ -224,23 +233,33 @@ function UnitModal({ isOpen, onClose, onSuccess, condoId, unit }: {
         if (!condoId) return;
 
         setLoading(true);
-        const data = {
-            condo_id: condoId,
-            bloco: bloco || null,
-            numero_unidade: numeroUnidade,
-            metragem: metragem ? parseFloat(metragem) : null,
-            vaga: vaga || null,
-            observacoes: observacoes || null,
-        };
+        try {
+            const data = {
+                condo_id: condoId,
+                bloco: bloco || null,
+                numero_unidade: numeroUnidade,
+                metragem: metragem ? parseFloat(metragem) : null,
+                vaga: vaga || null,
+                observacoes: observacoes || null,
+            };
 
-        if (unit) {
-            await supabase.from('units').update(data).eq('id', unit.id);
-        } else {
-            await supabase.from('units').insert(data);
+            const response = await fetch('/api/units', {
+                method: unit ? 'PUT' : 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(unit ? { id: unit.id, ...data } : data),
+            });
+
+            if (!response.ok) {
+                const result = await response.json();
+                throw new Error(result.error || 'Erro ao salvar unidade');
+            }
+
+            onSuccess();
+            onClose();
+        } catch (error: any) {
+            console.error('Error saving unit:', error);
+            alert(error.message || 'Erro ao salvar unidade');
         }
-
-        onSuccess();
-        onClose();
         setLoading(false);
     };
 

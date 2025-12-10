@@ -1,12 +1,13 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode, useMemo, useCallback } from 'react';
-import { User as SupabaseUser } from '@supabase/supabase-js';
+import { createContext, useContext, useEffect, useState, ReactNode, useMemo, useCallback, useRef } from 'react';
+import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
 import { User } from '@/types/database';
 
 interface AuthContextType {
     user: SupabaseUser | null;
+    session: Session | null;
     profile: User | null;
     loading: boolean;
     signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
@@ -14,206 +15,165 @@ interface AuthContextType {
     signOut: () => Promise<void>;
     signInWithMagicLink: (email: string) => Promise<{ error: Error | null }>;
     resetPassword: (email: string) => Promise<{ error: Error | null }>;
+    refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Cache para evitar múltiplas consultas
-let profileCache: { [key: string]: User } = {};
-
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<SupabaseUser | null>(null);
+    const [session, setSession] = useState<Session | null>(null);
     const [profile, setProfile] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
+    const initDone = useRef(false);
 
-    // Memoize supabase client to avoid recreating
     const supabase = useMemo(() => createClient(), []);
 
-    // Função para buscar perfil do usuário
-    const fetchProfile = useCallback(async (sessionUser: SupabaseUser) => {
+    // Fetch profile from database
+    const fetchProfile = useCallback(async (email: string): Promise<User | null> => {
         try {
-            // Check cache first
-            if (profileCache[sessionUser.id]) {
-                setProfile(profileCache[sessionUser.id]);
-                return profileCache[sessionUser.id];
-            }
-
-            // Buscar por email
-            const { data: profileData, error } = await supabase
+            const { data, error } = await supabase
                 .from('users')
                 .select('*')
-                .eq('email', sessionUser.email)
+                .eq('email', email)
                 .eq('ativo', true)
                 .maybeSingle();
 
             if (error) {
-                console.error('Error fetching profile:', error);
-
+                console.error('[AUTH] Profile fetch error:', error);
                 return null;
             }
-
-            if (profileData) {
-                profileCache[sessionUser.id] = profileData;
-                setProfile(profileData);
-                return profileData;
-            }
-
-            return null;
-        } catch (error) {
-            console.error('Error fetching profile:', error);
-
+            return data;
+        } catch (err) {
+            console.error('[AUTH] Profile fetch exception:', err);
             return null;
         }
     }, [supabase]);
 
+    // Refresh profile (for use after updates)
+    const refreshProfile = useCallback(async () => {
+        if (user?.email) {
+            const profileData = await fetchProfile(user.email);
+            setProfile(profileData);
+        }
+    }, [user, fetchProfile]);
+
+    // Initialize auth state with timeout
     useEffect(() => {
-        let isMounted = true;
+        if (initDone.current) return;
+        initDone.current = true;
 
-        // Fast initial check using getSession
-        const initAuth = async () => {
+        let mounted = true;
+        let timeoutId: NodeJS.Timeout;
+
+        const initializeAuth = async () => {
             try {
-                const { data: { session } } = await supabase.auth.getSession();
+                // Add timeout to prevent infinite loading
+                const timeoutPromise = new Promise<null>((resolve) => {
+                    timeoutId = setTimeout(() => {
+                        console.warn('[AUTH] getSession timeout - assuming no session');
+                        resolve(null);
+                    }, 5000);
+                });
 
-                if (!isMounted) return;
+                const sessionPromise = supabase.auth.getSession().then(res => res.data.session);
 
-                if (session?.user) {
-                    setUser(session.user);
-                    await fetchProfile(session.user);
+                const initialSession = await Promise.race([sessionPromise, timeoutPromise]);
+                clearTimeout(timeoutId);
+
+                if (!mounted) return;
+
+                if (initialSession?.user) {
+                    setSession(initialSession);
+                    setUser(initialSession.user);
+                    const profileData = await fetchProfile(initialSession.user.email!);
+                    setProfile(profileData);
                 } else {
+                    setSession(null);
                     setUser(null);
                     setProfile(null);
                 }
-            } catch (error) {
-                console.error('Auth init error:', error);
-                if (isMounted) {
-                    setUser(null);
-                    setProfile(null);
-                }
+            } catch (err) {
+                console.error('[AUTH] Init error:', err);
             } finally {
-                // CRITICAL: Always set loading to false
-                if (isMounted) {
+                if (mounted) {
                     setLoading(false);
                 }
             }
         };
 
-        initAuth();
+        initializeAuth();
 
         // Listen for auth changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            if (!isMounted) return;
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+            if (!mounted) return;
+
+            console.log('[AUTH] State change:', event);
 
             if (event === 'SIGNED_OUT') {
+                setSession(null);
                 setUser(null);
                 setProfile(null);
-                profileCache = {};
                 setLoading(false);
-                return;
-            }
-
-            if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-                if (session?.user) {
-                    setUser(session.user);
-                    await fetchProfile(session.user);
-                }
+            } else if (event === 'SIGNED_IN' && newSession?.user) {
+                setSession(newSession);
+                setUser(newSession.user);
+                const profileData = await fetchProfile(newSession.user.email!);
+                setProfile(profileData);
                 setLoading(false);
-            }
-
-            if (event === 'INITIAL_SESSION') {
-                setLoading(false);
+            } else if (event === 'TOKEN_REFRESHED' && newSession?.user) {
+                setSession(newSession);
+                setUser(newSession.user);
             }
         });
 
         return () => {
-            isMounted = false;
+            mounted = false;
+            clearTimeout(timeoutId);
             subscription.unsubscribe();
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [supabase]); // Only depend on supabase, not fetchProfile
+    }, [supabase, fetchProfile]);
 
     const signIn = useCallback(async (email: string, password: string) => {
-
-
-
-        setLoading(true);
-
-
         try {
-            // Timeout de 10 segundos para evitar travamento
-            const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('Timeout: Supabase não respondeu em 10s')), 10000)
-            );
-
-            const loginPromise = supabase.auth.signInWithPassword({ email, password });
-
-            const result = await Promise.race([loginPromise, timeoutPromise]) as any;
-            const { error } = result;
-
-
-            setLoading(false);
+            const { error } = await supabase.auth.signInWithPassword({ email, password });
             return { error: error as Error | null };
-        } catch (err: any) {
-
-            setLoading(false);
+        } catch (err) {
             return { error: err as Error };
         }
     }, [supabase]);
 
     const signUp = useCallback(async (email: string, password: string, nome: string) => {
-        setLoading(true);
-        const { data, error } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-                data: { nome },
-                emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`
-            }
-        });
-
-        if (!error && data.user) {
-            // Criar perfil no banco
-            await supabase.from('users').insert({
-                id: data.user.id,
+        try {
+            const { data, error } = await supabase.auth.signUp({
                 email,
-                nome,
-                role: 'morador',
-                ativo: true
+                password,
+                options: {
+                    data: { nome },
+                    emailRedirectTo: `${window.location.origin}/auth/callback`
+                }
             });
 
-            // ========================================
-            // ENVIAR E-MAIL DE BOAS-VINDAS
-            // ========================================
-            try {
-                const appUrl = window.location.origin;
-                await fetch('/api/email', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        tipo: 'welcome',
-                        destinatario: email,
-                        dados: {
-                            nome: nome,
-                            loginUrl: `${appUrl}/login`
-                        },
-                        userId: data.user.id,
-                        internalCall: true // Permitir envio sem autenticação
-                    }),
+            if (!error && data.user) {
+                await supabase.from('users').insert({
+                    id: data.user.id,
+                    email,
+                    nome,
+                    role: 'morador',
+                    ativo: true
                 });
-                console.log('E-mail de boas-vindas enviado para:', email);
-            } catch (emailError) {
-                // Não bloquear registro se e-mail falhar
-                console.error('Erro ao enviar e-mail de boas-vindas:', emailError);
             }
-        }
 
-        setLoading(false);
-        return { error: error as Error | null };
+            return { error: error as Error | null };
+        } catch (err) {
+            return { error: err as Error };
+        }
     }, [supabase]);
 
     const signOut = useCallback(async () => {
         setLoading(true);
-        profileCache = {};
         await supabase.auth.signOut();
+        setSession(null);
         setUser(null);
         setProfile(null);
         setLoading(false);
@@ -222,9 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const signInWithMagicLink = useCallback(async (email: string) => {
         const { error } = await supabase.auth.signInWithOtp({
             email,
-            options: {
-                emailRedirectTo: `${window.location.origin}/auth/callback`
-            }
+            options: { emailRedirectTo: `${window.location.origin}/auth/callback` }
         });
         return { error: error as Error | null };
     }, [supabase]);
@@ -236,17 +194,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error: error as Error | null };
     }, [supabase]);
 
-    // Memoize context value to prevent unnecessary re-renders
     const value = useMemo(() => ({
         user,
+        session,
         profile,
         loading,
         signIn,
         signUp,
         signOut,
         signInWithMagicLink,
-        resetPassword
-    }), [user, profile, loading, signIn, signUp, signOut, signInWithMagicLink, resetPassword]);
+        resetPassword,
+        refreshProfile
+    }), [user, session, profile, loading, signIn, signUp, signOut, signInWithMagicLink, resetPassword, refreshProfile]);
 
     return (
         <AuthContext.Provider value={value}>

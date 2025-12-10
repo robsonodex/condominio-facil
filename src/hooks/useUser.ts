@@ -2,38 +2,139 @@
 
 import { useAuth } from './useAuth';
 import { createClient } from '@/lib/supabase/client';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 
 // Cache para dados do condomínio
 let condoCache: { [key: string]: any } = {};
 
 export function useUser() {
-    const { user, profile, loading } = useAuth();
+    const { user, profile: authProfile, loading: authLoading } = useAuth();
+    const [impersonatedProfile, setImpersonatedProfile] = useState<any>(null);
+    const [impersonationLoading, setImpersonationLoading] = useState(true);
+    const [isImpersonating, setIsImpersonating] = useState(false);
+    const [originalAdminId, setOriginalAdminId] = useState<string | null>(null);
 
-    // Memoize computed values to prevent re-calculations
+    // Fetch Impersonation Status
+    const checkImpersonation = useCallback(async () => {
+        if (!user) {
+            setImpersonationLoading(false);
+            return;
+        }
+        try {
+            const res = await fetch('/api/impersonate', { method: 'GET' });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.active && data.impersonation && data.impersonation.target_user_id) {
+                    setIsImpersonating(true);
+                    setImpersonatedProfile({
+                        id: data.impersonation.target_user_id,
+                        ...data.targetUser,
+                    });
+                    setOriginalAdminId(data.impersonation.impersonator_id);
+                } else {
+                    setIsImpersonating(false);
+                    setImpersonatedProfile(null);
+                    setOriginalAdminId(null);
+                }
+            } else {
+                // If 404 or other, assume distinct
+                setIsImpersonating(false);
+            }
+        } catch (e) {
+            console.error('Failed to check impersonation', e);
+        } finally {
+            setImpersonationLoading(false);
+        }
+    }, [user]);
+
+    // Check impersonation on mount/auth load
+    useEffect(() => {
+        if (!authLoading) {
+            checkImpersonation();
+        }
+    }, [authLoading, checkImpersonation]);
+
+    // Fetch full data for target user if impersonating
+    useEffect(() => {
+        const fetchTargetProfile = async () => {
+            if (isImpersonating && impersonatedProfile?.id && !impersonatedProfile.condo_id) {
+                const supabase = createClient();
+                const { data, error } = await supabase.from('profiles').select('*').eq('id', impersonatedProfile.id).single();
+                if (data) {
+                    setImpersonatedProfile(data);
+                }
+            }
+        };
+        fetchTargetProfile();
+    }, [isImpersonating, impersonatedProfile?.id, impersonatedProfile?.condo_id]);
+
+    const effectiveProfile = isImpersonating ? impersonatedProfile : authProfile;
+
+    // Role checks
+    const isSuperAdminReal = authProfile?.role === 'superadmin';
+
+    // Effective Role (what the UI sees)
+    const effectiveRole = effectiveProfile?.role;
+
+    const isSuperAdmin = effectiveRole === 'superadmin';
+    const isSindico = effectiveRole === 'sindico';
+    const isPorteiro = effectiveRole === 'porteiro';
+    const isMorador = effectiveRole === 'morador';
+
+    // Loading state is true if auth is loading OR if checking impersonation
+    // We want to avoid "flicker" of Superadmin view before switching to Impersonated view
+    const loading = authLoading || impersonationLoading;
+
     return useMemo(() => ({
         user,
-        profile,
+        profile: effectiveProfile,
         loading,
-        isSuperAdmin: profile?.role === 'superadmin',
-        isSindico: profile?.role === 'sindico',
-        isPorteiro: profile?.role === 'porteiro',
-        isMorador: profile?.role === 'morador',
-        condoId: profile?.condo_id,
-        unidadeId: profile?.unidade_id,
-        canAccessFinanceiro: profile?.role === 'superadmin' || profile?.role === 'sindico',
-        canManageUsers: profile?.role === 'superadmin' || profile?.role === 'sindico',
-        canManageVisitors: profile?.role === 'superadmin' || profile?.role === 'sindico' || profile?.role === 'porteiro',
-        canCreateOccurrence: profile?.role !== 'superadmin',
-    }), [user, profile, loading]);
+
+        // Impersonation State
+        isImpersonating,
+        originalAdminId,
+        refetchUser: checkImpersonation,
+
+        // Real Role Flags
+        isSuperAdminReal,
+
+        // Effective UI Flags
+        isSuperAdmin,
+        isSindico,
+        isPorteiro,
+        isMorador,
+
+        // IDs
+        condoId: effectiveProfile?.condo_id,
+        unidadeId: effectiveProfile?.unidade_id,
+
+        // PERMISSIONS
+        canAccessFinanceiro: effectiveRole === 'superadmin' || effectiveRole === 'sindico',
+        canManageUsers: effectiveRole === 'superadmin' || effectiveRole === 'sindico',
+        canManageVisitors: effectiveRole === 'superadmin' || effectiveRole === 'sindico' || effectiveRole === 'porteiro',
+        canCreateOccurrence: true,
+        canManageUnits: effectiveRole === 'superadmin' || effectiveRole === 'sindico',
+        canManageResidents: effectiveRole === 'superadmin' || effectiveRole === 'sindico',
+        canManageNotices: effectiveRole === 'superadmin' || effectiveRole === 'sindico',
+        canAccessPortaria: effectiveRole === 'superadmin' || effectiveRole === 'sindico' || effectiveRole === 'porteiro',
+        canAccessReports: effectiveRole === 'superadmin' || effectiveRole === 'sindico',
+        canManageSettings: effectiveRole === 'superadmin' || effectiveRole === 'sindico',
+        canAccessAdmin: effectiveRole === 'superadmin',
+        canAccessAll: effectiveRole === 'superadmin',
+
+        hasAdminAccess: effectiveRole === 'superadmin' || effectiveRole === 'sindico',
+
+        shouldShowSindicoUI: effectiveRole === 'superadmin' || effectiveRole === 'sindico',
+        shouldShowPorteiroUI: effectiveRole === 'porteiro',
+        shouldShowMoradorUI: effectiveRole === 'morador',
+    }), [user, effectiveProfile, loading, isImpersonating, originalAdminId, checkImpersonation, isSuperAdminReal, isSuperAdmin, isSindico, isPorteiro, isMorador, effectiveRole]);
 }
 
 export function useCondo() {
-    const { profile } = useAuth();
+    const { profile } = useUser();
     const [condo, setCondo] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
-    // Memoize supabase client
     const supabase = useMemo(() => createClient(), []);
 
     useEffect(() => {
@@ -43,7 +144,6 @@ export function useCondo() {
                 return;
             }
 
-            // Check cache first
             if (condoCache[profile.condo_id]) {
                 setCondo(condoCache[profile.condo_id]);
                 setLoading(false);
@@ -69,7 +169,6 @@ export function useCondo() {
     return { condo, loading };
 }
 
-// Limpar cache quando necessário
 export function clearUserCache() {
     condoCache = {};
 }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { supabaseAdmin, getSessionFromReq } from '@/lib/supabase/admin';
 
 // Mercado Pago Configuration
 const MP_ACCESS_TOKEN = process.env.MERCADOPAGO_ACCESS_TOKEN;
@@ -113,27 +113,29 @@ async function createPixPayment(
 
 export async function POST(request: NextRequest) {
     try {
-        const supabase = await createClient();
-
         // ========================================
-        // SEGURANÇA 1: Autenticação obrigatória
+        // SEGURANÇA 1: Autenticação via getSessionFromReq
         // ========================================
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
+        const session = await getSessionFromReq(request);
+        if (!session) {
+            console.log('[CHECKOUT] No session found');
             return NextResponse.json(
                 { error: 'Não autorizado. Faça login para continuar.' },
                 { status: 401 }
             );
         }
 
+        console.log('[CHECKOUT] Session:', session.email, session.role);
+
         // Buscar perfil do usuário
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabaseAdmin
             .from('users')
             .select('id, email, nome, role, condo_id')
-            .eq('id', user.id)
+            .eq('id', session.userId)
             .single();
 
-        if (!profile) {
+        if (profileError || !profile) {
+            console.log('[CHECKOUT] Profile not found:', profileError);
             return NextResponse.json(
                 { error: 'Perfil não encontrado.' },
                 { status: 403 }
@@ -145,16 +147,14 @@ export async function POST(request: NextRequest) {
         // ========================================
         // SEGURANÇA 2: Validação de pertencimento
         // ========================================
-        // Apenas superadmin pode criar checkout para qualquer condo
-        // Síndico só pode criar para seu próprio condomínio
-        if (profile.role !== 'superadmin') {
+        if (!session.isSuperadmin) {
             if (!profile.condo_id || profile.condo_id !== body.condoId) {
                 return NextResponse.json(
                     { error: 'Sem permissão para este condomínio.' },
                     { status: 403 }
                 );
             }
-            if (profile.role !== 'sindico') {
+            if (!session.isSindico) {
                 return NextResponse.json(
                     { error: 'Apenas síndicos podem gerenciar pagamentos.' },
                     { status: 403 }
@@ -164,7 +164,6 @@ export async function POST(request: NextRequest) {
 
         // ========================================
         // SEGURANÇA 3: Buscar valor do plano no banco
-        // (NUNCA confiar no valor do frontend)
         // ========================================
         if (!body.planId) {
             return NextResponse.json(
@@ -173,7 +172,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const { data: plan, error: planError } = await supabase
+        const { data: plan, error: planError } = await supabaseAdmin
             .from('plans')
             .select('id, nome_plano, valor_mensal, ativo')
             .eq('id', body.planId)
@@ -187,11 +186,10 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Valor SEMPRE vem do banco, nunca do frontend
         const valorCobrar = Number(plan.valor_mensal);
 
         // Validar condomínio existe
-        const { data: condo } = await supabase
+        const { data: condo } = await supabaseAdmin
             .from('condos')
             .select('id, nome, email_contato')
             .eq('id', body.condoId)
@@ -219,7 +217,6 @@ export async function POST(request: NextRequest) {
             const nomePagador = profile.nome;
 
             if (body.metodoPagamento === 'pix') {
-                // Direct PIX payment
                 paymentResult = await createPixPayment(
                     body.condoId,
                     valorCobrar,
@@ -228,11 +225,10 @@ export async function POST(request: NextRequest) {
                     body.cpfCnpj
                 );
                 invoiceData.gateway_id = paymentResult.id?.toString();
-                invoiceData.gateway_payment_id = paymentResult.id?.toString(); // ID único para idempotência
+                invoiceData.gateway_payment_id = paymentResult.id?.toString();
                 invoiceData.pix_code = paymentResult.point_of_interaction?.transaction_data?.qr_code;
                 invoiceData.pix_qrcode = paymentResult.point_of_interaction?.transaction_data?.qr_code_base64;
             } else {
-                // Checkout preference (card/boleto)
                 paymentResult = await createMercadoPagoPreference(
                     body.condoId,
                     valorCobrar,
@@ -252,7 +248,7 @@ export async function POST(request: NextRequest) {
         // Save invoice to database
         let invoice = null;
         try {
-            const { data, error } = await supabase
+            const { data, error } = await supabaseAdmin
                 .from('invoices')
                 .insert(invoiceData)
                 .select()
@@ -305,7 +301,6 @@ function generateStaticPix(valor: number, pixKey: string): string {
     emv += '62070503***';
     emv += '6304';
 
-    // CRC16
     let crc = 0xFFFF;
     for (let i = 0; i < emv.length; i++) {
         crc ^= emv.charCodeAt(i) << 8;

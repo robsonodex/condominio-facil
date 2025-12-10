@@ -61,11 +61,23 @@ export default function PortariaPage() {
     };
 
     const handleExit = async (visitorId: string) => {
-        await supabase
-            .from('visitors')
-            .update({ data_hora_saida: new Date().toISOString() })
-            .eq('id', visitorId);
-        fetchVisitors();
+        try {
+            const response = await fetch('/api/visitors', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: visitorId }),
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Erro ao registrar saída');
+            }
+
+            fetchVisitors();
+        } catch (error: any) {
+            console.error('Error recording exit:', error);
+            alert(error.message || 'Erro ao registrar saída');
+        }
     };
 
     const filteredPresent = presentVisitors.filter(v =>
@@ -262,26 +274,39 @@ function VisitorModal({ isOpen, onClose, onSuccess, condoId, userId }: {
         if (!condoId || !userId) return;
 
         setLoading(true);
-        await supabase.from('visitors').insert({
-            condo_id: condoId,
-            nome,
-            documento: documento || null,
-            tipo,
-            placa_veiculo: placaVeiculo || null,
-            unidade_id: unidadeId || null,
-            observacoes: observacoes || null,
-            registrado_por_user_id: userId,
-        });
+        try {
+            const response = await fetch('/api/visitors', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    condo_id: condoId,
+                    nome,
+                    documento: documento || null,
+                    tipo,
+                    placa_veiculo: placaVeiculo || null,
+                    unidade_id: unidadeId || null,
+                    observacoes: observacoes || null,
+                }),
+            });
 
-        onSuccess();
-        onClose();
-        // Reset
-        setNome('');
-        setDocumento('');
-        setTipo('visitante');
-        setPlacaVeiculo('');
-        setUnidadeId('');
-        setObservacoes('');
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Erro ao registrar visitante');
+            }
+
+            onSuccess();
+            onClose();
+            // Reset
+            setNome('');
+            setDocumento('');
+            setTipo('visitante');
+            setPlacaVeiculo('');
+            setUnidadeId('');
+            setObservacoes('');
+        } catch (error: any) {
+            console.error('Error registering visitor:', error);
+            alert(error.message || 'Erro ao registrar visitante');
+        }
         setLoading(false);
     };
 

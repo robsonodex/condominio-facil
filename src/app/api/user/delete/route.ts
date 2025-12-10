@@ -1,227 +1,162 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { supabaseAdmin, getSessionFromReq } from '@/lib/supabase/admin';
 
 /**
- * LGPD Endpoint - Exclusão de dados do usuário
- * Art. 18, VI - Direito à exclusão de dados
+ * DELETE /api/user/delete?id=xxx
+ * Delete user (superadmin/síndico only)
  */
 export async function DELETE(request: NextRequest) {
     try {
-        const supabase = await createClient();
+        console.log('[DELETE USER] Starting delete request...');
 
-        // ========================================
-        // SEGURANÇA: Autenticação obrigatória
-        // ========================================
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
+        // Get session from request
+        const session = await getSessionFromReq(request);
+        if (!session) {
+            console.log('[DELETE USER] No session found');
             return NextResponse.json(
-                { error: 'Não autorizado. Faça login para continuar.' },
+                { error: 'Não autorizado. Faça login para continuar.', success: false },
                 { status: 401 }
             );
         }
 
-        // Buscar perfil do usuário logado (por email para garantir match)
-        const { data: profile } = await supabase
-            .from('users')
-            .select('id, email, nome, role, condo_id')
-            .eq('email', user.email)
-            .single();
+        console.log('[DELETE USER] Session:', session.email, session.role);
 
-        if (!profile) {
-            return NextResponse.json(
-                { error: 'Perfil não encontrado. Verifique se seu email está cadastrado.' },
-                { status: 404 }
-            );
-        }
-
-        // ========================================
-        // VERIFICAR: Exclusão administrativa (superadmin/síndico)
-        // ========================================
         const { searchParams } = new URL(request.url);
         const targetUserId = searchParams.get('id');
 
-        // Se há um ID na query string, é exclusão administrativa
-        if (targetUserId) {
-            // Apenas superadmin e síndico podem excluir usuários
-            if (profile.role !== 'superadmin' && profile.role !== 'sindico') {
-                return NextResponse.json({
-                    error: 'Acesso negado',
-                    message: 'Apenas administradores podem excluir usuários.',
-                }, { status: 403 });
-            }
-
-            // Buscar o usuário alvo
-            const { data: targetUser } = await supabase
-                .from('users')
-                .select('id, nome, role, condo_id')
-                .eq('id', targetUserId)
-                .single();
-
-            if (!targetUser) {
-                return NextResponse.json({
-                    error: 'Usuário não encontrado',
-                    success: false,
-                }, { status: 404 });
-            }
-
-            // Não pode excluir superadmin
-            if (targetUser.role === 'superadmin') {
-                return NextResponse.json({
-                    error: 'Não é possível excluir um superadmin',
-                    success: false,
-                }, { status: 403 });
-            }
-
-            // Síndico só pode excluir usuários do próprio condomínio
-            if (profile.role === 'sindico' && targetUser.condo_id !== profile.condo_id) {
-                return NextResponse.json({
-                    error: 'Você só pode excluir usuários do seu condomínio',
-                    success: false,
-                }, { status: 403 });
-            }
-
-            // Executar exclusão via função do banco
-            const { data: result, error } = await supabase.rpc('hard_delete_user', {
-                p_user_id: targetUserId,
-            });
-
-            if (error) {
-                console.error('Admin delete error:', error);
-                return NextResponse.json({
-                    error: 'Erro ao excluir usuário',
-                    message: error.message,
-                    success: false,
-                }, { status: 500 });
-            }
-
-            // Verificar resultado da função
-            if (result && result.success === false) {
-                return NextResponse.json({
-                    error: result.error || 'Erro desconhecido',
-                    detail: result.detail,
-                    success: false,
-                }, { status: 500 });
-            }
-
-            console.log(`ADMIN: Usuário ${user.id} (${profile.role}) excluiu usuário ${targetUserId}`);
-
-            return NextResponse.json({
-                success: true,
-                message: 'Usuário excluído permanentemente.',
-            });
+        if (!targetUserId) {
+            return NextResponse.json(
+                { error: 'ID do usuário é obrigatório', success: false },
+                { status: 400 }
+            );
         }
 
-        // ========================================
-        // EXCLUSÃO PRÓPRIA (LGPD) - Requer confirmação
-        // ========================================
-        let body: any = {};
-        try {
-            body = await request.json();
-        } catch {
-            // Body vazio é ok
-        }
+        console.log('[DELETE USER] Target user ID:', targetUserId);
 
-        if (body.confirmacao !== 'EXCLUIR MEUS DADOS') {
+        // Check permission - only superadmin and síndico can delete
+        if (!session.isSuperadmin && !session.isSindico) {
+            console.log('[DELETE USER] Permission denied for role:', session.role);
             return NextResponse.json({
-                error: 'Confirmação necessária',
-                message: 'Para excluir seus dados, envie: { "confirmacao": "EXCLUIR MEUS DADOS" }',
-                aviso: 'Esta ação é IRREVERSÍVEL e removerá todos os seus dados pessoais.',
-            }, { status: 400 });
-        }
-
-        if (profile.role === 'superadmin') {
-            return NextResponse.json({
-                error: 'Superadmin não pode se auto-excluir',
-                message: 'Entre em contato com o suporte técnico.',
+                error: 'Acesso negado',
+                message: 'Apenas administradores podem excluir usuários.',
+                success: false,
             }, { status: 403 });
         }
 
-        if (profile.role === 'sindico' && profile.condo_id) {
-            const { data: subscription } = await supabase
-                .from('subscriptions')
-                .select('status')
-                .eq('condo_id', profile.condo_id)
-                .eq('status', 'ativo')
-                .single();
+        // Fetch target user
+        const { data: targetUser, error: fetchError } = await supabaseAdmin
+            .from('users')
+            .select('id, nome, role, condo_id')
+            .eq('id', targetUserId)
+            .single();
 
-            if (subscription) {
-                return NextResponse.json({
-                    error: 'Assinatura ativa',
-                    message: 'Cancele a assinatura do condomínio antes de excluir sua conta.',
-                }, { status: 400 });
-            }
+        if (fetchError) {
+            console.log('[DELETE USER] Fetch error:', fetchError);
+            return NextResponse.json({
+                error: 'Usuário não encontrado',
+                message: fetchError.message,
+                success: false,
+            }, { status: 404 });
         }
 
-        const { data: result, error } = await supabase.rpc('delete_user_data', {
-            p_user_id: user.id,
-        });
-
-        if (error) {
-            console.error('LGPD delete error:', error);
+        if (!targetUser) {
             return NextResponse.json({
-                error: 'Erro ao processar exclusão',
-                message: 'Entre em contato com o suporte: suporte@condominiofacil.com.br',
+                error: 'Usuário não encontrado',
+                success: false,
+            }, { status: 404 });
+        }
+
+        console.log('[DELETE USER] Target user found:', targetUser.nome, targetUser.role);
+
+        // Cannot delete superadmin
+        if (targetUser.role === 'superadmin') {
+            return NextResponse.json({
+                error: 'Não é possível excluir um superadmin',
+                success: false,
+            }, { status: 403 });
+        }
+
+        // Síndico can only delete users from their own condo
+        if (session.isSindico && !session.isSuperadmin && targetUser.condo_id !== session.condoId) {
+            return NextResponse.json({
+                error: 'Você só pode excluir usuários do seu condomínio',
+                success: false,
+            }, { status: 403 });
+        }
+
+        // Delete from auth first (ignore error if user not in auth)
+        try {
+            const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(targetUserId);
+            if (authDeleteError) {
+                console.log('[DELETE USER] Auth delete error (may be OK):', authDeleteError.message);
+            } else {
+                console.log('[DELETE USER] Auth user deleted');
+            }
+        } catch (authErr) {
+            console.log('[DELETE USER] Auth delete exception (may be OK):', authErr);
+        }
+
+        // Delete related records first (to avoid FK constraints)
+        // Delete residents
+        await supabaseAdmin.from('residents').delete().eq('user_id', targetUserId);
+        console.log('[DELETE USER] Deleted residents');
+
+        // Delete user profile
+        const { error: deleteError } = await supabaseAdmin
+            .from('users')
+            .delete()
+            .eq('id', targetUserId);
+
+        if (deleteError) {
+            console.error('[DELETE USER] Profile delete error:', deleteError);
+            return NextResponse.json({
+                error: 'Erro ao excluir usuário',
+                message: deleteError.message,
+                success: false,
             }, { status: 500 });
         }
 
-        await supabase.auth.signOut();
-
-        console.log(`LGPD: Usuário ${user.id} solicitou exclusão de dados`);
+        console.log(`[DELETE USER] SUCCESS - User ${session.email} deleted user ${targetUserId}`);
 
         return NextResponse.json({
             success: true,
-            message: 'Seus dados foram removidos/anonimizados conforme LGPD.',
-            detalhes: result,
-            aviso: 'Sua sessão foi encerrada. Você será redirecionado.',
+            message: 'Usuário excluído com sucesso.',
         });
+
     } catch (error: any) {
-        console.error('LGPD endpoint error:', error);
+        console.error('[DELETE USER] Unexpected error:', error);
         return NextResponse.json(
-            { error: 'Erro ao processar solicitação' },
+            { error: 'Erro ao processar solicitação', message: error.message, success: false },
             { status: 500 }
         );
     }
 }
 
 /**
- * GET - Retornar dados do usuário (portabilidade LGPD)
+ * GET /api/user/delete - Get user data (LGPD portability)
  */
 export async function GET(request: NextRequest) {
     try {
-        const supabase = await createClient();
-
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
+        const session = await getSessionFromReq(request);
+        if (!session) {
             return NextResponse.json(
                 { error: 'Não autorizado' },
                 { status: 401 }
             );
         }
 
-        // Buscar todos os dados do usuário
-        const { data: profile } = await supabase
+        const { data: profile, error } = await supabaseAdmin
             .from('users')
-            .select(`
-                id, nome, email, telefone, role, condo_id, ativo, created_at,
-                residents (id, tipo, created_at),
-                occurrences:occurrences!criado_por_user_id (id, titulo, created_at),
-                notice_reads (id, read_at)
-            `)
-            .eq('id', user.id)
+            .select('*')
+            .eq('id', session.userId)
             .single();
 
-        if (!profile) {
+        if (error || !profile) {
             return NextResponse.json(
                 { error: 'Perfil não encontrado' },
                 { status: 404 }
             );
         }
-
-        // Buscar aceites legais
-        const { data: acceptances } = await supabase
-            .from('legal_acceptances')
-            .select('tipo, versao, aceito_em')
-            .eq('user_id', user.id);
 
         return NextResponse.json({
             dados_pessoais: {
@@ -232,19 +167,9 @@ export async function GET(request: NextRequest) {
                 ativo: profile.ativo,
                 cadastrado_em: profile.created_at,
             },
-            residencias: profile.residents,
-            ocorrencias_criadas: profile.occurrences,
-            avisos_lidos: profile.notice_reads?.length || 0,
-            aceites_legais: acceptances,
-            lgpd: {
-                direito_exclusao: '/api/user/delete (DELETE)',
-                direito_retificacao: '/perfil (editar)',
-                controlador: 'Condomínio Fácil LTDA',
-                contato_dpo: 'dpo@condominiofacil.com.br',
-            },
         });
     } catch (error: any) {
-        console.error('LGPD get error:', error);
+        console.error('[GET USER] Error:', error);
         return NextResponse.json(
             { error: 'Erro ao buscar dados' },
             { status: 500 }

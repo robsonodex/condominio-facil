@@ -24,7 +24,7 @@ function StatsSkeleton() {
 }
 
 export default function DashboardPage() {
-    const { profile, isSuperAdmin, isSindico, isMorador, isPorteiro, condoId, loading: userLoading } = useUser();
+    const { profile, isSuperAdmin, shouldShowMoradorUI, shouldShowPorteiroUI, condoId, loading: userLoading } = useUser();
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [chartData, setChartData] = useState<ChartData[]>([]);
     const [notices, setNotices] = useState<Notice[]>([]);
@@ -66,8 +66,16 @@ export default function DashboardPage() {
                 .gte('data_vencimento', sixMonthsAgo)
                 .lte('data_vencimento', lastDay);
 
-            // Apply condo filter if needed
-            if (condoId) {
+            // Apply condo filter if needed (SUPERADMIN without condo sees all)
+            if (condoId && !isSuperAdmin) {
+                unitsQuery = unitsQuery.eq('condo_id', condoId);
+                occQuery = occQuery.eq('condo_id', condoId);
+                inadQuery = inadQuery.eq('condo_id', condoId);
+                vencQuery = vencQuery.eq('condo_id', condoId);
+                noticesQuery = noticesQuery.eq('condo_id', condoId);
+                chartQuery = chartQuery.eq('condo_id', condoId);
+            } else if (condoId) {
+                // If SUPERADMIN has a condo, filter by it
                 unitsQuery = unitsQuery.eq('condo_id', condoId);
                 occQuery = occQuery.eq('condo_id', condoId);
                 inadQuery = inadQuery.eq('condo_id', condoId);
@@ -163,13 +171,13 @@ export default function DashboardPage() {
         );
     }
 
-    // Resident Dashboard
-    if (isMorador) {
+    // Morador Dashboard (only for actual moradores, NOT superadmin)
+    if (shouldShowMoradorUI) {
         return <MoradorDashboard notices={notices} />;
     }
 
-    // Doorman Dashboard  
-    if (isPorteiro) {
+    // Porteiro Dashboard (only for actual porteiros, NOT superadmin)
+    if (shouldShowPorteiroUI) {
         return <PorteiroDashboard stats={stats} notices={notices} />;
     }
 

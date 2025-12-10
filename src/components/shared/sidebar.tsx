@@ -41,7 +41,7 @@ const navItems: NavItem[] = [
     { href: '/ocorrencias', label: 'Ocorrências', icon: <AlertTriangle className="h-5 w-5" /> },
     { href: '/portaria', label: 'Portaria', icon: <UserCheck className="h-5 w-5" />, roles: ['superadmin', 'sindico', 'porteiro'] },
     { href: '/relatorios', label: 'Relatórios', icon: <FileText className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
-    { href: '/assinatura', label: 'Assinatura', icon: <CreditCard className="h-5 w-5" />, roles: ['sindico'] },
+    { href: '/assinatura', label: 'Assinatura', icon: <CreditCard className="h-5 w-5" />, roles: ['superadmin', 'sindico'] }, // SUPERADMIN também
     { href: '/perfil', label: 'Meu Perfil', icon: <Settings className="h-5 w-5" /> },
 ];
 
@@ -53,11 +53,22 @@ const adminItems: NavItem[] = [
     { href: '/admin/assinaturas', label: 'Assinaturas', icon: <Settings className="h-5 w-5" /> },
 ];
 
+import { ImpersonateModal } from '@/components/admin/ImpersonateModal';
+
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
     const pathname = usePathname();
-    const { profile, isSuperAdmin } = useUser();
+    const { profile, isSuperAdmin, isSuperAdminReal, isImpersonating } = useUser();
+
+    // SUPERADMIN vê TODOS os menus, sem exceção (se não estiver impersonando, ou se quiser ver)
+    // Se estiver impersonando, deve ver o que o target vê?
+    // O Dashboard já filtra os dados. O menu deve ser filtrado também?
+    // Se isSuperAdmin for true (que agora é false se impersonando syndic), o sidebar se comporta como syndic.
+    // Isso é BOM.
+
+    // Mas precisamos da opção de trocar de conta SEMPRE visível para o Superadmin REAL.
 
     const filteredNavItems = navItems.filter(item => {
+        if (isSuperAdmin) return true;
         if (!item.roles) return true;
         return item.roles.includes(profile?.role || '');
     });
@@ -94,6 +105,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                         <X className="h-5 w-5 text-gray-500" />
                     </button>
                 </div>
+
+                {/* SUPERADMIN ACTIONS */}
+                {(isSuperAdminReal || isImpersonating) && ( // Show if real admin, even if impersonating
+                    <div className="px-6 pt-4">
+                        <ImpersonateModal />
+                    </div>
+                )}
 
                 {/* Navigation */}
                 <nav className="p-4 space-y-1 overflow-y-auto h-[calc(100vh-4rem)]">

@@ -291,18 +291,28 @@ function NewEntryModal({ isOpen, onClose, onSuccess, condoId }: {
         if (!condoId) return;
 
         setLoading(true);
-        const { error } = await supabase.from('financial_entries').insert({
-            condo_id: condoId,
-            tipo,
-            categoria,
-            descricao,
-            valor: parseFloat(valor),
-            data_vencimento: dataVencimento,
-            status,
-            unidade_id: unidadeId || null,
-        });
+        try {
+            const response = await fetch('/api/financial/entries', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    condo_id: condoId,
+                    tipo,
+                    categoria,
+                    descricao,
+                    valor: parseFloat(valor),
+                    data_vencimento: dataVencimento,
+                    status,
+                    unidade_id: unidadeId || null,
+                }),
+            });
 
-        if (!error) {
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Erro ao criar lançamento');
+            }
+
             onSuccess();
             onClose();
             setTipo('receita');
@@ -312,6 +322,9 @@ function NewEntryModal({ isOpen, onClose, onSuccess, condoId }: {
             setDataVencimento('');
             setStatus('em_aberto');
             setUnidadeId('');
+        } catch (error: any) {
+            console.error('Error creating entry:', error);
+            alert(error.message || 'Erro ao criar lançamento');
         }
         setLoading(false);
     };

@@ -1,16 +1,18 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import { Sidebar, Header } from '@/components/shared';
 import { useAuth } from '@/hooks/useAuth';
+import { Loader2 } from 'lucide-react';
+import { ImpersonationBanner } from '@/components/admin/ImpersonationBanner';
 
-// Componente de loading inline otimizado (não bloqueia)
-function QuickLoader() {
+function LoadingScreen() {
     return (
-        <div className="fixed inset-0 bg-gray-50 flex items-center justify-center z-50">
-            <div className="flex flex-col items-center gap-3">
-                <div className="w-10 h-10 border-3 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
-                <p className="text-sm text-gray-500">Carregando...</p>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className="text-center">
+                <Loader2 className="h-10 w-10 text-emerald-600 animate-spin mx-auto mb-4" />
+                <p className="text-gray-500">Carregando...</p>
             </div>
         </div>
     );
@@ -22,13 +24,37 @@ export default function DashboardLayout({
     children: React.ReactNode;
 }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const { loading, user, profile } = useAuth();
+    const { loading, user } = useAuth();
+    const router = useRouter();
+    const pathname = usePathname();
+    const redirectedRef = useRef(false);
 
-    // Renderiza layout com skeleton enquanto carrega (não bloqueia completamente)
+    // Redirect to login if not authenticated - only once
+    useEffect(() => {
+        if (!loading && !user && !redirectedRef.current) {
+            redirectedRef.current = true;
+            router.replace('/login');
+        }
+        // Reset ref when user logs in
+        if (user) {
+            redirectedRef.current = false;
+        }
+    }, [loading, user, router]);
+
+    // Show loading while checking auth
+    if (loading) {
+        return <LoadingScreen />;
+    }
+
+    // Don't render if not authenticated (will redirect)
+    if (!user) {
+        return <LoadingScreen />;
+    }
+
     return (
         <div className="min-h-screen bg-gray-50">
-            {loading && <QuickLoader />}
-            <div className={`flex ${loading ? 'opacity-0' : 'opacity-100 transition-opacity duration-200'}`}>
+            <ImpersonationBanner />
+            <div className="flex">
                 <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
                 <div className="flex-1 lg:ml-0">
                     <Header onMenuClick={() => setSidebarOpen(true)} />
