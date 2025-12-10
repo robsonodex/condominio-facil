@@ -23,17 +23,13 @@ export async function POST(request: NextRequest) {
 
         // 2. Validate Target User Exists
         const { data: targetUser, error: userError } = await supabaseAdmin
-            .from('profiles') // Assuming profiles table matches auth.users logic usually, or verify auth.users? 
-            .select('role, nome')
+            .from('users')
+            .select('role, nome, email, ativo')
             .eq('id', target_user_id)
             .single();
 
-        // Note: 'profiles' is safer to query than auth.users directly if we enabled RLS on profiles.
-        // If profiles doesn't exist, we fallback to just checking if we can insert?
-        // Actually, user prompts said "from('users')" in example but supabaseAdmin can access auth.users *if* properly set up, but usually we access public tables.
-        // Assuming 'profiles' exists.
-
         if (userError || !targetUser) {
+            console.log('[IMPERSONATE] User not found:', target_user_id, userError);
             return NextResponse.json({ error: 'Target user not found' }, { status: 404 });
         }
 
@@ -140,7 +136,7 @@ export async function GET(request: NextRequest) {
     // Check DB validity
     const { data: imp } = await supabaseAdmin
         .from('impersonations')
-        .select('*, target:target_user_id(role, nome)') // Join with profiles? target_user_id refers to profiles.id usually
+        .select('*, target:users!target_user_id(role, nome, email)')
         .eq('id', impId)
         .is('ended_at', null)
         .gt('expires_at', new Date().toISOString())

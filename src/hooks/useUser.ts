@@ -59,7 +59,7 @@ export function useUser() {
         const fetchTargetProfile = async () => {
             if (isImpersonating && impersonatedProfile?.id && !impersonatedProfile.condo_id) {
                 const supabase = createClient();
-                const { data, error } = await supabase.from('profiles').select('*').eq('id', impersonatedProfile.id).single();
+                const { data, error } = await supabase.from('users').select('*').eq('id', impersonatedProfile.id).single();
                 if (data) {
                     setImpersonatedProfile(data);
                 }

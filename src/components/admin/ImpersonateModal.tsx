@@ -34,14 +34,16 @@ export function ImpersonateModal() {
         setSearching(true);
         const supabase = createClient();
 
-        // Search syndics (mostly) but allow searching anyone
+        // Search users by name or email
         const { data, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .ilike('nome', `%${search}%`)
-            .in('role', ['sindico', 'porteiro', 'morador']) // Limit roles? Or allow all?
+            .from('users')
+            .select('id, nome, email, role, condo_id, ativo')
+            .or(`nome.ilike.%${search}%,email.ilike.%${search}%`)
+            .in('role', ['sindico', 'porteiro', 'morador'])
+            .eq('ativo', true)
             .limit(10);
 
+        console.log('[IMPERSONATE] Search results:', data, error);
         if (data) setResults(data);
         setSearching(false);
     };
@@ -54,6 +56,7 @@ export function ImpersonateModal() {
             const res = await fetch('/api/impersonate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({ target_user_id: targetUser.id })
             });
 
