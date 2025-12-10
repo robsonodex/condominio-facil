@@ -27,21 +27,27 @@ export function ImpersonateModal() {
     const [impersonating, setImpersonating] = useState(false);
     const router = useRouter();
 
-    const handleSearch = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!search.trim()) return;
+    const handleSearch = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
 
         setSearching(true);
         const supabase = createClient();
 
-        // Search users by name or email
-        const { data, error } = await supabase
+        // Query base - busca todos se não tiver termo
+        let query = supabase
             .from('users')
             .select('id, nome, email, role, condo_id, ativo')
-            .or(`nome.ilike.%${search}%,email.ilike.%${search}%`)
             .in('role', ['sindico', 'porteiro', 'morador'])
             .eq('ativo', true)
-            .limit(10);
+            .order('nome')
+            .limit(50);
+
+        // Se tiver termo de busca, filtra
+        if (search.trim()) {
+            query = query.or(`nome.ilike.%${search}%,email.ilike.%${search}%`);
+        }
+
+        const { data, error } = await query;
 
         console.log('[IMPERSONATE] Search results:', data, error);
         if (data) setResults(data);
