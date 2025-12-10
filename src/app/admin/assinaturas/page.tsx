@@ -1,17 +1,24 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Card, CardContent, Button, Select, Table, Badge } from '@/components/ui';
+import { Card, CardContent, Button, Select, Table, Badge, Input, Textarea } from '@/components/ui';
+import { Modal } from '@/components/ui/modal';
 import { createClient } from '@/lib/supabase/client';
 import { formatCurrency, formatDate, getStatusColor, getStatusLabel } from '@/lib/utils';
-import { CreditCard } from 'lucide-react';
-import { Subscription, Condo, Plan } from '@/types/database';
+import { CreditCard, Send, Bell, Mail, DollarSign } from 'lucide-react';
 
 export default function AdminAssinaturasPage() {
     const [subscriptions, setSubscriptions] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [filterStatus, setFilterStatus] = useState('');
     const supabase = createClient();
+
+    // Modal state
+    const [showBillingModal, setShowBillingModal] = useState(false);
+    const [selectedSub, setSelectedSub] = useState<any>(null);
+    const [billingAction, setBillingAction] = useState<'email' | 'notification' | 'both'>('both');
+    const [customMessage, setCustomMessage] = useState('');
+    const [sending, setSending] = useState(false);
 
     useEffect(() => {
         fetchSubscriptions();
@@ -40,30 +47,72 @@ export default function AdminAssinaturasPage() {
         }
     };
 
-    const [sendingInvoice, setSendingInvoice] = useState<string | null>(null);
+    const openBillingModal = (sub: any) => {
+        setSelectedSub(sub);
+        setCustomMessage(`Olá!\n\nSua mensalidade do Condomínio Fácil para o ${sub.condo?.nome} está disponível para pagamento.\n\nValor: R$ ${(sub.valor_mensal_cobrado || 0).toFixed(2)}\nPlano: ${sub.plan?.nome_plano}\n\nPor favor, efetue o pagamento para manter seus serviços ativos.`);
+        setShowBillingModal(true);
+    };
 
-    const handleSendInvoice = async (subscriptionId: string, condoNome: string) => {
-        if (!confirm(`Enviar cobrança por email para ${condoNome}?`)) return;
+    const handleSendBilling = async () => {
+        if (!selectedSub) return;
 
-        setSendingInvoice(subscriptionId);
+        setSending(true);
         try {
-            const response = await fetch('/api/billing/send-invoice', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ subscription_id: subscriptionId })
-            });
+            const results = { email: false, notification: false };
 
-            const result = await response.json();
-
-            if (!response.ok) {
-                alert(`❌ ${result.error}`);
-            } else {
-                alert(`✅ ${result.message}`);
+            // Enviar Email
+            if (billingAction === 'email' || billingAction === 'both') {
+                const emailRes = await fetch('/api/billing/send-invoice', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        subscription_id: selectedSub.id,
+                        custom_message: customMessage
+                    })
+                });
+                results.email = emailRes.ok;
             }
+
+            // Enviar Notificação In-App
+            if (billingAction === 'notification' || billingAction === 'both') {
+                // Buscar síndico do condomínio
+                const { data: sindico } = await supabase
+                    .from('users')
+                    .select('id')
+                    .eq('condo_id', selectedSub.condo_id)
+                    .eq('role', 'sindico')
+                    .single();
+
+                if (sindico) {
+                    const { error } = await supabase.from('notifications').insert({
+                        condo_id: selectedSub.condo_id,
+                        user_id: sindico.id,
+                        title: '💳 Cobrança de Mensalidade',
+                        message: `Sua mensalidade do Condomínio Fácil está disponível. Valor: R$ ${(selectedSub.valor_mensal_cobrado || 0).toFixed(2)}. Acesse a página de Assinatura para efetuar o pagamento.`,
+                        type: 'billing',
+                        link: '/assinatura'
+                    });
+                    results.notification = !error;
+                }
+            }
+
+            // Feedback
+            const msgs = [];
+            if (results.email) msgs.push('Email enviado');
+            if (results.notification) msgs.push('Notificação criada');
+
+            if (msgs.length > 0) {
+                alert(`✅ ${msgs.join(' e ')}!`);
+            } else {
+                alert('❌ Nenhuma ação foi executada com sucesso');
+            }
+
+            setShowBillingModal(false);
         } catch (error: any) {
             alert(`❌ Erro: ${error.message}`);
         } finally {
-            setSendingInvoice(null);
+            setSending(false);
         }
     };
 
@@ -97,11 +146,10 @@ export default function AdminAssinaturasPage() {
             render: (s: any) => (
                 <Button
                     size="sm"
-                    variant="outline"
-                    onClick={() => handleSendInvoice(s.id, s.condo?.nome)}
-                    disabled={sendingInvoice === s.id}
+                    onClick={() => openBillingModal(s)}
                 >
-                    {sendingInvoice === s.id ? '⏳' : '📧'} Cobrar
+                    <DollarSign className="h-4 w-4 mr-1" />
+                    Cobrar
                 </Button>
             )
         },
@@ -183,6 +231,100 @@ export default function AdminAssinaturasPage() {
                     />
                 </CardContent>
             </Card>
+
+            {/* Billing Modal */}
+            <Modal
+                isOpen={showBillingModal}
+                onClose={() => setShowBillingModal(false)}
+                title={`Cobrar ${selectedSub?.condo?.nome || ''}`}
+                size="lg"
+            >
+                <div className="space-y-6">
+                    {/* Info */}
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="font-semibold text-emerald-800">{selectedSub?.condo?.nome}</p>
+                                <p className="text-sm text-emerald-600">Plano: {selectedSub?.plan?.nome_plano}</p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-2xl font-bold text-emerald-600">
+                                    R$ {(selectedSub?.valor_mensal_cobrado || 0).toFixed(2)}
+                                </p>
+                                <p className="text-xs text-emerald-500">por mês</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Action Selection */}
+                    <div>
+                        <p className="font-medium text-gray-700 mb-3">Como deseja cobrar?</p>
+                        <div className="grid grid-cols-3 gap-3">
+                            <button
+                                onClick={() => setBillingAction('email')}
+                                className={`p-4 rounded-lg border-2 text-center transition-all ${billingAction === 'email'
+                                        ? 'border-emerald-500 bg-emerald-50'
+                                        : 'border-gray-200 hover:border-gray-300'
+                                    }`}
+                            >
+                                <Mail className={`h-6 w-6 mx-auto mb-2 ${billingAction === 'email' ? 'text-emerald-500' : 'text-gray-400'}`} />
+                                <p className="text-sm font-medium">Apenas Email</p>
+                            </button>
+                            <button
+                                onClick={() => setBillingAction('notification')}
+                                className={`p-4 rounded-lg border-2 text-center transition-all ${billingAction === 'notification'
+                                        ? 'border-emerald-500 bg-emerald-50'
+                                        : 'border-gray-200 hover:border-gray-300'
+                                    }`}
+                            >
+                                <Bell className={`h-6 w-6 mx-auto mb-2 ${billingAction === 'notification' ? 'text-emerald-500' : 'text-gray-400'}`} />
+                                <p className="text-sm font-medium">Apenas Notificação</p>
+                            </button>
+                            <button
+                                onClick={() => setBillingAction('both')}
+                                className={`p-4 rounded-lg border-2 text-center transition-all ${billingAction === 'both'
+                                        ? 'border-emerald-500 bg-emerald-50'
+                                        : 'border-gray-200 hover:border-gray-300'
+                                    }`}
+                            >
+                                <Send className={`h-6 w-6 mx-auto mb-2 ${billingAction === 'both' ? 'text-emerald-500' : 'text-gray-400'}`} />
+                                <p className="text-sm font-medium">Ambos</p>
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Custom Message (for email) */}
+                    {(billingAction === 'email' || billingAction === 'both') && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Mensagem do Email (personalizável)
+                            </label>
+                            <Textarea
+                                value={customMessage}
+                                onChange={(e) => setCustomMessage(e.target.value)}
+                                rows={6}
+                                className="w-full"
+                                placeholder="Escreva uma mensagem personalizada..."
+                            />
+                            <p className="text-xs text-gray-500 mt-1">
+                                O email incluirá um botão "Pagar Agora" com link para o Mercado Pago
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Actions */}
+                    <div className="flex gap-3 justify-end pt-4 border-t">
+                        <Button variant="ghost" onClick={() => setShowBillingModal(false)}>
+                            Cancelar
+                        </Button>
+                        <Button onClick={handleSendBilling} loading={sending}>
+                            <Send className="h-4 w-4 mr-2" />
+                            Enviar Cobrança
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 }
+
