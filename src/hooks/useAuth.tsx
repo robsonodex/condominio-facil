@@ -31,6 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Fetch profile from database
     const fetchProfile = useCallback(async (email: string): Promise<User | null> => {
+        console.log('[AUTH] Fetching profile for email:', email);
         try {
             const { data, error } = await supabase
                 .from('users')
@@ -39,10 +40,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 .eq('ativo', true)
                 .maybeSingle();
 
+            console.log('[AUTH] Profile query result:', { data, error });
+
             if (error) {
                 console.error('[AUTH] Profile fetch error:', error);
                 return null;
             }
+
+            if (!data) {
+                console.warn('[AUTH] No profile found for email:', email);
+            }
+
             return data;
         } catch (err) {
             console.error('[AUTH] Profile fetch exception:', err);
