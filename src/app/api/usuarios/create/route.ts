@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// Validate SERVICE_ROLE_KEY exists
+// Validate SERVICE_ROLE_KEY exists  
 if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
     console.error('[CREATE_USER] SUPABASE_SERVICE_ROLE_KEY não configurado!');
 }

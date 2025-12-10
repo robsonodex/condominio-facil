@@ -33,6 +33,7 @@ function LoginContent() {
 
         const { error } = await signIn(email, password);
 
+
         if (error) {
             setError('Email ou senha inválidos');
             setLoading(false);

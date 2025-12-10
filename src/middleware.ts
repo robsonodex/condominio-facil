@@ -49,7 +49,7 @@ export async function middleware(request: NextRequest) {
                         getAll() {
                             return request.cookies.getAll();
                         },
-                        setAll() { }, // No-op no middleware (read-only)
+                        setAll() {}, // No-op no middleware (read-only)
                     },
                 }
             );
