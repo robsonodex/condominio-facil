@@ -53,6 +53,7 @@ const adminItems: NavItem[] = [
     { href: '/admin/planos', label: 'Planos', icon: <CreditCard className="h-5 w-5" /> },
     { href: '/admin/usuarios', label: 'Usuários', icon: <Users className="h-5 w-5" /> },
     { href: '/admin/assinaturas', label: 'Assinaturas', icon: <Settings className="h-5 w-5" /> },
+    { href: '/admin/cobrancas', label: 'Cobranças', icon: <DollarSign className="h-5 w-5" /> },
 ];
 
 import { ImpersonateModal } from '@/components/admin/ImpersonateModal';

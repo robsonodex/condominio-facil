@@ -29,34 +29,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const supabase = useMemo(() => createClient(), []);
 
-    // Fetch profile from database
+    // Fetch profile via API (bypasses RLS)
     const fetchProfile = useCallback(async (email: string): Promise<User | null> => {
         console.log('[AUTH] Fetching profile for email:', email);
         try {
-            const { data, error } = await supabase
-                .from('users')
-                .select('*')
-                .eq('email', email)
-                .eq('ativo', true)
-                .maybeSingle();
+            const response = await fetch('/api/auth/profile', {
+                credentials: 'include',
+            });
 
-            console.log('[AUTH] Profile query result:', { data, error });
-
-            if (error) {
-                console.error('[AUTH] Profile fetch error:', error);
+            if (!response.ok) {
+                console.error('[AUTH] Profile API error:', response.status);
                 return null;
             }
 
-            if (!data) {
-                console.warn('[AUTH] No profile found for email:', email);
-            }
+            const data = await response.json();
+            console.log('[AUTH] Profile API result:', data.profile ? 'found' : 'null');
 
-            return data;
+            return data.profile;
         } catch (err) {
             console.error('[AUTH] Profile fetch exception:', err);
             return null;
         }
-    }, [supabase]);
+    }, []);
 
     // Refresh profile (for use after updates)
     const refreshProfile = useCallback(async () => {
