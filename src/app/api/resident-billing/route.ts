@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { createClient as createServiceRoleClient } from '@supabase/supabase-js';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 
 const MP_ACCESS_TOKEN = process.env.MERCADOPAGO_ACCESS_TOKEN;
 const MP_API_URL = 'https://api.mercadopago.com';
@@ -15,7 +15,8 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
         }
 
-        const { data: profile } = await supabase
+        // Use admin client to bypass RLS for profile
+        const { data: profile } = await supabaseAdmin
             .from('users')
             .select('id, role, condo_id')
             .eq('id', user.id)
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Perfil não encontrado' }, { status: 404 });
         }
 
-        let query = supabase
+        let query = supabaseAdmin
             .from('resident_invoices')
             .select(`
                 *,
@@ -68,7 +69,8 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
         }
 
-        const { data: profile } = await supabase
+        // Use admin client to bypass RLS for profile
+        const { data: profile } = await supabaseAdmin
             .from('users')
             .select('id, role, condo_id')
             .eq('id', user.id)
@@ -166,11 +168,7 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        // Inserir cobrança no banco
-        const supabaseAdmin = createServiceRoleClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY!
-        );
+        // Inserir cobrança no banco (using imported supabaseAdmin)
 
         const { data: invoice, error: insertError } = await supabaseAdmin
             .from('resident_invoices')
