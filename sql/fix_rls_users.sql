@@ -108,5 +108,32 @@ FOR SELECT USING (
 );
 
 -- =============================================
+-- FIX FINANCIAL_ENTRIES RLS
+-- =============================================
+ALTER TABLE financial_entries ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "financial_superadmin" ON financial_entries;
+DROP POLICY IF EXISTS "financial_sindico" ON financial_entries;
+DROP POLICY IF EXISTS "financial_morador_read" ON financial_entries;
+
+-- Superadmin full access
+CREATE POLICY "financial_superadmin" ON financial_entries
+FOR ALL USING (
+  get_my_role() = 'superadmin'
+);
+
+-- Sindico full access to own condo entries
+CREATE POLICY "financial_sindico" ON financial_entries
+FOR ALL USING (
+  get_my_role() = 'sindico' AND get_my_condo_id() = condo_id
+);
+
+-- Morador can read their own unit entries
+CREATE POLICY "financial_morador_read" ON financial_entries
+FOR SELECT USING (
+  unidade_id = (SELECT unidade_id FROM users WHERE id = auth.uid())
+);
+
+-- =============================================
 -- DONE! Execute this in Supabase SQL Editor
 -- =============================================

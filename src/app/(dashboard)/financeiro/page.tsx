@@ -6,7 +6,7 @@ import { Modal } from '@/components/ui/modal';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/hooks/useUser';
 import { formatCurrency, formatDate, getStatusColor, getStatusLabel } from '@/lib/utils';
-import { Plus, Download, DollarSign, TrendingUp, TrendingDown, AlertCircle } from 'lucide-react';
+import { Plus, Download, DollarSign, TrendingUp, TrendingDown, AlertCircle, Edit2, Trash2 } from 'lucide-react';
 import { FinancialEntry } from '@/types/database';
 
 const CATEGORIAS_RECEITA = [
@@ -38,10 +38,11 @@ const STATUS_OPTIONS = [
 ];
 
 export default function FinanceiroPage() {
-    const { condoId, isMorador, isSuperAdmin, profile, loading: userLoading } = useUser();
+    const { condoId, isMorador, isSuperAdmin, isSindico, profile, loading: userLoading } = useUser();
     const [entries, setEntries] = useState<FinancialEntry[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
+    const [editingEntry, setEditingEntry] = useState<FinancialEntry | null>(null);
     const [filterType, setFilterType] = useState('');
     const [filterStatus, setFilterStatus] = useState('');
     const [stats, setStats] = useState({ receitas: 0, despesas: 0, inadimplencia: 0 });
@@ -101,6 +102,33 @@ export default function FinanceiroPage() {
         setLoading(false);
     };
 
+    const handleEdit = (entry: FinancialEntry) => {
+        setEditingEntry(entry);
+        setShowModal(true);
+    };
+
+    const handleDelete = async (entry: FinancialEntry) => {
+        if (!confirm(`Tem certeza que deseja excluir este lançamento?\n\n${entry.categoria} - ${formatCurrency(entry.valor)}`)) {
+            return;
+        }
+
+        try {
+            const { error } = await supabase
+                .from('financial_entries')
+                .delete()
+                .eq('id', entry.id);
+
+            if (error) throw error;
+
+            setEntries(prev => prev.filter(e => e.id !== entry.id));
+            alert('✅ Lançamento excluído com sucesso!');
+        } catch (err: any) {
+            alert('❌ Erro ao excluir: ' + err.message);
+        }
+    };
+
+    const canEdit = !isMorador && (isSindico || isSuperAdmin);
+
     const columns = [
         {
             key: 'tipo', header: 'Tipo', render: (e: FinancialEntry) => (
@@ -140,6 +168,20 @@ export default function FinanceiroPage() {
                 </span>
             )
         },
+        ...(canEdit ? [{
+            key: 'actions',
+            header: 'Ações',
+            render: (e: FinancialEntry) => (
+                <div className="flex gap-1">
+                    <Button size="sm" variant="ghost" onClick={() => handleEdit(e)} title="Editar">
+                        <Edit2 className="h-4 w-4 text-blue-600" />
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => handleDelete(e)} title="Excluir">
+                        <Trash2 className="h-4 w-4 text-red-600" />
+                    </Button>
+                </div>
+            )
+        }] : []),
     ];
 
     return (
@@ -248,24 +290,26 @@ export default function FinanceiroPage() {
                 </CardContent>
             </Card>
 
-            {/* New Entry Modal */}
+            {/* New/Edit Entry Modal */}
             {condoId && (
                 <NewEntryModal
                     isOpen={showModal}
-                    onClose={() => setShowModal(false)}
-                    onSuccess={fetchEntries}
+                    onClose={() => { setShowModal(false); setEditingEntry(null); }}
+                    onSuccess={() => { fetchEntries(); setEditingEntry(null); }}
                     condoId={condoId}
+                    editingEntry={editingEntry}
                 />
             )}
         </div>
     );
 }
 
-function NewEntryModal({ isOpen, onClose, onSuccess, condoId }: {
+function NewEntryModal({ isOpen, onClose, onSuccess, condoId, editingEntry }: {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
     condoId: string | null | undefined;
+    editingEntry?: FinancialEntry | null;
 }) {
     const [loading, setLoading] = useState(false);
     const [tipo, setTipo] = useState('receita');
@@ -277,6 +321,28 @@ function NewEntryModal({ isOpen, onClose, onSuccess, condoId }: {
     const [unidadeId, setUnidadeId] = useState('');
     const [units, setUnits] = useState<{ id: string; bloco: string; numero_unidade: string }[]>([]);
     const supabase = createClient();
+
+    // Populate form when editing
+    useEffect(() => {
+        if (editingEntry) {
+            setTipo(editingEntry.tipo);
+            setCategoria(editingEntry.categoria);
+            setDescricao(editingEntry.descricao || '');
+            setValor(String(editingEntry.valor));
+            setDataVencimento(editingEntry.data_vencimento);
+            setStatus(editingEntry.status);
+            setUnidadeId(editingEntry.unidade_id || '');
+        } else {
+            // Reset form for new entry
+            setTipo('receita');
+            setCategoria('');
+            setDescricao('');
+            setValor('');
+            setDataVencimento('');
+            setStatus('em_aberto');
+            setUnidadeId('');
+        }
+    }, [editingEntry, isOpen]);
 
     useEffect(() => {
         if (condoId) {
@@ -292,39 +358,45 @@ function NewEntryModal({ isOpen, onClose, onSuccess, condoId }: {
 
         setLoading(true);
         try {
-            const response = await fetch('/api/financial/entries', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    condo_id: condoId,
-                    tipo,
-                    categoria,
-                    descricao,
-                    valor: parseFloat(valor),
-                    data_vencimento: dataVencimento,
-                    status,
-                    unidade_id: unidadeId || null,
-                }),
-            });
+            const entryData = {
+                condo_id: condoId,
+                tipo,
+                categoria,
+                descricao,
+                valor: parseFloat(valor),
+                data_vencimento: dataVencimento,
+                status,
+                unidade_id: unidadeId || null,
+            };
 
-            const data = await response.json();
+            if (editingEntry) {
+                // Update existing entry
+                const { error } = await supabase
+                    .from('financial_entries')
+                    .update(entryData)
+                    .eq('id', editingEntry.id);
 
-            if (!response.ok) {
-                throw new Error(data.error || 'Erro ao criar lançamento');
+                if (error) throw error;
+            } else {
+                // Create new entry
+                const response = await fetch('/api/financial/entries', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(entryData),
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Erro ao criar lançamento');
+                }
             }
 
             onSuccess();
             onClose();
-            setTipo('receita');
-            setCategoria('');
-            setDescricao('');
-            setValor('');
-            setDataVencimento('');
-            setStatus('em_aberto');
-            setUnidadeId('');
         } catch (error: any) {
-            console.error('Error creating entry:', error);
-            alert(error.message || 'Erro ao criar lançamento');
+            console.error('Error saving entry:', error);
+            alert(error.message || 'Erro ao salvar lançamento');
         }
         setLoading(false);
     };
@@ -332,7 +404,7 @@ function NewEntryModal({ isOpen, onClose, onSuccess, condoId }: {
     const categorias = tipo === 'receita' ? CATEGORIAS_RECEITA : CATEGORIAS_DESPESA;
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Novo Lançamento" size="lg">
+        <Modal isOpen={isOpen} onClose={onClose} title={editingEntry ? 'Editar Lançamento' : 'Novo Lançamento'} size="lg">
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                     <Select
