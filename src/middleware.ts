@@ -26,11 +26,15 @@ const EXCLUDED_FROM_LEGAL_CHECK = [
 ];
 
 export async function middleware(request: NextRequest) {
-    // TEMPORÁRIO: Middleware desabilitado - estava bloqueando login
-    // O problema: sessão não está sendo salva rápido o suficiente
+    // MIDDLEWARE DESABILITADO - Login funciona mas sem proteção
+    // TODO FUTURO: Implementar corretamente após resolver outros problemas
     return NextResponse.next();
+}
 
-    /*
+// Código comentado para referência futura
+/*
+export async function middleware_DISABLED(request: NextRequest) {
+
     const startTime = Date.now();
     const { pathname } = request.nextUrl;
 
@@ -41,7 +45,8 @@ export async function middleware(request: NextRequest) {
     const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
     const isExcluded = EXCLUDED_FROM_LEGAL_CHECK.some(route => pathname.startsWith(route));
 
-    // TEMPORÁRIO: ACEITE LEGAL DESABILITADO para permitir login
+    // TEMPORÁRIO: ACEITE LEGAL DESABILITADO
+    // TODO: Re-implementar verificação de aceite legal com bypass para superadmin
     /*
     if (isProtectedRoute && !isExcluded) {
         try {
@@ -108,17 +113,17 @@ export async function middleware(request: NextRequest) {
     }
     */
 
-    // Log de métrica para sucesso
-    if (isProtectedRoute) {
-        logMiddlewareMetrics({
-            pathname,
-            duration: Date.now() - startTime,
-            redirected: false,
-            reason: 'success'
-        });
-    }
+// Log de métrica para sucesso
+if (isProtectedRoute) {
+    logMiddlewareMetrics({
+        pathname,
+        duration: Date.now() - startTime,
+        redirected: false,
+        reason: 'success'
+    });
+}
 
-    return response;
+return response;
 }
 
 // Função de logging de métricas (non-blocking)

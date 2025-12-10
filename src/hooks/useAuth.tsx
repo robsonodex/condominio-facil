@@ -132,11 +132,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, [supabase]); // Only depend on supabase, not fetchProfile
 
     const signIn = useCallback(async (email: string, password: string) => {
-        alert('[signIn] INÍCIO DA FUNÇÃO');
-        alert('[signIn] SUPABASE_URL: ' + process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 30) + '...');
-        alert('[signIn] ANON_KEY existe: ' + (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'SIM' : 'NÃO'));
+
+
+
         setLoading(true);
-        alert('[signIn] ANTES DE signInWithPassword');
+
 
         try {
             // Timeout de 10 segundos para evitar travamento
@@ -149,11 +149,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const result = await Promise.race([loginPromise, timeoutPromise]) as any;
             const { error } = result;
 
-            alert('[signIn] DEPOIS DE signInWithPassword - error: ' + (error ? error.message : 'SEM ERRO'));
+
             setLoading(false);
             return { error: error as Error | null };
         } catch (err: any) {
-            alert('[signIn] ERRO CAPTURADO: ' + err.message);
+
             setLoading(false);
             return { error: err as Error };
         }

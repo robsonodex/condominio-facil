@@ -35,8 +35,14 @@ export async function updateSession(request: NextRequest) {
         data: { user },
     } = await supabase.auth.getUser();
 
-    // Proteção de rotas - lógica simplificada sem loops
-    const protectedPaths = ['/dashboard', '/admin', '/financeiro', '/moradores', '/unidades', '/avisos', '/ocorrencias', '/portaria', '/relatorios', '/usuarios', '/alugueis', '/assinatura', '/suporte', '/perfil', '/boletos'];
+    // Proteção de rotas
+    const protectedPaths = [
+        '/dashboard', '/admin', '/financeiro', '/moradores',
+        '/unidades', '/avisos', '/ocorrencias', '/portaria',
+        '/relatorios', '/usuarios', '/alugueis', '/assinatura',
+        '/suporte', '/perfil', '/boletos'
+    ];
+
     const isProtectedRoute = protectedPaths.some(path => request.nextUrl.pathname.startsWith(path));
 
     // Se não tem usuário E está tentando acessar rota protegida → login
@@ -47,7 +53,8 @@ export async function updateSession(request: NextRequest) {
     }
 
     // Se tem usuário E está na página de login → dashboard
-    // IMPORTANTE: só redireciona se vier DIRETAMENTE do /login, não de outras páginas
+    //IMPORTANTE: Redirect do login é feito via window.location.href com delay de 500ms
+    // Isso garante que a sessão já foi salva quando middleware verificar
     if (user && request.nextUrl.pathname === '/login') {
         const url = request.nextUrl.clone();
         url.pathname = '/dashboard';
