@@ -61,6 +61,7 @@ export default function AdminUsuariosPage() {
         try {
             const response = await fetch(`/api/user/delete?id=${id}`, {
                 method: 'DELETE',
+                credentials: 'include',
             });
             const data = await response.json();
 
@@ -325,6 +326,7 @@ function UserModal({ isOpen, onClose, onSuccess, user, condos, plans, subscripti
                 const response = await fetch('/api/admin/users', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include', // IMPORTANTE: enviar cookies de autenticação
                     body: JSON.stringify({
                         nome,
                         email,

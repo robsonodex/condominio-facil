@@ -83,6 +83,7 @@ export default function UsuariosCondoPage() {
                 const response = await fetch('/api/usuarios/create', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
                     body: JSON.stringify({
                         email: formData.email,
                         password: formData.senha,
@@ -128,6 +129,7 @@ export default function UsuariosCondoPage() {
         try {
             const response = await fetch(`/api/user/delete?id=${user.id}`, {
                 method: 'DELETE',
+                credentials: 'include',
             });
             const data = await response.json();
 

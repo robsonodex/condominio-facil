@@ -106,6 +106,9 @@ export async function getSessionFromReq(req: Request): Promise<{
         const authHeader = req.headers.get('authorization');
         const cookies = req.headers.get('cookie') || '';
 
+        console.log('[GET_SESSION] Auth header present:', !!authHeader);
+        console.log('[GET_SESSION] Cookies present:', !!cookies);
+
         // Extract token from cookie (Supabase SSR format)
         const tokenMatch = cookies.match(/sb-[^-]+-auth-token=([^;]+)/);
         const tokenFromCookie = tokenMatch ? decodeURIComponent(tokenMatch[1]) : null;
@@ -123,27 +126,51 @@ export async function getSessionFromReq(req: Request): Promise<{
         }
 
         if (!accessToken) {
+            console.log('[GET_SESSION] No access token found');
             return null;
         }
+
+        console.log('[GET_SESSION] Token length:', accessToken.length);
 
         // Verify token and get user
         const { data: { user }, error } = await supabaseAdmin.auth.getUser(accessToken);
 
-        if (error || !user) {
+        if (error) {
+            console.error('[GET_SESSION] Auth error:', error.message);
             return null;
         }
 
-        // Get user profile
-        const { data: profile } = await supabaseAdmin
+        if (!user) {
+            console.log('[GET_SESSION] No user from token');
+            return null;
+        }
+
+        console.log('[GET_SESSION] Auth user email:', user.email);
+
+        // Get user profile - IMPORTANTE: buscar também usuários inativos para debug
+        const { data: profile, error: profileError } = await supabaseAdmin
             .from('users')
-            .select('id, email, role, condo_id')
+            .select('id, email, role, condo_id, ativo')
             .eq('email', user.email)
-            .eq('ativo', true)
             .single();
 
-        if (!profile) {
+        if (profileError) {
+            console.error('[GET_SESSION] Profile query error:', profileError.message);
             return null;
         }
+
+        if (!profile) {
+            console.log('[GET_SESSION] No profile found for email:', user.email);
+            return null;
+        }
+
+        // Verificar se usuário está ativo
+        if (!profile.ativo) {
+            console.log('[GET_SESSION] User is inactive:', user.email);
+            return null;
+        }
+
+        console.log('[GET_SESSION] Profile found - Role:', profile.role, 'Condo:', profile.condo_id);
 
         return {
             userId: profile.id,

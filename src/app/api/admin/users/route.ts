@@ -1,39 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { supabaseAdmin, getSessionFromReq } from '@/lib/supabase/admin';
 import { createClient } from '@supabase/supabase-js';
-import { createClient as createServerClient } from '@/lib/supabase/server';
 
+// No GET allowed
 export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
 }
 
-
 export async function POST(request: NextRequest) {
     try {
-        // Criar admin client no runtime
-        const supabaseAdmin = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY!
-        );
+        console.log('[ADMIN_CREATE_USER] Request received');
 
-        // Criar client dentro do POST para evitar error de build
-        const supabase = await createServerClient();
-        const { data: { user } } = await supabase.auth.getUser();
+        // 1. Auth Check using shared helper
+        const session = await getSessionFromReq(request);
 
-        if (!user) {
-            return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+        if (!session) {
+            console.log('[ADMIN_CREATE_USER] No session found - returning 401');
+            return NextResponse.json({
+                error: 'Não autorizado. Por favor, faça login novamente.'
+            }, { status: 401 });
         }
 
-        const { data: profile } = await supabase
-            .from('users')
-            .select('role')
-            .eq('email', user.email)
-            .single();
+        console.log('[ADMIN_CREATE_USER] Session found - Role:', session.role);
 
-        if (!profile || (profile.role !== 'superadmin' && profile.role !== 'sindico')) {
+        // Only Superadmin or Sindico
+        if (!session.isSuperadmin && !session.isSindico) {
+            console.log('[ADMIN_CREATE_USER] Permission denied for role:', session.role);
             return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
         }
 
-        // Dados do novo usuário
+        // 2. Parse Body
         const body = await request.json();
         const {
             nome,
@@ -50,14 +46,15 @@ export async function POST(request: NextRequest) {
             ativar_imediatamente
         } = body;
 
+        // 3. Validate
         if (!nome || !email || !senha) {
             return NextResponse.json({
                 error: 'Nome, email e senha são obrigatórios'
             }, { status: 400 });
         }
 
-        // Verificar se email já existe na tabela users
-        const { data: existingUser } = await supabase
+        // 4. Check email existence (using Admin to be sure)
+        const { data: existingUser } = await supabaseAdmin
             .from('users')
             .select('id')
             .eq('email', email)
@@ -69,7 +66,7 @@ export async function POST(request: NextRequest) {
             }, { status: 400 });
         }
 
-        // Criar usuário no Supabase Auth
+        // 5. Create Auth User (Service Role)
         const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
             email,
             password: senha,
@@ -78,9 +75,9 @@ export async function POST(request: NextRequest) {
         });
 
         if (authError) {
-            if (authError.message.includes('already')) {
+            if (authError.message.includes('already') || authError.message.includes('exists')) {
                 return NextResponse.json({
-                    error: `Já existe um usuário cadastrado com o email "${email}". Por favor, use outro email.`
+                    error: `Já existe um usuário cadastrado com o email "${email}".`
                 }, { status: 400 });
             }
             return NextResponse.json({
@@ -88,37 +85,35 @@ export async function POST(request: NextRequest) {
             }, { status: 500 });
         }
 
+        if (!authData.user) {
+            return NextResponse.json({ error: 'Falha ao gerar usuário' }, { status: 500 });
+        }
+
         let finalCondoId = condo_id || null;
 
-        // Se for síndico e tiver dados de plano, criar condomínio e subscription
+        // 6. Handle Sindico Setup (Condo + Subscription)
         if (role === 'sindico' && condo_nome && plano_id) {
-            // Buscar dados do plano
-            const { data: plan } = await supabase
+            const { data: plan } = await supabaseAdmin
                 .from('plans')
                 .select('valor_mensal')
                 .eq('id', plano_id)
                 .single();
 
-            // Calcular datas
             const hoje = new Date();
-            let dataRenovacao: Date;
-            let condoStatus: string;
+            let dataRenovacao = new Date(hoje);
+            let condoStatus = 'ativo';
 
             if (ativar_imediatamente) {
-                condoStatus = 'ativo';
-                dataRenovacao = new Date(hoje);
+                // Ativo + 1 mês
                 dataRenovacao.setMonth(dataRenovacao.getMonth() + 1);
             } else if (periodo_teste) {
-                condoStatus = 'teste'; // Status do CONDO pode ser 'teste'
-                dataRenovacao = new Date(hoje);
+                condoStatus = 'teste';
                 dataRenovacao.setDate(dataRenovacao.getDate() + 7);
             } else {
-                condoStatus = 'ativo';
-                dataRenovacao = new Date(hoje);
                 dataRenovacao.setMonth(dataRenovacao.getMonth() + 1);
             }
 
-            // Criar condomínio (usando service role para contornar RLS)
+            // Create Condo
             const { data: newCondo, error: condoError } = await supabaseAdmin
                 .from('condos')
                 .insert({
@@ -140,27 +135,22 @@ export async function POST(request: NextRequest) {
 
             finalCondoId = newCondo.id;
 
-            // Criar subscription (usando service role para contornar RLS)
-            const { error: subError } = await supabaseAdmin
+            // Create Subscription
+            await supabaseAdmin
                 .from('subscriptions')
                 .insert({
                     condo_id: newCondo.id,
                     plano_id: plano_id,
-                    status: 'ativo', // Subscription sempre começa como 'ativo'
+                    status: 'ativo',
                     data_inicio: hoje.toISOString().split('T')[0],
                     data_renovacao: dataRenovacao.toISOString().split('T')[0],
                     valor_mensal_cobrado: plan?.valor_mensal || 0,
                     observacoes: periodo_teste ? 'Período de teste - 7 dias' : null,
                 });
-
-            if (subError) {
-                console.error('Subscription error:', subError);
-                // Continua mesmo com erro de subscription
-            }
         }
 
-        // Inserir na tabela users
-        const { error: dbError } = await supabase
+        // 7. Create Profile
+        const { error: dbError } = await supabaseAdmin
             .from('users')
             .insert({
                 id: authData.user.id,
@@ -175,18 +165,14 @@ export async function POST(request: NextRequest) {
         if (dbError) {
             await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
             return NextResponse.json({
-                error: `Erro ao salvar dados: ${dbError.message}`
+                error: `Erro ao salvar perfil: ${dbError.message}`
             }, { status: 500 });
         }
 
+        // Success Message Construction
         let message = `Usuário "${nome}" criado com sucesso!`;
         if (role === 'sindico' && condo_nome) {
-            message += ` Condomínio "${condo_nome}" criado.`;
-            if (periodo_teste && !ativar_imediatamente) {
-                message += ` Período de teste: 7 dias.`;
-            } else {
-                message += ` Ativado imediatamente.`;
-            }
+            message += ` Condomínio "${condo_nome}" criado em modo ${periodo_teste ? 'TESTE' : 'ATIVO'}.`;
         }
 
         return NextResponse.json({
@@ -200,10 +186,9 @@ export async function POST(request: NextRequest) {
         });
 
     } catch (error: any) {
-        console.error('User creation error:', error);
+        console.error('[ADMIN_CREATE_USER] Error:', error);
         return NextResponse.json({
             error: `Erro inesperado: ${error.message}`
         }, { status: 500 });
     }
 }
-
