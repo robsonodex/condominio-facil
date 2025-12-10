@@ -1,29 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 
 const MP_ACCESS_TOKEN = process.env.MERCADOPAGO_ACCESS_TOKEN;
 const MP_API_URL = 'https://api.mercadopago.com';
 
+// Helper function to get user from Authorization header
+async function getUserFromRequest(request: NextRequest) {
+    const authHeader = request.headers.get('authorization');
+    const token = authHeader?.replace('Bearer ', '');
+
+    if (!token) {
+        return null;
+    }
+
+    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
+    if (error || !user) {
+        return null;
+    }
+
+    // Get profile
+    const { data: profile } = await supabaseAdmin
+        .from('users')
+        .select('id, role, condo_id')
+        .eq('email', user.email)
+        .eq('ativo', true)
+        .single();
+
+    return profile;
+}
+
 // GET: Listar cobranças
 export async function GET(request: NextRequest) {
     try {
-        const supabase = await createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-
-        if (!user) {
-            return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
-        }
-
-        // Use admin client to bypass RLS for profile
-        const { data: profile } = await supabaseAdmin
-            .from('users')
-            .select('id, role, condo_id')
-            .eq('id', user.id)
-            .single();
+        const profile = await getUserFromRequest(request);
 
         if (!profile) {
-            return NextResponse.json({ error: 'Perfil não encontrado' }, { status: 404 });
+            return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
         }
 
         let query = supabaseAdmin
@@ -62,21 +74,13 @@ export async function GET(request: NextRequest) {
 // POST: Criar cobrança
 export async function POST(request: NextRequest) {
     try {
-        const supabase = await createClient();
-        const { data: { user } } = await supabase.auth.getUser();
+        const profile = await getUserFromRequest(request);
 
-        if (!user) {
+        if (!profile) {
             return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
         }
 
-        // Use admin client to bypass RLS for profile
-        const { data: profile } = await supabaseAdmin
-            .from('users')
-            .select('id, role, condo_id')
-            .eq('id', user.id)
-            .single();
-
-        if (!profile || (profile.role !== 'sindico' && profile.role !== 'superadmin')) {
+        if (profile.role !== 'sindico' && profile.role !== 'superadmin') {
             return NextResponse.json({ error: 'Apenas síndicos podem criar cobranças' }, { status: 403 });
         }
 
@@ -89,8 +93,8 @@ export async function POST(request: NextRequest) {
             }, { status: 400 });
         }
 
-        // Buscar dados do morador
-        const { data: morador } = await supabase
+        // Buscar dados do morador (usando supabaseAdmin)
+        const { data: morador } = await supabaseAdmin
             .from('users')
             .select('id, nome, email, condo_id')
             .eq('id', morador_id)
@@ -108,7 +112,7 @@ export async function POST(request: NextRequest) {
         const condoId = profile.role === 'sindico' ? profile.condo_id : morador.condo_id;
 
         // Buscar nome do condomínio
-        const { data: condo } = await supabase
+        const { data: condo } = await supabaseAdmin
             .from('condos')
             .select('nome')
             .eq('id', condoId)
@@ -168,8 +172,7 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        // Inserir cobrança no banco (using imported supabaseAdmin)
-
+        // Inserir cobrança no banco
         const { data: invoice, error: insertError } = await supabaseAdmin
             .from('resident_invoices')
             .insert({
@@ -232,20 +235,13 @@ export async function POST(request: NextRequest) {
 // DELETE: Cancelar cobrança
 export async function DELETE(request: NextRequest) {
     try {
-        const supabase = await createClient();
-        const { data: { user } } = await supabase.auth.getUser();
+        const profile = await getUserFromRequest(request);
 
-        if (!user) {
+        if (!profile) {
             return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
         }
 
-        const { data: profile } = await supabase
-            .from('users')
-            .select('id, role, condo_id')
-            .eq('id', user.id)
-            .single();
-
-        if (!profile || (profile.role !== 'sindico' && profile.role !== 'superadmin')) {
+        if (profile.role !== 'sindico' && profile.role !== 'superadmin') {
             return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
         }
 
@@ -256,7 +252,7 @@ export async function DELETE(request: NextRequest) {
             return NextResponse.json({ error: 'ID é obrigatório' }, { status: 400 });
         }
 
-        const { error } = await supabase
+        const { error } = await supabaseAdmin
             .from('resident_invoices')
             .update({ status: 'cancelado' })
             .eq('id', id);
@@ -271,3 +267,4 @@ export async function DELETE(request: NextRequest) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
+

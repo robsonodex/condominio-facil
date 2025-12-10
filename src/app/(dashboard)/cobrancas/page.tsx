@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, Button, Input, Select, Table, Badge } from '@/components/ui';
 import { Modal } from '@/components/ui/modal';
 import { useUser } from '@/hooks/useUser';
+import { useAuth } from '@/hooks/useAuth';
 import { createClient } from '@/lib/supabase/client';
 import { Plus, Send, Trash2, CreditCard, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 
@@ -22,6 +23,7 @@ interface Invoice {
 
 export default function CobrancasPage() {
     const { isSindico, isSuperAdmin, condoId, loading: userLoading } = useUser();
+    const { session } = useAuth();
     const [invoices, setInvoices] = useState<Invoice[]>([]);
     const [moradores, setMoradores] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -36,17 +38,30 @@ export default function CobrancasPage() {
     const [enviarEmail, setEnviarEmail] = useState(true);
     const [saving, setSaving] = useState(false);
 
+    const getAuthHeaders = () => {
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+        };
+        if (session?.access_token) {
+            headers['Authorization'] = `Bearer ${session.access_token}`;
+        }
+        return headers;
+    };
+
     useEffect(() => {
-        if (!userLoading && condoId) {
+        if (!userLoading && condoId && session?.access_token) {
             fetchInvoices();
             fetchMoradores();
         }
-    }, [userLoading, condoId]);
+    }, [userLoading, condoId, session?.access_token]);
 
     const fetchInvoices = async () => {
         setLoading(true);
         try {
-            const res = await fetch('/api/resident-billing', { credentials: 'include' });
+            const res = await fetch('/api/resident-billing', {
+                headers: getAuthHeaders(),
+                credentials: 'include'
+            });
             const data = await res.json();
             setInvoices(data.invoices || []);
         } catch (error) {
@@ -58,9 +73,9 @@ export default function CobrancasPage() {
     const fetchMoradores = async () => {
         const { data } = await supabase
             .from('users')
-            .select('id, nome, email, unidade_id, unidade:units(bloco, numero_unidade)')
+            .select('id, nome, email, role, unidade_id, unidade:units(bloco, numero_unidade)')
             .eq('condo_id', condoId)
-            .eq('role', 'morador')
+            .in('role', ['morador', 'inquilino'])
             .eq('ativo', true)
             .order('nome');
         setMoradores(data || []);
@@ -74,7 +89,7 @@ export default function CobrancasPage() {
         try {
             const res = await fetch('/api/resident-billing', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getAuthHeaders(),
                 credentials: 'include',
                 body: JSON.stringify({
                     morador_id: moradorId,
@@ -106,6 +121,7 @@ export default function CobrancasPage() {
         try {
             const res = await fetch(`/api/resident-billing?id=${id}`, {
                 method: 'DELETE',
+                headers: getAuthHeaders(),
                 credentials: 'include',
             });
 
