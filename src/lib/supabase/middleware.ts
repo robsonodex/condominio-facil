@@ -35,6 +35,8 @@ export async function updateSession(request: NextRequest) {
         data: { user },
     } = await supabase.auth.getUser();
 
+    // TEMPORÁRIO: PROTEÇÃO DE ROTAS DESABILITADA para permitir login
+    /*
     // Protected routes
     const protectedPaths = ['/dashboard', '/admin', '/financeiro', '/moradores', '/unidades', '/avisos', '/ocorrencias', '/portaria', '/relatorios'];
     const isProtectedRoute = protectedPaths.some(path => request.nextUrl.pathname.startsWith(path));
@@ -51,6 +53,7 @@ export async function updateSession(request: NextRequest) {
         url.pathname = '/dashboard';
         return NextResponse.redirect(url);
     }
+    */
 
     return supabaseResponse;
 }

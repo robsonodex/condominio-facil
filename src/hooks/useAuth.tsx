@@ -145,7 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             password,
             options: {
                 data: { nome },
-                emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboarding/aceite`
+                emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`
             }
         });
 

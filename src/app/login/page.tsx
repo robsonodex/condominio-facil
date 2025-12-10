@@ -37,7 +37,8 @@ function LoginContent() {
             setError('Email ou senha inválidos');
             setLoading(false);
         } else {
-            router.push('/dashboard');
+            // Redirect direto sem usar router
+            window.location.href = '/dashboard';
         }
     };
 

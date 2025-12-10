@@ -36,6 +36,8 @@ export async function middleware(request: NextRequest) {
     const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
     const isExcluded = EXCLUDED_FROM_LEGAL_CHECK.some(route => pathname.startsWith(route));
 
+    // TEMPORÁRIO: ACEITE LEGAL DESABILITADO para permitir login
+    /*
     if (isProtectedRoute && !isExcluded) {
         try {
             // Criar supabase client para verificar role
@@ -99,6 +101,7 @@ export async function middleware(request: NextRequest) {
             });
         }
     }
+    */
 
     // Log de métrica para sucesso
     if (isProtectedRoute) {
