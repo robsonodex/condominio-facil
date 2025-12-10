@@ -29,27 +29,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const supabase = useMemo(() => createClient(), []);
 
-    // Fetch profile via API (bypasses RLS)
+    // Fetch profile via API (bypasses RLS) with retry
     const fetchProfile = useCallback(async (email: string): Promise<User | null> => {
         console.log('[AUTH] Fetching profile for email:', email);
-        try {
-            const response = await fetch('/api/auth/profile', {
-                credentials: 'include',
-            });
 
-            if (!response.ok) {
-                console.error('[AUTH] Profile API error:', response.status);
-                return null;
+        // Retry up to 3 times
+        for (let attempt = 1; attempt <= 3; attempt++) {
+            try {
+                const response = await fetch('/api/auth/profile', {
+                    credentials: 'include',
+                    cache: 'no-store',
+                    headers: {
+                        'Cache-Control': 'no-cache',
+                    }
+                });
+
+                if (!response.ok) {
+                    console.error('[AUTH] Profile API error:', response.status, 'attempt:', attempt);
+                    if (attempt < 3) {
+                        await new Promise(r => setTimeout(r, 500 * attempt));
+                        continue;
+                    }
+                    return null;
+                }
+
+                const data = await response.json();
+
+                if (data.profile) {
+                    console.log('[AUTH] Profile loaded - Role:', data.profile.role, 'Email:', data.profile.email);
+                    return data.profile;
+                } else {
+                    console.warn('[AUTH] Profile API returned null, attempt:', attempt);
+                    if (attempt < 3) {
+                        await new Promise(r => setTimeout(r, 500 * attempt));
+                        continue;
+                    }
+                }
+            } catch (err) {
+                console.error('[AUTH] Profile fetch exception, attempt:', attempt, err);
+                if (attempt < 3) {
+                    await new Promise(r => setTimeout(r, 500 * attempt));
+                    continue;
+                }
             }
-
-            const data = await response.json();
-            console.log('[AUTH] Profile API result:', data.profile ? 'found' : 'null');
-
-            return data.profile;
-        } catch (err) {
-            console.error('[AUTH] Profile fetch exception:', err);
-            return null;
         }
+
+        console.error('[AUTH] Failed to fetch profile after 3 attempts');
+        return null;
     }, []);
 
     // Refresh profile (for use after updates)
