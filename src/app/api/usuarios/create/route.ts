@@ -1,61 +1,56 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-// Validate SERVICE_ROLE_KEY exists  
-if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    console.error('[CREATE_USER] SUPABASE_SERVICE_ROLE_KEY não configurado!');
-}
-
-// Create Supabase Admin client (service role)
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-        auth: {
-            autoRefreshToken: false,
-            persistSession: false
-        }
-    }
-);
+import { supabaseAdmin, getSessionFromReq } from '@/lib/supabase/admin';
 
 export async function POST(request: NextRequest) {
     try {
+        // 1. Check Authentication & Permission
+        const session = await getSessionFromReq(request);
+        if (!session) {
+            return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+        }
+
+        // Only Superadmin or Sindico can create users
+        if (!session.isSuperadmin && !session.isSindico) {
+            return NextResponse.json({ error: 'Permissões insuficientes' }, { status: 403 });
+        }
+
         const body = await request.json();
         const { email, password, nome, telefone, role, condo_id } = body;
 
-        // Validate required fields
+        // 2. Validate Request
         if (!email || !password || !nome || !role || !condo_id) {
             return NextResponse.json(
-                { error: 'Campos obrigatórios faltando' },
+                { error: 'Campos obrigatórios: email, password, nome, role, condo_id' },
                 { status: 400 }
             );
         }
 
-        // Create user in Supabase Auth using Admin API
-        // CRITICAL: Using service role prevents logging out current user
+        // Sindico can only create for their own condo
+        if (session.isSindico && session.condoId !== condo_id) {
+            return NextResponse.json({ error: 'Acesso negado ao condomínio' }, { status: 403 });
+        }
+
+        // 3. Create Auth User (Service Role)
         const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
             email,
             password,
-            email_confirm: true, // Auto-confirm email
+            email_confirm: true,
             user_metadata: { nome }
         });
 
         if (authError) {
             console.error('[CREATE_USER] Auth error:', authError);
             return NextResponse.json(
-                { error: authError.message },
+                { error: `Erro na autenticação: ${authError.message}` },
                 { status: 400 }
             );
         }
 
         if (!authData.user) {
-            return NextResponse.json(
-                { error: 'Falha ao criar usuário' },
-                { status: 500 }
-            );
+            return NextResponse.json({ error: 'Falha ao criar usuário Auth' }, { status: 500 });
         }
 
-        // Create user profile in users table
+        // 4. Create Profile (Service Role)
         const { error: profileError } = await supabaseAdmin
             .from('users')
             .insert({
@@ -70,10 +65,10 @@ export async function POST(request: NextRequest) {
 
         if (profileError) {
             console.error('[CREATE_USER] Profile error:', profileError);
-            // Attempt to delete auth user if profile creation fails
+            // Rollback auth user
             await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
             return NextResponse.json(
-                { error: 'Erro ao criar perfil do usuário' },
+                { error: `Erro ao criar perfil: ${profileError.message}` },
                 { status: 500 }
             );
         }
@@ -84,18 +79,15 @@ export async function POST(request: NextRequest) {
                 id: authData.user.id,
                 email,
                 nome,
-                role
-            },
-            credentials: {
-                email,
-                password
+                role,
+                condo_id
             }
         });
 
     } catch (error: any) {
         console.error('[CREATE_USER] Unexpected error:', error);
         return NextResponse.json(
-            { error: error.message || 'Erro interno' },
+            { error: error.message || 'Erro interno no servidor' },
             { status: 500 }
         );
     }
