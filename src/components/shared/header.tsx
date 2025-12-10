@@ -12,14 +12,25 @@ interface HeaderProps {
 
 export function Header({ onMenuClick }: HeaderProps) {
     const { signOut } = useAuth();
-    const { profile, isSuperAdmin } = useUser();
+    const { profile, isSuperAdmin, loading: userLoading } = useUser();
     const { condo } = useCondo();
     const router = useRouter();
     const [showUserMenu, setShowUserMenu] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     const handleSignOut = async () => {
-        signOut();
-        router.push('/login');
+        if (isLoggingOut) return; // Prevent double-click
+        setIsLoggingOut(true);
+        setShowUserMenu(false);
+
+        try {
+            await signOut();
+            // Use window.location for clean redirect without router state issues
+            window.location.href = '/login';
+        } catch (error) {
+            console.error('[Header] Logout error:', error);
+            setIsLoggingOut(false);
+        }
     };
 
     return (
@@ -81,10 +92,11 @@ export function Header({ onMenuClick }: HeaderProps) {
                                     </div>
                                     <button
                                         onClick={handleSignOut}
-                                        className="w-full flex items-center gap-2 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                                        disabled={isLoggingOut}
+                                        className="w-full flex items-center gap-2 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
                                     >
-                                        <LogOut className="h-4 w-4" />
-                                        Sair
+                                        <LogOut className={`h-4 w-4 ${isLoggingOut ? 'animate-spin' : ''}`} />
+                                        {isLoggingOut ? 'Saindo...' : 'Sair'}
                                     </button>
                                 </div>
                             </>
