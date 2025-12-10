@@ -10,44 +10,59 @@ export async function GET(request: NextRequest) {
         const supabase = await createClient();
         const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-        console.log('[PROFILE API] Auth result:', user?.email || 'NO USER', authError?.message || 'no error');
+        console.log('[PROFILE API] Auth result:', user?.email || 'NO USER', authError?.message || 'no auth error');
 
-        if (!user) {
-            console.log('[PROFILE API] No authenticated user');
+        if (!user || !user.email) {
+            console.log('[PROFILE API] No authenticated user or no email');
             return NextResponse.json({ profile: null });
         }
 
-        console.log('[PROFILE API] Fetching profile for user ID:', user.id);
+        console.log('[PROFILE API] Fetching profile for:', user.email, 'AuthID:', user.id);
 
-        // Use admin client to bypass RLS
-        const { data: profile, error } = await supabaseAdmin
+        // PRIORITY 1: Fetch by EMAIL (most reliable)
+        const { data: profileByEmail, error: emailError } = await supabaseAdmin
+            .from('users')
+            .select('*')
+            .eq('email', user.email)
+            .eq('ativo', true)
+            .single();
+
+        if (profileByEmail) {
+            console.log('[PROFILE API] ✅ Found by EMAIL - Role:', profileByEmail.role, 'ID:', profileByEmail.id);
+            return NextResponse.json({ profile: profileByEmail });
+        }
+
+        console.log('[PROFILE API] Email lookup failed:', emailError?.message, emailError?.code);
+
+        // PRIORITY 2: Try by auth ID
+        const { data: profileById, error: idError } = await supabaseAdmin
             .from('users')
             .select('*')
             .eq('id', user.id)
             .eq('ativo', true)
             .single();
 
-        if (error) {
-            console.error('[PROFILE API] Database error:', error.message, error.code);
-            // Try fetching by email as fallback
-            const { data: profileByEmail, error: emailError } = await supabaseAdmin
-                .from('users')
-                .select('*')
-                .eq('email', user.email)
-                .eq('ativo', true)
-                .single();
-
-            if (profileByEmail) {
-                console.log('[PROFILE API] Found by email, role:', profileByEmail.role);
-                return NextResponse.json({ profile: profileByEmail });
-            }
-
-            console.error('[PROFILE API] Email fallback also failed:', emailError?.message);
-            return NextResponse.json({ profile: null });
+        if (profileById) {
+            console.log('[PROFILE API] ✅ Found by ID - Role:', profileById.role);
+            return NextResponse.json({ profile: profileById });
         }
 
-        console.log('[PROFILE API] Profile found - Role:', profile?.role, 'CondoId:', profile?.condo_id);
-        return NextResponse.json({ profile });
+        console.log('[PROFILE API] ID lookup failed:', idError?.message, idError?.code);
+
+        // PRIORITY 3: Check if user exists but is inactive
+        const { data: inactiveUser } = await supabaseAdmin
+            .from('users')
+            .select('id, email, role, ativo')
+            .eq('email', user.email)
+            .single();
+
+        if (inactiveUser) {
+            console.log('[PROFILE API] ⚠️ User found but INACTIVE:', inactiveUser.email, 'ativo:', inactiveUser.ativo);
+        } else {
+            console.log('[PROFILE API] ❌ User NOT FOUND in users table for email:', user.email);
+        }
+
+        return NextResponse.json({ profile: null });
 
     } catch (error: any) {
         console.error('[PROFILE API] Exception:', error.message);
