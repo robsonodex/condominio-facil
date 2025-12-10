@@ -227,8 +227,64 @@ export default function AssinaturaPage() {
                             </div>
 
                             {/* Botões de Pagamento - sempre visíveis */}
-                            <div className="space-y-3 pt-4 border-t">
+                            <div className="space-y-4 pt-4 border-t">
                                 <p className="text-sm font-medium text-gray-700">Opções de pagamento:</p>
+
+                                {/* PIX Estático - Sempre visível */}
+                                <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+                                    <div className="flex items-start gap-3">
+                                        <QrCode className="h-8 w-8 text-emerald-600 flex-shrink-0" />
+                                        <div className="flex-1">
+                                            <h4 className="font-semibold text-emerald-800">Pagamento via PIX</h4>
+                                            <p className="text-sm text-emerald-700 mb-2">Chave PIX (CNPJ):</p>
+                                            <div className="flex items-center gap-2 bg-white p-2 rounded border border-emerald-300">
+                                                <code className="text-sm font-mono flex-1">57.444.727/0001-85</code>
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    onClick={() => {
+                                                        navigator.clipboard.writeText('57444727000185');
+                                                        setCopied(true);
+                                                        setTimeout(() => setCopied(false), 2000);
+                                                    }}
+                                                >
+                                                    <Copy className="h-4 w-4" />
+                                                    {copied ? 'Copiado!' : ''}
+                                                </Button>
+                                            </div>
+                                            <p className="text-xs text-emerald-600 mt-2">
+                                                Valor: <strong>{formatCurrency(subscription?.valor_mensal_cobrado || subscription?.plan?.valor_mensal || 49.90)}</strong>
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* WhatsApp Button */}
+                                    <div className="mt-4 pt-3 border-t border-emerald-200">
+                                        <p className="text-xs text-emerald-700 mb-2">
+                                            ⚠️ Após pagar, envie o comprovante para dar baixa no sistema:
+                                        </p>
+                                        <Button
+                                            variant="outline"
+                                            className="w-full border-emerald-500 text-emerald-700 hover:bg-emerald-100"
+                                            onClick={() => {
+                                                const msg = encodeURIComponent(
+                                                    `Olá! Segue comprovante de pagamento da mensalidade do Condomínio Fácil.\n\n` +
+                                                    `Condomínio: ${profile?.condo_nome || 'N/A'}\n` +
+                                                    `Valor: ${formatCurrency(subscription?.valor_mensal_cobrado || 49.90)}\n\n` +
+                                                    `Por favor, confirmem o recebimento.`
+                                                );
+                                                window.open(`https://wa.me/5588999999999?text=${msg}`, '_blank');
+                                            }}
+                                        >
+                                            📱 Enviar Comprovante via WhatsApp
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                {/* Outras opções */}
+                                <p className="text-xs text-gray-500 text-center">
+                                    Ou use as opções abaixo para gerar código de pagamento automático:
+                                </p>
                                 <div className="grid grid-cols-2 gap-3">
                                     <Button
                                         onClick={generateMercadoPagoCheckout}
@@ -236,7 +292,7 @@ export default function AssinaturaPage() {
                                         variant="primary"
                                     >
                                         <CreditCard className="h-4 w-4 mr-2" />
-                                        {generatingCheckout ? 'Abrindo...' : 'Cartão/PIX/Boleto'}
+                                        {generatingCheckout ? 'Abrindo...' : 'Cartão/Boleto'}
                                     </Button>
                                     <Button
                                         onClick={generatePixPayment}
@@ -244,12 +300,9 @@ export default function AssinaturaPage() {
                                         variant="outline"
                                     >
                                         <QrCode className="h-4 w-4 mr-2" />
-                                        {generatingPix ? 'Gerando...' : 'PIX Direto'}
+                                        {generatingPix ? 'Gerando...' : 'Gerar QR Code'}
                                     </Button>
                                 </div>
-                                <p className="text-xs text-gray-500 text-center">
-                                    Cartão/PIX/Boleto redireciona para o Mercado Pago. PIX Direto gera código na hora.
-                                </p>
                             </div>
                         </div>
                     ) : (
