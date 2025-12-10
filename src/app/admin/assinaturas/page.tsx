@@ -179,30 +179,38 @@ export default function AdminAssinaturasPage() {
                         <p className="text-emerald-100 text-sm">MRR (Receita Recorrente)</p>
                     </CardContent>
                 </Card>
-                <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0">
-                    <CardContent className="py-4 text-center">
-                        <p className="text-2xl font-bold">{stats.total}</p>
-                        <p className="text-sm text-blue-100">Total</p>
-                    </CardContent>
-                </Card>
-                <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0">
-                    <CardContent className="py-4 text-center">
-                        <p className="text-2xl font-bold">{stats.ativo}</p>
-                        <p className="text-sm text-purple-100">Ativas</p>
-                    </CardContent>
-                </Card>
-                <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white border-0">
-                    <CardContent className="py-4 text-center">
-                        <p className="text-2xl font-bold">{stats.pendente}</p>
-                        <p className="text-sm text-orange-100">Pendentes</p>
-                    </CardContent>
-                </Card>
-                <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white border-0">
-                    <CardContent className="py-4 text-center">
-                        <p className="text-2xl font-bold">{stats.cancelado}</p>
-                        <p className="text-sm text-red-100">Canceladas</p>
-                    </CardContent>
-                </Card>
+                <div onClick={() => setFilterStatus('')} className="cursor-pointer transition-transform hover:scale-105">
+                    <Card className={`bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 h-full ${filterStatus === '' ? 'ring-2 ring-white ring-offset-2' : ''}`}>
+                        <CardContent className="py-4 text-center">
+                            <p className="text-2xl font-bold">{stats.total}</p>
+                            <p className="text-sm text-blue-100">Total</p>
+                        </CardContent>
+                    </Card>
+                </div>
+                <div onClick={() => setFilterStatus('ativo')} className="cursor-pointer transition-transform hover:scale-105">
+                    <Card className={`bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0 h-full ${filterStatus === 'ativo' ? 'ring-2 ring-white ring-offset-2' : ''}`}>
+                        <CardContent className="py-4 text-center">
+                            <p className="text-2xl font-bold">{stats.ativo}</p>
+                            <p className="text-sm text-purple-100">Ativas</p>
+                        </CardContent>
+                    </Card>
+                </div>
+                <div onClick={() => setFilterStatus('pendente_pagamento')} className="cursor-pointer transition-transform hover:scale-105">
+                    <Card className={`bg-gradient-to-br from-orange-500 to-orange-600 text-white border-0 h-full ${filterStatus === 'pendente_pagamento' ? 'ring-2 ring-white ring-offset-2' : ''}`}>
+                        <CardContent className="py-4 text-center">
+                            <p className="text-2xl font-bold">{stats.pendente}</p>
+                            <p className="text-sm text-orange-100">Pendentes</p>
+                        </CardContent>
+                    </Card>
+                </div>
+                <div onClick={() => setFilterStatus('cancelado')} className="cursor-pointer transition-transform hover:scale-105">
+                    <Card className={`bg-gradient-to-br from-red-500 to-red-600 text-white border-0 h-full ${filterStatus === 'cancelado' ? 'ring-2 ring-white ring-offset-2' : ''}`}>
+                        <CardContent className="py-4 text-center">
+                            <p className="text-2xl font-bold">{stats.cancelado}</p>
+                            <p className="text-sm text-red-100">Canceladas</p>
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
 
             {/* Filter */}
@@ -263,8 +271,8 @@ export default function AdminAssinaturasPage() {
                             <button
                                 onClick={() => setBillingAction('email')}
                                 className={`p-4 rounded-lg border-2 text-center transition-all ${billingAction === 'email'
-                                        ? 'border-emerald-500 bg-emerald-50'
-                                        : 'border-gray-200 hover:border-gray-300'
+                                    ? 'border-emerald-500 bg-emerald-50'
+                                    : 'border-gray-200 hover:border-gray-300'
                                     }`}
                             >
                                 <Mail className={`h-6 w-6 mx-auto mb-2 ${billingAction === 'email' ? 'text-emerald-500' : 'text-gray-400'}`} />
@@ -273,8 +281,8 @@ export default function AdminAssinaturasPage() {
                             <button
                                 onClick={() => setBillingAction('notification')}
                                 className={`p-4 rounded-lg border-2 text-center transition-all ${billingAction === 'notification'
-                                        ? 'border-emerald-500 bg-emerald-50'
-                                        : 'border-gray-200 hover:border-gray-300'
+                                    ? 'border-emerald-500 bg-emerald-50'
+                                    : 'border-gray-200 hover:border-gray-300'
                                     }`}
                             >
                                 <Bell className={`h-6 w-6 mx-auto mb-2 ${billingAction === 'notification' ? 'text-emerald-500' : 'text-gray-400'}`} />
@@ -283,8 +291,8 @@ export default function AdminAssinaturasPage() {
                             <button
                                 onClick={() => setBillingAction('both')}
                                 className={`p-4 rounded-lg border-2 text-center transition-all ${billingAction === 'both'
-                                        ? 'border-emerald-500 bg-emerald-50'
-                                        : 'border-gray-200 hover:border-gray-300'
+                                    ? 'border-emerald-500 bg-emerald-50'
+                                    : 'border-gray-200 hover:border-gray-300'
                                     }`}
                             >
                                 <Send className={`h-6 w-6 mx-auto mb-2 ${billingAction === 'both' ? 'text-emerald-500' : 'text-gray-400'}`} />

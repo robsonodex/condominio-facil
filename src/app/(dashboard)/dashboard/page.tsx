@@ -191,68 +191,76 @@ export default function DashboardPage() {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0">
-                    <CardContent className="pt-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-emerald-100">Unidades</p>
-                                <p className="text-3xl font-bold">{stats?.totalUnidades}</p>
+                <Link href="/unidades" className="block transition-transform hover:scale-105">
+                    <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0 h-full cursor-pointer">
+                        <CardContent className="pt-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm text-emerald-100">Unidades</p>
+                                    <p className="text-3xl font-bold">{stats?.totalUnidades}</p>
+                                </div>
+                                <div className="p-3 bg-white/20 rounded-lg">
+                                    <Home className="h-6 w-6" />
+                                </div>
                             </div>
-                            <div className="p-3 bg-white/20 rounded-lg">
-                                <Home className="h-6 w-6" />
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                        </CardContent>
+                    </Card>
+                </Link>
 
-                <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white border-0">
-                    <CardContent className="pt-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-red-100">Inadimplência</p>
-                                <p className="text-2xl font-bold">{formatCurrency(stats?.inadimplenciaValor || 0)}</p>
-                                <p className="text-xs text-red-200">{stats?.inadimplenciaPercentual?.toFixed(1)}% do previsto</p>
+                <Link href="/financeiro" className="block transition-transform hover:scale-105">
+                    <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white border-0 h-full cursor-pointer">
+                        <CardContent className="pt-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm text-red-100">Inadimplência</p>
+                                    <p className="text-2xl font-bold">{formatCurrency(stats?.inadimplenciaValor || 0)}</p>
+                                    <p className="text-xs text-red-200">{stats?.inadimplenciaPercentual?.toFixed(1)}% do previsto</p>
+                                </div>
+                                <div className="p-3 bg-white/20 rounded-lg">
+                                    <DollarSign className="h-6 w-6" />
+                                </div>
                             </div>
-                            <div className="p-3 bg-white/20 rounded-lg">
-                                <DollarSign className="h-6 w-6" />
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                        </CardContent>
+                    </Card>
+                </Link>
 
-                <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white border-0">
-                    <CardContent className="pt-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-orange-100">Ocorrências Abertas</p>
-                                <p className="text-3xl font-bold">{stats?.ocorrenciasAbertas}</p>
+                <Link href="/ocorrencias" className="block transition-transform hover:scale-105">
+                    <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white border-0 h-full cursor-pointer">
+                        <CardContent className="pt-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm text-orange-100">Ocorrências Abertas</p>
+                                    <p className="text-3xl font-bold">{stats?.ocorrenciasAbertas}</p>
+                                </div>
+                                <div className="p-3 bg-white/20 rounded-lg">
+                                    <AlertTriangle className="h-6 w-6" />
+                                </div>
                             </div>
-                            <div className="p-3 bg-white/20 rounded-lg">
-                                <AlertTriangle className="h-6 w-6" />
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                        </CardContent>
+                    </Card>
+                </Link>
 
-                <Card className={`bg-gradient-to-br ${(stats?.receitasMes || 0) >= (stats?.despesasMes || 0) ? 'from-blue-500 to-blue-600' : 'from-purple-500 to-purple-600'} text-white border-0`}>
-                    <CardContent className="pt-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm opacity-80">Saldo do Mês</p>
-                                <p className="text-2xl font-bold">
-                                    {formatCurrency((stats?.receitasMes || 0) - (stats?.despesasMes || 0))}
-                                </p>
+                <Link href="/financeiro" className="block transition-transform hover:scale-105">
+                    <Card className={`bg-gradient-to-br ${(stats?.receitasMes || 0) >= (stats?.despesasMes || 0) ? 'from-blue-500 to-blue-600' : 'from-purple-500 to-purple-600'} text-white border-0 h-full cursor-pointer`}>
+                        <CardContent className="pt-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm opacity-80">Saldo do Mês</p>
+                                    <p className="text-2xl font-bold">
+                                        {formatCurrency((stats?.receitasMes || 0) - (stats?.despesasMes || 0))}
+                                    </p>
+                                </div>
+                                <div className="p-3 bg-white/20 rounded-lg">
+                                    {(stats?.receitasMes || 0) >= (stats?.despesasMes || 0) ? (
+                                        <TrendingUp className="h-6 w-6" />
+                                    ) : (
+                                        <TrendingDown className="h-6 w-6" />
+                                    )}
+                                </div>
                             </div>
-                            <div className="p-3 bg-white/20 rounded-lg">
-                                {(stats?.receitasMes || 0) >= (stats?.despesasMes || 0) ? (
-                                    <TrendingUp className="h-6 w-6" />
-                                ) : (
-                                    <TrendingDown className="h-6 w-6" />
-                                )}
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                        </CardContent>
+                    </Card>
+                </Link>
             </div>
 
             {/* Chart and Notices */}
