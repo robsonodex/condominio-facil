@@ -119,7 +119,7 @@ export function ImpersonateModal() {
                                     <div>
                                         <p className="font-medium text-sm">{user.nome}</p>
                                         <div className="flex items-center gap-2">
-                                            <Badge variant="outline" className="text-xs h-5 capitalize">
+                                            <Badge variant="secondary" className="text-xs h-5 capitalize">
                                                 {user.role}
                                             </Badge>
                                             {user.condo_id && <span className="text-xs text-gray-400">Condo ID: ...{user.condo_id.slice(-4)}</span>}
