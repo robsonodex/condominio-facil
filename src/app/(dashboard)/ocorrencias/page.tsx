@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/hooks/useUser';
 import { formatDate, formatDateTime, getStatusColor, getStatusLabel, getPriorityColor, getOccurrenceTypeLabel } from '@/lib/utils';
-import { Plus, Search, AlertTriangle, Eye } from 'lucide-react';
+import { Plus, Search, AlertTriangle, Eye, Trash2 } from 'lucide-react';
 import { Unit, User } from '@/types/database';
 
 function OcorrenciasSkeleton() {
@@ -58,6 +58,19 @@ export default function OcorrenciasPage() {
     };
 
     const canEdit = isSindico || isSuperAdmin || isPorteiro;
+
+    const handleDelete = async (o: any) => {
+        if (!confirm(`Tem certeza que deseja excluir a ocorrência "${o.titulo}"?`)) return;
+
+        try {
+            const { error } = await supabase.from('occurrences').delete().eq('id', o.id);
+            if (error) throw error;
+            setOccurrences(prev => prev.filter(item => item.id !== o.id));
+            alert('✅ Ocorrência excluída com sucesso!');
+        } catch (err: any) {
+            alert('❌ Erro ao excluir: ' + err.message);
+        }
+    };
 
     const filteredOccurrences = occurrences.filter(o =>
         o.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -115,13 +128,23 @@ export default function OcorrenciasPage() {
             header: '',
             className: 'text-right',
             render: (o: any) => (
-                <div className="flex gap-2 justify-end">
+                <div className="flex gap-1 justify-end">
                     <button
                         onClick={(e) => { e.stopPropagation(); setEditingOccurrence(o); setShowModal(true); }}
                         className="p-1 hover:bg-gray-100 rounded"
+                        title="Ver/Editar"
                     >
                         <Eye className="h-4 w-4 text-gray-500" />
                     </button>
+                    {canEdit && (
+                        <button
+                            onClick={(e) => { e.stopPropagation(); handleDelete(o); }}
+                            className="p-1 hover:bg-red-100 rounded"
+                            title="Excluir"
+                        >
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                        </button>
+                    )}
                 </div>
             )
         },
