@@ -16,12 +16,11 @@ export function ImpersonationBanner() {
     const handleStopImpersonation = async () => {
         setLoading(true);
         try {
-            await fetch('/api/impersonate', { method: 'DELETE' });
-            await refetchUser();
-            router.refresh();
+            await fetch('/api/impersonate', { method: 'DELETE', credentials: 'include' });
+            // Força atualização completa da página
+            window.location.href = '/admin';
         } catch (error) {
             console.error('Failed to stop impersonation', error);
-        } finally {
             setLoading(false);
         }
     };

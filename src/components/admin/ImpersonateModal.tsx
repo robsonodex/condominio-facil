@@ -72,14 +72,12 @@ export function ImpersonateModal() {
                 throw new Error(data.error || 'Falha ao iniciar impersonação');
             }
 
-            await refetchUser();
-            setOpen(false);
-            router.refresh();
+            // Força atualização completa da página
+            window.location.href = '/dashboard';
 
         } catch (error: any) {
             console.error('[ImpersonateModal] Error:', error);
             alert(`Erro ao iniciar impersonação: ${error.message}`);
-        } finally {
             setImpersonating(false);
         }
     };
