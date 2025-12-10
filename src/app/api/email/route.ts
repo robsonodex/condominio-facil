@@ -226,6 +226,91 @@ const templates: Record<string, { subject: string; html: (data: any) => string }
         subject: '✅ Seu aceite foi registrado - Condomínio Fácil',
         html: (data) => legalAcceptanceConfirmedEmail(data),
     },
+    // Subscription Reminder Templates
+    subscription_reminder: {
+        subject: '⏰ Sua assinatura vence em breve - Condomínio Fácil',
+        html: (data) => `
+            <!DOCTYPE html>
+            <html>
+            <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+            <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f3f4f6;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+                    <div style="background: linear-gradient(135deg, #f59e0b, #d97706); padding: 40px 20px; text-align: center;">
+                        <h1 style="color: #ffffff; margin: 0; font-size: 28px;">⏰ Lembrete de Renovação</h1>
+                    </div>
+                    <div style="padding: 40px 30px;">
+                        <h2 style="color: #1f2937; margin-top: 0;">Olá, ${sanitizeHtml(data.nome)}!</h2>
+                        <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
+                            Sua assinatura do <strong>Condomínio Fácil</strong> para o condomínio 
+                            <strong>${sanitizeHtml(data.condoNome)}</strong> vence em 
+                            <strong style="color: #f59e0b;">${sanitizeHtml(data.diasRestantes)} dias</strong> 
+                            (${sanitizeHtml(data.dataVencimento)}).
+                        </p>
+                        <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; margin: 25px 0;">
+                            <p style="color: #92400e; margin: 0;">
+                                <strong>Plano atual:</strong> ${sanitizeHtml(data.plano)}<br>
+                                <strong>Valor:</strong> R$ ${sanitizeHtml(data.valor)}/mês
+                            </p>
+                        </div>
+                        <p style="color: #4b5563; font-size: 16px;">
+                            Para evitar a interrupção dos serviços, renove sua assinatura antes do vencimento.
+                        </p>
+                        <div style="text-align: center; margin: 35px 0;">
+                            <a href="${sanitizeHtml(data.assinaturaUrl)}" 
+                               style="display: inline-block; background: #f59e0b; color: #ffffff; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
+                                Renovar Agora →
+                            </a>
+                        </div>
+                    </div>
+                    <div style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
+                        <p style="color: #9ca3af; font-size: 12px; margin: 0;">© ${new Date().getFullYear()} Condomínio Fácil</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+        `,
+    },
+    subscription_expired: {
+        subject: '🚨 Sua assinatura expirou - Funcionalidades reduzidas',
+        html: (data) => `
+            <!DOCTYPE html>
+            <html>
+            <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+            <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f3f4f6;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+                    <div style="background: linear-gradient(135deg, #ef4444, #dc2626); padding: 40px 20px; text-align: center;">
+                        <h1 style="color: #ffffff; margin: 0; font-size: 28px;">🚨 Assinatura Expirada</h1>
+                    </div>
+                    <div style="padding: 40px 30px;">
+                        <h2 style="color: #1f2937; margin-top: 0;">Olá, ${sanitizeHtml(data.nome)}!</h2>
+                        <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
+                            A assinatura do <strong>Condomínio Fácil</strong> para o condomínio 
+                            <strong>${sanitizeHtml(data.condoNome)}</strong> expirou há 
+                            <strong style="color: #ef4444;">${sanitizeHtml(data.diasRestantes)} dias</strong>.
+                        </p>
+                        <div style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 15px; margin: 25px 0;">
+                            <p style="color: #991b1b; margin: 0; font-weight: bold;">
+                                ⚠️ Seu acesso está no modo TRIAL com funcionalidades reduzidas.
+                            </p>
+                        </div>
+                        <p style="color: #4b5563; font-size: 16px;">
+                            Reative sua assinatura agora para ter acesso completo ao sistema.
+                        </p>
+                        <div style="text-align: center; margin: 35px 0;">
+                            <a href="${sanitizeHtml(data.assinaturaUrl)}" 
+                               style="display: inline-block; background: #ef4444; color: #ffffff; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
+                                Reativar Assinatura →
+                            </a>
+                        </div>
+                    </div>
+                    <div style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
+                        <p style="color: #9ca3af; font-size: 12px; margin: 0;">© ${new Date().getFullYear()} Condomínio Fácil</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+        `,
+    },
 };
 
 // Create transporter
