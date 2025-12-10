@@ -100,11 +100,12 @@ DROP POLICY IF EXISTS "occurrences_superadmin" ON occurrences;
 DROP POLICY IF EXISTS "occurrences_sindico" ON occurrences;
 DROP POLICY IF EXISTS "occurrences_porteiro" ON occurrences;
 DROP POLICY IF EXISTS "occurrences_morador" ON occurrences;
+DROP POLICY IF EXISTS "occurrences_condo_read" ON occurrences;
 
 CREATE POLICY "occurrences_superadmin" ON occurrences FOR ALL USING (get_my_role() = 'superadmin');
 CREATE POLICY "occurrences_sindico" ON occurrences FOR ALL USING (get_my_role() = 'sindico' AND get_my_condo_id() = condo_id);
 CREATE POLICY "occurrences_porteiro" ON occurrences FOR ALL USING (get_my_role() = 'porteiro' AND get_my_condo_id() = condo_id);
-CREATE POLICY "occurrences_morador" ON occurrences FOR ALL USING (created_by = auth.uid() OR get_my_condo_id() = condo_id);
+CREATE POLICY "occurrences_condo_read" ON occurrences FOR SELECT USING (get_my_condo_id() = condo_id);
 
 -- =============================================
 -- FINANCIAL_ENTRIES TABLE
