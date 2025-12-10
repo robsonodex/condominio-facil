@@ -258,14 +258,24 @@ function VisitorModal({ isOpen, onClose, onSuccess, condoId, userId }: {
     const [documento, setDocumento] = useState('');
     const [tipo, setTipo] = useState('visitante');
     const [placaVeiculo, setPlacaVeiculo] = useState('');
-    const [unidadeId, setUnidadeId] = useState('');
+    const [destinoId, setDestinoId] = useState('');
+    const [destinoTipo, setDestinoTipo] = useState<'unit' | 'custom'>('unit');
     const [observacoes, setObservacoes] = useState('');
     const [units, setUnits] = useState<Unit[]>([]);
+    const [customDestinations, setCustomDestinations] = useState<any[]>([]);
     const supabase = createClient();
 
     useEffect(() => {
         if (condoId) {
-            supabase.from('units').select('*').eq('condo_id', condoId).order('bloco').order('numero_unidade').then(({ data }) => setUnits(data || []));
+            // Buscar unidades
+            supabase.from('units').select('*').eq('condo_id', condoId).order('bloco').order('numero_unidade')
+                .then(({ data }) => setUnits(data || []));
+
+            // Buscar destinos personalizados
+            fetch('/api/destinations', { credentials: 'include' })
+                .then(res => res.json())
+                .then(data => setCustomDestinations(data.destinations || []))
+                .catch(() => setCustomDestinations([]));
         }
     }, [condoId]);
 
@@ -275,18 +285,28 @@ function VisitorModal({ isOpen, onClose, onSuccess, condoId, userId }: {
 
         setLoading(true);
         try {
+            // Determina se é unidade ou destino personalizado
+            const payload: any = {
+                condo_id: condoId,
+                nome,
+                documento: documento || null,
+                tipo,
+                placa_veiculo: placaVeiculo || null,
+                observacoes: observacoes || null,
+            };
+
+            // Se começa com 'unit_' é unidade, senão é destino personalizado
+            if (destinoId && destinoId.startsWith('unit_')) {
+                payload.unidade_id = destinoId.replace('unit_', '');
+            } else if (destinoId && destinoId.startsWith('dest_')) {
+                payload.destino_personalizado = destinoId.replace('dest_', '');
+            }
+
             const response = await fetch('/api/visitors', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    condo_id: condoId,
-                    nome,
-                    documento: documento || null,
-                    tipo,
-                    placa_veiculo: placaVeiculo || null,
-                    unidade_id: unidadeId || null,
-                    observacoes: observacoes || null,
-                }),
+                credentials: 'include',
+                body: JSON.stringify(payload),
             });
 
             if (!response.ok) {
@@ -301,7 +321,7 @@ function VisitorModal({ isOpen, onClose, onSuccess, condoId, userId }: {
             setDocumento('');
             setTipo('visitante');
             setPlacaVeiculo('');
-            setUnidadeId('');
+            setDestinoId('');
             setObservacoes('');
         } catch (error: any) {
             console.error('Error registering visitor:', error);
@@ -343,11 +363,14 @@ function VisitorModal({ isOpen, onClose, onSuccess, condoId, userId }: {
 
                 <div className="grid grid-cols-2 gap-4">
                     <Select
-                        label="Unidade Destino"
-                        value={unidadeId}
-                        onChange={(e) => setUnidadeId(e.target.value)}
-                        options={units.map(u => ({ value: u.id, label: `${u.bloco || ''} ${u.numero_unidade}` }))}
-                        placeholder="Área comum"
+                        label="Destino"
+                        value={destinoId}
+                        onChange={(e) => setDestinoId(e.target.value)}
+                        options={[
+                            { value: '', label: '-- Selecione o destino --' },
+                            ...customDestinations.map(d => ({ value: `dest_${d.id}`, label: `🏢 ${d.nome}` })),
+                            ...units.map(u => ({ value: `unit_${u.id}`, label: `🏠 Apt ${u.bloco || ''} ${u.numero_unidade}` }))
+                        ]}
                     />
                     <Input
                         label="Placa do Veículo"
