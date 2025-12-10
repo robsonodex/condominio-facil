@@ -29,19 +29,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const supabase = useMemo(() => createClient(), []);
 
-    // Fetch profile via API (bypasses RLS) with retry
-    const fetchProfile = useCallback(async (email: string): Promise<User | null> => {
-        console.log('[AUTH] Fetching profile for email:', email);
+    // Fetch profile via API - pass access token for server-side auth
+    const fetchProfile = useCallback(async (email: string, accessToken?: string): Promise<User | null> => {
+        console.log('[AUTH] Fetching profile for email:', email, 'hasToken:', !!accessToken);
 
         // Retry up to 3 times
         for (let attempt = 1; attempt <= 3; attempt++) {
             try {
+                const headers: Record<string, string> = {
+                    'Cache-Control': 'no-cache',
+                    'Content-Type': 'application/json',
+                };
+
+                // Pass access token in Authorization header
+                if (accessToken) {
+                    headers['Authorization'] = `Bearer ${accessToken}`;
+                }
+
                 const response = await fetch('/api/auth/profile', {
                     credentials: 'include',
                     cache: 'no-store',
-                    headers: {
-                        'Cache-Control': 'no-cache',
-                    }
+                    headers,
                 });
 
                 if (!response.ok) {
@@ -80,11 +88,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Refresh profile (for use after updates)
     const refreshProfile = useCallback(async () => {
-        if (user?.email) {
-            const profileData = await fetchProfile(user.email);
+        if (user?.email && session?.access_token) {
+            const profileData = await fetchProfile(user.email, session.access_token);
             setProfile(profileData);
         }
-    }, [user, fetchProfile]);
+    }, [user, session, fetchProfile]);
 
     // Initialize auth state with timeout
     useEffect(() => {
@@ -114,7 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 if (initialSession?.user) {
                     setSession(initialSession);
                     setUser(initialSession.user);
-                    const profileData = await fetchProfile(initialSession.user.email!);
+                    const profileData = await fetchProfile(initialSession.user.email!, initialSession.access_token);
                     setProfile(profileData);
                 } else {
                     setSession(null);
@@ -146,7 +154,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             } else if (event === 'SIGNED_IN' && newSession?.user) {
                 setSession(newSession);
                 setUser(newSession.user);
-                const profileData = await fetchProfile(newSession.user.email!);
+                const profileData = await fetchProfile(newSession.user.email!, newSession.access_token);
                 setProfile(profileData);
                 setLoading(false);
             } else if (event === 'TOKEN_REFRESHED' && newSession?.user) {

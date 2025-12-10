@@ -1,44 +1,49 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { createClient } from '@/lib/supabase/server';
 
 // GET: Fetch current user's profile (bypasses RLS)
+// Uses Authorization header token for authentication
 export async function GET(request: NextRequest) {
     try {
-        // Verify supabaseAdmin is configured
-        const hasServiceKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
-        console.log('[PROFILE API] Service key configured:', hasServiceKey, 'Key length:', process.env.SUPABASE_SERVICE_ROLE_KEY?.length || 0);
+        // Get token from Authorization header
+        const authHeader = request.headers.get('authorization');
+        const token = authHeader?.replace('Bearer ', '');
 
-        console.log('[PROFILE API] Request received');
+        console.log('[PROFILE API] Token present:', !!token, 'Token length:', token?.length || 0);
 
-        const supabase = await createClient();
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (!token) {
+            console.log('[PROFILE API] No token provided');
+            return NextResponse.json({ profile: null });
+        }
+
+        // Verify token and get user
+        const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
 
         console.log('[PROFILE API] Auth result:', user?.email || 'NO USER', authError?.message || 'no auth error');
 
         if (!user || !user.email) {
-            console.log('[PROFILE API] No authenticated user or no email');
+            console.log('[PROFILE API] Invalid token or no user');
             return NextResponse.json({ profile: null });
         }
 
-        console.log('[PROFILE API] Fetching profile for:', user.email, 'AuthID:', user.id);
+        console.log('[PROFILE API] User verified:', user.email);
 
-        // PRIORITY 1: Fetch by EMAIL (most reliable)
-        const { data: profileByEmail, error: emailError } = await supabaseAdmin
+        // Fetch profile by EMAIL (most reliable)
+        const { data: profile, error: profileError } = await supabaseAdmin
             .from('users')
             .select('*')
             .eq('email', user.email)
             .eq('ativo', true)
             .single();
 
-        if (profileByEmail) {
-            console.log('[PROFILE API] ✅ Found by EMAIL - Role:', profileByEmail.role, 'ID:', profileByEmail.id);
-            return NextResponse.json({ profile: profileByEmail });
+        if (profile) {
+            console.log('[PROFILE API] ✅ Profile found - Role:', profile.role, 'ID:', profile.id);
+            return NextResponse.json({ profile });
         }
 
-        console.log('[PROFILE API] Email lookup failed:', emailError?.message, emailError?.code);
+        console.log('[PROFILE API] Email lookup failed:', profileError?.message);
 
-        // PRIORITY 2: Try by auth ID
+        // Fallback: Try by auth ID
         const { data: profileById, error: idError } = await supabaseAdmin
             .from('users')
             .select('*')
@@ -51,9 +56,9 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ profile: profileById });
         }
 
-        console.log('[PROFILE API] ID lookup failed:', idError?.message, idError?.code);
+        console.log('[PROFILE API] ID lookup failed:', idError?.message);
 
-        // PRIORITY 3: Check if user exists but is inactive
+        // Check if user exists but is inactive
         const { data: inactiveUser } = await supabaseAdmin
             .from('users')
             .select('id, email, role, ativo')
@@ -61,9 +66,9 @@ export async function GET(request: NextRequest) {
             .single();
 
         if (inactiveUser) {
-            console.log('[PROFILE API] ⚠️ User found but INACTIVE:', inactiveUser.email, 'ativo:', inactiveUser.ativo);
+            console.log('[PROFILE API] ⚠️ User INACTIVE:', inactiveUser.email, 'ativo:', inactiveUser.ativo);
         } else {
-            console.log('[PROFILE API] ❌ User NOT FOUND in users table for email:', user.email);
+            console.log('[PROFILE API] ❌ User NOT FOUND for email:', user.email);
         }
 
         return NextResponse.json({ profile: null });
@@ -73,3 +78,4 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ profile: null });
     }
 }
+
