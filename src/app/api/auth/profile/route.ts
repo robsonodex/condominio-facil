@@ -5,6 +5,10 @@ import { createClient } from '@/lib/supabase/server';
 // GET: Fetch current user's profile (bypasses RLS)
 export async function GET(request: NextRequest) {
     try {
+        // Verify supabaseAdmin is configured
+        const hasServiceKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+        console.log('[PROFILE API] Service key configured:', hasServiceKey, 'Key length:', process.env.SUPABASE_SERVICE_ROLE_KEY?.length || 0);
+
         console.log('[PROFILE API] Request received');
 
         const supabase = await createClient();
