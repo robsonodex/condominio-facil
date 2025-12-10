@@ -35,11 +35,7 @@ export async function updateSession(request: NextRequest) {
         data: { user },
     } = await supabase.auth.getUser();
 
-<<<<<<< HEAD
     // TEMPORÁRIO: PROTEÇÃO DE ROTAS DESABILITADA para permitir login
-=======
-    // DESABILITADO TEMPORARIAMENTE - estava causando loop de logout
->>>>>>> 803f683cabe0ddc75b316361ecc3852668cf2959
     /*
     // Protected routes
     const protectedPaths = ['/dashboard', '/admin', '/financeiro', '/moradores', '/unidades', '/avisos', '/ocorrencias', '/portaria', '/relatorios'];
