@@ -24,12 +24,18 @@ export function Header({ onMenuClick }: HeaderProps) {
         setShowUserMenu(false);
 
         try {
-            await signOut();
-            // Use window.location for clean redirect without router state issues
-            window.location.href = '/login';
+            // Timeout de 3 segundos para evitar travamento
+            const signOutPromise = signOut();
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Timeout')), 3000)
+            );
+
+            await Promise.race([signOutPromise, timeoutPromise]);
         } catch (error) {
             console.error('[Header] Logout error:', error);
-            setIsLoggingOut(false);
+        } finally {
+            // Redireciona independente de sucesso ou erro
+            window.location.href = '/login';
         }
     };
 
