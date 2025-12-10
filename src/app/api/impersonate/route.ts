@@ -8,30 +8,47 @@ const COOKIE_MAX_AGE = 60 * 60; // 1 hour
 
 export async function POST(request: NextRequest) {
     try {
+        console.log('[IMPERSONATE] POST request started');
+
         // 1. Validate Superadmin Session
         const session = await getSessionFromReq(request);
-        if (!session || !session.isSuperadmin) {
-            return NextResponse.json({ error: 'Forbidden. Superadmin access required.' }, { status: 403 });
+        if (!session) {
+            console.log('[IMPERSONATE] No session found');
+            return NextResponse.json({ error: 'Sessão não encontrada. Faça login novamente.' }, { status: 401 });
+        }
+
+        if (!session.isSuperadmin) {
+            console.log('[IMPERSONATE] Not superadmin:', session.role);
+            return NextResponse.json({ error: 'Acesso negado. Apenas superadmin.' }, { status: 403 });
         }
 
         const body = await request.json();
         const { target_user_id } = body;
 
         if (!target_user_id) {
-            return NextResponse.json({ error: 'Target user ID is required' }, { status: 400 });
+            return NextResponse.json({ error: 'ID do usuário alvo é obrigatório' }, { status: 400 });
         }
+
+        console.log('[IMPERSONATE] Target user:', target_user_id);
 
         // 2. Validate Target User Exists
         const { data: targetUser, error: userError } = await supabaseAdmin
             .from('users')
-            .select('role, nome, email, ativo')
+            .select('id, role, nome, email, ativo')
             .eq('id', target_user_id)
             .single();
 
-        if (userError || !targetUser) {
-            console.log('[IMPERSONATE] User not found:', target_user_id, userError);
-            return NextResponse.json({ error: 'Target user not found' }, { status: 404 });
+        if (userError) {
+            console.error('[IMPERSONATE] User query error:', userError);
+            return NextResponse.json({ error: `Erro ao buscar usuário: ${userError.message}` }, { status: 500 });
         }
+
+        if (!targetUser) {
+            console.log('[IMPERSONATE] User not found:', target_user_id);
+            return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 });
+        }
+
+        console.log('[IMPERSONATE] Found target user:', targetUser.nome);
 
         // 3. Create Impersonation Session
         const expiresAt = new Date(Date.now() + COOKIE_MAX_AGE * 1000).toISOString();
@@ -48,9 +65,13 @@ export async function POST(request: NextRequest) {
             .single();
 
         if (impError) {
-            console.error('Impersonation insert error:', impError);
-            return NextResponse.json({ error: 'Failed to start impersonation' }, { status: 500 });
+            console.error('[IMPERSONATE] Insert error:', impError);
+            return NextResponse.json({
+                error: `Erro ao criar sessão: ${impError.message}. Verifique se a tabela impersonations existe no banco.`
+            }, { status: 500 });
         }
+
+        console.log('[IMPERSONATE] Session created:', imp.id);
 
         // 4. Set HttpOnly Cookie
         const cookieStore = await cookies();
@@ -62,22 +83,27 @@ export async function POST(request: NextRequest) {
             path: '/',
         });
 
-        // 5. Audit Log (Start)
-        await supabaseAdmin.from('impersonation_action_logs').insert({
-            impersonation_id: imp.id,
-            impersonator_id: session.userId,
-            target_user_id: target_user_id,
-            method: 'POST',
-            path: '/api/impersonate',
-            payload: { action: 'START_IMPERSONATION', target: targetUser },
-            response_status: 200
-        });
+        // 5. Audit Log (Start) - não bloquear se falhar
+        try {
+            await supabaseAdmin.from('impersonation_action_logs').insert({
+                impersonation_id: imp.id,
+                impersonator_id: session.userId,
+                target_user_id: target_user_id,
+                method: 'POST',
+                path: '/api/impersonate',
+                payload: { action: 'START_IMPERSONATION', target: targetUser.nome },
+                response_status: 200
+            });
+        } catch (logError) {
+            console.warn('[IMPERSONATE] Audit log failed:', logError);
+        }
 
+        console.log('[IMPERSONATE] Success!');
         return NextResponse.json({ success: true, impersonation: imp });
 
-    } catch (error) {
-        console.error('Impersonation error:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    } catch (error: any) {
+        console.error('[IMPERSONATE] Error:', error);
+        return NextResponse.json({ error: `Erro interno: ${error.message}` }, { status: 500 });
     }
 }
 

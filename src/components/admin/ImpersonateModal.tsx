@@ -60,15 +60,19 @@ export function ImpersonateModal() {
                 body: JSON.stringify({ target_user_id: targetUser.id })
             });
 
-            if (!res.ok) throw new Error('Falha ao iniciar impersonação');
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error || 'Falha ao iniciar impersonação');
+            }
 
             await refetchUser();
             setOpen(false);
             router.refresh();
 
-        } catch (error) {
-            console.error(error);
-            alert('Erro ao iniciar impersonação');
+        } catch (error: any) {
+            console.error('[ImpersonateModal] Error:', error);
+            alert(`Erro ao iniciar impersonação: ${error.message}`);
         } finally {
             setImpersonating(false);
         }
