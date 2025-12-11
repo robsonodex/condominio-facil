@@ -55,7 +55,13 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: error.message }, { status: 500 });
         }
 
-        return NextResponse.json({ subscriptions: data || [] });
+        // Ensure valor_mensal_cobrado has a value (fallback to plan value)
+        const subscriptions = (data || []).map(sub => ({
+            ...sub,
+            valor_mensal_cobrado: sub.valor_mensal_cobrado || sub.plan?.valor_mensal || 0
+        }));
+
+        return NextResponse.json({ subscriptions });
 
     } catch (error: any) {
         console.error('Subscriptions API error:', error);
