@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Card, CardContent, Button, Select } from '@/components/ui';
-import { useUser } from '@/hooks/useUser';
+import { useUser, useCondo } from '@/hooks/useUser';
 import { createClient } from '@/lib/supabase/client';
 import { generatePDF, generateExcel, ReportTemplates } from '@/lib/reports';
 import { FileText, Download, FileSpreadsheet, Calendar, Filter } from 'lucide-react';
@@ -10,7 +10,9 @@ import { FileText, Download, FileSpreadsheet, Calendar, Filter } from 'lucide-re
 type ReportType = 'financeiro' | 'cobrancas' | 'ocorrencias' | 'moradores' | 'unidades';
 
 export default function RelatoriosPage() {
-    const { condoId, profile, condoName } = useUser();
+    const { condoId, profile } = useUser();
+    const { condo } = useCondo();
+    const condoName = condo?.nome || 'Condomínio';
     const [reportType, setReportType] = useState<ReportType>('financeiro');
     const [loading, setLoading] = useState(false);
     const [startDate, setStartDate] = useState('');
