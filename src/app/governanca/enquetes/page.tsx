@@ -4,7 +4,6 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { toast } from 'sonner';
 
 export default function EnquetesPage() {
     const [enquetes, setEnquetes] = useState<any[]>([]);
@@ -36,11 +35,11 @@ export default function EnquetesPage() {
                 })
             });
             if (res.ok) {
-                toast.success("Enquete criada!");
+                alert("Enquete criada!");
                 setNewTitle('');
                 fetchEnquetes();
             }
-        } catch (e) { toast.error("Erro ao criar"); }
+        } catch (e) { alert("Erro ao criar"); }
     }
 
     async function vote(enqueteId: string, optionId: string) {
@@ -50,13 +49,13 @@ export default function EnquetesPage() {
                 body: JSON.stringify({ option_id: optionId })
             });
             if (res.ok) {
-                toast.success("Voto registrado!");
+                alert("Voto registrado!");
                 fetchEnquetes();
             } else {
                 const err = await res.json();
-                toast.error(err.error || "Erro ao votar");
+                alert(err.error || "Erro ao votar");
             }
-        } catch (e) { toast.error("Erro"); }
+        } catch (e) { alert("Erro"); }
     }
 
     return (

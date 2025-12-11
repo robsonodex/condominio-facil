@@ -3,7 +3,6 @@ import React, { useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/hooks/useUser';
-import { toast } from 'sonner';
 
 export default function TurboPage() {
     const { user } = useUser();
@@ -14,7 +13,7 @@ export default function TurboPage() {
         try {
             // Capture from video stream
             if (!videoRef.current) {
-                toast.error("Camera not active");
+                alert("Camera not active");
                 return;
             }
 
@@ -31,7 +30,7 @@ export default function TurboPage() {
             const fd = new FormData();
             fd.append('photo', blob, 'photo.jpg');
 
-            toast.info("Processando...");
+            // alert("Processando...");
 
             const upload = await fetch('/api/portaria/upload-photo', { method: 'POST', body: fd });
             if (!upload.ok) throw new Error('Upload failed');
@@ -44,13 +43,13 @@ export default function TurboPage() {
             });
 
             if (res.ok) {
-                toast.success("Entrada registrada!");
+                alert("Entrada registrada!");
             } else {
-                toast.error("Erro ao registrar");
+                alert("Erro ao registrar");
             }
         } catch (e) {
             console.error(e);
-            toast.error("Erro no sistema");
+            alert("Erro no sistema");
         }
     }
 

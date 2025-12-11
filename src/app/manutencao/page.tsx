@@ -4,7 +4,6 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from 'sonner';
 
 export default function MaintenancePage() {
     const [equipments, setEquipments] = useState<any[]>([]);
@@ -26,7 +25,7 @@ export default function MaintenancePage() {
             body: JSON.stringify({ name: newName, type: newType, location: 'Condomínio' })
         });
         if (res.ok) {
-            toast.success("Equipamento adicionado");
+            alert("Equipamento adicionado");
             setNewName('');
             load();
         }
@@ -39,7 +38,7 @@ export default function MaintenancePage() {
             method: 'POST',
             body: JSON.stringify({ equipment_id: id, next_date: date, frequency: 'monthly' })
         });
-        if (res.ok) toast.success("Agendado");
+        if (res.ok) alert("Agendado");
     }
 
     return (
