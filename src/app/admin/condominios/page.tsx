@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, Button, Input, Select, Table, Badge } from '@/components/ui';
 import { Modal } from '@/components/ui/modal';
 import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { formatCurrency, formatDate, getStatusColor, getStatusLabel } from '@/lib/utils';
 import { Plus, Search, Building2, Edit, Trash2, Eye } from 'lucide-react';
 import { Condo, Plan } from '@/types/database';
@@ -17,6 +18,7 @@ export default function AdminCondominiosPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('');
     const supabase = createClient();
+    const { session } = useAuth();
 
     useEffect(() => {
         fetchCondos();
@@ -39,9 +41,27 @@ export default function AdminCondominiosPage() {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Deseja realmente excluir este condomínio? Esta ação é irreversível.')) return;
-        await supabase.from('condos').delete().eq('id', id);
-        fetchCondos();
+        if (!confirm('Deseja realmente excluir este condomínio?\n\nATENÇÃO: Todos os dados relacionados (unidades, moradores, financeiro, etc) serão excluídos permanentemente!')) return;
+
+        try {
+            const res = await fetch(`/api/admin/condos?id=${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${session?.access_token}`,
+                },
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error || 'Erro ao excluir');
+            }
+
+            alert('Condomínio excluído com sucesso!');
+            fetchCondos();
+        } catch (error: any) {
+            alert(`Erro ao excluir: ${error.message}`);
+        }
     };
 
     const filteredCondos = condos.filter(c => {
