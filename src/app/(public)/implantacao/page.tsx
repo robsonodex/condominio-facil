@@ -53,7 +53,7 @@ export default function ImplantacaoPage() {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     <Link
-                        href="https://wa.me/5511999999999?text=Olá!%20Quero%20implantar%20o%20Condomínio%20Fácil%20em%207%20dias"
+                        href="https://wa.me/5521962532247?text=Olá!%20Quero%20implantar%20o%20Condomínio%20Fácil%20em%207%20dias"
                         target="_blank"
                         className="bg-emerald-500 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:bg-emerald-600 transition flex items-center justify-center gap-2"
                     >
@@ -123,7 +123,7 @@ export default function ImplantacaoPage() {
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <Link
-                            href="https://wa.me/5511999999999?text=Olá!%20Quero%20implantar%20o%20Condomínio%20Fácil"
+                            href="https://wa.me/5521962532247?text=Olá!%20Quero%20implantar%20o%20Condomínio%20Fácil"
                             target="_blank"
                             className="bg-white text-emerald-600 px-8 py-4 rounded-xl text-lg font-semibold hover:bg-emerald-50 transition flex items-center justify-center gap-2"
                         >
