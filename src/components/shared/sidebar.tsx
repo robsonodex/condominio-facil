@@ -51,6 +51,8 @@ const navItems: NavItem[] = [
     { href: '/automacoes', label: 'Automações', icon: <Settings className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
     { href: '/assinatura', label: 'Assinatura', icon: <CreditCard className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
     { href: '/perfil', label: 'Meu Perfil', icon: <Settings className="h-5 w-5" /> },
+    { href: '/portaria/deliveries/list', label: 'Encomendas', icon: <Building2 className="h-5 w-5" />, roles: ['superadmin', 'sindico', 'porteiro'] },
+    { href: '/app/deliveries', label: 'Minhas Encomendas', icon: <Building2 className="h-5 w-5" />, roles: ['morador', 'inquilino'] },
 ];
 
 const adminItems: NavItem[] = [
