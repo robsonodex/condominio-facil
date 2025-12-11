@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
                     email: DEMO_EMAIL,
                     nome: 'Síndico Demo',
                     role: 'sindico',
-                    condo_id: demoCondo.id,
+                    condo_id: demoCondo!.id,
                     telefone: '(11) 99999-0000',
                     ativo: true
                 });
@@ -92,14 +92,14 @@ export async function POST(request: NextRequest) {
                 .from('users')
                 .update({
                     role: 'sindico',
-                    condo_id: demoCondo.id,
+                    condo_id: demoCondo!.id,
                     ativo: true
                 })
                 .eq('id', demoUser!.id);
         }
 
         // 5. Criar dados de exemplo se não existirem
-        await createDemoData(demoCondo.id, demoUser!.id);
+        await createDemoData(demoCondo!.id, demoUser!.id);
 
         return NextResponse.json({
             success: true,
