@@ -293,14 +293,14 @@ export default function CobrancasPage() {
             <Modal isOpen={showModal} onClose={closeModal} title="Nova Cobrança" size="md">
                 <form onSubmit={handleCreate} className="space-y-4">
                     <Select
-                        label="Morador"
+                        label="Morador / Inquilino"
                         value={moradorId}
                         onChange={(e) => setMoradorId(e.target.value)}
                         options={[
-                            { value: '', label: '-- Selecione o morador --' },
+                            { value: '', label: '-- Selecione --' },
                             ...moradores.map(m => ({
                                 value: m.id,
-                                label: `${m.nome}${m.unidade ? ` - ${m.unidade.bloco || ''} ${m.unidade.numero_unidade}` : ''}`
+                                label: `${m.nome} (${m.role === 'inquilino' ? 'Inquilino' : 'Morador'})${m.unidade ? ` - ${m.unidade.bloco || ''} ${m.unidade.numero_unidade}` : ''}`
                             }))
                         ]}
                         required
