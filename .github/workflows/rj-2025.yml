@@ -1,0 +1,38 @@
+name: Evolution RJ 2025 CI
+
+on:
+  push:
+    branches: [ feature/rj-2025-evolution ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18
+        
+    - name: Install Deps
+      run: npm ci
+      
+    - name: Run Linter
+      run: npm run lint
+      
+    - name: Build Web
+      run: npm run build
+      
+    - name: Build Mobile (Check)
+      run: |
+        cd mobile
+        npm install
+        # Just check if types compile, don't run eas build in CI without tokens
+        npx tsc --noEmit
+        
+    - name: Run Tests
+      run: npm run test:unit

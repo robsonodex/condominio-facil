@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "mobile:android": "cd mobile && eas build --platform android --non-interactive",
+    "mobile:ios": "cd mobile && eas build --platform ios --non-interactive",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "test:e2e": "playwright test",
