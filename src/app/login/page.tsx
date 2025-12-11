@@ -140,9 +140,38 @@ export default function LoginPage() {
                             type="button"
                             variant="outline"
                             className="w-full border-amber-300 text-amber-600 hover:bg-amber-50"
-                            onClick={() => {
-                                setEmail('sindico.demo@condofacil.com');
-                                setPassword('demo123456');
+                            loading={loading}
+                            onClick={async () => {
+                                setLoading(true);
+                                setError('');
+                                try {
+                                    // Primeiro, garantir que o ambiente demo existe
+                                    const setupRes = await fetch('/api/demo/setup', { method: 'POST' });
+                                    const setupData = await setupRes.json();
+
+                                    if (!setupRes.ok) {
+                                        setError(setupData.error || 'Erro ao configurar demo');
+                                        setLoading(false);
+                                        return;
+                                    }
+
+                                    // Agora fazer login
+                                    const { error: signInError } = await signIn(
+                                        'sindico.demo@condofacil.com',
+                                        'demo123456'
+                                    );
+
+                                    if (signInError) {
+                                        setError('Erro ao entrar no demo: ' + signInError.message);
+                                        setLoading(false);
+                                        return;
+                                    }
+
+                                    router.push('/dashboard');
+                                } catch (err: any) {
+                                    setError('Erro: ' + err.message);
+                                    setLoading(false);
+                                }
                             }}
                         >
                             🎯 Entrar como Síndico DEMO
