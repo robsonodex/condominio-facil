@@ -1,419 +1,235 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, Button, Input } from '@/components/ui';
-import { createClient } from '@/lib/supabase/client';
+import { useEffect, useState } from 'react';
+import { Card, CardContent, Button, Select } from '@/components/ui';
 import { useUser } from '@/hooks/useUser';
-import { formatCurrency, formatDate } from '@/lib/utils';
-import { FileText, Download, Calendar, DollarSign, TrendingUp, TrendingDown, Users } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
+import { generatePDF, generateExcel, ReportTemplates } from '@/lib/reports';
+import { FileText, Download, FileSpreadsheet, Calendar, Filter } from 'lucide-react';
+
+type ReportType = 'financeiro' | 'cobrancas' | 'ocorrencias' | 'moradores' | 'unidades';
 
 export default function RelatoriosPage() {
-    const { condoId, loading: userLoading } = useUser();
+    const { condoId, profile, condoName } = useUser();
+    const [reportType, setReportType] = useState<ReportType>('financeiro');
     const [loading, setLoading] = useState(false);
-    const [periodoInicio, setPeriodoInicio] = useState('');
-    const [periodoFim, setPeriodoFim] = useState('');
-    const [reportData, setReportData] = useState<any>(null);
-    const supabase = useMemo(() => createClient(), []);
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+    const supabase = createClient();
 
-    // Set default period to current month
     useEffect(() => {
-        const now = new Date();
-        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        setPeriodoInicio(firstDay.toISOString().split('T')[0]);
-        setPeriodoFim(lastDay.toISOString().split('T')[0]);
+        // Default: last 30 days
+        const end = new Date();
+        const start = new Date();
+        start.setDate(start.getDate() - 30);
+        setStartDate(start.toISOString().split('T')[0]);
+        setEndDate(end.toISOString().split('T')[0]);
     }, []);
 
-    const generateReport = async () => {
-        if (!condoId || !periodoInicio || !periodoFim) return;
+    const fetchReportData = async () => {
+        if (!condoId) return [];
 
+        switch (reportType) {
+            case 'financeiro': {
+                const { data } = await supabase
+                    .from('financial_entries')
+                    .select('*')
+                    .eq('condo_id', condoId)
+                    .gte('data', startDate)
+                    .lte('data', endDate)
+                    .order('data', { ascending: false });
+                return data || [];
+            }
+            case 'cobrancas': {
+                const { data } = await supabase
+                    .from('resident_invoices')
+                    .select('*, morador:users!morador_id(nome), unidade:units(bloco, numero_unidade)')
+                    .eq('condo_id', condoId)
+                    .gte('created_at', startDate)
+                    .lte('created_at', endDate)
+                    .order('created_at', { ascending: false });
+                return (data || []).map(d => ({
+                    ...d,
+                    morador_nome: d.morador?.nome,
+                    unidade: d.unidade ? `${d.unidade.bloco || ''} ${d.unidade.numero_unidade}` : '',
+                }));
+            }
+            case 'ocorrencias': {
+                const { data } = await supabase
+                    .from('occurrences')
+                    .select('*, usuario:users!user_id(nome)')
+                    .eq('condo_id', condoId)
+                    .gte('created_at', startDate)
+                    .lte('created_at', endDate)
+                    .order('created_at', { ascending: false });
+                return (data || []).map(d => ({
+                    ...d,
+                    usuario_nome: d.usuario?.nome,
+                }));
+            }
+            case 'moradores': {
+                const { data } = await supabase
+                    .from('users')
+                    .select('*, unidade:units(bloco, numero_unidade)')
+                    .eq('condo_id', condoId)
+                    .in('role', ['morador', 'inquilino', 'sindico', 'porteiro'])
+                    .order('nome');
+                return (data || []).map(d => ({
+                    ...d,
+                    unidade: d.unidade ? `${d.unidade.bloco || ''} ${d.unidade.numero_unidade}` : '',
+                    status: d.ativo ? 'Ativo' : 'Inativo',
+                }));
+            }
+            case 'unidades': {
+                const { data } = await supabase
+                    .from('units')
+                    .select('*, proprietario:users!proprietario_id(nome)')
+                    .eq('condo_id', condoId)
+                    .order('bloco')
+                    .order('numero_unidade');
+                return (data || []).map(d => ({
+                    ...d,
+                    proprietario_nome: d.proprietario?.nome || 'N/A',
+                }));
+            }
+            default:
+                return [];
+        }
+    };
+
+    const handleExport = async (format: 'pdf' | 'excel') => {
         setLoading(true);
+        try {
+            const data = await fetchReportData();
 
-        // Fetch condo info
-        const { data: condo } = await supabase
-            .from('condos')
-            .select('*')
-            .eq('id', condoId)
-            .single();
-
-        // Fetch receitas
-        const { data: receitas } = await supabase
-            .from('financial_entries')
-            .select('*, unit:units(bloco, numero_unidade)')
-            .eq('condo_id', condoId)
-            .eq('tipo', 'receita')
-            .gte('data_vencimento', periodoInicio)
-            .lte('data_vencimento', periodoFim)
-            .order('data_vencimento');
-
-        // Fetch despesas
-        const { data: despesas } = await supabase
-            .from('financial_entries')
-            .select('*')
-            .eq('condo_id', condoId)
-            .eq('tipo', 'despesa')
-            .gte('data_vencimento', periodoInicio)
-            .lte('data_vencimento', periodoFim)
-            .order('data_vencimento');
-
-        // Fetch inadimplentes
-        const { data: inadimplentes } = await supabase
-            .from('financial_entries')
-            .select('*, unit:units(bloco, numero_unidade)')
-            .eq('condo_id', condoId)
-            .eq('tipo', 'receita')
-            .in('status', ['em_aberto', 'atrasado'])
-            .not('unidade_id', 'is', null);
-
-        const totalReceitas = receitas?.reduce((sum, r) => sum + Number(r.valor), 0) || 0;
-        const receitasPagas = receitas?.filter(r => r.status === 'pago').reduce((sum, r) => sum + Number(r.valor), 0) || 0;
-        const totalDespesas = despesas?.reduce((sum, d) => sum + Number(d.valor), 0) || 0;
-        const despesasPagas = despesas?.filter(d => d.status === 'pago').reduce((sum, d) => sum + Number(d.valor), 0) || 0;
-        const inadTotal = inadimplentes?.reduce((sum, i) => sum + Number(i.valor), 0) || 0;
-
-        setReportData({
-            condo,
-            periodoInicio,
-            periodoFim,
-            receitas: receitas || [],
-            despesas: despesas || [],
-            inadimplentes: inadimplentes || [],
-            totais: {
-                totalReceitas,
-                receitasPagas,
-                totalDespesas,
-                despesasPagas,
-                saldo: receitasPagas - despesasPagas,
-                inadimplencia: inadTotal,
+            if (data.length === 0) {
+                alert('Nenhum dado encontrado para o período selecionado');
+                return;
             }
-        });
 
-        setLoading(false);
+            const templateFn = ReportTemplates[reportType];
+            const config = templateFn(data, condoName || 'Condomínio');
+
+            if (format === 'pdf') {
+                generatePDF(config);
+            } else {
+                generateExcel(config);
+            }
+        } catch (error: any) {
+            alert('Erro ao gerar relatório: ' + error.message);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const downloadPDF = async () => {
-        if (!reportData) return;
-
-        // Dynamic import jsPDF
-        const jsPDF = (await import('jspdf')).default;
-
-        const doc = new jsPDF();
-        const pageWidth = doc.internal.pageSize.getWidth();
-
-        // Header
-        doc.setFontSize(20);
-        doc.text('Prestação de Contas', pageWidth / 2, 20, { align: 'center' });
-        doc.setFontSize(14);
-        doc.text(reportData.condo?.nome || 'Condomínio', pageWidth / 2, 30, { align: 'center' });
-        doc.setFontSize(10);
-        doc.text(`Período: ${formatDate(reportData.periodoInicio)} a ${formatDate(reportData.periodoFim)}`, pageWidth / 2, 38, { align: 'center' });
-
-        let y = 50;
-
-        // Summary
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Resumo Financeiro', 14, y);
-        y += 8;
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(10);
-        doc.text(`Total Receitas: ${formatCurrency(reportData.totais.totalReceitas)}`, 14, y);
-        y += 6;
-        doc.text(`Receitas Pagas: ${formatCurrency(reportData.totais.receitasPagas)}`, 14, y);
-        y += 6;
-        doc.text(`Total Despesas: ${formatCurrency(reportData.totais.totalDespesas)}`, 14, y);
-        y += 6;
-        doc.text(`Despesas Pagas: ${formatCurrency(reportData.totais.despesasPagas)}`, 14, y);
-        y += 6;
-        doc.setFont('helvetica', 'bold');
-        doc.text(`Saldo: ${formatCurrency(reportData.totais.saldo)}`, 14, y);
-        y += 10;
-
-        // Receitas
-        if (reportData.receitas.length > 0) {
-            doc.setFontSize(12);
-            doc.text('Receitas', 14, y);
-            y += 6;
-            doc.setFontSize(9);
-            doc.setFont('helvetica', 'normal');
-
-            reportData.receitas.slice(0, 15).forEach((r: any) => {
-                const unit = r.unit ? `${r.unit.bloco || ''} ${r.unit.numero_unidade}` : 'Geral';
-                doc.text(`${formatDate(r.data_vencimento)} - ${r.categoria} - ${unit} - ${formatCurrency(r.valor)} (${r.status})`, 14, y);
-                y += 5;
-                if (y > 270) {
-                    doc.addPage();
-                    y = 20;
-                }
-            });
-            y += 5;
-        }
-
-        // Despesas
-        if (reportData.despesas.length > 0) {
-            doc.setFontSize(12);
-            doc.setFont('helvetica', 'bold');
-            doc.text('Despesas', 14, y);
-            y += 6;
-            doc.setFontSize(9);
-            doc.setFont('helvetica', 'normal');
-
-            reportData.despesas.slice(0, 15).forEach((d: any) => {
-                doc.text(`${formatDate(d.data_vencimento)} - ${d.categoria} - ${d.descricao || ''} - ${formatCurrency(d.valor)}`, 14, y);
-                y += 5;
-                if (y > 270) {
-                    doc.addPage();
-                    y = 20;
-                }
-            });
-            y += 5;
-        }
-
-        // Inadimplentes
-        if (reportData.inadimplentes.length > 0) {
-            if (y > 240) {
-                doc.addPage();
-                y = 20;
-            }
-            doc.setFontSize(12);
-            doc.setFont('helvetica', 'bold');
-            doc.text('Inadimplentes', 14, y);
-            y += 6;
-            doc.setFontSize(9);
-            doc.setFont('helvetica', 'normal');
-
-            reportData.inadimplentes.forEach((i: any) => {
-                const unit = i.unit ? `${i.unit.bloco || ''} ${i.unit.numero_unidade}` : 'Sem unidade';
-                doc.text(`${unit} - ${formatCurrency(i.valor)} (Venc: ${formatDate(i.data_vencimento)})`, 14, y);
-                y += 5;
-                if (y > 270) {
-                    doc.addPage();
-                    y = 20;
-                }
-            });
-        }
-
-        // Footer
-        doc.setFontSize(8);
-        doc.text(`Gerado em ${new Date().toLocaleString('pt-BR')}`, 14, 285);
-
-        doc.save(`prestacao-contas-${reportData.periodoInicio}-${reportData.periodoFim}.pdf`);
-    };
+    const reportOptions = [
+        { value: 'financeiro', label: 'Financeiro', desc: 'Receitas e despesas do condomínio' },
+        { value: 'cobrancas', label: 'Cobranças', desc: 'Cobranças de moradores' },
+        { value: 'ocorrencias', label: 'Ocorrências', desc: 'Registro de ocorrências' },
+        { value: 'moradores', label: 'Moradores', desc: 'Lista de moradores e usuários' },
+        { value: 'unidades', label: 'Unidades', desc: 'Cadastro de unidades' },
+    ];
 
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-2xl font-bold text-gray-900">Relatórios</h1>
-                <p className="text-gray-500">Gere relatórios e prestação de contas</p>
+                <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                    <FileText className="h-6 w-6 text-emerald-500" />
+                    Relatórios
+                </h1>
+                <p className="text-gray-500">Exporte relatórios em PDF ou Excel</p>
             </div>
 
-            {/* Period Selection */}
+            {/* Filtros */}
             <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Calendar className="h-5 w-5" />
-                        Período do Relatório
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex flex-wrap gap-4 items-end">
-                        <Input
-                            label="Data Início"
-                            type="date"
-                            value={periodoInicio}
-                            onChange={(e) => setPeriodoInicio(e.target.value)}
-                            className="w-44"
-                        />
-                        <Input
-                            label="Data Fim"
-                            type="date"
-                            value={periodoFim}
-                            onChange={(e) => setPeriodoFim(e.target.value)}
-                            className="w-44"
-                        />
-                        <Button onClick={generateReport} loading={loading}>
-                            <FileText className="h-4 w-4 mr-2" />
-                            Gerar Relatório
-                        </Button>
+                <CardContent className="p-6">
+                    <div className="grid md:grid-cols-4 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Tipo de Relatório
+                            </label>
+                            <Select
+                                value={reportType}
+                                onChange={(e) => setReportType(e.target.value as ReportType)}
+                                options={reportOptions.map(o => ({ value: o.value, label: o.label }))}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Data Início
+                            </label>
+                            <input
+                                type="date"
+                                value={startDate}
+                                onChange={(e) => setStartDate(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Data Fim
+                            </label>
+                            <input
+                                type="date"
+                                value={endDate}
+                                onChange={(e) => setEndDate(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                            />
+                        </div>
+                        <div className="flex items-end gap-2">
+                            <Button onClick={() => handleExport('pdf')} loading={loading} className="flex-1">
+                                <Download className="h-4 w-4 mr-2" />
+                                PDF
+                            </Button>
+                            <Button onClick={() => handleExport('excel')} loading={loading} variant="outline" className="flex-1">
+                                <FileSpreadsheet className="h-4 w-4 mr-2" />
+                                Excel
+                            </Button>
+                        </div>
                     </div>
                 </CardContent>
             </Card>
 
-            {/* Report Results */}
-            {reportData && (
-                <>
-                    {/* Summary Cards */}
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                        <Card>
-                            <CardContent className="pt-6">
-                                <div className="flex items-center gap-4">
-                                    <div className="p-3 bg-emerald-100 rounded-lg">
-                                        <TrendingUp className="h-6 w-6 text-emerald-600" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-500">Total Receitas</p>
-                                        <p className="text-xl font-bold text-emerald-600">{formatCurrency(reportData.totais.totalReceitas)}</p>
-                                    </div>
+            {/* Report Types Grid */}
+            <div className="grid md:grid-cols-3 gap-4">
+                {reportOptions.map((opt) => (
+                    <Card
+                        key={opt.value}
+                        className={`cursor-pointer transition hover:shadow-md ${reportType === opt.value ? 'ring-2 ring-emerald-500' : ''}`}
+                        onClick={() => setReportType(opt.value as ReportType)}
+                    >
+                        <CardContent className="p-4">
+                            <div className="flex items-start gap-3">
+                                <div className={`p-2 rounded-lg ${reportType === opt.value ? 'bg-emerald-100' : 'bg-gray-100'}`}>
+                                    <FileText className={`h-5 w-5 ${reportType === opt.value ? 'text-emerald-600' : 'text-gray-500'}`} />
                                 </div>
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardContent className="pt-6">
-                                <div className="flex items-center gap-4">
-                                    <div className="p-3 bg-orange-100 rounded-lg">
-                                        <TrendingDown className="h-6 w-6 text-orange-600" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-500">Total Despesas</p>
-                                        <p className="text-xl font-bold text-orange-600">{formatCurrency(reportData.totais.totalDespesas)}</p>
-                                    </div>
+                                <div>
+                                    <h3 className="font-medium text-gray-900">{opt.label}</h3>
+                                    <p className="text-sm text-gray-500">{opt.desc}</p>
                                 </div>
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardContent className="pt-6">
-                                <div className="flex items-center gap-4">
-                                    <div className="p-3 bg-blue-100 rounded-lg">
-                                        <DollarSign className="h-6 w-6 text-blue-600" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-500">Saldo</p>
-                                        <p className={`text-xl font-bold ${reportData.totais.saldo >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                                            {formatCurrency(reportData.totais.saldo)}
-                                        </p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardContent className="pt-6">
-                                <div className="flex items-center gap-4">
-                                    <div className="p-3 bg-red-100 rounded-lg">
-                                        <Users className="h-6 w-6 text-red-600" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-500">Inadimplência</p>
-                                        <p className="text-xl font-bold text-red-600">{formatCurrency(reportData.totais.inadimplencia)}</p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-
-                    {/* Download Button */}
-                    <div className="flex justify-end">
-                        <Button onClick={downloadPDF} variant="primary" size="lg">
-                            <Download className="h-5 w-5 mr-2" />
-                            Baixar Prestação de Contas (PDF)
-                        </Button>
-                    </div>
-
-                    {/* Receitas Table */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Receitas do Período</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            {reportData.receitas.length === 0 ? (
-                                <p className="text-gray-500">Nenhuma receita no período</p>
-                            ) : (
-                                <div className="overflow-x-auto">
-                                    <table className="min-w-full divide-y divide-gray-200">
-                                        <thead>
-                                            <tr className="text-left text-xs text-gray-500 uppercase">
-                                                <th className="pb-3">Data</th>
-                                                <th className="pb-3">Categoria</th>
-                                                <th className="pb-3">Unidade</th>
-                                                <th className="pb-3 text-right">Valor</th>
-                                                <th className="pb-3">Status</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-100">
-                                            {reportData.receitas.map((r: any) => (
-                                                <tr key={r.id}>
-                                                    <td className="py-2 text-sm">{formatDate(r.data_vencimento)}</td>
-                                                    <td className="py-2 text-sm capitalize">{r.categoria.replace('_', ' ')}</td>
-                                                    <td className="py-2 text-sm">{r.unit ? `${r.unit.bloco || ''} ${r.unit.numero_unidade}` : 'Geral'}</td>
-                                                    <td className="py-2 text-sm text-right text-emerald-600 font-medium">{formatCurrency(r.valor)}</td>
-                                                    <td className="py-2 text-sm capitalize">{r.status.replace('_', ' ')}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )}
+                            </div>
                         </CardContent>
                     </Card>
+                ))}
+            </div>
 
-                    {/* Despesas Table */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Despesas do Período</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            {reportData.despesas.length === 0 ? (
-                                <p className="text-gray-500">Nenhuma despesa no período</p>
-                            ) : (
-                                <div className="overflow-x-auto">
-                                    <table className="min-w-full divide-y divide-gray-200">
-                                        <thead>
-                                            <tr className="text-left text-xs text-gray-500 uppercase">
-                                                <th className="pb-3">Data</th>
-                                                <th className="pb-3">Categoria</th>
-                                                <th className="pb-3">Descrição</th>
-                                                <th className="pb-3 text-right">Valor</th>
-                                                <th className="pb-3">Status</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-100">
-                                            {reportData.despesas.map((d: any) => (
-                                                <tr key={d.id}>
-                                                    <td className="py-2 text-sm">{formatDate(d.data_vencimento)}</td>
-                                                    <td className="py-2 text-sm capitalize">{d.categoria.replace('_', ' ')}</td>
-                                                    <td className="py-2 text-sm">{d.descricao || '-'}</td>
-                                                    <td className="py-2 text-sm text-right text-orange-600 font-medium">{formatCurrency(d.valor)}</td>
-                                                    <td className="py-2 text-sm capitalize">{d.status.replace('_', ' ')}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    {/* Inadimplentes */}
-                    {reportData.inadimplentes.length > 0 && (
-                        <Card className="border-red-200">
-                            <CardHeader>
-                                <CardTitle className="text-red-600">Unidades Inadimplentes</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="overflow-x-auto">
-                                    <table className="min-w-full divide-y divide-gray-200">
-                                        <thead>
-                                            <tr className="text-left text-xs text-gray-500 uppercase">
-                                                <th className="pb-3">Unidade</th>
-                                                <th className="pb-3">Vencimento</th>
-                                                <th className="pb-3 text-right">Valor em Aberto</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-100">
-                                            {reportData.inadimplentes.map((i: any) => (
-                                                <tr key={i.id}>
-                                                    <td className="py-2 text-sm font-medium">{i.unit ? `${i.unit.bloco || ''} ${i.unit.numero_unidade}` : '-'}</td>
-                                                    <td className="py-2 text-sm">{formatDate(i.data_vencimento)}</td>
-                                                    <td className="py-2 text-sm text-right text-red-600 font-medium">{formatCurrency(i.valor)}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
-                </>
-            )}
+            {/* Preview Info */}
+            <Card className="bg-blue-50 border-blue-200">
+                <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                        <Calendar className="h-5 w-5 text-blue-600 mt-0.5" />
+                        <div>
+                            <h3 className="font-medium text-blue-900">Sobre os Relatórios</h3>
+                            <ul className="text-sm text-blue-700 mt-1 space-y-1">
+                                <li>• Relatórios PDF incluem cabeçalho profissional com logo do sistema</li>
+                                <li>• Exportação Excel permite edição e análise avançada dos dados</li>
+                                <li>• Filtro de datas aplicado em relatórios com histórico (financeiro, cobranças, ocorrências)</li>
+                                <li>• Relatórios de moradores e unidades mostram o cadastro atual completo</li>
+                            </ul>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
         </div>
     );
 }

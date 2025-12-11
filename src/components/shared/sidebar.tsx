@@ -16,6 +16,7 @@ import {
     FileText,
     Settings,
     CreditCard,
+    Calendar,
     X
 } from 'lucide-react';
 
@@ -35,12 +36,13 @@ const navItems: NavItem[] = [
     { href: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
     { href: '/financeiro', label: 'Financeiro', icon: <DollarSign className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
     { href: '/cobrancas', label: 'Cobranças', icon: <CreditCard className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
-    { href: '/minhas-cobrancas', label: 'Minhas Cobranças', icon: <CreditCard className="h-5 w-5" />, roles: ['morador'] },
+    { href: '/minhas-cobrancas', label: 'Minhas Cobranças', icon: <CreditCard className="h-5 w-5" />, roles: ['morador', 'inquilino'] },
     { href: '/moradores', label: 'Moradores', icon: <Users className="h-5 w-5" />, roles: ['superadmin', 'sindico', 'porteiro'] },
     { href: '/unidades', label: 'Unidades', icon: <Home className="h-5 w-5" />, roles: ['superadmin', 'sindico', 'porteiro'] },
     { href: '/usuarios', label: 'Usuários', icon: <Users className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
     { href: '/avisos', label: 'Avisos', icon: <Bell className="h-5 w-5" /> },
     { href: '/ocorrencias', label: 'Ocorrências', icon: <AlertTriangle className="h-5 w-5" /> },
+    { href: '/reservas', label: 'Reservas', icon: <Calendar className="h-5 w-5" /> },
     { href: '/portaria', label: 'Portaria', icon: <UserCheck className="h-5 w-5" />, roles: ['superadmin', 'sindico', 'porteiro'] },
     { href: '/relatorios', label: 'Relatórios', icon: <FileText className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
     { href: '/assinatura', label: 'Assinatura', icon: <CreditCard className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
