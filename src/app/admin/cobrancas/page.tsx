@@ -77,7 +77,16 @@ export default function AdminCobrancasPage() {
             .from('subscriptions')
             .select('id, status, valor_mensal_cobrado, condo:condos(id, nome, email_contato), plan:plans(nome_plano, valor_mensal)')
             .eq('status', 'ativo');
-        setSubscriptions(data || []);
+
+        // Map to handle Supabase join returning arrays for single relations
+        const mapped = (data || []).map((item: any) => ({
+            id: item.id,
+            status: item.status,
+            valor_mensal_cobrado: item.valor_mensal_cobrado,
+            condo: Array.isArray(item.condo) ? item.condo[0] || null : item.condo,
+            plan: Array.isArray(item.plan) ? item.plan[0] || null : item.plan,
+        }));
+        setSubscriptions(mapped);
     };
 
     const handleDelete = async (id: string) => {
