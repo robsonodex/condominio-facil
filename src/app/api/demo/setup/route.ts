@@ -51,8 +51,7 @@ export async function POST(request: NextRequest) {
                     estado: 'SP',
                     cep: '01234-567',
                     cnpj: '00.000.000/0001-00',
-                    telefone: '(11) 99999-0000',
-                    email: 'demo@condofacil.com'
+                    telefone: '(11) 99999-0000'
                 })
                 .select()
                 .single();
