@@ -1,9 +1,9 @@
 # Condomínio Fácil - Documentação Oficial Unificada
 
-**Versão:** 5.1  
+**Versão:** 5.2  
 **Data:** 11 de Dezembro de 2024  
 **Status:** ✅ Estável / Pronto para Lançamento  
-**Última Atualização:** 11/12/2024 13:55
+**Última Atualização:** 11/12/2024 14:40
 
 ---
 
@@ -318,6 +318,129 @@
 - Estatísticas (total, pendentes, recebido)
 
 **API:** `/api/admin/billing`, `/api/billing/send-invoice`
+
+---
+
+### 3.19 Status Geral (`/status`) ✅ **NOVO v5.2**
+
+**Função:** Visão geral da saúde do sistema.
+
+**Recursos:**
+- Status de cada módulo (Financeiro, Cobranças, Portaria, Reservas, etc.)
+- Alertas visuais (OK, Atenção, Erro)
+- Ações rápidas para correção
+- Atualização em tempo real
+
+**Permissões:** Síndico e Superadmin
+
+---
+
+### 3.20 Central de Notificações (`/notificacoes`) ✅ **NOVO v5.2**
+
+**Função:** Enviar comunicados multi-canal para moradores.
+
+**Canais:**
+- Push Notification
+- WhatsApp
+- Email
+- Aviso Interno
+
+**Destinatários:**
+- Todos os moradores
+- Bloco específico
+- Unidade específica
+- Porteiros
+
+**Recursos:**
+- Histórico de envios
+- Estatísticas por canal
+
+---
+
+### 3.21 Automações de Inadimplência (`/automacoes`) ✅ **NOVO v5.2**
+
+**Função:** Regras automáticas para cobranças atrasadas.
+
+**Regras Configuráveis:**
+- Lembrete após X dias
+- Multa automática após Y dias
+- Cobrança automática após Z dias
+- Relatório mensal de inadimplentes
+
+**Parâmetros:**
+- Percentual de multa
+- Juros diários
+- Canais (WhatsApp/Email)
+
+---
+
+### 3.22 Módulo de Câmeras (`/portaria/cameras`) ✅ **NOVO v5.2**
+
+**Função:** Visualização ao vivo de câmeras IP (sem gravação).
+
+**Recursos:**
+- Lista de câmeras com status
+- Stream ao vivo (WebRTC/HLS)
+- Captura de snapshots (TTL 24h)
+- Validação de rede local obrigatória
+- Probe de status (RTSP/ONVIF)
+
+**Requisitos das Câmeras:**
+- RTSP habilitado
+- ONVIF Perfil S
+- Codec H.264
+- IP fixo, cabeada
+
+**APIs:** `/api/cameras/*`  
+**SQL:** `sql/cameras_module.sql`  
+**Docs:** `docs/CAMERAS_MODULE.md`
+
+---
+
+### 3.23 Modo DEMO ✅ **NOVO v5.2**
+
+**Função:** Ambiente de demonstração com dados fictícios.
+
+**Recursos:**
+- Botão "Entrar como Síndico DEMO" na tela de login
+- Condomínio fictício pré-populado
+- Reset automático diário
+
+**Credenciais Demo:**
+- Email: `sindico.demo@condofacil.com`
+- Senha: `demo123456`
+
+---
+
+### 3.24 Admin - Painel de Erros (`/admin/erros`) ✅ **NOVO v5.2**
+
+**Função:** Monitoramento de falhas do sistema.
+
+**Recursos:**
+- Log de erros em tempo real
+- Prioridades (alta, média, baixa)
+- Problemas de integridade (unidades sem morador, etc.)
+- Ações rápidas para resolver
+
+**Permissões:** Apenas Superadmin
+
+---
+
+### 3.25 Checklist de Implantação ✅ **NOVO v5.2**
+
+**Função:** Guiar síndicos novos na configuração inicial.
+
+**Exibição:** Dashboard (apenas síndicos, primeiros 30 dias)
+
+**Tarefas Monitoradas:**
+- Cadastrar unidades
+- Cadastrar moradores
+- Configurar financeiro
+- Criar primeiro aviso
+
+**Recursos:**
+- Progresso automático
+- Botão "Concluir Implantação"
 
 ---
 

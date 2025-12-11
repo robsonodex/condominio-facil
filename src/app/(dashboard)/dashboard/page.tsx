@@ -190,6 +190,9 @@ export default function DashboardPage() {
                 <p className="text-gray-500">Visão geral do seu condomínio</p>
             </div>
 
+            {/* Onboarding Checklist for new syndics */}
+            <OnboardingChecklist />
+
             {/* Stats Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Link href="/unidades" className="block transition-transform hover:scale-105">
