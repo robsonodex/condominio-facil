@@ -195,6 +195,72 @@ O **Condomínio Fácil** é uma plataforma SaaS (Software como Serviço) para ge
 - Alterar senha
 - Ver informações da conta
 
+### 13. Status Geral (`/status`) ✅ NOVO v5.2
+- **Visão de saúde** de todos os módulos
+- Indicadores: OK (verde), Atenção (amarelo), Erro (vermelho)
+- Módulos monitorados:
+  - Financeiro (entradas/saídas)
+  - Cobranças Mercado Pago
+  - Portaria (visitantes)
+  - Reservas (conflitos)
+  - Usuários (pendentes)
+  - Unidades (ocupação)
+  - PWA
+  - RLS/Segurança
+  - Assinatura
+- **Ações rápidas** para correção
+
+### 14. Notificações (`/notificacoes`) ✅ NOVO v5.2
+- **Central de envio** multi-canal
+- Canais: Push, WhatsApp, Email, Aviso Interno
+- Destinatários:
+  - Todos os moradores
+  - Bloco específico
+  - Unidade específica
+  - Porteiros
+- **Histórico de envios** com status
+
+### 15. Automações de Inadimplência (`/automacoes`) ✅ NOVO v5.2
+- **Configurar regras automáticas**:
+  - Lembrete após X dias de atraso
+  - Multa automática após Y dias
+  - Cobrança MP após Z dias
+  - Relatório mensal de inadimplentes
+- Parâmetros:
+  - Percentual de multa
+  - Juros diários
+- **Liga/desliga** cada automação
+
+### 16. Câmeras (`/portaria/cameras`) ✅ NOVO v5.2
+- **Visualização ao vivo** (sem gravação)
+- Stream via WebRTC ou HLS
+- **Captura de snapshot** (expira em 24h)
+- Requisitos das câmeras:
+  - RTSP habilitado
+  - ONVIF Perfil S
+  - H.264, IP fixo, cabeada
+- **Validação de rede** (mesma LAN do gateway)
+- Probe de status (online/offline)
+
+### 17. Modo Demo ✅ NOVO v5.2
+- **Botão na tela de login**
+- Cria automaticamente:
+  - Usuário síndico demo
+  - Condomínio "Residencial Demo"
+  - Unidades de exemplo
+  - Avisos e lançamentos
+- Ideal para **demonstrações comerciais**
+
+### 18. Painel de Erros (`/admin/erros`) ✅ NOVO v5.2
+- **Apenas SuperAdmin**
+- Monitoramento de:
+  - Erros do sistema
+  - Problemas de integridade
+  - Unidades sem morador
+  - Moradores sem unidade
+- **Prioridades**: Alta, Média, Baixa
+- **Ações**: Marcar como resolvido
+
 ---
 
 ## 📲 PWA - App Instalável ✅ NOVO
