@@ -1,9 +1,9 @@
 # Condomínio Fácil - Documentação Oficial Unificada
 
-**Versão:** 5.0  
+**Versão:** 5.1  
 **Data:** 11 de Dezembro de 2024  
 **Status:** ✅ Estável / Pronto para Lançamento  
-**Última Atualização:** 11/12/2024 12:30
+**Última Atualização:** 11/12/2024 13:55
 
 ---
 

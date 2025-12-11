@@ -116,49 +116,122 @@ O **Condomínio Fácil** é uma plataforma SaaS (Software como Serviço) para ge
 
 ### 1. Dashboard
 - Visão geral com KPIs
-- Gráficos de receitas vs despesas
+- Gráficos de receita vs despesa
 - Avisos recentes
 - Próximos vencimentos
 
 ### 2. Financeiro (`/financeiro`)
 - Lançar receitas (taxas de condomínio)
 - Lançar despesas (água, luz, manutenção)
+- **Editar e excluir lançamentos** ✅
 - Visualizar inadimplência
 - Filtrar por período
 
-### 3. Unidades (`/unidades`)
+### 3. Cobranças (`/cobrancas`)
+- Criar cobranças para moradores
+- Integração Mercado Pago (PIX, Boleto, Cartão)
+- **Exibir morador e inquilino** ✅
+- Cancelar cobranças
+
+### 4. Unidades (`/unidades`)
 - Cadastrar apartamentos/casas
 - Definir bloco, andar, área
 - Vincular proprietário
 
-### 4. Moradores (`/moradores`)
+### 5. Moradores (`/moradores`)
 - Cadastrar moradores
 - Vincular à unidade
 - Definir como proprietário ou inquilino
 - Status: ativo/inativo
 
-### 5. Avisos (`/avisos`)
+### 6. Avisos (`/avisos`)
 - Criar comunicados
-- Definir público-alvo (todos, síndicos, moradores)
-- Agendar publicação
+- Definir prioridade
 - Histórico de avisos
 
-### 6. Ocorrências (`/ocorrencias`)
+### 7. Ocorrências (`/ocorrencias`)
 - Abrir reclamações
 - Classificar por tipo (barulho, manutenção, etc.)
 - Definir prioridade
 - Acompanhar status
+- **Excluir ocorrências** ✅
 
-### 7. Portaria (`/portaria`)
-- Registrar entrada de visitantes
-- Registrar saída
-- Histórico de visitas
-- Buscar por nome/documento
+### 8. Reservas de Áreas Comuns (`/reservas`) ✅ NOVO
+- **Calendário interativo** mensal
+- **Cadastrar áreas** (salão, churrasqueira, piscina)
+- Reservar com horário início/fim
+- **Verificação automática** de conflitos
+- Fluxo de **aprovação** (síndico)
+- Taxa opcional por reserva
 
-### 8. Relatórios (`/relatorios`)
-- Gerar Prestação de Contas
-- Exportar em PDF
-- Filtrar por período
+### 9. Portaria Profissional (`/portaria`) ✅ ATUALIZADO
+- **Modo tela cheia** para porteiros
+- **Entrada/saída rápida** com um clique
+- **Captura de foto** via webcam
+- **Impressão de crachá** de visitante
+- Busca por **CPF, placa ou nome**
+- **Estatísticas** em tempo real
+- Histórico diário
+
+### 10. Relatórios (`/relatorios`) ✅ NOVO
+- **Exportar PDF** profissional com logo
+- **Exportar Excel** (XLSX)
+- Tipos disponíveis:
+  - Financeiro (receitas/despesas)
+  - Cobranças de moradores
+  - Ocorrências
+  - Moradores/Usuários
+  - Unidades
+- Filtro por período
+
+### 11. Assinatura (`/assinatura`)
+- Visualizar plano atual
+- Gerar pagamento (cartão, boleto)
+- **PIX estático** com chave fixa ✅
+- **Botão WhatsApp** para enviar comprovante ✅
+
+### 12. Meu Perfil (`/perfil`)
+- Editar dados pessoais
+- Alterar senha
+- Ver informações da conta
+
+---
+
+## 📲 PWA - App Instalável ✅ NOVO
+
+O sistema pode ser instalado como aplicativo no celular:
+
+### Como Instalar (Android)
+1. Acesse o sistema pelo Chrome
+2. Toque nos 3 pontos (menu)
+3. Selecione "Instalar app"
+4. O ícone aparece na tela inicial
+
+### Como Instalar (iPhone)
+1. Acesse o sistema pelo Safari
+2. Toque no botão Compartilhar
+3. Selecione "Adicionar à Tela de Início"
+
+### Recursos PWA
+- ✅ Ícone na tela inicial
+- ✅ Funciona offline (páginas visitadas)
+- ✅ Notificações push
+- ✅ Experiência de app nativo
+
+---
+
+## 📱 WhatsApp Integration ✅ NOVO
+
+### Mensagens Automáticas
+O sistema gera links WhatsApp prontos para:
+- **Cobranças** - Enviar lembrete de pagamento
+- **Reservas** - Confirmar ou notificar pendência
+- **Avisos** - Comunicar moradores
+- **Visitantes** - Autorização de entrada
+- **Boas-vindas** - Novo morador
+
+### PIX via WhatsApp
+Botão para enviar código PIX com mensagem formatada.
 
 ---
 
