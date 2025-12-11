@@ -201,6 +201,28 @@ Moradores acessam:
 
 ---
 
+## 📦 Gestão de Encomendas
+
+### Para Porteiros (Registrar Chegada)
+**Menu**: Portaria → Encomendas → Nova Entrega
+
+1. Selecione a **Unidade** e o **Morador**
+2. Tipo (Pacote, Carta, Delivery)
+3. Remetente e Código de Rastreio (opcional)
+4. **Tire uma foto** da encomenda (opcional)
+5. **Registrar Encomenda**
+6. O morador recebe notificação no WhatsApp/Email na hora!
+
+### Para Moradores (Retirar)
+**Menu**: Minhas Encomendas
+
+1. Você recebe um aviso (WhatsApp/Email)
+2. Vá até a portaria
+3. Após retirar, clique em **"Confirmar Recebimento"** no app
+4. Ou o porteiro pode dar baixa manualmente
+
+---
+
 ## 🛠️ Ocorrências
 
 ### Abrindo Ocorrência (Síndico)

@@ -8,6 +8,7 @@
 - **Desorganização** de documentos e informações
 - **Inadimplência** difícil de controlar  
 - **Comunicação** fragmentada com moradores
+- **Encomendas** perdidas ou acumuladas na portaria
 - **Prestação de contas** trabalhosa
 - **Portaria** manual e sem histórico
 - **Pagamentos** difíceis de rastrear
@@ -69,7 +70,9 @@ O Condomínio Fácil é uma plataforma completa onde você:
 ✅ Registra visitantes na portaria
 ✅ Gerencia ocorrências
 ✅ Gera boletos e PIX automáticos via Mercado Pago
+✅ Gera boletos e PIX automáticos via Mercado Pago
 ✅ Cria prestação de contas automaticamente
+✅ **Notifica encomendas na hora** com foto e WhatsApp
 
 🎁 Teste grátis por 7 dias, sem cartão de crédito!
 

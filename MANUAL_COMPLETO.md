@@ -263,6 +263,23 @@ O **Condomínio Fácil** é uma plataforma SaaS (Software como Serviço) para ge
 
 ---
 
+### 19. Encomendas e Mensageria (`/portaria/deliveries`) ✅ NOVO v5.1
+- **Recebimento na Portaria**:
+  - Cadastro rápido com **foto da encomenda**
+  - Registro de código de rastreio e remetente
+  - Seleção de unidade/morador
+- **Notificações Automáticas**:
+  - Envio imediato de **WhatsApp e Email** para o morador
+  - Link seguro para confirmação
+- **Retirada**:
+  - Morador confirma retirada pelo app (ou porteiro dá baixa)
+  - Histórico completo de quem recebeu e quando
+- **Gestão**:
+  - Painel de pendentes
+  - Registro de devoluções
+
+---
+
 ## 📲 PWA - App Instalável ✅ NOVO
 
 O sistema pode ser instalado como aplicativo no celular:
