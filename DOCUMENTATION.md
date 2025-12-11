@@ -444,6 +444,42 @@
 
 ---
 
+### 3.26 Módulo de Mensageria e Encomendas (Portaria) ✅ **NOVO v5.1**
+
+**Função:** Gestão completa de encomendas com notificações automáticas.
+
+**Fluxo:**
+1. Porteiro registra entrega (foto, dados, tracking).
+2. Morador recebe WhatsApp/Email com link de confirmação.
+3. Morador retira (status atualizado).
+4. Ou: Porteiro registra devolução/cancelamento.
+
+**Recursos:**
+- Registro de entregas com foto
+- Notificações multicanal (WhatsApp/Email)
+- Worker de envio em background com retry
+- Confirmação de retirada pelo morador (link seguro)
+- Dashboard da portaria com filtros
+
+**APIs:** `/api/portaria/deliveries`
+**SQL:** `sql/deliveries_module.sql`
+
+---
+
+### 3.27 Checklist Final de Deploy (SaaS v5.1)
+
+**Itens Críticos para Produção:**
+
+- [ ] **Migrations Aplicadas:** Executar `sql/deliveries_module.sql` no Supabase.
+- [ ] **Bucket Supabase:** Criar bucket `delivery-photos` (público ou autenticado).
+- [ ] **Worker Ativo:** Configurar Cron Job para `/api/cron/process-notifications` (ex: a cada 1 min).
+- [ ] **Credenciais:** Configurar SMTP e WhatsApp Token nas variáveis de ambiente.
+- [ ] **UI Validada:** Verificar telas de listagem e cadastro em Mobile e Desktop.
+- [ ] **E2E Testado:** Rodar `/api/test/messaging-flow`.
+- [ ] **Logs:** Monitorar `system_logs` para falhas de envio.
+
+---
+
 ## 4. Estrutura de Arquivos
 
 ```
@@ -537,6 +573,16 @@ src/
 | `/api/impersonate` | POST | Inicia impersonação |
 | `/api/impersonate` | DELETE | Encerra impersonação |
 
+### Mensageria e Encomendas (Portaria) ✅ **NOVO v5.1**
+
+| Endpoint | Método | Descrição |
+|----------|--------|-----------|
+| `/api/portaria/deliveries` | GET | Lista entregas (filtros: condo, status, unit) |
+| `/api/portaria/deliveries` | POST | Cria nova entrega |
+| `/api/portaria/deliveries/[id]/confirm` | POST | Confirmação de retirada |
+| `/api/portaria/deliveries/[id]/return` | POST | Registrar devolução |
+| `/api/cron/process-notifications` | GET | Worker de envio de notificações |
+
 ---
 
 ## 6. Autenticação e Permissões (RBAC)
@@ -602,6 +648,8 @@ FOR ALL USING (
 - `payments` - Pagamentos
 - `notifications` - Notificações
 - `plans` - Planos (público para leitura)
+- `deliveries` - Entregas e Encomendas ✅ **NOVO v5.1**
+- `delivery_notifications` - Log de envios de mensageria ✅ **NOVO v5.1**
 
 ---
 
@@ -651,7 +699,7 @@ FOR ALL USING (
 
 ## 9. Roadmap e Melhorias Futuras
 
-### ✅ Implementado (v5.0 - 11/12/2024)
+### ✅ Implementado (v5.1 - 11/12/2024)
 - [x] Reservas de áreas comuns (calendário, aprovação, conflitos)
 - [x] PWA (manifest, service worker, install banner)
 - [x] Relatórios PDF/Excel (financeiro, cobranças, ocorrências, moradores)
@@ -659,13 +707,13 @@ FOR ALL USING (
 - [x] WhatsApp (templates de mensagens, links automáticos)
 - [x] Landing page "Implantação em 7 dias" (`/implantacao`)
 - [x] Notificações push (service worker configurado)
+- [x] Encomendas na portaria (Mensageria, notificações, confirmação)
+- [x] Módulo de Câmeras IP (Visualização em tempo real)
 
 ### 🔜 Próximas Entregas
 - [ ] App Mobile (React Native/Expo)
-- [ ] Encomendas na portaria
-- [ ] Integração com câmeras IP
 - [ ] Tour guiado para novos usuários
-- [ ] Modo demonstração para vendas
+- [ ] Integração nativa WhatsApp Business API (atualmente mock)
 
 ---
 
