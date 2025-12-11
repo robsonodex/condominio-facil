@@ -1,9 +1,9 @@
 # Condomínio Fácil - Documentação Oficial Unificada
 
-**Versão:** 4.0  
-**Data:** 10 de Dezembro de 2024  
-**Status:** ✅ Estável / Em Produção (Beta)  
-**Última Atualização:** 10/12/2024 18:45
+**Versão:** 5.0  
+**Data:** 11 de Dezembro de 2024  
+**Status:** ✅ Estável / Pronto para Lançamento  
+**Última Atualização:** 11/12/2024 12:30
 
 ---
 
@@ -197,30 +197,70 @@
 
 ---
 
-### 3.9 Portaria (`/portaria`)
+### 3.9 Portaria Profissional (`/portaria`) ✅ **ATUALIZADO**
 
-**Função:** Controle de visitantes e prestadores.
+**Função:** Dashboard avançado de controle de visitantes.
 
 **Recursos:**
-- Registrar entrada/saída de visitantes
-- Histórico de visitas
-- Busca por nome ou documento
+- Dashboard em tela cheia (modo fullscreen)
+- Entrada/saída rápida com um clique
+- Captura de foto via webcam
+- Impressão de crachá de visitante
+- Busca por CPF, placa ou nome
+- Histórico em tempo real (atualização automática)
+- Estatísticas: visitantes ativos, entregas, prestadores
 
 ---
 
-### 3.10 Assinatura (`/assinatura`)
+### 3.10 Reservas de Áreas Comuns (`/reservas`) ✅ **NOVO**
+
+**Função:** Sistema completo de reserva de salões, churrasqueiras e áreas.
+
+**Recursos:**
+- CRUD de áreas comuns (síndico)
+- Calendário interativo com visualização mensal
+- Reserva com horário início/fim
+- Verificação automática de conflitos
+- Fluxo de aprovação (automático ou manual)
+- Taxa opcional por reserva
+- Regras personalizadas por área
+
+**APIs:** `/api/common-areas`, `/api/reservations`  
+**SQL:** `sql/reservations_module.sql`
+
+---
+
+### 3.11 Relatórios (`/relatorios`) ✅ **NOVO**
+
+**Função:** Exportação de relatórios profissionais em PDF e Excel.
+
+**Tipos de Relatório:**
+- Financeiro (receitas/despesas)
+- Cobranças de moradores
+- Ocorrências
+- Moradores/Usuários
+- Unidades
+
+**Recursos:**
+- Filtro por período
+- Cabeçalho profissional com logo
+- Download em PDF (jsPDF) ou Excel (XLSX)
+
+---
+
+### 3.12 Assinatura (`/assinatura`)
 
 **Função:** Gerenciar assinatura do condomínio na plataforma.
 
 **Recursos:**
 - Visualizar plano atual
 - Gerar pagamento (cartão, boleto)
-- PIX estático com chave fixa ✅ **NOVO**
-- Botão WhatsApp para enviar comprovante ✅ **NOVO**
+- PIX estático com chave fixa
+- Botão WhatsApp para enviar comprovante
 
 ---
 
-### 3.11 Admin - Painel Geral (`/admin`)
+### 3.13 Admin - Painel Geral (`/admin`)
 
 **Função:** Visão global para Superadmin.
 
@@ -231,46 +271,53 @@
 
 ---
 
-### 3.12 Admin - Condomínios (`/admin/condominios`)
+### 3.14 Admin - Condomínios (`/admin/condominios`)
 
 **Função:** Gerenciar todos os condomínios.
 
+**Recursos:**
+- Listar todos os condomínios
+- Excluir condomínio (com cascade delete de dependências)
+
+**API:** `/api/admin/condos` (DELETE com cascade)
+
 ---
 
-### 3.13 Admin - Planos (`/admin/planos`)
+### 3.15 Admin - Planos (`/admin/planos`)
 
 **Função:** Criar e editar planos de assinatura.
 
 ---
 
-### 3.14 Admin - Usuários (`/admin/usuarios`)
+### 3.16 Admin - Usuários (`/admin/usuarios`)
 
 **Função:** Visualizar todos os usuários do sistema.
 
 ---
 
-### 3.15 Admin - Assinaturas (`/admin/assinaturas`)
+### 3.17 Admin - Assinaturas (`/admin/assinaturas`)
 
 **Função:** Gerenciar assinaturas de todos os condomínios.
 
 **Recursos:**
 - Listar assinaturas
 - Filtrar por status
+- MRR com fallback automático
 - Botão "Cobrar" para enviar notificação
 
 ---
 
-### 3.16 Admin - Cobranças (`/admin/cobrancas`) ✅ **NOVO**
+### 3.18 Admin - Cobranças (`/admin/cobrancas`)
 
-**Função:** Visualizar todas as cobranças de moradores do sistema.
+**Função:** Gerenciar cobranças de assinaturas.
 
 **Recursos:**
-- Listar cobranças de todos os condomínios
-- Filtrar por status
+- Botão "Nova Cobrança" para assinaturas ativas
+- Seleção múltipla de assinaturas
+- Envio de cobrança por email
 - Estatísticas (total, pendentes, recebido)
-- Cancelar cobrança
 
-**API:** `/api/admin/billing`
+**API:** `/api/admin/billing`, `/api/billing/send-invoice`
 
 ---
 
@@ -481,12 +528,21 @@ FOR ALL USING (
 
 ## 9. Roadmap e Melhorias Futuras
 
-- [ ] App Mobile (React Native)
-- [ ] Reservas de áreas comuns
+### ✅ Implementado (v5.0 - 11/12/2024)
+- [x] Reservas de áreas comuns (calendário, aprovação, conflitos)
+- [x] PWA (manifest, service worker, install banner)
+- [x] Relatórios PDF/Excel (financeiro, cobranças, ocorrências, moradores)
+- [x] Portaria Profissional (tela cheia, foto, crachá, busca)
+- [x] WhatsApp (templates de mensagens, links automáticos)
+- [x] Landing page "Implantação em 7 dias" (`/implantacao`)
+- [x] Notificações push (service worker configurado)
+
+### 🔜 Próximas Entregas
+- [ ] App Mobile (React Native/Expo)
 - [ ] Encomendas na portaria
-- [ ] Relatórios PDF/Excel
-- [ ] Integração com câmeras
-- [ ] Notificações push
+- [ ] Integração com câmeras IP
+- [ ] Tour guiado para novos usuários
+- [ ] Modo demonstração para vendas
 
 ---
 
