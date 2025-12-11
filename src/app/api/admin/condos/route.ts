@@ -76,6 +76,10 @@ export async function DELETE(request: NextRequest) {
         await supabaseAdmin.from('residents').delete().eq('condo_id', condoId);
         console.log('[DELETE CONDO] Deleted residents');
 
+        // 8.5. Clear unidade_id from users before deleting units
+        await supabaseAdmin.from('users').update({ unidade_id: null }).eq('condo_id', condoId);
+        console.log('[DELETE CONDO] Cleared unidade_id from users');
+
         // 9. Delete units
         await supabaseAdmin.from('units').delete().eq('condo_id', condoId);
         console.log('[DELETE CONDO] Deleted units');
