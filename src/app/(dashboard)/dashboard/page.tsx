@@ -9,6 +9,7 @@ import { Home, AlertTriangle, DollarSign, TrendingUp, TrendingDown, Bell, Calend
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import Link from 'next/link';
 import { FinancialEntry, Notice, DashboardStats, ChartData } from '@/types/database';
+import { OnboardingChecklist } from '@/components/dashboard/OnboardingChecklist';
 
 // Skeleton components for instant feedback
 function StatsSkeleton() {

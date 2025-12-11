@@ -130,6 +130,24 @@ export default function LoginPage() {
                             Cadastre-se
                         </Link>
                     </p>
+
+                    {/* Demo Mode Button */}
+                    <div className="mt-6 pt-6 border-t border-gray-200">
+                        <p className="text-center text-xs text-gray-400 mb-3">
+                            Quer conhecer o sistema?
+                        </p>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full border-amber-300 text-amber-600 hover:bg-amber-50"
+                            onClick={() => {
+                                setEmail('sindico.demo@condofacil.com');
+                                setPassword('demo123456');
+                            }}
+                        >
+                            🎯 Entrar como Síndico DEMO
+                        </Button>
+                    </div>
                 </div>
             </div>
         </div>

@@ -34,6 +34,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
     { href: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
+    { href: '/status', label: 'Status Geral', icon: <Settings className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
     { href: '/financeiro', label: 'Financeiro', icon: <DollarSign className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
     { href: '/cobrancas', label: 'Cobranças', icon: <CreditCard className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
     { href: '/minhas-cobrancas', label: 'Minhas Cobranças', icon: <CreditCard className="h-5 w-5" />, roles: ['morador', 'inquilino'] },
@@ -41,10 +42,12 @@ const navItems: NavItem[] = [
     { href: '/unidades', label: 'Unidades', icon: <Home className="h-5 w-5" />, roles: ['superadmin', 'sindico', 'porteiro'] },
     { href: '/usuarios', label: 'Usuários', icon: <Users className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
     { href: '/avisos', label: 'Avisos', icon: <Bell className="h-5 w-5" /> },
+    { href: '/notificacoes', label: 'Notificações', icon: <Bell className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
     { href: '/ocorrencias', label: 'Ocorrências', icon: <AlertTriangle className="h-5 w-5" /> },
     { href: '/reservas', label: 'Reservas', icon: <Calendar className="h-5 w-5" /> },
     { href: '/portaria', label: 'Portaria', icon: <UserCheck className="h-5 w-5" />, roles: ['superadmin', 'sindico', 'porteiro'] },
     { href: '/relatorios', label: 'Relatórios', icon: <FileText className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
+    { href: '/automacoes', label: 'Automações', icon: <Settings className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
     { href: '/assinatura', label: 'Assinatura', icon: <CreditCard className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
     { href: '/perfil', label: 'Meu Perfil', icon: <Settings className="h-5 w-5" /> },
 ];
@@ -56,6 +59,7 @@ const adminItems: NavItem[] = [
     { href: '/admin/usuarios', label: 'Usuários', icon: <Users className="h-5 w-5" /> },
     { href: '/admin/assinaturas', label: 'Assinaturas', icon: <Settings className="h-5 w-5" /> },
     { href: '/admin/cobrancas', label: 'Cobranças', icon: <DollarSign className="h-5 w-5" /> },
+    { href: '/admin/erros', label: 'Erros', icon: <AlertTriangle className="h-5 w-5" /> },
 ];
 
 import { ImpersonateModal } from '@/components/admin/ImpersonateModal';
