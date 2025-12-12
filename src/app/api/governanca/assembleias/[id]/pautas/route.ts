@@ -1,4 +1,3 @@
-```typescript
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { GovernanceService } from '@/lib/services/governance';
@@ -15,12 +14,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const { id } = await params; // Await params here
+    const { id } = await params;
     const body = await req.json();
 
     try {
         const pauta = await GovernanceService.createPauta({
-            assembleia_id: params.id,
+            assembleia_id: id,
             title: body.title,
             description: body.description,
             order_index: body.order_index
