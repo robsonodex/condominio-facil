@@ -1,9 +1,9 @@
 # Condomínio Fácil - Documentação Oficial Unificada
 
-**Versão:** 6.1  
+**Versão:** 6.2  
 **Data:** 12 de Dezembro de 2024  
 **Status:** ✅ Estável / Pronto para Lançamento  
-**Última Atualização:** 12/12/2024 14:00
+**Última Atualização:** 12/12/2024 17:15
 
 ---
 
@@ -466,21 +466,54 @@
 
 ---
 
-### 3.28 Governança - Assembleias (`/governanca/assembleias`) ✅ **NOVO v6.0**
+### 3.28 Governança - Assembleias Digitais 3.0 (`/governanca/assembleias`) ✅ **ATUALIZADO v6.2**
 
-**Função:** Gestão de assembleias digitais do condomínio.
+**Função:** Sistema completo de assembleias digitais com votação formal, quórum, presença, auditoria e geração de ATA.
+
+**Novidades v6.2:**
+- ✅ **Votação Formal** - 1 voto por unidade, estilo WhatsApp
+- ✅ **Controle de Presença** - Check-in com IP, user-agent, geolocalização
+- ✅ **Tipos de Quórum** - Maioria simples, absoluta, 2/3, unanimidade, personalizado
+- ✅ **Bloqueio de Inadimplentes** - Opcional, configurável por dias
+- ✅ **Auditoria Completa** - Log de todas as ações
+- ✅ **Geração de ATA** - Com hash SHA256 e QR code de verificação
+- ✅ **Verificação Pública** - Endpoint para validar autenticidade da ATA
+
+**Status da Assembleia:**
+- `draft` - Rascunho (editável)
+- `scheduled` - Agendada (convocação enviada)
+- `open` - Aberta (votação em andamento)
+- `voting_closed` - Votação encerrada (consolidando)
+- `finalized` - Concluída (ata gerada)
+- `cancelled` - Cancelada
 
 **Recursos:**
-- Criar novas assembleias (título, agenda, data/hora)
-- Listar assembleias agendadas e históricas
-- Status: agendada, em andamento, concluída, cancelada
-- Controle de presença (futuro)
-- Votações durante assembleia (futuro)
+- Criar assembleias com múltiplas pautas
+- Configurar quórum por pauta
+- Check-in de presença digital
+- Votação A FAVOR / CONTRA / ABSTENÇÃO
+- Cálculo automático de resultados
+- Geração de ATA com hash SHA256
+- QR Code para verificação pública
+- Trilha de auditoria completa
 
-**Permissões:** Síndico e Superadmin podem criar, todos podem visualizar
+**APIs:**
+- `GET/POST /api/governanca/assembleias` - CRUD assembleias
+- `GET/POST /api/governanca/assembleias/[id]/pautas` - CRUD pautas
+- `POST /api/governanca/assembleias/[id]/pautas/[pautaId]/vote` - Votar
+- `GET/POST /api/governanca/assembleias/[id]/presence` - Check-in
+- `POST /api/governanca/assembleias/[id]/close` - Encerrar e gerar ATA
+- `GET /api/governanca/assembleias/[id]/ata` - Obter ATA
+- `GET /api/governanca/ata/verify/[hash]` - Verificação pública
 
-**APIs:** `/api/governanca/assembleias`  
-**SQL:** `sql/create_governance_tables.sql`
+**SQL Migration:** `sql/upgrade_governance_3.0_assembleia_digital.sql`
+
+**Tabelas:**
+- `assembly_pautas` - Pautas da assembleia
+- `assembly_presences` - Presenças registradas
+- `assembly_votes` - Votos formais (1 por unidade)
+- `assembly_audit_logs` - Trilha de auditoria
+- `assembly_atas` - Atas geradas com hash
 
 ---
 
@@ -696,6 +729,19 @@ src/
 | `/api/governanca/documents` | GET | Lista documentos do condomínio |
 | `/api/governanca/documents` | POST | Upload de documento (síndico) |
 
+### Assembleia Digital 3.0 ✅ **NOVO v6.2**
+
+| Endpoint | Método | Descrição |
+|----------|--------|-----------|
+| `/api/governanca/assembleias/[id]/pautas` | GET | Lista pautas da assembleia |
+| `/api/governanca/assembleias/[id]/pautas` | POST | Cria nova pauta (síndico) |
+| `/api/governanca/assembleias/[id]/pautas/[pautaId]/vote` | POST | Vota em uma pauta |
+| `/api/governanca/assembleias/[id]/presence` | GET | Lista presenças |
+| `/api/governanca/assembleias/[id]/presence` | POST | Check-in de presença |
+| `/api/governanca/assembleias/[id]/close` | POST | Encerra assembleia e gera ATA |
+| `/api/governanca/assembleias/[id]/ata` | GET | Obtém ATA gerada |
+| `/api/governanca/ata/verify/[hash]` | GET | Verificação pública da ATA |
+
 ### Manutenção ✅ **NOVO v6.0**
 
 | Endpoint | Método | Descrição |
@@ -780,6 +826,11 @@ FOR ALL USING (
 - `governance_documents` - Documentos de governança ✅ **NOVO v6.0**
 - `manutencao_equipments` - Equipamentos para manutenção ✅ **NOVO v6.0**
 - `manutencao_schedule` - Agendamentos de manutenção ✅ **NOVO v6.0**
+- `assembly_pautas` - Pautas de assembleia ✅ **NOVO v6.2**
+- `assembly_presences` - Presenças em assembleia ✅ **NOVO v6.2**
+- `assembly_votes` - Votos formais ✅ **NOVO v6.2**
+- `assembly_audit_logs` - Auditoria de assembleia ✅ **NOVO v6.2**
+- `assembly_atas` - Atas com hash SHA256 ✅ **NOVO v6.2**
 
 ---
 
