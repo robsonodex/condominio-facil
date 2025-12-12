@@ -5,12 +5,21 @@
 -- ============================================================
 
 -- ============================================================
--- 1. ALTERAÇÕES NA TABELA ASSEMBLEIAS EXISTENTE
+-- 1. CORREÇÃO DE DADOS EXISTENTES (importante executar primeiro)
+-- ============================================================
+
+-- Primeiro, atualizar registros com status antigo para um status válido
+UPDATE assembleias 
+SET status = 'scheduled' 
+WHERE status NOT IN ('draft', 'scheduled', 'open', 'voting_closed', 'finalized', 'cancelled');
+
+-- ============================================================
+-- 2. ALTERAÇÕES NA TABELA ASSEMBLEIAS EXISTENTE
 -- ============================================================
 
 -- Adicionar novos campos para assembleias formais
 ALTER TABLE assembleias 
-ADD COLUMN IF NOT EXISTS type TEXT DEFAULT 'simple' CHECK (type IN ('simple', 'formal')),
+ADD COLUMN IF NOT EXISTS type TEXT DEFAULT 'simple',
 ADD COLUMN IF NOT EXISTS require_presence BOOLEAN DEFAULT false,
 ADD COLUMN IF NOT EXISTS block_defaulters BOOLEAN DEFAULT false,
 ADD COLUMN IF NOT EXISTS defaulter_days INTEGER DEFAULT 30,
@@ -18,8 +27,22 @@ ADD COLUMN IF NOT EXISTS quorum_install INTEGER DEFAULT 50,
 ADD COLUMN IF NOT EXISTS opened_at TIMESTAMPTZ,
 ADD COLUMN IF NOT EXISTS closed_at TIMESTAMPTZ;
 
+-- Adicionar constraint de type separadamente (para evitar erro se já existe)
+DO $$
+BEGIN
+    ALTER TABLE assembleias ADD CONSTRAINT assembleias_type_check 
+        CHECK (type IN ('simple', 'formal'));
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
+
+-- Atualizar constraint do status (primeiro remove a antiga)
+ALTER TABLE assembleias DROP CONSTRAINT IF EXISTS assembleias_status_check;
+ALTER TABLE assembleias ADD CONSTRAINT assembleias_status_check 
+    CHECK (status IN ('draft', 'scheduled', 'open', 'voting_closed', 'finalized', 'cancelled'));
+
 -- ============================================================
--- 2. TABELA DE PAUTAS
+-- 3. TABELA DE PAUTAS
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS assembly_pautas (
@@ -43,7 +66,7 @@ CREATE TABLE IF NOT EXISTS assembly_pautas (
 CREATE INDEX IF NOT EXISTS idx_assembly_pautas_assembly_id ON assembly_pautas(assembly_id);
 
 -- ============================================================
--- 3. TABELA DE PRESENÇAS
+-- 4. TABELA DE PRESENÇAS
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS assembly_presences (
@@ -66,7 +89,7 @@ CREATE INDEX IF NOT EXISTS idx_assembly_presences_assembly_id ON assembly_presen
 CREATE INDEX IF NOT EXISTS idx_assembly_presences_unit_id ON assembly_presences(unit_id);
 
 -- ============================================================
--- 4. TABELA DE VOTOS FORMAIS
+-- 5. TABELA DE VOTOS FORMAIS
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS assembly_votes (
@@ -89,12 +112,12 @@ CREATE INDEX IF NOT EXISTS idx_assembly_votes_pauta_id ON assembly_votes(pauta_i
 CREATE INDEX IF NOT EXISTS idx_assembly_votes_unit_id ON assembly_votes(unit_id);
 
 -- ============================================================
--- 5. TABELA DE AUDITORIA
+-- 6. TABELA DE AUDITORIA
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS assembly_audit_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    assembly_id UUID NOT NULL REFERENCES assembleias(id) ON DELETE CASCADE,
+    assembly_id UUID REFERENCES assembleias(id) ON DELETE CASCADE,
     event_type TEXT NOT NULL,
     actor_id UUID REFERENCES auth.users(id),
     actor_role TEXT,
@@ -112,7 +135,7 @@ CREATE INDEX IF NOT EXISTS idx_assembly_audit_logs_event_type ON assembly_audit_
 CREATE INDEX IF NOT EXISTS idx_assembly_audit_logs_created_at ON assembly_audit_logs(created_at);
 
 -- ============================================================
--- 6. TABELA DE ATAS
+-- 7. TABELA DE ATAS
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS assembly_atas (
@@ -130,7 +153,7 @@ CREATE TABLE IF NOT EXISTS assembly_atas (
 CREATE INDEX IF NOT EXISTS idx_assembly_atas_hash ON assembly_atas(hash_sha256);
 
 -- ============================================================
--- 7. RLS POLICIES
+-- 8. RLS POLICIES
 -- ============================================================
 
 -- Habilitar RLS
@@ -141,7 +164,7 @@ ALTER TABLE assembly_audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE assembly_atas ENABLE ROW LEVEL SECURITY;
 
 -- ============================================================
--- 7.1 POLICIES PARA PAUTAS
+-- 8.1 POLICIES PARA PAUTAS
 -- ============================================================
 
 DROP POLICY IF EXISTS "pautas_select_same_condo" ON assembly_pautas;
@@ -188,7 +211,7 @@ CREATE POLICY "pautas_delete_sindico" ON assembly_pautas
     );
 
 -- ============================================================
--- 7.2 POLICIES PARA PRESENÇAS
+-- 8.2 POLICIES PARA PRESENÇAS
 -- ============================================================
 
 DROP POLICY IF EXISTS "presences_select_same_condo" ON assembly_presences;
@@ -214,7 +237,7 @@ CREATE POLICY "presences_insert_authenticated" ON assembly_presences
     );
 
 -- ============================================================
--- 7.3 POLICIES PARA VOTOS
+-- 8.3 POLICIES PARA VOTOS
 -- ============================================================
 
 DROP POLICY IF EXISTS "votes_select_same_condo" ON assembly_votes;
@@ -243,17 +266,20 @@ CREATE POLICY "votes_insert_authenticated" ON assembly_votes
     );
 
 -- ============================================================
--- 7.4 POLICIES PARA AUDITORIA
+-- 8.4 POLICIES PARA AUDITORIA
 -- ============================================================
 
 DROP POLICY IF EXISTS "audit_select_sindico" ON assembly_audit_logs;
 CREATE POLICY "audit_select_sindico" ON assembly_audit_logs
     FOR SELECT USING (
         get_my_role() IN ('superadmin', 'sindico')
-        AND EXISTS (
-            SELECT 1 FROM assembleias a 
-            WHERE a.id = assembly_audit_logs.assembly_id 
-            AND a.condo_id = get_my_condo_id()
+        AND (
+            assembly_id IS NULL
+            OR EXISTS (
+                SELECT 1 FROM assembleias a 
+                WHERE a.id = assembly_audit_logs.assembly_id 
+                AND a.condo_id = get_my_condo_id()
+            )
         )
     );
 
@@ -262,7 +288,7 @@ CREATE POLICY "audit_insert_system" ON assembly_audit_logs
     FOR INSERT WITH CHECK (true); -- Sistema pode inserir sempre
 
 -- ============================================================
--- 7.5 POLICIES PARA ATAS
+-- 8.5 POLICIES PARA ATAS
 -- ============================================================
 
 DROP POLICY IF EXISTS "atas_select_same_condo" ON assembly_atas;
@@ -287,10 +313,9 @@ CREATE POLICY "atas_insert_sindico" ON assembly_atas
     );
 
 -- ============================================================
--- 8. FUNÇÃO PARA VERIFICAÇÃO PÚBLICA DE ATA
+-- 9. FUNÇÃO PARA VERIFICAÇÃO PÚBLICA DE ATA
 -- ============================================================
 
--- Esta função pode ser chamada sem autenticação para verificar atas
 CREATE OR REPLACE FUNCTION verify_ata_hash(p_hash TEXT)
 RETURNS TABLE (
     valid BOOLEAN,
@@ -315,21 +340,11 @@ BEGIN
     JOIN condos c ON c.id = ass.condo_id
     WHERE a.hash_sha256 = p_hash;
     
-    -- Se não encontrou, retorna inválido
     IF NOT FOUND THEN
         RETURN QUERY SELECT false, NULL::UUID, NULL::TEXT, NULL::TEXT, NULL::TIMESTAMPTZ;
     END IF;
 END;
 $$;
-
--- ============================================================
--- 9. ATUALIZAR STATUS DA TABELA ASSEMBLEIAS
--- ============================================================
-
--- Atualizar constraint do status para incluir novos valores
-ALTER TABLE assembleias DROP CONSTRAINT IF EXISTS assembleias_status_check;
-ALTER TABLE assembleias ADD CONSTRAINT assembleias_status_check 
-    CHECK (status IN ('draft', 'scheduled', 'open', 'voting_closed', 'finalized', 'cancelled'));
 
 -- ============================================================
 -- FIM DA MIGRAÇÃO
