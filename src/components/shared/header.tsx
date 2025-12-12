@@ -80,7 +80,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                                 <User className="h-4 w-4 text-emerald-600" />
                             </div>
                             <div className="hidden sm:block text-left">
-                                <p className="text-sm font-medium text-gray-900">{profile?.nome || 'Usuário'}</p>
+                                <p className="text-sm font-medium text-gray-900">{profile?.nome || profile?.email || 'Carregando...'}</p>
                                 <p className="text-xs text-gray-500 capitalize">{profile?.role}</p>
                             </div>
                         </button>
@@ -93,7 +93,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                                 />
                                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
                                     <div className="p-3 border-b border-gray-200 sm:hidden">
-                                        <p className="text-sm font-medium text-gray-900">{profile?.nome}</p>
+                                        <p className="text-sm font-medium text-gray-900">{profile?.nome || profile?.email}</p>
                                         <p className="text-xs text-gray-500 capitalize">{profile?.role}</p>
                                     </div>
                                     <button

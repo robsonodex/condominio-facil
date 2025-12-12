@@ -208,11 +208,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const signOut = useCallback(async () => {
         setLoading(true);
-        await supabase.auth.signOut();
-        setSession(null);
-        setUser(null);
-        setProfile(null);
-        setLoading(false);
+
+        try {
+            // Clear all state first
+            setSession(null);
+            setUser(null);
+            setProfile(null);
+
+            // Sign out from Supabase
+            await supabase.auth.signOut();
+
+            // Clear any localStorage/sessionStorage that might persist
+            if (typeof window !== 'undefined') {
+                // Clear Supabase keys
+                const keys = Object.keys(localStorage);
+                keys.forEach(key => {
+                    if (key.startsWith('sb-')) {
+                        localStorage.removeItem(key);
+                    }
+                });
+
+                // Also clear sessionStorage
+                const sessionKeys = Object.keys(sessionStorage);
+                sessionKeys.forEach(key => {
+                    if (key.startsWith('sb-')) {
+                        sessionStorage.removeItem(key);
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('[AUTH] Logout error:', error);
+        } finally {
+            setLoading(false);
+
+            // Force redirect to login page
+            if (typeof window !== 'undefined') {
+                window.location.href = '/login';
+            }
+        }
     }, [supabase]);
 
     const signInWithMagicLink = useCallback(async (email: string) => {
