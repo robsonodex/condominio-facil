@@ -106,57 +106,124 @@ export const GovernanceService = {
         return results;
     },
 
-    // --- Enquetes ---
+    // --- Enquetes (Polls 2.1) ---
     async createEnquete(data: any) {
-        const { data: enquete, error } = await supabase
+        // 1. Create Enquete Base
+        const { data: enquete, error: enqueteError } = await supabase
             .from('enquetes')
-            .insert(data)
+            .insert({
+                condo_id: data.condo_id,
+                title: data.title,
+                description: data.description,
+                start_at: data.start_at,
+                end_at: data.end_at,
+                created_by: data.created_by,
+                one_vote_per_unit: data.one_vote_per_unit
+            })
             .select()
             .single();
-        if (error) throw error;
+
+        if (enqueteError) throw enqueteError;
+
+        // 2. Create Questions & Options
+        if (data.questions && data.questions.length > 0) {
+            for (const q of data.questions) {
+                const { data: question, error: qError } = await supabase
+                    .from('enquete_questions')
+                    .insert({
+                        enquete_id: enquete.id,
+                        text: q.text,
+                        type: q.type,
+                        order_index: q.order_index
+                    })
+                    .select()
+                    .single();
+
+                if (qError) throw qError;
+
+                if (q.options && q.options.length > 0) {
+                    const optionsPayload = q.options.map((opt: string, idx: number) => ({
+                        question_id: question.id,
+                        label: opt,
+                        order_index: idx
+                    }));
+
+                    const { error: optError } = await supabase
+                        .from('enquete_options')
+                        .insert(optionsPayload);
+
+                    if (optError) throw optError;
+                }
+            }
+        }
+
         return enquete;
     },
 
     async getEnquetes(condo_id: string) {
         const { data, error } = await supabase
             .from('enquetes')
-            .select('*')
+            .select(`
+                *,
+                questions:enquete_questions (
+                    *,
+                    options:enquete_options (*)
+                )
+            `)
             .eq('condo_id', condo_id)
             .order('created_at', { ascending: false });
         if (error) throw error;
         return data;
     },
 
-    async voteEnquete(data: { enquete_id: string, user_id: string, unit_id: string, option_id: string }) {
-        // Check if unit already voted (if one_vote_per_unit is true)
-        const { data: enquete } = await supabase
-            .from('enquetes')
-            .select('one_vote_per_unit')
-            .eq('id', data.enquete_id)
-            .single();
+    async voteEnquete(data: { question_answers: any[], user_id: string, unit_id: string }) {
+        // Data expects array of { question_id, option_id (optional), text_response (optional) }
 
-        if (enquete?.one_vote_per_unit) {
+        // 1. Validate One Vote Per Unit (Check first question as proxy)
+        if (data.question_answers.length > 0) {
+            const firstQ = data.question_answers[0];
             const { data: existing } = await supabase
-                .from('enquete_votes')
+                .from('enquete_answers')
                 .select('id')
-                .eq('enquete_id', data.enquete_id)
+                .eq('question_id', firstQ.question_id)
                 .eq('unit_id', data.unit_id)
                 .single();
 
-            if (existing) {
-                // Determine if we should update or block. For now, block.
-                throw new Error('Esta unidade já votou nesta enquete.');
-            }
+            if (existing) throw new Error('Esta unidade já respondeu a esta enquete.');
         }
 
-        const { data: vote, error } = await supabase
-            .from('enquete_votes')
-            .insert(data)
-            .select()
-            .single();
+        const payload = data.question_answers.map(ans => ({
+            question_id: ans.question_id,
+            user_id: data.user_id,
+            unit_id: data.unit_id,
+            option_id: ans.option_id,
+            text_response: ans.text_response
+        }));
+
+        const { data: votes, error } = await supabase
+            .from('enquete_answers')
+            .insert(payload)
+            .select();
 
         if (error) throw error;
-        return vote;
+        return votes;
+    },
+
+    async getEnquete(id: string) {
+        const { data, error } = await supabase
+            .from('enquetes')
+            .select(`
+                *,
+                questions:enquete_questions (
+                    *,
+                    options:enquete_options (*),
+                    answers:enquete_answers (*)
+                )
+            `)
+            .eq('id', id)
+            .single();
+        if (error) throw error;
+        return data;
     },
 
     // --- Documents ---

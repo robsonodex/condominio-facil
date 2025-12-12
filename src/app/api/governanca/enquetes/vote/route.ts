@@ -13,17 +13,20 @@ export async function POST(req: NextRequest) {
         }
 
         const body = await req.json();
-        const { enquete_id, option_id, unit_id } = body;
+        const { question_answers, unit_id } = body;
 
         if (!unit_id) {
             return NextResponse.json({ error: 'Unit ID is required' }, { status: 400 });
         }
 
+        if (!question_answers || !Array.isArray(question_answers)) {
+            return NextResponse.json({ error: 'Answers are required' }, { status: 400 });
+        }
+
         const result = await GovernanceService.voteEnquete({
-            enquete_id,
+            question_answers,
             user_id: user.id,
-            unit_id,
-            option_id
+            unit_id
         });
 
         return NextResponse.json(result);
