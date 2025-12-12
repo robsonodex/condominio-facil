@@ -25,12 +25,14 @@ export default function NovaAssembleiaPage() {
         try {
             const res = await fetch('/api/governanca/assembleias', {
                 method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
             });
-            if (!res.ok) throw new Error('Erro ao criar assembleia');
+            const json = await res.json();
+            if (!res.ok) throw new Error(json.error || 'Erro ao criar assembleia');
             router.push('/governanca/assembleias');
-        } catch (error) {
-            alert('Erro ao criar assembleia');
+        } catch (error: any) {
+            alert(error.message || 'Erro ao criar assembleia');
         } finally {
             setLoading(false);
         }
