@@ -1,9 +1,9 @@
 # Condomínio Fácil - Documentação Oficial Unificada
 
-**Versão:** 6.0  
-**Data:** 11 de Dezembro de 2024  
+**Versão:** 6.1  
+**Data:** 12 de Dezembro de 2024  
 **Status:** ✅ Estável / Pronto para Lançamento  
-**Última Atualização:** 11/12/2024 21:49
+**Última Atualização:** 12/12/2024 14:00
 
 ---
 
@@ -484,22 +484,43 @@
 
 ---
 
-### 3.29 Governança - Enquetes (`/governanca/enquetes`) ✅ **NOVO v6.0**
+### 3.29 Governança - Enquetes 2.1 (`/governanca/enquetes`) ✅ **ATUALIZADO v6.1**
 
-**Função:** Sistema de votação e consultas aos condôminos.
+**Função:** Sistema completo de votação estilo WhatsApp com múltiplas perguntas e gráficos.
+
+**Novidades v6.1:**
+- ✅ **Múltiplas Perguntas por Enquete** - Crie enquetes com várias perguntas
+- ✅ **Form Builder Dinâmico** - Interface visual para construir perguntas e opções
+- ✅ **Pizza Charts (Gráficos)** - Visualização de resultados com gráficos de pizza (recharts)
+- ✅ **Respostas Discursivas** - Além de múltipla escolha, agora aceita respostas de texto
+- ✅ **Um Voto por Unidade** - Opção para limitar votação por unidade
+- ✅ **Período de Votação** - Configurar data início/fim
+
+**Tipos de Pergunta:**
+- `single_choice` - Múltipla escolha (única resposta)
+- `text` - Texto discursivo livre
 
 **Recursos:**
-- Criar enquetes com múltiplas opções
-- Configurar período de votação
+- Criar enquetes com Form Builder visual
+- Adicionar/remover perguntas dinamicamente
+- Adicionar/remover opções de resposta
+- Configurar tipo de cada pergunta
 - Votar em enquetes ativas
-- Visualizar resultados em tempo real (gráficos)
+- Visualizar resultados em tempo real com Pizza Charts 🍕
 - Histórico de votações
-- Um voto por usuário
+- RLS policies para segurança
 
 **Permissões:** Todos podem votar, Síndico cria enquetes
 
-**APIs:** `/api/governanca/enquetes`, `/api/governanca/enquetes/[id]/vote`  
-**SQL:** `sql/create_governance_tables.sql`
+**APIs:** 
+- `/api/governanca/enquetes` (GET/POST)
+- `/api/governanca/enquetes/[id]` (GET - detalhes com perguntas)
+- `/api/governanca/enquetes/vote` (POST - votar)
+
+**SQL Migrations:** 
+- `sql/upgrade_governance_2.0.sql` - Estrutura base
+- `sql/upgrade_governance_2.1_polls.sql` - Tabelas: `enquete_questions`, `enquete_options`, `enquete_answers`
+- `sql/fix_visibility_and_seed.sql` - RLS e dados de exemplo
 
 ---
 
@@ -753,6 +774,9 @@ FOR ALL USING (
 - `assembleias` - Assembleias do condomínio ✅ **NOVO v6.0**
 - `enquetes` - Enquetes e votações ✅ **NOVO v6.0**
 - `enquete_votes` - Votos nas enquetes ✅ **NOVO v6.0**
+- `enquete_questions` - Perguntas das enquetes ✅ **NOVO v6.1**
+- `enquete_options` - Opções de resposta ✅ **NOVO v6.1**
+- `enquete_answers` - Respostas dos usuários ✅ **NOVO v6.1**
 - `governance_documents` - Documentos de governança ✅ **NOVO v6.0**
 - `manutencao_equipments` - Equipamentos para manutenção ✅ **NOVO v6.0**
 - `manutencao_schedule` - Agendamentos de manutenção ✅ **NOVO v6.0**
