@@ -31,7 +31,7 @@ export default function AssembleiasPage() {
             <div className="flex justify-between items-center">
                 <h1 className="text-3xl font-bold text-gray-800">Assembleias Digitais</h1>
                 <Link href="/governanca/assembleias/nova">
-                    <Button className="bg-brand-600 hover:bg-brand-700">
+                    <Button className="bg-emerald-600 hover:bg-emerald-700">
                         <Plus className="w-4 h-4 mr-2" /> Agendar Nova
                     </Button>
                 </Link>
@@ -43,16 +43,22 @@ export default function AssembleiasPage() {
                         <CardHeader className="pb-3">
                             <div className="flex justify-between items-start">
                                 <CardTitle className="text-xl font-semibold text-brand-900">{item.title}</CardTitle>
-                                {item.status === 'em_andamento' && (
-                                    <Badge variant="destructive" className="animate-pulse">AO VIVO</Badge>
+                                {item.status === 'open' && (
+                                    <Badge variant="destructive" className="animate-pulse">🔴 AO VIVO</Badge>
                                 )}
-                                {item.status === 'agendada' && (
+                                {item.status === 'scheduled' && (
                                     <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">Agendada</Badge>
+                                )}
+                                {item.status === 'finalized' && (
+                                    <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">Concluída</Badge>
+                                )}
+                                {item.status === 'draft' && (
+                                    <Badge variant="outline" className="bg-gray-50 text-gray-500">Rascunho</Badge>
                                 )}
                             </div>
                             <div className="flex items-center text-sm text-gray-500 mt-2">
                                 <Calendar className="w-4 h-4 mr-2" />
-                                {new Date(item.start_at).toLocaleString()}
+                                {new Date(item.date || item.start_at).toLocaleString('pt-BR')}
                             </div>
                         </CardHeader>
                         <CardContent>
