@@ -50,10 +50,24 @@ export const GovernanceService = {
             .from('assembleias')
             .select(`
                 *,
-                pautas:assembleia_pautas(*)
+                pautas:assembly_pautas(*)
             `)
             .eq('condo_id', condo_id)
-            .order('start_at', { ascending: false });
+            .order('date', { ascending: false });
+        if (error) throw error;
+        return data;
+    },
+
+    // SUPERADMIN: Get ALL assemblies from all condos
+    async getAllAssemblies() {
+        const { data, error } = await supabase
+            .from('assembleias')
+            .select(`
+                *,
+                condo:condos(name),
+                pautas:assembly_pautas(*)
+            `)
+            .order('date', { ascending: false });
         if (error) throw error;
         return data;
     },
