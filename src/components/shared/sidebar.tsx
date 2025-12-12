@@ -112,7 +112,15 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                         <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-lg flex items-center justify-center">
                             <Building2 className="h-5 w-5 text-white" />
                         </div>
-                        <span className="font-bold text-gray-900">Condomínio Fácil</span>
+                        <div className="flex flex-col leading-tight">
+                            <span
+                                className="text-xs text-emerald-500 italic font-medium -mb-1"
+                                style={{ transform: 'rotate(-8deg)', marginLeft: '-2px' }}
+                            >
+                                Meu
+                            </span>
+                            <span className="font-bold text-gray-900">Condomínio Fácil</span>
+                        </div>
                     </Link>
                     <button
                         onClick={onClose}

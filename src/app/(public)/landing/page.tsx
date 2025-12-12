@@ -1,22 +1,26 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { CheckCircle, Shield, CreditCard, Users, FileText, Bell, BarChart3, Building2, ArrowRight, Star, Clock, TrendingUp, Phone, Mail, Lock, Check, X } from 'lucide-react';
+import {
+    CheckCircle, Shield, CreditCard, Users, FileText, Bell, BarChart3, Building2,
+    ArrowRight, Star, Clock, TrendingUp, Phone, Mail, Lock, Check, X,
+    Calendar, Package, Camera, Zap, MessageSquare, Smartphone, Vote, Wrench
+} from 'lucide-react';
 
 export const metadata = {
-    title: 'Condomínio Fácil - Gestão Completa de Condomínios | Sistema Online',
-    description: 'Sistema completo para gestão de condomínios. Cobrança automática via Mercado Pago, portaria virtual, controle de moradores, ocorrências e finanças. Teste grátis por 7 dias.',
-    keywords: 'gestão de condomínio, software para condomínio, sistema para síndico, cobrança automática, boleto condomínio, portaria virtual',
+    title: 'Meu Condomínio Fácil - Gestão Completa de Condomínios | Sistema Online',
+    description: 'Sistema completo para gestão de condomínios. PIX com QR Code, WhatsApp automático, portaria virtual, reservas, encomendas, câmeras e muito mais. Teste grátis por 7 dias.',
+    keywords: 'gestão de condomínio, software para condomínio, sistema para síndico, cobrança automática, boleto condomínio, portaria virtual, pix qr code, whatsapp condomínio',
     openGraph: {
-        title: 'Condomínio Fácil - Gestão Completa de Condomínios',
-        description: 'Sistema completo para gestão de condomínios. Cobrança automática via Mercado Pago, controle financeiro, portaria e muito mais.',
+        title: 'Meu Condomínio Fácil - Gestão Completa de Condomínios',
+        description: 'Sistema completo para gestão de condomínios. PIX com QR Code, WhatsApp, controle financeiro, portaria e muito mais.',
         url: 'https://meucondominiofacil.com',
-        siteName: 'Condomínio Fácil',
+        siteName: 'Meu Condomínio Fácil',
         type: 'website',
         images: ['/logo.png'],
     },
     twitter: {
         card: 'summary_large_image',
-        title: 'Condomínio Fácil - Sistema de Gestão para Condomínios',
+        title: 'Meu Condomínio Fácil - Sistema de Gestão para Condomínios',
         description: 'Simplifique a administração do seu condomínio. Teste grátis por 7 dias.',
     }
 };
@@ -47,15 +51,66 @@ const detailedFeatures = [
         ]
     },
     {
+        icon: Zap,
+        title: 'PIX Dinâmico + QR Code',
+        description: 'Gere cobranças instantâneas com QR Code que o morador paga na hora.',
+        screenshot: '/screenshots/pix-qr.png',
+        benefits: [
+            'QR Code gerado automaticamente',
+            'Confirmação em tempo real',
+            'Integração Mercado Pago',
+            'Reconciliação automática'
+        ],
+        isNew: true
+    },
+    {
+        icon: MessageSquare,
+        title: 'WhatsApp Automático',
+        description: 'Envie notificações de cobrança e avisos direto no WhatsApp do morador.',
+        screenshot: '/screenshots/whatsapp.png',
+        benefits: [
+            'Notificação de novas cobranças',
+            'Lembrete de vencimento',
+            'Confirmação de pagamento',
+            'Avisos do condomínio'
+        ],
+        isNew: true
+    },
+    {
         icon: Shield,
-        title: 'Portaria Virtual',
-        description: 'Registre visitantes, prestadores e entregas de forma rápida.',
+        title: 'Portaria Virtual Profissional',
+        description: 'Registre visitantes, prestadores e entregas com captura de foto.',
         screenshot: '/screenshots/portaria.png',
         benefits: [
-            'Registro de entrada/saída',
-            'Histórico completo',
-            'Controle por unidade',
-            'Relatórios de acesso'
+            'Modo tela cheia para porteiros',
+            'Captura de foto via webcam',
+            'Impressão de crachá',
+            'Busca por CPF, placa ou nome'
+        ]
+    },
+    {
+        icon: Package,
+        title: 'Gestão de Encomendas',
+        description: 'Controle chegada e retirada de pacotes com notificação automática.',
+        screenshot: '/screenshots/encomendas.png',
+        benefits: [
+            'Foto da encomenda na chegada',
+            'WhatsApp/Email para morador',
+            'Confirmação de retirada',
+            'Histórico completo'
+        ],
+        isNew: true
+    },
+    {
+        icon: Calendar,
+        title: 'Reservas de Áreas Comuns',
+        description: 'Moradores reservam salão, churrasqueira e piscina pelo sistema.',
+        screenshot: '/screenshots/reservas.png',
+        benefits: [
+            'Calendário interativo',
+            'Aprovação do síndico',
+            'Taxa opcional por reserva',
+            'Bloqueio de conflitos'
         ]
     },
     {
@@ -71,26 +126,53 @@ const detailedFeatures = [
         ]
     },
     {
-        icon: CreditCard,
-        title: 'Cobrança via Mercado Pago',
-        description: 'Gere boletos e PIX automaticamente para seus moradores.',
-        screenshot: '/screenshots/boletos.png',
+        icon: Camera,
+        title: 'Monitoramento de Câmeras',
+        description: 'Visualize câmeras do condomínio em tempo real pelo navegador.',
+        screenshot: '/screenshots/cameras.png',
         benefits: [
-            'Boleto e PIX automáticos',
-            'Recebimento via Mercado Pago',
-            'Notificações de pagamento',
-            'Controle de vencimentos'
-        ]
+            'Stream ao vivo RTSP/HLS',
+            'Captura de snapshot',
+            'Status online/offline',
+            'Acesso seguro por RLS'
+        ],
+        isNew: true
+    },
+    {
+        icon: Vote,
+        title: 'Governança Digital',
+        description: 'Enquetes, assembleias virtuais e documentos do condomínio.',
+        screenshot: '/screenshots/governanca.png',
+        benefits: [
+            'Votações online',
+            'Assembleias com ata digital',
+            'Repositório de documentos',
+            'Resultados em tempo real'
+        ],
+        isNew: true
+    },
+    {
+        icon: Zap,
+        title: 'Automações de Inadimplência',
+        description: 'Configure regras automáticas para cobrar em atraso.',
+        screenshot: '/screenshots/automacoes.png',
+        benefits: [
+            'Lembrete após X dias',
+            'Multa automática',
+            'Cobrança via gateway',
+            'Relatório mensal'
+        ],
+        isNew: true
     },
     {
         icon: BarChart3,
-        title: 'Relatórios Detalhados',
-        description: 'Prestação de contas e relatórios financeiros automáticos.',
+        title: 'Relatórios Profissionais',
+        description: 'Exporte PDFs e planilhas Excel para prestação de contas.',
         screenshot: '/screenshots/relatorios.png',
         benefits: [
-            'Gráficos de receitas/despesas',
-            'Análise por categoria',
-            'Export para PDF/Excel',
+            'PDF com logo do condomínio',
+            'Excel formatado',
+            'Filtro por período',
             'Comparativo mensal'
         ]
     },
@@ -105,9 +187,10 @@ const plans = [
             'Gestão Financeira',
             'Cadastro de Moradores',
             'Avisos e Comunicados',
+            'PIX com QR Code',
             'Suporte por Email',
         ],
-        notIncluded: ['Ocorrências', 'Portaria Virtual', 'Relatórios Avançados'],
+        notIncluded: ['Portaria Virtual', 'Reservas', 'Relatórios Avançados'],
         popular: false,
     },
     {
@@ -116,10 +199,13 @@ const plans = [
         units: 'Até 40 unidades',
         features: [
             'Tudo do Básico',
-            'Controle de Ocorrências',
             'Portaria Virtual',
-            'Relatórios Completos',
-            'Boletos via Mercado Pago',
+            'Reservas de Áreas',
+            'Controle de Ocorrências',
+            'Gestão de Encomendas',
+            'Boletos Mercado Pago',
+            'WhatsApp Automático',
+            'Relatórios PDF/Excel',
             'Suporte Prioritário',
         ],
         notIncluded: [],
@@ -131,10 +217,12 @@ const plans = [
         units: 'Até 60 unidades',
         features: [
             'Tudo do Profissional',
+            'Câmeras ao Vivo',
+            'Governança Digital',
+            'Automações de Cobrança',
             'Multi-condomínios',
             'Suporte 24/7',
             'Treinamento Online',
-            'Consultor Dedicado',
         ],
         notIncluded: [],
         popular: false,
@@ -156,15 +244,19 @@ const faqs = [
     },
     {
         question: 'Preciso instalar algo?',
-        answer: 'Não! O sistema é 100% online. Acesse de qualquer dispositivo com internet.'
+        answer: 'Não! O sistema é 100% online. Você pode até instalar como app no celular (PWA).'
     },
     {
         question: 'Os moradores também têm acesso?',
-        answer: 'Sim! Cada morador recebe um login para ver suas cobranças, abrir ocorrências e receber avisos.'
+        answer: 'Sim! Cada morador recebe um login para ver suas cobranças, fazer reservas, abrir ocorrências e receber avisos.'
+    },
+    {
+        question: 'Como funciona o WhatsApp automático?',
+        answer: 'Com um clique você envia cobranças e avisos direto no WhatsApp do morador. Integramos com Meta Cloud API.'
     },
     {
         question: 'Meus dados estão seguros?',
-        answer: 'Absolutamente. Usamos criptografia de ponta a ponta e hospedagem em servidores seguros. Seus dados são protegidos.'
+        answer: 'Absolutamente. Usamos criptografia de ponta a ponta, RLS (Row Level Security) e hospedagem em servidores seguros.'
     },
 ];
 
@@ -178,7 +270,7 @@ export default function LandingPage() {
                     __html: JSON.stringify({
                         "@context": "https://schema.org",
                         "@type": "SoftwareApplication",
-                        "name": "Condomínio Fácil",
+                        "name": "Meu Condomínio Fácil",
                         "applicationCategory": "BusinessApplication",
                         "offers": {
                             "@type": "AggregateOffer",
@@ -186,7 +278,8 @@ export default function LandingPage() {
                             "highPrice": "249.90",
                             "priceCurrency": "BRL"
                         },
-                        "description": "Sistema completo para gestão de condomínios"
+                        "description": "Sistema completo para gestão de condomínios com PIX, WhatsApp, portaria e muito mais",
+                        "featureList": "PIX QR Code, WhatsApp Automático, Portaria Virtual, Reservas, Encomendas, Câmeras, Governança"
                     })
                 }}
             />
@@ -232,7 +325,7 @@ export default function LandingPage() {
                             <span className="text-emerald-600 block mt-2">em um só lugar</span>
                         </h1>
                         <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
-                            Cobrança automática via Mercado Pago, controle de portaria, gestão de moradores e finanças.
+                            PIX com QR Code, WhatsApp automático, portaria virtual, reservas, encomendas e muito mais.
                             Tudo que você precisa para administrar seu condomínio de forma simples e profissional.
                         </p>
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
@@ -249,10 +342,14 @@ export default function LandingPage() {
                                 Ver Funcionalidades
                             </a>
                         </div>
-                        <div className="flex items-center justify-center gap-6 text-sm text-gray-600">
+                        <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-gray-600">
                             <div className="flex items-center gap-2">
                                 <CheckCircle className="h-5 w-5 text-emerald-600" />
-                                <span>Sem instalação</span>
+                                <span>PIX + QR Code</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <CheckCircle className="h-5 w-5 text-emerald-600" />
+                                <span>WhatsApp Automático</span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <CheckCircle className="h-5 w-5 text-emerald-600" />
@@ -260,7 +357,7 @@ export default function LandingPage() {
                             </div>
                             <div className="flex items-center gap-2">
                                 <CheckCircle className="h-5 w-5 text-emerald-600" />
-                                <span>Suporte em português</span>
+                                <span>App instalável (PWA)</span>
                             </div>
                         </div>
                     </div>
@@ -270,50 +367,99 @@ export default function LandingPage() {
             {/* Trust Badges */}
             <section className="py-12 bg-white border-y border-gray-100">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex flex-wrap items-center justify-center gap-8 opacity-60">
+                    <div className="flex flex-wrap items-center justify-center gap-8 opacity-70">
                         <div className="flex items-center gap-2">
                             <Lock className="h-5 w-5 text-gray-600" />
                             <span className="text-gray-600 font-medium">Dados Criptografados</span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <Shield className="h-5 w-5 text-gray-600" />
+                            <CreditCard className="h-5 w-5 text-gray-600" />
                             <span className="text-gray-600 font-medium">Mercado Pago Integrado</span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <TrendingUp className="h-5 w-5 text-gray-600" />
-                            <span className="text-gray-600 font-medium">Atualizado Automaticamente</span>
+                            <MessageSquare className="h-5 w-5 text-gray-600" />
+                            <span className="text-gray-600 font-medium">WhatsApp Business</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Smartphone className="h-5 w-5 text-gray-600" />
+                            <span className="text-gray-600 font-medium">App PWA</span>
                         </div>
                     </div>
                 </div>
             </section>
 
+            {/* Quick Features Grid */}
+            <section className="py-16 bg-gray-50">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="text-center mb-12">
+                        <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                            +12 Módulos Integrados
+                        </h2>
+                        <p className="text-gray-600">Tudo que seu condomínio precisa em uma única plataforma</p>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                        {[
+                            { icon: BarChart3, name: 'Dashboard', isNew: false },
+                            { icon: CreditCard, name: 'Financeiro', isNew: false },
+                            { icon: Zap, name: 'PIX QR', isNew: true },
+                            { icon: MessageSquare, name: 'WhatsApp', isNew: true },
+                            { icon: Shield, name: 'Portaria', isNew: false },
+                            { icon: Package, name: 'Encomendas', isNew: true },
+                            { icon: Calendar, name: 'Reservas', isNew: false },
+                            { icon: FileText, name: 'Ocorrências', isNew: false },
+                            { icon: Camera, name: 'Câmeras', isNew: true },
+                            { icon: Vote, name: 'Governança', isNew: true },
+                            { icon: Zap, name: 'Automações', isNew: true },
+                            { icon: BarChart3, name: 'Relatórios', isNew: false },
+                        ].map((item, index) => (
+                            <div key={index} className="relative bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow text-center">
+                                {item.isNew && (
+                                    <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full font-medium">
+                                        NOVO
+                                    </span>
+                                )}
+                                <item.icon className="h-8 w-8 text-emerald-600 mx-auto mb-2" />
+                                <span className="text-sm font-medium text-gray-700">{item.name}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
             {/* Detailed Features */}
-            <section id="funcionalidades" className="py-24 bg-gray-50">
+            <section id="funcionalidades" className="py-24 bg-white">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="text-center mb-16">
                         <h2 className="text-4xl font-bold text-gray-900 mb-4">
-                            Tudo que seu condomínio precisa
+                            Funcionalidades Completas
                         </h2>
                         <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                            Funcionalidades completas para simplificar a administração e economizar seu tempo
+                            Conheça cada módulo e veja como podemos facilitar sua gestão
                         </p>
                     </div>
 
-                    <div className="space-y-24">
+                    <div className="space-y-20">
                         {detailedFeatures.map((feature, index) => (
                             <div
                                 key={index}
                                 className={`flex flex-col ${index % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'} gap-12 items-center`}
                             >
                                 <div className="flex-1">
-                                    <div className="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center mb-6">
-                                        <feature.icon className="h-7 w-7 text-emerald-600" />
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                                            <feature.icon className="h-6 w-6 text-emerald-600" />
+                                        </div>
+                                        {feature.isNew && (
+                                            <span className="bg-orange-500 text-white text-xs px-3 py-1 rounded-full font-medium">
+                                                NOVO
+                                            </span>
+                                        )}
                                     </div>
-                                    <h3 className="text-3xl font-bold text-gray-900 mb-4">{feature.title}</h3>
-                                    <p className="text-lg text-gray-600 mb-6 leading-relaxed">{feature.description}</p>
-                                    <ul className="space-y-3">
+                                    <h3 className="text-2xl font-bold text-gray-900 mb-3">{feature.title}</h3>
+                                    <p className="text-gray-600 mb-5 leading-relaxed">{feature.description}</p>
+                                    <ul className="space-y-2">
                                         {feature.benefits.map((benefit, bIndex) => (
-                                            <li key={bIndex} className="flex items-center gap-3 text-gray-700">
+                                            <li key={bIndex} className="flex items-center gap-2 text-gray-700">
                                                 <CheckCircle className="h-5 w-5 text-emerald-600 flex-shrink-0" />
                                                 <span>{benefit}</span>
                                             </li>
@@ -321,20 +467,8 @@ export default function LandingPage() {
                                     </ul>
                                 </div>
                                 <div className="flex-1">
-                                    <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-gray-200">
-                                        {feature.screenshot ? (
-                                            <Image
-                                                src={feature.screenshot}
-                                                alt={feature.title}
-                                                width={800}
-                                                height={600}
-                                                className="w-full h-auto"
-                                            />
-                                        ) : (
-                                            <div className="bg-gradient-to-br from-emerald-50 to-blue-50 p-8 aspect-video flex items-center justify-center">
-                                                <feature.icon className="h-24 w-24 text-emerald-200" />
-                                            </div>
-                                        )}
+                                    <div className="relative rounded-2xl overflow-hidden shadow-xl border border-gray-200 bg-gradient-to-br from-emerald-50 to-blue-50 aspect-video flex items-center justify-center">
+                                        <feature.icon className="h-24 w-24 text-emerald-200" />
                                     </div>
                                 </div>
                             </div>
@@ -344,7 +478,7 @@ export default function LandingPage() {
             </section>
 
             {/* Pricing */}
-            <section id="precos" className="py-24 bg-white">
+            <section id="precos" className="py-24 bg-gray-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="text-center mb-16">
                         <h2 className="text-4xl font-bold text-gray-900 mb-4">
@@ -420,15 +554,21 @@ export default function LandingPage() {
                                 </thead>
                                 <tbody className="divide-y divide-gray-200">
                                     {[
-                                        { name: 'Gestão Financeira', basic: true, pro: true, adv: true },
+                                        { name: 'Dashboard & Financeiro', basic: true, pro: true, adv: true },
+                                        { name: 'PIX com QR Code', basic: true, pro: true, adv: true },
                                         { name: 'Cadastro de Moradores', basic: true, pro: true, adv: true },
                                         { name: 'Avisos e Comunicados', basic: true, pro: true, adv: true },
-                                        { name: 'Controle de Ocorrências', basic: false, pro: true, adv: true },
                                         { name: 'Portaria Virtual', basic: false, pro: true, adv: true },
+                                        { name: 'Reservas de Áreas', basic: false, pro: true, adv: true },
+                                        { name: 'Gestão de Encomendas', basic: false, pro: true, adv: true },
+                                        { name: 'Controle de Ocorrências', basic: false, pro: true, adv: true },
+                                        { name: 'WhatsApp Automático', basic: false, pro: true, adv: true },
                                         { name: 'Boletos Mercado Pago', basic: false, pro: true, adv: true },
-                                        { name: 'Relatórios Avançados', basic: false, pro: true, adv: true },
+                                        { name: 'Relatórios PDF/Excel', basic: false, pro: true, adv: true },
+                                        { name: 'Câmeras ao Vivo', basic: false, pro: false, adv: true },
+                                        { name: 'Governança Digital', basic: false, pro: false, adv: true },
+                                        { name: 'Automações de Cobrança', basic: false, pro: false, adv: true },
                                         { name: 'Multi-condomínios', basic: false, pro: false, adv: true },
-                                        { name: 'Consultor Dedicado', basic: false, pro: false, adv: true },
                                     ].map((row, index) => (
                                         <tr key={index} className="hover:bg-gray-50">
                                             <td className="px-6 py-4 text-sm text-gray-900">{row.name}</td>
@@ -463,9 +603,9 @@ export default function LandingPage() {
                     </div>
                     <div className="grid md:grid-cols-3 gap-8">
                         {[
-                            { name: 'Carlos Silva', role: 'Síndico - Ed. Solar', text: 'Reduzi meu trabalho pela metade. Agora os moradores pagam em dia e eu tenho controle total das finanças!' },
-                            { name: 'Maria Santos', role: 'Síndica - Cond. Verde', text: 'Sistema fácil de usar. Até os moradores mais velhos conseguem acessar pelo celular sem dificuldade.' },
-                            { name: 'João Oliveira', role: 'Síndico - Res. Park', text: 'O suporte é excelente. Sempre me ajudam quando preciso. A integração com Mercado Pago facilitou muito!' },
+                            { name: 'Carlos Silva', role: 'Síndico - Ed. Solar', text: 'O PIX com QR Code foi um divisor de águas! Agora os moradores pagam na hora e eu recebo confirmação automática.' },
+                            { name: 'Maria Santos', role: 'Síndica - Cond. Verde', text: 'Adoro a gestão de encomendas. O porteiro registra e o morador recebe WhatsApp na hora. Zero pacotes perdidos!' },
+                            { name: 'João Oliveira', role: 'Síndico - Res. Park', text: 'As reservas online acabaram com os conflitos. Moradores reservam pelo celular e o sistema bloqueia automaticamente.' },
                         ].map((testimonial, index) => (
                             <div key={index} className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow">
                                 <div className="flex items-center gap-1 mb-4">
@@ -510,10 +650,10 @@ export default function LandingPage() {
             <section className="py-24 bg-gradient-to-br from-emerald-600 to-emerald-700">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                     <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-                        Pronto para simplificar a gestão do seu condomínio?
+                        Pronto para modernizar seu condomínio?
                     </h2>
                     <p className="text-emerald-100 mb-8 text-xl leading-relaxed">
-                        Comece hoje mesmo e veja a diferença. Sem compromisso, sem cartão de crédito.
+                        PIX com QR Code, WhatsApp automático, portaria virtual e muito mais.
                         <br />7 dias grátis para testar todas as funcionalidades.
                     </p>
                     <Link
@@ -538,7 +678,7 @@ export default function LandingPage() {
                                 <span className="font-bold text-xl text-white">Condomínio Fácil</span>
                             </div>
                             <p className="text-sm leading-relaxed">
-                                Sistema completo para gestão de condomínios pequenos e médios.
+                                Sistema completo para gestão de condomínios pequenos e médios com PIX, WhatsApp e muito mais.
                             </p>
                         </div>
                         <div>
@@ -570,7 +710,7 @@ export default function LandingPage() {
                         </div>
                     </div>
                     <div className="border-t border-gray-800 pt-8 text-center text-sm">
-                        <p>© {new Date().getFullYear()} Condomínio Fácil. Todos os direitos reservados.</p>
+                        <p>© {new Date().getFullYear()} Meu Condomínio Fácil. Todos os direitos reservados.</p>
                     </div>
                 </div>
             </footer>

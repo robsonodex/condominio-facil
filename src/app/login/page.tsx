@@ -71,6 +71,12 @@ export default function LoginPage() {
                     </div>
                 </div>
                 <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
+                    <span
+                        className="text-lg text-emerald-500 italic font-medium block"
+                        style={{ transform: 'rotate(-8deg)', marginBottom: '-8px', marginLeft: '20px' }}
+                    >
+                        Meu
+                    </span>
                     Condomínio Fácil
                 </h2>
                 <p className="mt-2 text-center text-sm text-gray-600">
