@@ -1,370 +1,188 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { createClient as createServiceRoleClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 
-// Mercado Pago Webhook
-// Receives payment notifications and updates invoice/subscription status
-
-const MP_ACCESS_TOKEN = process.env.MERCADOPAGO_ACCESS_TOKEN;
-const MP_WEBHOOK_SECRET = process.env.MERCADOPAGO_WEBHOOK_SECRET;
-
-// ========================================
-// SEGURANÇA: Idempotência em memória (para produção usar Redis)
-// ========================================
-const processedPayments = new Set<string>();
-const IDEMPOTENCY_WINDOW = 60 * 60 * 1000; // 1 hora
-
-// Limpar pagamentos antigos periodicamente
-setInterval(() => {
-    processedPayments.clear();
-}, IDEMPOTENCY_WINDOW);
-
-// Validate webhook signature from Mercado Pago
-function validateSignature(request: NextRequest, body: string): boolean {
-    // ========================================
-    // SEGURANÇA: NUNCA permitir bypass de validação
-    // ========================================
-    if (!MP_WEBHOOK_SECRET) {
-        console.error('CRITICAL: MERCADOPAGO_WEBHOOK_SECRET not configured');
-        return false; // BLOQUEAR - nunca permitir sem secret
-    }
-
-    const xSignature = request.headers.get('x-signature');
-    const xRequestId = request.headers.get('x-request-id');
-
-    if (!xSignature || !xRequestId) {
-        console.error('Missing x-signature or x-request-id headers');
-        return false;
-    }
-
-    // Parse x-signature header (format: ts=xxx,v1=xxx)
-    const parts: Record<string, string> = {};
-    xSignature.split(',').forEach(part => {
-        const [key, value] = part.split('=');
-        if (key && value) parts[key.trim()] = value.trim();
-    });
-
-    const ts = parts['ts'];
-    const v1 = parts['v1'];
-
-    if (!ts || !v1) {
-        console.error('Invalid x-signature format');
-        return false;
-    }
-
-    // Get data_id from query params
-    const url = new URL(request.url);
-    const dataId = url.searchParams.get('data.id') || url.searchParams.get('id') || '';
-
-    // Build manifest string
-    const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
-
-    // Calculate HMAC-SHA256
-    const hmac = crypto.createHmac('sha256', MP_WEBHOOK_SECRET);
-    hmac.update(manifest);
-    const calculatedSignature = hmac.digest('hex');
-
-    const isValid = calculatedSignature === v1;
-    if (!isValid) {
-        console.error('Webhook signature validation failed');
-    }
-
-    return isValid;
+interface MercadoPagoWebhook {
+    action: string;
+    api_version: string;
+    data: {
+        id: string;
+    };
+    date_created: string;
+    id: number;
+    live_mode: boolean;
+    type: string;
+    user_id: string;
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(req: NextRequest) {
     try {
-        // ========================================
-        // SEGURANÇA: Bloquear se secret não configurado
-        // ========================================
-        if (!MP_WEBHOOK_SECRET) {
-            console.error('MERCADOPAGO_WEBHOOK_SECRET não configurado');
-            return NextResponse.json(
-                { error: 'Webhook não configurado' },
-                { status: 503 }
-            );
+        // Get raw body for signature validation
+        const body = await req.text();
+        const payload: MercadoPagoWebhook = JSON.parse(body);
+
+        // Validate webhook signature (Mercado Pago uses x-signature header)
+        const signature = req.headers.get('x-signature');
+        const xRequestId = req.headers.get('x-request-id');
+
+        if (!signature || !xRequestId) {
+            console.error('[Webhook] Missing signature or request ID');
+            return NextResponse.json({ error: 'Invalid webhook' }, { status: 400 });
         }
 
-        // Clone request to read body as text for validation
-        const bodyText = await request.text();
-        const body = JSON.parse(bodyText);
+        // Extract timestamp and hash from signature
+        const parts = signature.split(',');
+        const tsMatch = parts.find(p => p.startsWith('ts='));
+        const hashMatch = parts.find(p => p.startsWith('v1='));
 
-        // Validate webhook signature
-        if (!validateSignature(request, bodyText)) {
-            console.error('Invalid webhook signature - possível ataque');
-            return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+        if (!tsMatch || !hashMatch) {
+            console.error('[Webhook] Invalid signature format');
+            return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
         }
 
-        // Webhook types: payment, merchant_order
-        if (body.type !== 'payment' && body.action !== 'payment.updated') {
-            return NextResponse.json({ received: true });
-        }
+        const timestamp = tsMatch.split('=')[1];
+        const hash = hashMatch.split('=')[1];
 
-        const paymentId = body.data?.id;
-        if (!paymentId) {
-            return NextResponse.json({ error: 'No payment ID' }, { status: 400 });
-        }
+        // Verify signature (if webhook secret is configured)
+        const webhookSecret = process.env.MERCADOPAGO_WEBHOOK_SECRET;
+        if (webhookSecret) {
+            const dataId = payload.data?.id || '';
+            const manifest = `id:${dataId};request-id:${xRequestId};ts:${timestamp};`;
+            const hmac = crypto.createHmac('sha256', webhookSecret);
+            hmac.update(manifest);
+            const calculatedHash = hmac.digest('hex');
 
-        // ========================================
-        // SEGURANÇA: Idempotência - verificar se já processado
-        // ========================================
-        const idempotencyKey = `payment_${paymentId}`;
-        if (processedPayments.has(idempotencyKey)) {
-            console.log(`Payment ${paymentId} já processado - ignorando duplicata`);
-            return NextResponse.json({ received: true, status: 'already_processed' });
-        }
-
-        // Get payment details from Mercado Pago
-        const paymentResponse = await fetch(
-            `https://api.mercadopago.com/v1/payments/${paymentId}`,
-            {
-                headers: {
-                    'Authorization': `Bearer ${MP_ACCESS_TOKEN}`,
-                },
+            if (calculatedHash !== hash) {
+                console.error('[Webhook] Signature validation failed');
+                return NextResponse.json({ error: 'Invalid signature' }, { status: 403 });
             }
-        );
-
-        if (!paymentResponse.ok) {
-            console.error('Error fetching payment from MP');
-            return NextResponse.json({ error: 'Payment not found' }, { status: 404 });
         }
 
-        const payment = await paymentResponse.json();
+        // Get supabase admin client (webhooks need full access)
+        const supabase = await createClient();
 
-        // Usar service role para contornar RLS
-        const supabaseAdmin = createServiceRoleClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY!
-        );
-
-        const condoId = payment.external_reference;
-        const paymentIdStr = paymentId.toString();
-
-        // Buscar invoice pelo provider_id ou gateway_id
-        const { data: invoice } = await supabaseAdmin
-            .from('invoices')
-            .select('id, condo_id')
-            .or(`provider_id.eq.${paymentIdStr},gateway_id.eq.${paymentIdStr}`)
-            .single();
-
-        // Registrar log de evento (sempre)
-        await supabaseAdmin
-            .from('payment_logs')
-            .insert({
-                invoice_id: invoice?.id || null,
-                condo_id: condoId || invoice?.condo_id || null,
-                event_type: `payment.${payment.status}`,
-                status: payment.status,
+        // Log webhook for debugging
+        const { error: logError } = await supabase
+            .from('payment_webhooks_log')
+            .insert([{
                 provider: 'mercadopago',
-                provider_payment_id: paymentIdStr,
-                raw_payload: payment,
-            });
+                event_type: payload.type,
+                provider_id: payload.data?.id || null,
+                payload: payload,
+                headers: {
+                    signature,
+                    request_id: xRequestId,
+                },
+                idempotency_key: `${payload.type}-${payload.data?.id}-${payload.id}`,
+            }]);
 
-        // ========================================
-        // Tratamento COMPLETO de todos os status do Mercado Pago
-        // ========================================
-        switch (payment.status) {
-            case 'approved':
-                // ========================================
-                // CORREÇÃO: Atualizar por gateway_payment_id, não condo_id
-                // ========================================
-                // Primeiro, tentar atualizar invoice existente pelo gateway_payment_id
-                const { data: invoiceByGateway } = await supabaseAdmin
-                    .from('invoices')
-                    .update({
-                        status: 'pago',
-                        data_pagamento: new Date().toISOString(),
-                    })
-                    .eq('gateway_payment_id', paymentIdStr)
-                    .select()
-                    .single();
-
-                // Se não encontrou por gateway_payment_id, tentar por gateway_id
-                if (!invoiceByGateway) {
-                    await supabaseAdmin
-                        .from('invoices')
-                        .update({
-                            status: 'pago',
-                            data_pagamento: new Date().toISOString(),
-                            gateway_payment_id: paymentIdStr, // Salvar para futuras referências
-                        })
-                        .eq('gateway_id', paymentIdStr)
-                        .is('data_pagamento', null); // Só atualiza se ainda não foi pago
-                }
-
-                // Release subscription (activate)
-                if (condoId) {
-                    await supabaseAdmin.rpc('release_subscription', {
-                        p_condo_id: condoId,
-                        p_meses: 1,
-                    });
-                }
-
-                // ========================================
-                // ENVIAR E-MAIL DE CONFIRMAÇÃO DE PAGAMENTO
-                // ========================================
-                if (condoId) {
-                    try {
-                        // Buscar dados do condomínio e usuário
-                        const { data: condo } = await supabaseAdmin
-                            .from('condos')
-                            .select('nome, email_contato')
-                            .eq('id', condoId)
-                            .single();
-
-                        const { data: sindico } = await supabaseAdmin
-                            .from('users')
-                            .select('nome, email')
-                            .eq('condo_id', condoId)
-                            .eq('role', 'sindico')
-                            .limit(1)
-                            .single();
-
-                        // Buscar subscription ativa
-                        const { data: subscription } = await supabaseAdmin
-                            .from('subscriptions')
-                            .select('data_renovacao, valor_mensal_cobrado')
-                            .eq('condo_id', condoId)
-                            .eq('status', 'ativo')
-                            .single();
-
-                        if (sindico || condo) {
-                            const destinatario = sindico?.email || condo?.email_contato;
-                            const nome = sindico?.nome || 'Síndico';
-
-                            // Verificar se e-mail já foi enviado para evitar duplicata
-                            const { data: emailLog } = await supabaseAdmin
-                                .from('email_logs')
-                                .select('id')
-                                .eq('condo_id', condoId)
-                                .eq('tipo', 'payment_confirmed')
-                                .eq('destinatario', destinatario)
-                                .eq('status', 'enviado')
-                                .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
-                                .limit(1);
-
-                            if (!emailLog || emailLog.length === 0) {
-                                // Enviar e-mail de confirmação de pagamento
-                                const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://meucondominiofacil.com';
-                                await fetch(`${appUrl}/api/email`, {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({
-                                        tipo: 'payment_confirmed',
-                                        destinatario,
-                                        dados: {
-                                            nome,
-                                            valor: payment.transaction_amount?.toFixed(2) || subscription?.valor_mensal_cobrado?.toFixed(2) || '0.00',
-                                            proximoVencimento: subscription?.data_renovacao || 'a definir',
-                                            dashboardUrl: `${appUrl}/dashboard`
-                                        },
-                                        condoId,
-                                        internalCall: true
-                                    }),
-                                });
-                                console.log(`E-mail de confirmação enviado para ${destinatario}`);
-                            }
-                        }
-                    } catch (emailError) {
-                        console.error('Erro ao enviar e-mail de confirmação:', emailError);
-                        // Não bloquear webhook por erro de e-mail
-                    }
-                }
-
-                // Marcar como processado APÓS sucesso
-                processedPayments.add(idempotencyKey);
-
-                console.log(`Payment APPROVED: ${paymentIdStr} for condo ${condoId}`);
-                break;
-
-            case 'pending':
-            case 'in_process':
-                // Pagamento pendente - não fazer nada
-                console.log(`Payment PENDING: ${paymentIdStr}`);
-                break;
-
-            case 'rejected':
-            case 'cancelled':
-                // Pagamento rejeitado/cancelado
-                await supabaseAdmin
-                    .from('invoices')
-                    .update({ status: 'cancelado' })
-                    .eq('gateway_payment_id', paymentIdStr);
-
-                processedPayments.add(idempotencyKey);
-                console.log(`Payment REJECTED/CANCELLED: ${paymentIdStr}`);
-                break;
-
-            case 'refunded':
-                // Reembolso - reverter status da assinatura
-                await supabaseAdmin
-                    .from('invoices')
-                    .update({ status: 'cancelado' })
-                    .eq('gateway_payment_id', paymentIdStr);
-
-                // Bloquear assinatura se foi reembolsado
-                if (condoId) {
-                    await supabaseAdmin
-                        .from('subscriptions')
-                        .update({
-                            status: 'suspenso',
-                            motivo_bloqueio: 'Pagamento reembolsado',
-                        })
-                        .eq('condo_id', condoId);
-                }
-
-                processedPayments.add(idempotencyKey);
-                console.log(`Payment REFUNDED: ${paymentIdStr}`);
-                break;
-
-            case 'charged_back':
-                // Chargeback - situação grave, bloquear imediatamente
-                await supabaseAdmin
-                    .from('invoices')
-                    .update({ status: 'cancelado' })
-                    .eq('gateway_payment_id', paymentIdStr);
-
-                if (condoId) {
-                    await supabaseAdmin
-                        .from('subscriptions')
-                        .update({
-                            status: 'suspenso',
-                            bloqueado: true,
-                            motivo_bloqueio: 'CHARGEBACK - Contestação de pagamento',
-                        })
-                        .eq('condo_id', condoId);
-                }
-
-                // TODO: Notificar admin sobre chargeback
-                processedPayments.add(idempotencyKey);
-                console.error(`CHARGEBACK DETECTED: ${paymentIdStr} - AÇÃO NECESSÁRIA`);
-                break;
-
-            case 'in_mediation':
-                // Mediação - aguardar resolução
-                console.log(`Payment IN MEDIATION: ${paymentIdStr} - aguardando resolução`);
-                break;
-
-            default:
-                console.log(`Unknown payment status: ${payment.status}`);
+        if (logError) {
+            console.error('[Webhook] Failed to log:', logError);
         }
 
-        return NextResponse.json({ received: true, status: payment.status });
+        // Process only payment events
+        if (payload.type !== 'payment') {
+            console.log('[Webhook] Ignoring non-payment event:', payload.type);
+            return NextResponse.json({ status: 'ignored' });
+        }
+
+        // Fetch payment details from Mercado Pago
+        const accessToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
+        if (!accessToken) {
+            console.error('[Webhook] Missing access token');
+            return NextResponse.json({ error: 'Server config error' }, { status: 500 });
+        }
+
+        const mpResponse = await fetch(`https://api.mercadopago.com/v1/payments/${payload.data.id}`, {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+            },
+        });
+
+        if (!mpResponse.ok) {
+            console.error('[Webhook] Failed to fetch payment from MP');
+            return NextResponse.json({ error: 'Provider error' }, { status: 500 });
+        }
+
+        const paymentData = await mpResponse.json();
+
+        // Find payment in our database
+        const { data: existingPayment, error: fetchError } = await supabase
+            .from('payments')
+            .select('*')
+            .eq('provider_payment_id', paymentData.id)
+            .maybeSingle();
+
+        if (fetchError) {
+            console.error('[Webhook] Database fetch error:', fetchError);
+            return NextResponse.json({ error: 'Database error' }, { status: 500 });
+        }
+
+        if (!existingPayment) {
+            console.log('[Webhook] Payment not found in database:', paymentData.id);
+            return NextResponse.json({ status: 'payment_not_found' });
+        }
+
+        // Update payment status based on Mercado Pago status
+        let newStatus: string = existingPayment.status;
+
+        if (paymentData.status === 'approved') {
+            newStatus = 'paid';
+        } else if (paymentData.status === 'rejected') {
+            newStatus = 'failed';
+        } else if (paymentData.status === 'cancelled') {
+            newStatus = 'cancelled';
+        } else if (paymentData.status === 'in_process') {
+            newStatus = 'processing';
+        }
+
+        // Only update if status changed
+        if (newStatus !== existingPayment.status) {
+            const { error: updateError } = await supabase
+                .from('payments')
+                .update({
+                    status: newStatus,
+                    provider_transaction_id: paymentData.transaction_id || null,
+                    metadata: {
+                        ...existingPayment.metadata,
+                        webhook_data: paymentData,
+                        updated_at: new Date().toISOString(),
+                    }
+                })
+                .eq('id', existingPayment.id);
+
+            if (updateError) {
+                console.error('[Webhook] Failed to update payment:', updateError);
+                return NextResponse.json({ error: 'Update failed' }, { status: 500 });
+            }
+
+            console.log(`[Webhook] Payment ${existingPayment.id} updated: ${existingPayment.status} → ${newStatus}`);
+
+            // Mark webhook as processed
+            await supabase
+                .from('payment_webhooks_log')
+                .update({ processed: true, processed_at: new Date().toISOString() })
+                .eq('idempotency_key', `${payload.type}-${payload.data?.id}-${payload.id}`);
+        } else {
+            console.log(`[Webhook] Payment ${existingPayment.id} status unchanged: ${newStatus}`);
+        }
+
+        return NextResponse.json({ status: 'ok', payment_status: newStatus });
+
     } catch (error: any) {
-        console.error('Webhook error:', error.message);
-        return NextResponse.json(
-            { error: 'Webhook error' },
-            { status: 500 }
-        );
+        console.error('[Webhook] Error:', error);
+        return NextResponse.json({
+            error: 'Internal server error',
+            message: error.message
+        }, { status: 500 });
     }
 }
 
-// Verification endpoint for Mercado Pago
-export async function GET(request: NextRequest) {
+// Health check endpoint
+export async function GET() {
     return NextResponse.json({
         status: 'ok',
-        message: 'Webhook endpoint active',
-        configured: !!MP_WEBHOOK_SECRET,
+        endpoint: '/api/webhooks/mercadopago',
+        provider: 'mercadopago'
     });
 }
