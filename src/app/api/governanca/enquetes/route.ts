@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
         end_at: body.end_at,
         created_by: user.id
     };
-    const { data, error } = await supabaseAdmin.from('governanca_enquetes').insert([payload]).select().single();
+    const { data, error } = await supabaseAdmin.from('enquetes').insert([payload]).select().single();
     if (error) {
         await supabaseAdmin.from('system_errors').insert([{ condo_id: user.condo_id, level: 'high', source: 'enquete_api', message: error.message, payload: body }]);
         return NextResponse.json({ error: error.message }, { status: 500 });
@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
     const user = await getUserFromReq(req);
     if (!user) return NextResponse.json({ error: 'unauth' }, { status: 401 });
 
-    const { data, error } = await supabaseAdmin.from('governanca_enquetes')
+    const { data, error } = await supabaseAdmin.from('enquetes')
         .select('*')
         .eq('condo_id', user.condo_id)
         .order('created_at', { ascending: false });

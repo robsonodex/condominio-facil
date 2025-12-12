@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
     if (!user || user.role !== 'sindico') return NextResponse.json({ error: 'unauth' }, { status: 401 });
 
     const body = await req.json();
-    const { data, error } = await supabaseAdmin.from('governanca_assembleias').insert([{
+    const { data, error } = await supabaseAdmin.from('assembleias').insert([{
         condo_id: user.condo_id,
         title: body.title,
         agenda: body.agenda,
@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
     const user = await getUserFromReq(req);
     if (!user) return NextResponse.json({ error: 'unauth' }, { status: 401 });
 
-    const { data, error } = await supabaseAdmin.from('governanca_assembleias')
+    const { data, error } = await supabaseAdmin.from('assembleias')
         .select('*')
         .eq('condo_id', user.condo_id)
         .order('start_at', { ascending: false });

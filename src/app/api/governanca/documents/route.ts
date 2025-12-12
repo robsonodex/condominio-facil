@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'unauth' }, { status: 401 });
 
     const body = await req.json();
-    const { data, error } = await supabaseAdmin.from('governanca_documents').insert([{
+    const { data, error } = await supabaseAdmin.from('governance_documents').insert([{
         condo_id: user.condo_id,
         name: body.name,
         folder: body.folder,
@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
     const user = await getUserFromReq(req);
     if (!user) return NextResponse.json({ error: 'unauth' }, { status: 401 });
 
-    const { data, error } = await supabaseAdmin.from('governanca_documents')
+    const { data, error } = await supabaseAdmin.from('governance_documents')
         .select('*')
         .eq('condo_id', user.condo_id)
         .order('uploaded_at', { ascending: false });
