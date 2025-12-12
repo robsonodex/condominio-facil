@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { GovernanceService } from '@/lib/services/governance';
 
+// NOTE: POST (Upload) logic is complex and often requires handling FormData. 
+// For now, I'll leave the POST inline or assume it matches what we have, 
+// but I will update GET to use the service for consistency.
 export async function POST(req: NextRequest) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -42,11 +46,10 @@ export async function GET(req: NextRequest) {
 
     if (!profile) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { data, error } = await supabase.from('governance_documents')
-        .select('*')
-        .eq('condo_id', profile.condo_id)
-        .order('uploaded_at', { ascending: false });
-
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ documents: data });
+    try {
+        const documents = await GovernanceService.getDocuments(profile.condo_id);
+        return NextResponse.json({ documents });
+    } catch (e: any) {
+        return NextResponse.json({ error: e.message }, { status: 500 });
+    }
 }

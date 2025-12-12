@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { GovernanceService } from '@/lib/services/governance';
 
 export async function POST(req: NextRequest) {
     const supabase = await createClient();
@@ -16,22 +17,17 @@ export async function POST(req: NextRequest) {
     if (!profile) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = await req.json();
-    const payload = {
-        condo_id: profile.condo_id,
-        title: body.title,
-        description: body.description,
-        options: body.options,
-        start_at: body.start_at,
-        end_at: body.end_at,
-        created_by: user.id
-    };
 
-    const { data, error } = await supabase.from('enquetes').insert([payload]).select().single();
-    if (error) {
-        console.error('Error creating enquete:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    try {
+        const enquete = await GovernanceService.createEnquete({
+            condo_id: profile.condo_id,
+            ...body,
+            created_by: user.id
+        });
+        return NextResponse.json({ status: 'created', enquete });
+    } catch (e: any) {
+        return NextResponse.json({ error: e.message }, { status: 500 });
     }
-    return NextResponse.json({ status: 'created', enquete: data });
 }
 
 export async function GET(req: NextRequest) {
@@ -48,11 +44,10 @@ export async function GET(req: NextRequest) {
 
     if (!profile) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { data, error } = await supabase.from('enquetes')
-        .select('*')
-        .eq('condo_id', profile.condo_id)
-        .order('created_at', { ascending: false });
-
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ enquetes: data });
+    try {
+        const enquetes = await GovernanceService.getEnquetes(profile.condo_id);
+        return NextResponse.json({ enquetes });
+    } catch (e: any) {
+        return NextResponse.json({ error: e.message }, { status: 500 });
+    }
 }
