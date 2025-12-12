@@ -5,19 +5,27 @@
 -- ============================================================
 
 -- ============================================================
--- 1. CORREÇÃO DE DADOS EXISTENTES (importante executar primeiro)
+-- 1. PRIMEIRO: REMOVER CONSTRAINTS ANTIGOS
 -- ============================================================
 
--- Primeiro, atualizar registros com status antigo para um status válido
+-- Remove constraints antigos ANTES de qualquer alteração
+ALTER TABLE assembleias DROP CONSTRAINT IF EXISTS assembleias_status_check;
+ALTER TABLE assembleias DROP CONSTRAINT IF EXISTS assembleias_type_check;
+
+-- ============================================================
+-- 2. CORREÇÃO DE DADOS EXISTENTES
+-- ============================================================
+
+-- Agora podemos atualizar livremente (sem constraint ativo)
 UPDATE assembleias 
 SET status = 'scheduled' 
-WHERE status NOT IN ('draft', 'scheduled', 'open', 'voting_closed', 'finalized', 'cancelled');
+WHERE status NOT IN ('draft', 'scheduled', 'open', 'voting_closed', 'finalized', 'cancelled')
+   OR status IS NULL;
 
 -- ============================================================
--- 2. ALTERAÇÕES NA TABELA ASSEMBLEIAS EXISTENTE
+-- 3. ADICIONAR NOVAS COLUNAS
 -- ============================================================
 
--- Adicionar novos campos para assembleias formais
 ALTER TABLE assembleias 
 ADD COLUMN IF NOT EXISTS type TEXT DEFAULT 'simple',
 ADD COLUMN IF NOT EXISTS require_presence BOOLEAN DEFAULT false,
@@ -27,7 +35,14 @@ ADD COLUMN IF NOT EXISTS quorum_install INTEGER DEFAULT 50,
 ADD COLUMN IF NOT EXISTS opened_at TIMESTAMPTZ,
 ADD COLUMN IF NOT EXISTS closed_at TIMESTAMPTZ;
 
--- Adicionar constraint de type separadamente (para evitar erro se já existe)
+-- ============================================================
+-- 4. ADICIONAR NOVOS CONSTRAINTS
+-- ============================================================
+
+-- Agora adiciona os novos constraints
+ALTER TABLE assembleias ADD CONSTRAINT assembleias_status_check 
+    CHECK (status IN ('draft', 'scheduled', 'open', 'voting_closed', 'finalized', 'cancelled'));
+
 DO $$
 BEGIN
     ALTER TABLE assembleias ADD CONSTRAINT assembleias_type_check 
@@ -35,11 +50,6 @@ BEGIN
 EXCEPTION
     WHEN duplicate_object THEN NULL;
 END $$;
-
--- Atualizar constraint do status (primeiro remove a antiga)
-ALTER TABLE assembleias DROP CONSTRAINT IF EXISTS assembleias_status_check;
-ALTER TABLE assembleias ADD CONSTRAINT assembleias_status_check 
-    CHECK (status IN ('draft', 'scheduled', 'open', 'voting_closed', 'finalized', 'cancelled'));
 
 -- ============================================================
 -- 3. TABELA DE PAUTAS
