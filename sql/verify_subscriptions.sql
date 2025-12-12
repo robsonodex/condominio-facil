@@ -67,7 +67,7 @@ BEGIN
     USING (
         condo_id IN (
             SELECT condo_id 
-            FROM profiles 
+            FROM users 
             WHERE id = auth.uid()
         )
     );
@@ -75,14 +75,14 @@ END $$;
 
 -- 6. Verificar se usuários têm condo_id preenchido
 SELECT 
-    p.id,
-    p.nome,
-    p.email,
-    p.role,
-    p.condo_id,
+    u.id,
+    u.nome,
+    u.email,
+    u.role,
+    u.condo_id,
     c.nome as condo_nome
-FROM profiles p
-LEFT JOIN condos c ON c.id = p.condo_id
-WHERE p.role IN ('sindico', 'superadmin')
-ORDER BY p.created_at DESC
+FROM users u
+LEFT JOIN condos c ON c.id = u.condo_id
+WHERE u.role IN ('sindico', 'superadmin')
+ORDER BY u.created_at DESC
 LIMIT 20;
