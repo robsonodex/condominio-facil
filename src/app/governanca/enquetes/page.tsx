@@ -80,7 +80,7 @@ export default function EnquetesPage() {
             <div className="flex justify-between items-center">
                 <h1 className="text-3xl font-bold text-gray-800">Enquetes e Votações</h1>
                 <Link href="/governanca/enquetes/nova">
-                    <Button className="bg-brand-600 hover:bg-brand-700">
+                    <Button className="bg-emerald-600 hover:bg-emerald-700">
                         <Plus className="w-4 h-4 mr-2" /> Nova Enquete
                     </Button>
                 </Link>

@@ -216,7 +216,7 @@ export default function NovaEnquetePage() {
 
                 <div className="sticky bottom-4 bg-white/90 backdrop-blur p-4 rounded-lg border shadow-lg flex justify-end gap-2">
                     <Button type="button" variant="ghost" onClick={() => router.back()}>Cancelar</Button>
-                    <Button type="submit" disabled={loading} className="bg-brand-600 hover:bg-brand-700 min-w-[200px]">
+                    <Button type="submit" disabled={loading} className="bg-emerald-600 hover:bg-emerald-700 min-w-[200px]">
                         {loading ? 'Salvando...' : 'Publicar Enquete'}
                     </Button>
                 </div>

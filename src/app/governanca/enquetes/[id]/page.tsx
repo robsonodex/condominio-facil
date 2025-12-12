@@ -244,7 +244,7 @@ export default function EnqueteDetalhePage() {
                         size="lg"
                         onClick={handleSubmit}
                         disabled={submitting}
-                        className="bg-brand-600 hover:bg-brand-700"
+                        className="bg-emerald-600 hover:bg-emerald-700"
                     >
                         {submitting ? 'Enviando Votos...' : 'Confirmar Votos'}
                     </Button>
