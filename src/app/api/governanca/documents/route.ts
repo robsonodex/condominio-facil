@@ -1,14 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase/admin';
-import { getUserFromReq } from '@/lib/auth';
+import { createClient } from '@/lib/supabase/server';
 
 export async function POST(req: NextRequest) {
-    const user = await getUserFromReq(req);
-    if (!user) return NextResponse.json({ error: 'unauth' }, { status: 401 });
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const { data: profile } = await supabase
+        .from('users')
+        .select('condo_id')
+        .eq('id', user.id)
+        .single();
+
+    if (!profile) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = await req.json();
-    const { data, error } = await supabaseAdmin.from('governance_documents').insert([{
-        condo_id: user.condo_id,
+    const { data, error } = await supabase.from('governance_documents').insert([{
+        condo_id: profile.condo_id,
         name: body.name,
         folder: body.folder,
         storage_path: body.storage_path,
@@ -20,12 +29,22 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-    const user = await getUserFromReq(req);
-    if (!user) return NextResponse.json({ error: 'unauth' }, { status: 401 });
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    const { data, error } = await supabaseAdmin.from('governance_documents')
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const { data: profile } = await supabase
+        .from('users')
+        .select('condo_id')
+        .eq('id', user.id)
+        .single();
+
+    if (!profile) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const { data, error } = await supabase.from('governance_documents')
         .select('*')
-        .eq('condo_id', user.condo_id)
+        .eq('condo_id', profile.condo_id)
         .order('uploaded_at', { ascending: false });
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
