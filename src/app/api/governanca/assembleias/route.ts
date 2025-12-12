@@ -25,13 +25,17 @@ export async function POST(req: NextRequest) {
             condo_id: profile.condo_id,
             title: body.title,
             description: body.description,
-            start_at: body.start_at,
-            is_virtual: body.is_virtual,
-            virtual_link: body.virtual_link,
+            date: body.start_at || body.date, // Support both field names
+            status: 'scheduled',
+            type: body.type || 'simple',
+            require_presence: body.require_presence || false,
+            block_defaulters: body.block_defaulters || false,
+            quorum_install: body.quorum_install || 50,
             created_by: user.id
         });
         return NextResponse.json({ assembleia: assembly });
     } catch (e: any) {
+        console.error('Error creating assembly:', e);
         return NextResponse.json({ error: e.message }, { status: 500 });
     }
 }

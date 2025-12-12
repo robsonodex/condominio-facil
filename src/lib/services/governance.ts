@@ -10,9 +10,12 @@ export interface CreateAssemblyDTO {
     condo_id: string;
     title: string;
     description?: string;
-    start_at: string;
-    is_virtual?: boolean;
-    virtual_link?: string;
+    date: string;
+    status?: string;
+    type?: string;
+    require_presence?: boolean;
+    block_defaulters?: boolean;
+    quorum_install?: number;
     created_by: string;
 }
 
