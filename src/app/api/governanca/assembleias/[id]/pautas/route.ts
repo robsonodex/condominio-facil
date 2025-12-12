@@ -1,9 +1,9 @@
-
+```typescript
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { GovernanceService } from '@/lib/services/governance';
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -15,6 +15,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
+    const { id } = await params; // Await params here
     const body = await req.json();
 
     try {

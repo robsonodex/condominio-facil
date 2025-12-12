@@ -1,5 +1,5 @@
 -- =====================================================
--- GOVERNANCE 2.0 - UPGRADE MIGRATION
+-- GOVERNANCE 2.0 - UPGRADE MIGRATION (IDEMPOTENT)
 -- =====================================================
 
 -- 1. Upgrade Assembleias Table
@@ -50,8 +50,6 @@ SET unit_id = (
 WHERE unit_id IS NULL;
 
 -- Enforce Unique Constraints if one_vote_per_unit is active
--- Note: We can't easily add a conditional unique constraint in standard Postgres without a partial index, 
--- but we will enforce this via RLS/Application Logic.
 CREATE UNIQUE INDEX IF NOT EXISTS idx_enquete_votes_unit 
 ON enquete_votes(enquete_id, unit_id) 
 WHERE unit_id IS NOT NULL;
@@ -64,6 +62,7 @@ WHERE unit_id IS NOT NULL;
 -- Pautas
 ALTER TABLE assembleia_pautas ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view pautas of their condo" ON assembleia_pautas;
 CREATE POLICY "Users can view pautas of their condo"
     ON assembleia_pautas FOR SELECT
     USING (assembleia_id IN (
@@ -71,6 +70,7 @@ CREATE POLICY "Users can view pautas of their condo"
         WHERE condo_id IN (SELECT condo_id FROM users WHERE id = auth.uid())
     ));
 
+DROP POLICY IF EXISTS "Sindicos can manage pautas" ON assembleia_pautas;
 CREATE POLICY "Sindicos can manage pautas"
     ON assembleia_pautas FOR ALL
     USING (assembleia_id IN (
@@ -81,6 +81,7 @@ CREATE POLICY "Sindicos can manage pautas"
 -- Assembleia Votes
 ALTER TABLE assembleia_votes ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view votes (if public) or own vote" ON assembleia_votes;
 CREATE POLICY "Users can view votes (if public) or own vote"
     ON assembleia_votes FOR SELECT
     USING (
@@ -88,6 +89,7 @@ CREATE POLICY "Users can view votes (if public) or own vote"
         EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role IN ('sindico', 'superadmin'))
     );
 
+DROP POLICY IF EXISTS "Users can vote if resident/owner" ON assembleia_votes;
 CREATE POLICY "Users can vote if resident/owner"
     ON assembleia_votes FOR INSERT
     WITH CHECK (
