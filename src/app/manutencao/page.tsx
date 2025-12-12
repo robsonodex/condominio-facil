@@ -3,7 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+
 
 export default function MaintenancePage() {
     const [equipments, setEquipments] = useState<any[]>([]);
@@ -49,15 +50,16 @@ export default function MaintenancePage() {
                 <CardHeader><CardTitle>Novo Equipamento</CardTitle></CardHeader>
                 <CardContent className="flex gap-4">
                     <Input placeholder="Nome (Ex: Bombas)" value={newName} onChange={e => setNewName(e.target.value)} />
-                    <Select value={newType} onValueChange={setNewType}>
-                        <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="Elevador">Elevador</SelectItem>
-                            <SelectItem value="Bomba">Bomba</SelectItem>
-                            <SelectItem value="Extintor">Extintor</SelectItem>
-                            <SelectItem value="Portão">Portão</SelectItem>
-                        </SelectContent>
-                    </Select>
+                    <select
+                        className="w-[180px] border rounded-md p-2 bg-background"
+                        value={newType}
+                        onChange={e => setNewType(e.target.value)}
+                    >
+                        <option value="Elevador">Elevador</option>
+                        <option value="Bomba">Bomba</option>
+                        <option value="Extintor">Extintor</option>
+                        <option value="Portão">Portão</option>
+                    </select>
                     <Button onClick={addEquipment}>Cadastrar</Button>
                 </CardContent>
             </Card>

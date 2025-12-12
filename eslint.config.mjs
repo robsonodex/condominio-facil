@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Ignore mobile directory (React Native app)
+    "mobile/**",
   ]),
 ]);
 
