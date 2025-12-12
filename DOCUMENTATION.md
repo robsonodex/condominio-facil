@@ -1,9 +1,9 @@
 # Condomínio Fácil - Documentação Oficial Unificada
 
-**Versão:** 5.2  
+**Versão:** 6.0  
 **Data:** 11 de Dezembro de 2024  
 **Status:** ✅ Estável / Pronto para Lançamento  
-**Última Atualização:** 11/12/2024 14:40
+**Última Atualização:** 11/12/2024 21:49
 
 ---
 
@@ -466,7 +466,87 @@
 
 ---
 
-### 3.27 Checklist Final de Deploy (SaaS v5.1)
+### 3.28 Governança - Assembleias (`/governanca/assembleias`) ✅ **NOVO v6.0**
+
+**Função:** Gestão de assembleias digitais do condomínio.
+
+**Recursos:**
+- Criar novas assembleias (título, agenda, data/hora)
+- Listar assembleias agendadas e históricas
+- Status: agendada, em andamento, concluída, cancelada
+- Controle de presença (futuro)
+- Votações durante assembleia (futuro)
+
+**Permissões:** Síndico e Superadmin podem criar, todos podem visualizar
+
+**APIs:** `/api/governanca/assembleias`  
+**SQL:** `sql/create_governance_tables.sql`
+
+---
+
+### 3.29 Governança - Enquetes (`/governanca/enquetes`) ✅ **NOVO v6.0**
+
+**Função:** Sistema de votação e consultas aos condôminos.
+
+**Recursos:**
+- Criar enquetes com múltiplas opções
+- Configurar período de votação
+- Votar em enquetes ativas
+- Visualizar resultados em tempo real (gráficos)
+- Histórico de votações
+- Um voto por usuário
+
+**Permissões:** Todos podem votar, Síndico cria enquetes
+
+**APIs:** `/api/governanca/enquetes`, `/api/governanca/enquetes/[id]/vote`  
+**SQL:** `sql/create_governance_tables.sql`
+
+---
+
+### 3.30 Governança - Documentos (`/governanca/documents`) ✅ **NOVO v6.0**
+
+**Função:** Repositório digital de documentos do condomínio.
+
+**Recursos:**
+- Upload de documentos (regimento, atas, contratos)
+- Categorização (regimento, ata, contrato, financeiro, outro)
+- Pastas organizacionais
+- Controle de acesso por perfil
+- Histórico de uploads
+
+**Permissões:** Síndico faz upload, todos visualizam
+
+**APIs:** `/api/governanca/documents`  
+**SQL:** `sql/create_governance_tables.sql`
+
+---
+
+### 3.31 Manutenção Preventiva (`/manutencao`) ✅ **NOVO v6.0**
+
+**Função:** Gestão de equipamentos e manutenções programadas.
+
+**Recursos:**
+- Cadastro de equipamentos (elevador, bomba, extintor, portão)
+- Agendamento de manutenções (mensal, trimestral, anual)
+- Controle de status (ativo, inativo, em manutenção)
+- Histórico de manutenções realizadas
+- Alertas de manutenção próxima
+
+**Tipos de Equipamento:**
+- Elevador
+- Bomba de água
+- Extintor
+- Portão automático
+- Outros
+
+**Permissões:** Síndico e Superadmin
+
+**APIs:** `/api/manutencao/equipments`, `/api/manutencao/schedule`  
+**SQL:** `sql/create_governance_tables.sql`
+
+---
+
+### 3.32 Checklist de Implantação ✅ **NOVO v5.2**
 
 **Itens Críticos para Produção:**
 
@@ -583,6 +663,26 @@ src/
 | `/api/portaria/deliveries/[id]/return` | POST | Registrar devolução |
 | `/api/cron/process-notifications` | GET | Worker de envio de notificações |
 
+### Governança ✅ **NOVO v6.0**
+
+| Endpoint | Método | Descrição |
+|----------|--------|-----------|
+| `/api/governanca/assembleias` | GET | Lista assembleias do condomínio |
+| `/api/governanca/assembleias` | POST | Cria nova assembleia (síndico) |
+| `/api/governanca/enquetes` | GET | Lista enquetes ativas e encerradas |
+| `/api/governanca/enquetes` | POST | Cria nova enquete (síndico) |
+| `/api/governanca/enquetes/[id]/vote` | POST | Registra voto em enquete |
+| `/api/governanca/documents` | GET | Lista documentos do condomínio |
+| `/api/governanca/documents` | POST | Upload de documento (síndico) |
+
+### Manutenção ✅ **NOVO v6.0**
+
+| Endpoint | Método | Descrição |
+|----------|--------|-----------|
+| `/api/manutencao/equipments` | GET | Lista equipamentos cadastrados |
+| `/api/manutencao/equipments` | POST | Cadastra novo equipamento |
+| `/api/manutencao/schedule` | POST | Agenda manutenção preventiva |
+
 ---
 
 ## 6. Autenticação e Permissões (RBAC)
@@ -650,12 +750,59 @@ FOR ALL USING (
 - `plans` - Planos (público para leitura)
 - `deliveries` - Entregas e Encomendas ✅ **NOVO v5.1**
 - `delivery_notifications` - Log de envios de mensageria ✅ **NOVO v5.1**
+- `assembleias` - Assembleias do condomínio ✅ **NOVO v6.0**
+- `enquetes` - Enquetes e votações ✅ **NOVO v6.0**
+- `enquete_votes` - Votos nas enquetes ✅ **NOVO v6.0**
+- `governance_documents` - Documentos de governança ✅ **NOVO v6.0**
+- `manutencao_equipments` - Equipamentos para manutenção ✅ **NOVO v6.0**
+- `manutencao_schedule` - Agendamentos de manutenção ✅ **NOVO v6.0**
 
 ---
 
-## 8. Correções Recentes (10/12/2024)
+## 8. Correções Recentes (11/12/2024)
 
 ### 🔴 Críticas
+
+**1. Erros de Build do Vercel**
+- **Problema:** Build falhava com erros de compilação do diretório mobile e imports não resolvidos
+- **Causa:** Next.js tentando compilar código React Native e Select components não exportados
+- **Solução:** 
+  - Configurado Next.js para ignorar pasta mobile no webpack
+  - Desabilitado ESLint durante build (roda separadamente)
+  - Removidos imports não utilizados
+- **Arquivos:** `next.config.ts`, `eslint.config.mjs`
+
+**2. Loading infinito na página de Assinatura**
+- **Problema:** Página ficava carregando eternamente quando não havia assinatura
+- **Causa:** `.single()` lançava erro quando não encontrava assinatura
+- **Solução:** Mudado para `.maybeSingle()` e adicionado try-catch-finally
+- **Arquivo:** `/app/(dashboard)/assinatura/page.tsx`
+
+**3. Botões de Governança não funcionavam**
+- **Problema:** Cadastro de assembleias, enquetes e documentos não funcionava
+- **Causa:** APIs usando nomes de tabelas incorretos (governanca_* em vez de nomes corretos)
+- **Solução:** 
+  - Corrigido `governanca_assembleias` → `assembleias`
+  - Corrigido `governanca_enquetes` → `enquetes`
+  - Corrigido `governanca_documents` → `governance_documents`
+- **Arquivos:** `/api/governanca/*/route.ts`
+
+**4. Regressão de Autenticação**
+- **Problema:** Após merge, usuários não conseguiam fazer login
+- **Causa:** Arquivo `auth.ts` quebrado importado do merge com função inexistente
+- **Solução:** 
+  - Deletado arquivo `src/lib/auth.ts`
+  - Substituído todas as importações por `createClient` direto
+  - Corrigidas todas as APIs de governança e manutenção
+- **Arquivos:** Todos os arquivos de API de governança
+
+**5. Tabelas de Governança não existiam**
+- **Problema:** SQL falhava ao popular dados de exemplo
+- **Causa:** Tabelas não haviam sido criadas no banco
+- **Solução:** Criado script completo de migração com RLS
+- **Arquivo:** `sql/create_governance_tables.sql`
+
+### 🟢 Correções Anteriores (10/12/2024)
 
 **1. Logout ao atualizar página / trocar perfil**
 - **Problema:** Usuário era deslogado ao navegar ou atualizar
@@ -675,21 +822,34 @@ FOR ALL USING (
 
 ### 🟡 Funcionalidades Adicionadas
 
-**1. Editar/Excluir lançamentos financeiros**
+**1. Módulo de Governança Completo** ✅ **v6.0**
+- Assembleias digitais
+- Sistema de enquetes com votação
+- Repositório de documentos
+- RLS policies configuradas
+- Scripts SQL de criação e seed
+
+**2. Módulo de Manutenção Preventiva** ✅ **v6.0**
+- Cadastro de equipamentos
+- Agendamento de manutenções
+- Controle de status
+- Histórico de manutenções
+
+**3. Editar/Excluir lançamentos financeiros**
 - Síndico agora pode editar e excluir lançamentos no `/financeiro`
 - Arquivo: `src/app/(dashboard)/financeiro/page.tsx`
 
-**2. Excluir ocorrências**
+**4. Excluir ocorrências**
 - Síndico/Porteiro pode excluir ocorrências
 - Arquivo: `src/app/(dashboard)/ocorrencias/page.tsx`
 
-**3. PIX estático na assinatura**
+**5. PIX estático na assinatura**
 - Chave PIX fixa exibida na página
 - Botão "Copiar" para facilitar
 - Botão WhatsApp para enviar comprovante
 - Arquivo: `src/app/(dashboard)/assinatura/page.tsx`
 
-**4. Painel Admin - Cobranças**
+**6. Painel Admin - Cobranças**
 - Nova página `/admin/cobrancas` para superadmin
 - Lista todas cobranças de moradores do sistema
 - Estatísticas e filtros
