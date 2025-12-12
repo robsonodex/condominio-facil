@@ -1,15 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase/admin';
-import { getUserFromReq } from '@/lib/auth';
+import { createClient } from '@/lib/supabase/server';
 
 export async function POST(req: NextRequest) {
     try {
-        const user = await getUserFromReq(req);
-        if (!user || !['porteiro', 'superadmin'].includes(user.role)) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+
+        const { data: profile } = await supabase
+            .from('users')
+            .select('role, condo_id')
+            .eq('id', user.id)
+            .single();
+
+        if (!profile || !['porteiro', 'superadmin'].includes(profile.role)) {
+            return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+        }
+
         const body = await req.json();
-        const condo_id = user.condo_id;
         const payload = {
-            condo_id,
+            condo_id: profile.condo_id,
             porteiro_id: user.id,
             entry_type: body.entry_type,
             name: body.name || null,
@@ -19,13 +30,13 @@ export async function POST(req: NextRequest) {
             ocr_text: body.ocr_text || null,
             photo_url: body.photo_url || null
         };
-        const { data, error } = await supabaseAdmin.from('turbo_entries').insert([payload]).select().single();
+
+        const { data, error } = await supabase.from('turbo_entries').insert([payload]).select().single();
         if (error) {
-            await supabaseAdmin.from('system_errors').insert([{ condo_id, level: 'high', source: 'turbo-entry', message: error.message, payload: body }]);
+            console.error('Turbo entry error:', error);
             return NextResponse.json({ error: error.message }, { status: 500 });
         }
-        // record metric
-        await supabaseAdmin.from('admin_metrics').insert([{ condo_id, key: 'turbo_entry', value: 1 }]);
+
         return NextResponse.json({ status: 'ok', entry: data });
     } catch (err: any) {
         return NextResponse.json({ error: err.message }, { status: 500 });

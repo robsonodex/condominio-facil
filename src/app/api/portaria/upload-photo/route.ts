@@ -1,22 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase/admin';
-import { getUserFromReq } from '@/lib/auth';
+import { createClient } from '@/lib/supabase/server';
 
 export async function POST(req: NextRequest) {
     try {
-        const user = await getUserFromReq(req);
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
         if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+
+        const { data: profile } = await supabase
+            .from('users')
+            .select('condo_id')
+            .eq('id', user.id)
+            .single();
+
+        if (!profile) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
         const formData = await req.formData();
         const file = formData.get('photo') as File;
         if (!file) return NextResponse.json({ error: 'no file' }, { status: 400 });
 
         const buffer = Buffer.from(await file.arrayBuffer());
-        const fileName = `turbo/${user.condo_id}/${Date.now()}_${file.name}`;
+        const fileName = `turbo/${profile.condo_id}/${Date.now()}_${file.name}`;
 
         // Upload to Supabase Storage
-        const { data, error } = await supabaseAdmin.storage
-            .from('condo_uploads') // Assumes bucket exists
+        const { data, error } = await supabase.storage
+            .from('condo_uploads')
             .upload(fileName, buffer, {
                 contentType: file.type,
                 upsert: true
@@ -27,7 +36,7 @@ export async function POST(req: NextRequest) {
         }
 
         // Get public URL
-        const { data: { publicUrl } } = supabaseAdmin.storage
+        const { data: { publicUrl } } = supabase.storage
             .from('condo_uploads')
             .getPublicUrl(fileName);
 

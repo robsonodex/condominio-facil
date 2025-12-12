@@ -1,18 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase/admin';
-import { getUserFromReq } from '@/lib/auth';
+import { createClient } from '@/lib/supabase/server';
 
 export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
-    const user = await getUserFromReq(req);
-    if (!user) return NextResponse.json({ error: 'unauth' }, { status: 401 });
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = await req.json(); // { option_id }
     const enqueteId = params.id;
 
     // Fetch enquete to check status and existing votes
-    const { data: enquete, error: fetchError } = await supabaseAdmin
-        .from('governanca_enquetes')
+    const { data: enquete, error: fetchError } = await supabase
+        .from('enquetes')
         .select('*')
         .eq('id', enqueteId)
         .single();
@@ -34,8 +35,8 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
 
     const newVotes = [...votes, newVote];
 
-    const { error: updateError } = await supabaseAdmin
-        .from('governanca_enquetes')
+    const { error: updateError } = await supabase
+        .from('enquetes')
         .update({ votes: newVotes })
         .eq('id', enqueteId);
 
