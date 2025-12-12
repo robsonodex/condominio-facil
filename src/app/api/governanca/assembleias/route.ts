@@ -4,18 +4,24 @@ import { GovernanceService } from '@/lib/services/governance';
 
 export async function POST(req: NextRequest) {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    console.log('Assembly POST - User:', user?.id, 'AuthError:', authError?.message);
 
-    const { data: profile } = await supabase
+    if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
+
+    const { data: profile, error: profileError } = await supabase
         .from('users')
         .select('role, condo_id')
         .eq('id', user.id)
         .single();
 
+    console.log('Assembly POST - Profile:', profile, 'ProfileError:', profileError?.message);
+
     if (!profile || !['sindico', 'superadmin'].includes(profile.role)) {
-        return NextResponse.json({ error: 'Não autorizado para criar assembleias' }, { status: 401 });
+        return NextResponse.json({
+            error: `Não autorizado (role: ${profile?.role || 'não encontrado'})`
+        }, { status: 401 });
     }
 
     const body = await req.json();
