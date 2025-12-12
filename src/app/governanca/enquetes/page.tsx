@@ -20,6 +20,8 @@ export default function EnquetesPage() {
         fetchData();
     }, []);
 
+    const [error, setError] = useState<string | null>(null);
+
     async function fetchData() {
         // Fetch user unit
         const { data: { user } } = await supabase.auth.getUser();
@@ -29,14 +31,19 @@ export default function EnquetesPage() {
         }
 
         // Fetch enquetes
-        const res = await fetch('/api/governanca/enquetes');
-        const json = await res.json();
-        if (json.enquetes) {
-            // Also fetch votes/results for each enquete (simplified for demo)
-            // Real app might need a separate call or join
-            setEnquetes(json.enquetes);
+        try {
+            const res = await fetch('/api/governanca/enquetes');
+            const json = await res.json();
+            if (!res.ok) {
+                setError(json.error || 'Erro ao carregar enquetes');
+            } else if (json.enquetes) {
+                setEnquetes(json.enquetes);
+            }
+        } catch (e) {
+            setError('Falha na conexão');
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     }
 
     async function vote(enqueteId: string, optionId: string) {
@@ -123,9 +130,16 @@ export default function EnquetesPage() {
                 ))}
             </div>
 
-            {enquetes.length === 0 && (
+            {error && (
+                <div className="bg-red-50 text-red-600 p-4 rounded-md border border-red-200">
+                    Erro: {error}
+                </div>
+            )}
+
+            {!error && enquetes.length === 0 && (
                 <div className="text-center py-12 bg-gray-50 rounded-lg border border-dashed border-gray-200">
                     <p className="text-gray-500">Nenhuma enquete ativa no momento.</p>
+                    <p className="text-sm text-gray-400 mt-2">Clique em "Nova Enquete" para começar.</p>
                 </div>
             )}
         </div>

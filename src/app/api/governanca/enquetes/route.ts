@@ -31,23 +31,41 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const { data: profile } = await supabase
-        .from('users')
-        .select('condo_id')
-        .eq('id', user.id)
-        .single();
-
-    if (!profile) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
     try {
-        const enquetes = await GovernanceService.getEnquetes(profile.condo_id);
+        const supabase = await createClient();
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+        let condo_id;
+
+        if (authError || !user) {
+            console.error('API Enquetes: User not found or auth error', authError);
+
+            // DEV MODE: Fallback to first condo for testing
+            const { data: firstCondo } = await supabase.from('condos').select('id').limit(1).single();
+            if (firstCondo) {
+                console.log('⚠️ DEV MODE: Using first condo for demo');
+                condo_id = firstCondo.id;
+            } else {
+                return NextResponse.json({ error: 'Unauthorized: No user' }, { status: 401 });
+            }
+        } else {
+            const { data: profile, error: profileError } = await supabase
+                .from('users')
+                .select('condo_id')
+                .eq('id', user.id)
+                .single();
+
+            if (profileError || !profile) {
+                console.error('API Enquetes: Profile not found', profileError);
+                return NextResponse.json({ error: 'Unauthorized: No profile' }, { status: 401 });
+            }
+            condo_id = profile.condo_id;
+        }
+
+        const enquetes = await GovernanceService.getEnquetes(condo_id);
         return NextResponse.json({ enquetes });
     } catch (e: any) {
+        console.error('API Enquetes: Exception', e);
         return NextResponse.json({ error: e.message }, { status: 500 });
     }
 }

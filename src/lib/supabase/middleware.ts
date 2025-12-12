@@ -1,10 +1,10 @@
-import { createServerClient } from '@supabase/ssr';
-import { NextResponse, type NextRequest } from 'next/server';
+import { createServerClient } from '@supabase/ssr'
+import { NextResponse, type NextRequest } from 'next/server'
 
 export async function updateSession(request: NextRequest) {
     let supabaseResponse = NextResponse.next({
         request,
-    });
+    })
 
     const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -12,27 +12,32 @@ export async function updateSession(request: NextRequest) {
         {
             cookies: {
                 getAll() {
-                    return request.cookies.getAll();
+                    return request.cookies.getAll()
                 },
-                setAll(cookiesToSet: Array<{ name: string; value: string; options?: any }>) {
-                    cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+                setAll(cookiesToSet: any) {
+                    cookiesToSet.forEach(({ name, value, options }: any) =>
+                        request.cookies.set(name, value)
+                    )
                     supabaseResponse = NextResponse.next({
                         request,
-                    });
-                    cookiesToSet.forEach(({ name, value, options }) =>
+                    })
+                    cookiesToSet.forEach(({ name, value, options }: any) =>
                         supabaseResponse.cookies.set(name, value, options)
-                    );
+                    )
                 },
             },
         }
-    );
+    )
 
-    // IMPORTANT: Just refresh the session, but DON'T redirect
-    // Let client-side AuthProvider handle authentication state
-    // This prevents redirect loops when cookies are being synced
-    await supabase.auth.getUser();
+    // IMPORTANT: Avoid writing any logic between createServerClient and
+    // supabase.auth.getUser(). A simple mistake could make it very hard to debug
+    // issues with users being randomly logged out.
 
-    // NEVER redirect from middleware - just pass through
-    // Client-side will handle auth check and redirect if needed
-    return supabaseResponse;
+    const {
+        data: { user },
+    } = await supabase.auth.getUser()
+
+    // Just refresh the session, don't redirect
+    // Individual pages handle their own auth requirements
+    return supabaseResponse
 }
