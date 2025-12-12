@@ -47,25 +47,38 @@ export default function AssinaturaPage() {
     }, [condoId]);
 
     const fetchData = async () => {
-        // Fetch subscription
-        const { data: subData } = await supabase
-            .from('subscriptions')
-            .select('*, plan:plans(*)')
-            .eq('condo_id', condoId)
-            .single();
+        try {
+            // Fetch subscription - use maybeSingle to avoid error if not found
+            const { data: subData, error: subError } = await supabase
+                .from('subscriptions')
+                .select('*, plan:plans(*)')
+                .eq('condo_id', condoId)
+                .maybeSingle();
 
-        setSubscription(subData);
+            if (subError) {
+                console.error('Error fetching subscription:', subError);
+            }
 
-        // Fetch payment history
-        const { data: payData } = await supabase
-            .from('payments')
-            .select('*')
-            .eq('condo_id', condoId)
-            .order('created_at', { ascending: false })
-            .limit(10);
+            setSubscription(subData);
 
-        setPayments(payData || []);
-        setLoading(false);
+            // Fetch payment history
+            const { data: payData, error: payError } = await supabase
+                .from('payments')
+                .select('*')
+                .eq('condo_id', condoId)
+                .order('created_at', { ascending: false })
+                .limit(10);
+
+            if (payError) {
+                console.error('Error fetching payments:', payError);
+            }
+
+            setPayments(payData || []);
+        } catch (error) {
+            console.error('Error in fetchData:', error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     // Checkout Mercado Pago - redireciona para pagamento
