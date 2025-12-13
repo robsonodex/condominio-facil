@@ -104,15 +104,115 @@ O **Condomínio Fácil** é uma plataforma SaaS (Software como Serviço) para ge
 
 **O que faz:**
 - Visualiza avisos do condomínio
-- Abre ocorrências (reclamações, sugestões)
-- Consulta seus boletos
-- Acompanha status das ocorrências
+- Abre ocorrências
+- Faz reservas de áreas comuns
+- Visualiza suas cobranças
 
-**Onde acessa:** `/dashboard` (visão de morador)
+**Onde acessa:** `/dashboard` (visão limitada)
 
 ---
 
-## 📱 Módulos do Sistema
+## 📱 APLICATIVO MOBILE (NOVO!)
+
+### Visão Geral
+
+O **Condomínio Fácil Mobile** é o aplicativo oficial para Android e iOS que oferece acesso completo ao sistema diretamente do smartphone.
+
+**Repositório**: https://github.com/robsonodex/app-condominio-facil.git
+
+### Plataformas Suportadas
+- ✅ **Android** 5.0+ (API 21+)
+- ✅ **iOS** 13.0+
+- ✅ Desenvolvido com React Native + Expo
+
+### Funcionalidades do App Mobile
+
+#### 1. Autenticação
+- Login com email/senha
+- Modo DEMO para síndicos
+- Recuperação de senha
+- Armazenamento seguro de tokens
+- Impersonação (SuperAdmin)
+
+#### 2. Dashboard Mobile
+- Estatísticas em tempo real
+- Resumo financeiro
+- Ações rápidas
+- Pull-to-refresh
+
+#### 3. Gestão Financeira
+- CRUD completo de lançamentos
+- Filtros por tipo e período
+- Visualização de saldo
+
+#### 4. Moradores
+- CRUD completo
+- Proprietários e inquilinos
+- Vinculação com unidades
+
+#### 5. Ocorrências
+- CRUD com workflow de status
+- 4 níveis de prioridade
+- Categorização
+- Filtros dinâmicos
+
+#### 6. Avisos
+- CRUD completo
+- Apenas Síndico/SuperAdmin podem criar
+- Todos podem visualizar
+
+#### 7. Reservas
+- Booking de áreas comuns
+- Salão, churrasqueira, quadra, piscina, academia
+- Gestão de horários
+
+#### 8. Portaria Professional
+- **Visitantes**: Check-in/check-out, registro de documentos
+- **Encomendas**: Registro, rastreamento, coleta
+- **Dashboard**: Estatísticas em tempo real
+
+#### 9. Governança
+- **Enquetes**: Sistema de votação
+- **Assembleias**: Gestão e presença
+- **Documentos**: Upload e download
+
+#### 10. SuperAdmin Mobile
+- Gestão de condomínios
+- Gestão de usuários
+- Gestão de assinaturas
+
+#### 11. Features Avançadas
+- ✅ **Push Notifications** (Expo Notifications)
+- ✅ **Câmera** (para visitantes e ocorrências)
+- ✅ **Upload de Arquivos** (documentos)
+
+### Tecnologias do App
+- React Native + Expo SDK 50
+- TypeScript
+- Expo Router (navegação)
+- Zustand + TanStack Query (estado)
+- Supabase (backend)
+- Expo SecureStore (segurança)
+
+### Build do App
+```bash
+# Android APK
+npx eas build -p android --profile preview
+
+# iOS IPA
+npx eas build -p ios --profile preview
+```
+
+### Estatísticas do App Mobile
+- **13 módulos** completos
+- **12 serviços API**
+- **5 componentes UI** reutilizáveis
+- **~6.500 linhas** de código
+- **100% funcional** e pronto para produção
+
+---
+
+## 📊 Módulos do Sistema (Web + Mobile)
 
 ### 1. Dashboard
 - Visão geral com KPIs
