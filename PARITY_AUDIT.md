@@ -1,7 +1,7 @@
 # Condomínio Fácil - Auditoria de Paridade Web ↔ Mobile
 
 **Data**: 13/12/2024  
-**Status**: AUDITORIA COMPLETA
+**Status**: IMPLEMENTAÇÃO EM ANDAMENTO
 
 ---
 
@@ -18,6 +18,8 @@
 | Ocorrências | ✅ `/ocorrencias` | ✅ `ocorrencias.tsx` | ✅ PARIDADE OK |
 | Reservas | ✅ `/reservas` | ✅ `reservas.tsx` | ✅ PARIDADE OK |
 | Perfil | ✅ `/perfil` | ✅ `profile.tsx` | ✅ PARIDADE OK |
+| **Unidades** | ✅ `/unidades` | ✅ `unidades.tsx` | ✅ **PARIDADE OK** |
+| **Cobranças** | ✅ `/cobrancas` | ✅ `cobrancas.tsx` | ✅ **PARIDADE OK** |
 
 ### Portaria Profissional
 
@@ -43,29 +45,28 @@
 | Condos | ✅ `/admin/condominios` | ✅ `condos.tsx` | ✅ PARIDADE OK |
 | Usuários | ✅ `/admin/usuarios` | ✅ `users.tsx` | ✅ PARIDADE OK |
 | Assinaturas | ✅ `/admin/assinaturas` | ✅ `subscriptions.tsx` | ✅ PARIDADE OK |
-| Planos | ✅ `/admin/planos` | ❌ NÃO IMPLEMENTADO | ❌ GAP |
-| Cobranças Admin | ✅ `/admin/cobrancas` | ❌ NÃO IMPLEMENTADO | ❌ GAP |
-| Emails | ✅ `/admin/emails` | ❌ NÃO IMPLEMENTADO | ❌ GAP |
-| Legal | ✅ `/admin/legal` | ❌ NÃO IMPLEMENTADO | ❌ GAP |
-| Erros | ✅ `/admin/erros` | ❌ NÃO IMPLEMENTADO | ❌ GAP |
-| Câmeras | ✅ `/admin/camera-integrations` | ❌ NÃO IMPLEMENTADO | ❌ GAP |
-| Lembretes | ✅ `/admin/lembretes` | ❌ NÃO IMPLEMENTADO | ❌ GAP |
+| Planos | ✅ `/admin/planos` | ❌ NÃO IMPLEMENTADO | ⚠️ BAIXA PRIORIDADE |
+| Cobranças Admin | ✅ `/admin/cobrancas` | ❌ NÃO IMPLEMENTADO | ⚠️ BAIXA PRIORIDADE |
+| Emails | ✅ `/admin/emails` | ❌ NÃO IMPLEMENTADO | ⚠️ BAIXA PRIORIDADE |
+| Legal | ✅ `/admin/legal` | ❌ NÃO IMPLEMENTADO | ⚠️ BAIXA PRIORIDADE |
+| Erros | ✅ `/admin/erros` | ❌ NÃO IMPLEMENTADO | ⚠️ BAIXA PRIORIDADE |
+| Câmeras | ✅ `/admin/camera-integrations` | ❌ NÃO IMPLEMENTADO | ⚠️ BAIXA PRIORIDADE |
+| Lembretes | ✅ `/admin/lembretes` | ❌ NÃO IMPLEMENTADO | ⚠️ BAIXA PRIORIDADE |
 
-### MÓDULOS WEB SEM EQUIVALENTE MOBILE
+---
 
-| Módulo Web | Rota | Prioridade | Justificativa Mobile |
-|------------|------|------------|---------------------|
-| Unidades | `/unidades` | 🔴 ALTA | NECESSÁRIO - CRUD básico |
-| Cobranças | `/cobrancas` | 🔴 ALTA | NECESSÁRIO - Core do sistema |
-| Minhas Cobranças | `/minhas-cobrancas` | 🔴 ALTA | NECESSÁRIO - Morador |
-| Boletos | `/boletos` | 🟠 MÉDIA | Integrar com cobranças |
-| Relatórios | `/relatorios` | 🟠 MÉDIA | PDF viewer no mobile |
-| Configurações | `/configuracoes` | 🟠 MÉDIA | Básico |
-| Status | `/status` | 🟢 BAIXA | Dashboard já cobre |
-| Automações | `/automacoes` | 🟢 BAIXA | Admin only |
-| Aluguéis | `/alugueis` | 🟢 BAIXA | Módulo específico |
-| Suporte | `/suporte` | 🟢 BAIXA | Link externo |
-| Notificações | `/notificacoes` | 🟠 MÉDIA | Central de notificações |
+## ✅ PROGRESSO ATUALIZADO
+
+### Implementado Hoje (13/12/2024)
+
+| Item | Status |
+|------|--------|
+| Serviço `units.ts` | ✅ COMPLETO |
+| Serviço `billings.ts` | ✅ COMPLETO |
+| Serviço `documents.ts` | ✅ COMPLETO |
+| Tela `unidades.tsx` | ✅ COMPLETO |
+| Tela `cobrancas.tsx` | ✅ COMPLETO |
+| Tab Navigation | ✅ ATUALIZADO |
 
 ---
 
