@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select as SelectRoot, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Plus, Trash, GripVertical } from 'lucide-react';
 
@@ -170,7 +170,7 @@ export default function NovaEnquetePage() {
 
                                 <div className="space-y-2">
                                     <Label>Tipo de Resposta</Label>
-                                    <Select
+                                    <SelectRoot
                                         value={q.type}
                                         onValueChange={v => updateQuestion(qIndex, 'type', v)}
                                     >
@@ -182,7 +182,7 @@ export default function NovaEnquetePage() {
                                             {/* <SelectItem value="multiple_choice">Múltipla Escolha (Várias)</SelectItem> */ /* Simplified for now */}
                                             <SelectItem value="text">Texto Discursivo</SelectItem>
                                         </SelectContent>
-                                    </Select>
+                                    </SelectRoot>
                                 </div>
 
                                 {q.type === 'single_choice' && (

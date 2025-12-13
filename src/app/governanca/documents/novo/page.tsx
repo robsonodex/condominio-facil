@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select as SelectRoot, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function NovoDocumentoPage() {
     const router = useRouter();
@@ -63,7 +63,7 @@ export default function NovoDocumentoPage() {
 
                         <div className="space-y-2">
                             <Label>Categoria / Pasta</Label>
-                            <Select
+                            <SelectRoot
                                 value={formData.folder}
                                 onValueChange={v => setFormData({ ...formData, folder: v })}
                             >
@@ -77,7 +77,7 @@ export default function NovoDocumentoPage() {
                                     <SelectItem value="regimento">Regimento/Convenção</SelectItem>
                                     <SelectItem value="geral">Geral</SelectItem>
                                 </SelectContent>
-                            </Select>
+                            </SelectRoot>
                         </div>
 
                         <div className="space-y-2">
