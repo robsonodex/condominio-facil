@@ -4,11 +4,18 @@ Sistema SaaS multi-tenant para gestão de condomínios pequenos no Brasil.
 
 ## 🚀 Tecnologias
 
+### Sistema Web
 - **Frontend**: Next.js 14 (App Router), TypeScript, React
 - **Estilização**: Tailwind CSS
 - **Backend**: Supabase (PostgreSQL + Auth + Storage)
 - **PDF**: jsPDF
 - **Gráficos**: Recharts
+
+### Aplicativo Mobile (NOVO!)
+- **Framework**: React Native + Expo SDK 50
+- **Navegação**: Expo Router
+- **Estado**: Zustand + TanStack Query
+- **Repositório**: https://github.com/robsonodex/app-condominio-facil.git
 
 ## 📋 Funcionalidades
 
@@ -19,7 +26,7 @@ Sistema SaaS multi-tenant para gestão de condomínios pequenos no Brasil.
 3. **Porteiro** - Controle de visitantes e registro de ocorrências
 4. **Morador** - Visualização de avisos, boletos e ocorrências
 
-### Módulos
+### Módulos Web
 
 - ✅ Dashboard com KPIs e gráficos
 - ✅ Gestão de Unidades (CRUD)
@@ -30,6 +37,23 @@ Sistema SaaS multi-tenant para gestão de condomínios pequenos no Brasil.
 - ✅ Portaria (entrada/saída de visitantes)
 - ✅ Relatórios com geração de PDF
 - ✅ Painel SuperAdmin (condomínios, planos, usuários, assinaturas)
+
+### Módulos Mobile (13 completos!)
+
+- ✅ Dashboard com estatísticas em tempo real
+- ✅ Gestão Financeira (CRUD)
+- ✅ Moradores (CRUD)
+- ✅ Ocorrências (CRUD com workflow)
+- ✅ Avisos (CRUD com RBAC)
+- ✅ Reservas de áreas comuns
+- ✅ Portaria (visitantes + encomendas)
+- ✅ Governança (enquetes, assembleias, documentos)
+- ✅ SuperAdmin (condos, users, assinaturas)
+- ✅ Push Notifications
+- ✅ Câmera integrada
+- ✅ Upload de arquivos
+
+📱 **Documentação completa**: [MOBILE_APP.md](./MOBILE_APP.md)
 
 ## 🛠️ Instalação
 
