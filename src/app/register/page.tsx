@@ -55,10 +55,11 @@ export default function RegisterPage() {
                             <CheckCircle className="h-8 w-8 text-emerald-600" />
                         </div>
                         <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                            Conta criada com sucesso!
+                            Conta criada com sucesso! 🎉
                         </h3>
                         <p className="text-gray-600 mb-6">
-                            Verifique seu email para confirmar sua conta.
+                            Enviamos um email de boas-vindas para <strong>{email}</strong>.
+                            Você pode fazer login e iniciar seu período de teste de 7 dias gratuitos!
                         </p>
                         <Button onClick={() => router.push('/login')} className="w-full">
                             Ir para o login

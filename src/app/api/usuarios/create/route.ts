@@ -73,6 +73,43 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // Get condo name for email
+        let condoNome = '';
+        if (condo_id) {
+            const { data: condoData } = await supabaseAdmin
+                .from('condos')
+                .select('nome')
+                .eq('id', condo_id)
+                .single();
+            condoNome = condoData?.nome || '';
+        }
+
+        // Send credentials email to new user
+        try {
+            const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://meucondominiofacil.com';
+            await fetch(`${baseUrl}/api/email`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tipo: 'user_credentials',
+                    destinatario: email,
+                    dados: {
+                        nome,
+                        email,
+                        password,
+                        role: role === 'sindico' ? 'Síndico' : role === 'porteiro' ? 'Porteiro' : 'Morador',
+                        condoNome,
+                        loginUrl: `${baseUrl}/login`
+                    },
+                    internalCall: true
+                })
+            });
+            console.log('[CREATE_USER] Credentials email sent to:', email);
+        } catch (emailError) {
+            console.error('[CREATE_USER] Failed to send credentials email:', emailError);
+            // Don't fail the request, just log the error
+        }
+
         return NextResponse.json({
             success: true,
             user: {

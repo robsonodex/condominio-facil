@@ -191,13 +191,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             });
 
             if (!error && data.user) {
+                // Create user profile with ativo=false (pending email confirmation)
                 await supabase.from('users').insert({
                     id: data.user.id,
                     email,
                     nome,
-                    role: 'morador',
-                    ativo: true
+                    role: 'sindico', // New registrations are síndicos (trial)
+                    ativo: false // Requires email confirmation
                 });
+
+                // Send welcome email
+                try {
+                    await fetch('/api/email', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            tipo: 'welcome',
+                            destinatario: email,
+                            dados: {
+                                nome,
+                                loginUrl: `${window.location.origin}/login`
+                            },
+                            internalCall: true
+                        })
+                    });
+                    console.log('[AUTH] Welcome email sent to:', email);
+                } catch (emailError) {
+                    console.error('[AUTH] Failed to send welcome email:', emailError);
+                }
+
+                // Sign out immediately to prevent auto-login
+                await supabase.auth.signOut();
             }
 
             return { error: error as Error | null };

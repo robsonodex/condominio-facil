@@ -158,6 +158,71 @@ export async function POST(req: NextRequest) {
 
             console.log(`[Webhook] Payment ${existingPayment.id} updated: ${existingPayment.status} → ${newStatus}`);
 
+            // Send confirmation emails when payment is approved
+            if (newStatus === 'paid') {
+                try {
+                    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://meucondominiofacil.com';
+
+                    // Get payment recipient details
+                    const { data: paymentDetails } = await supabase
+                        .from('payments')
+                        .select('condo_id, amount, description, condos(nome, email_contato)')
+                        .eq('id', existingPayment.id)
+                        .single();
+
+                    // Send payment received email to customer
+                    if (paymentDetails?.condos?.email_contato) {
+                        await fetch(`${baseUrl}/api/email`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                tipo: 'payment_received',
+                                destinatario: Array.isArray(paymentDetails.condos)
+                                    ? paymentDetails.condos[0]?.email_contato
+                                    : paymentDetails.condos?.email_contato,
+                                dados: {
+                                    nome: Array.isArray(paymentDetails.condos)
+                                        ? paymentDetails.condos[0]?.nome
+                                        : paymentDetails.condos?.nome,
+                                    valor: paymentData.transaction_amount || paymentDetails.amount,
+                                    payment_id: paymentData.id,
+                                    payment_method: paymentData.payment_type_id || 'Mercado Pago',
+                                    descricao: paymentDetails.description,
+                                    receipt_url: paymentData.receipt_url || null,
+                                },
+                                internalCall: true
+                            })
+                        });
+                        console.log('[Webhook] Payment confirmation email sent to customer');
+                    }
+
+                    // Send notification to admin
+                    await fetch(`${baseUrl}/api/email`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            tipo: 'admin_billing_notification',
+                            destinatario: 'contato@meucondominiofacil.com',
+                            dados: {
+                                condoNome: Array.isArray(paymentDetails?.condos)
+                                    ? paymentDetails.condos[0]?.nome
+                                    : paymentDetails?.condos?.nome,
+                                valor: (paymentData.transaction_amount || paymentDetails?.amount || 0).toFixed(2),
+                                destinatario: Array.isArray(paymentDetails?.condos)
+                                    ? paymentDetails.condos[0]?.email_contato
+                                    : paymentDetails?.condos?.email_contato,
+                            },
+                            internalCall: true
+                        })
+                    });
+                    console.log('[Webhook] Admin notification email sent');
+
+                } catch (emailError) {
+                    console.error('[Webhook] Failed to send emails:', emailError);
+                    // Don't fail the webhook if email fails
+                }
+            }
+
             // Mark webhook as processed
             await supabase
                 .from('payment_webhooks_log')

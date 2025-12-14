@@ -17,6 +17,7 @@ import {
     Settings,
     CreditCard,
     Calendar,
+    Package,
     X
 } from 'lucide-react';
 
@@ -47,6 +48,7 @@ const navItems: NavItem[] = [
     { href: '/reservas', label: 'Reservas', icon: <Calendar className="h-5 w-5" /> },
     { href: '/portaria', label: 'Portaria', icon: <UserCheck className="h-5 w-5" />, roles: ['superadmin', 'sindico', 'porteiro'] },
     { href: '/portaria/cameras', label: 'Câmeras', icon: <Settings className="h-5 w-5" />, roles: ['superadmin', 'sindico', 'porteiro'] },
+    { href: '/portaria/minhas-encomendas', label: 'Minhas Encomendas', icon: <Package className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
     { href: '/relatorios', label: 'Relatórios', icon: <FileText className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
     { href: '/automacoes', label: 'Automações', icon: <Settings className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
     { href: '/governanca/assembleias', label: 'Assembleias', icon: <Users className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
@@ -55,8 +57,8 @@ const navItems: NavItem[] = [
     { href: '/manutencao', label: 'Manutenção', icon: <Settings className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
     { href: '/assinatura', label: 'Assinatura', icon: <CreditCard className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
     { href: '/perfil', label: 'Meu Perfil', icon: <Settings className="h-5 w-5" /> },
-    { href: '/portaria/deliveries/list', label: 'Encomendas', icon: <Building2 className="h-5 w-5" />, roles: ['superadmin', 'sindico', 'porteiro'] },
-    { href: '/app/deliveries', label: 'Minhas Encomendas', icon: <Building2 className="h-5 w-5" />, roles: ['morador', 'inquilino'] },
+    { href: '/portaria/deliveries/list', label: 'Encomendas (Porteiro)', icon: <Package className="h-5 w-5" />, roles: ['porteiro'] },
+    { href: '/app/deliveries', label: 'Minhas Encomendas (Morador)', icon: <Package className="h-5 w-5" />, roles: ['morador', 'inquilino'] },
 ];
 
 const adminItems: NavItem[] = [

@@ -10,6 +10,7 @@ export default function MaintenancePage() {
     const [equipments, setEquipments] = useState<any[]>([]);
     const [newName, setNewName] = useState('');
     const [newType, setNewType] = useState('Elevador');
+    const [customType, setCustomType] = useState('');
 
     useEffect(() => { load(); }, []);
 
@@ -20,15 +21,25 @@ export default function MaintenancePage() {
     }
 
     async function addEquipment() {
+        const finalType = newType === 'Outros' ? customType : newType;
+        if (!newName || !finalType) {
+            alert('Preencha o nome e o tipo do equipamento');
+            return;
+        }
         const res = await fetch('/api/manutencao/equipments', {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ name: newName, type: newType, location: 'Condomínio' })
+            body: JSON.stringify({ name: newName, type: finalType, location: 'Condomínio' })
         });
         if (res.ok) {
             alert("Equipamento adicionado");
             setNewName('');
+            setCustomType('');
+            setNewType('Elevador');
             load();
+        } else {
+            const error = await res.json();
+            alert('Erro: ' + (error.error || 'Erro ao adicionar equipamento'));
         }
     }
 
@@ -48,18 +59,31 @@ export default function MaintenancePage() {
 
             <Card>
                 <CardHeader><CardTitle>Novo Equipamento</CardTitle></CardHeader>
-                <CardContent className="flex gap-4">
-                    <Input placeholder="Nome (Ex: Bombas)" value={newName} onChange={e => setNewName(e.target.value)} />
-                    <select
-                        className="w-[180px] border rounded-md p-2 bg-background"
-                        value={newType}
-                        onChange={e => setNewType(e.target.value)}
-                    >
-                        <option value="Elevador">Elevador</option>
-                        <option value="Bomba">Bomba</option>
-                        <option value="Extintor">Extintor</option>
-                        <option value="Portão">Portão</option>
-                    </select>
+                <CardContent className="space-y-4">
+                    <div className="flex gap-4">
+                        <Input placeholder="Nome (Ex: Bombas)" value={newName} onChange={e => setNewName(e.target.value)} />
+                        <select
+                            className="w-[180px] border rounded-md p-2 bg-background"
+                            value={newType}
+                            onChange={e => setNewType(e.target.value)}
+                        >
+                            <option value="Elevador">Elevador</option>
+                            <option value="Bomba">Bomba</option>
+                            <option value="Extintor">Extintor</option>
+                            <option value="Portão">Portão</option>
+                            <option value="Gerador">Gerador</option>
+                            <option value="CFTV">CFTV</option>
+                            <option value="Ar Condicionado">Ar Condicionado</option>
+                            <option value="Outros">Outros</option>
+                        </select>
+                    </div>
+                    {newType === 'Outros' && (
+                        <Input
+                            placeholder="Digite o tipo personalizado..."
+                            value={customType}
+                            onChange={e => setCustomType(e.target.value)}
+                        />
+                    )}
                     <Button onClick={addEquipment}>Cadastrar</Button>
                 </CardContent>
             </Card>

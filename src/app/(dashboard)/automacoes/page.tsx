@@ -62,7 +62,7 @@ export default function AutomacoesPage() {
                 .from('automation_settings')
                 .select('*')
                 .eq('condo_id', condoId)
-                .single();
+                .maybeSingle();
 
             if (data) {
                 setSettings(data);
