@@ -6,12 +6,17 @@ import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/hooks/useUser';
 import { Plus, Wrench, Calendar, CheckCircle, Clock, DollarSign, User, Star } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { OrderModal, SupplierModal } from '@/components/maintenance/MaintenanceModals';
 
 export default function ManutencaoPage() {
     const { condoId, isSindico, isSuperAdmin } = useUser();
     const [orders, setOrders] = useState<any[]>([]);
     const [suppliers, setSuppliers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [showOrderModal, setShowOrderModal] = useState(false);
+    const [showSupplierModal, setShowSupplierModal] = useState(false);
+    const [editingOrder, setEditingOrder] = useState<any>(null);
+    const [editingSupplier, setEditingSupplier] = useState<any>(null);
     const supabase = createClient();
 
     useEffect(() => {
@@ -52,6 +57,16 @@ export default function ManutencaoPage() {
         setSuppliers(data || []);
     };
 
+    const handleOrderSuccess = () => {
+        fetchOrders();
+        setEditingOrder(null);
+    };
+
+    const handleSupplierSuccess = () => {
+        fetchSuppliers();
+        setEditingSupplier(null);
+    };
+
     // Agrupar ordens por status
     const ordersByStatus = {
         agendado: orders.filter(o => o.status === 'agendado'),
@@ -90,11 +105,22 @@ export default function ManutencaoPage() {
                 </div>
                 {(isSindico || isSuperAdmin) && (
                     <div className="flex gap-2">
-                        <Button variant="outline">
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                setEditingSupplier(null);
+                                setShowSupplierModal(true);
+                            }}
+                        >
                             <Plus className="h-4 w-4 mr-2" />
                             Novo Fornecedor
                         </Button>
-                        <Button>
+                        <Button
+                            onClick={() => {
+                                setEditingOrder(null);
+                                setShowOrderModal(true);
+                            }}
+                        >
                             <Plus className="h-4 w-4 mr-2" />
                             Nova Ordem
                         </Button>
@@ -142,6 +168,10 @@ export default function ManutencaoPage() {
                     color="blue"
                     orders={ordersByStatus.agendado}
                     icon={Calendar}
+                    onCardClick={(order) => {
+                        setEditingOrder(order);
+                        setShowOrderModal(true);
+                    }}
                 />
 
                 {/* Coluna 2: Em Execução */}
@@ -150,6 +180,10 @@ export default function ManutencaoPage() {
                     color="orange"
                     orders={ordersByStatus.em_execucao}
                     icon={Wrench}
+                    onCardClick={(order) => {
+                        setEditingOrder(order);
+                        setShowOrderModal(true);
+                    }}
                 />
 
                 {/* Coluna 3: Concluído */}
@@ -158,18 +192,50 @@ export default function ManutencaoPage() {
                     color="green"
                     orders={ordersByStatus.concluido}
                     icon={CheckCircle}
+                    onCardClick={(order) => {
+                        setEditingOrder(order);
+                        setShowOrderModal(true);
+                    }}
                 />
 
                 {/* Coluna 4: Fornecedores */}
-                <SuppliersPanel suppliers={suppliers} />
+                <SuppliersPanel
+                    suppliers={suppliers}
+                    onCardClick={(supplier) => {
+                        setEditingSupplier(supplier);
+                        setShowSupplierModal(true);
+                    }}
+                />
             </div>
+
+            {/* Modals */}
+            <OrderModal
+                isOpen={showOrderModal}
+                onClose={() => {
+                    setShowOrderModal(false);
+                    setEditingOrder(null);
+                }}
+                onSuccess={handleOrderSuccess}
+                order={editingOrder}
+                suppliers={suppliers}
+            />
+
+            <SupplierModal
+                isOpen={showSupplierModal}
+                onClose={() => {
+                    setShowSupplierModal(false);
+                    setEditingSupplier(null);
+                }}
+                onSuccess={handleSupplierSuccess}
+                supplier={editingSupplier}
+            />
         </div>
     );
 }
 
 // Componente de Coluna Kanban
-function KanbanColumn({ title, color, orders, icon: Icon }: any) {
-    const colorClasses = {
+function KanbanColumn({ title, color, orders, icon: Icon, onCardClick }: { title: string; color: string; orders: any[]; icon: any; onCardClick: (order: any) => void }) {
+    const colorClasses: Record<string, string> = {
         blue: 'from-blue-500 to-blue-600',
         orange: 'from-orange-500 to-orange-600',
         green: 'from-emerald-500 to-emerald-600',
@@ -188,7 +254,7 @@ function KanbanColumn({ title, color, orders, icon: Icon }: any) {
             </div>
             <div className="space-y-3 min-h-[300px]">
                 {orders.map((order: any) => (
-                    <MaintenanceCard key={order.id} order={order} />
+                    <MaintenanceCard key={order.id} order={order} onClick={() => onCardClick(order)} />
                 ))}
                 {orders.length === 0 && (
                     <p className="text-center text-gray-400 text-sm py-8">Nenhuma ordem</p>
@@ -199,9 +265,9 @@ function KanbanColumn({ title, color, orders, icon: Icon }: any) {
 }
 
 // Card de Manutenção
-function MaintenanceCard({ order }: { order: any }) {
-    const getPriorityBadge = (prioridade: string) => {
-        const classes = {
+function MaintenanceCard({ order, onClick }: { order: any; onClick?: () => void }) {
+    const getPriorityBadge = (prioridade: string): string => {
+        const classes: Record<string, string> = {
             alta: 'bg-red-100 text-red-700',
             media: 'bg-amber-100 text-amber-700',
             baixa: 'bg-gray-100 text-gray-700',
@@ -210,7 +276,7 @@ function MaintenanceCard({ order }: { order: any }) {
     };
 
     return (
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={onClick}>
             <CardContent className="p-4 space-y-3">
                 <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -250,7 +316,7 @@ function MaintenanceCard({ order }: { order: any }) {
 }
 
 // Painel de Fornecedores
-function SuppliersPanel({ suppliers }: { suppliers: any[] }) {
+function SuppliersPanel({ suppliers, onCardClick }: { suppliers: any[]; onCardClick: (supplier: any) => void }) {
     return (
         <div className="space-y-3">
             <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-3 rounded-lg">
@@ -258,7 +324,7 @@ function SuppliersPanel({ suppliers }: { suppliers: any[] }) {
             </div>
             <div className="space-y-2">
                 {suppliers.map((supplier) => (
-                    <Card key={supplier.id} className="hover:shadow-md transition-shadow">
+                    <Card key={supplier.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => onCardClick(supplier)}>
                         <CardContent className="p-3">
                             <div className="flex items-start justify-between">
                                 <div className="flex-1">
