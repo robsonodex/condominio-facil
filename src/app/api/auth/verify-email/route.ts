@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 
 export async function GET(request: NextRequest) {
     try {
@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
             return NextResponse.redirect(new URL('/login?error=invalid_token', request.url));
         }
 
-        const supabase = await createClient();
+        const supabase = supabaseAdmin;
 
         // Decode token (format: base64(user_id))
         const userId = Buffer.from(token, 'base64').toString('utf-8');
