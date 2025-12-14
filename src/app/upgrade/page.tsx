@@ -19,16 +19,16 @@ export default function UpgradePage() {
             name: 'Básico',
             price: 99.90,
             units: 20,
-            tagline: 'Perfeito para começar',
+            tagline: 'Ideal para condomínios pequenos',
             features: [
-                '✅ Até 20 unidades',
-                '💰 Gestão financeira completa - controle total de receitas e despesas',
-                '🏢 Portaria digital - registro de visitantes e encomendas',
-                '📢 Avisos e comunicados ilimitados',
-                '📊 Relatórios financeiros detalhados',
-                '💳 Integração com boletos e PIX',
-                '📱 Acesso mobile para síndicos e moradores',
-                '📧 Suporte por email em até 24h'
+                'Até 20 unidades',
+                'Gestão financeira completa',
+                'Controle de portaria digital',
+                'Avisos e comunicados',
+                'Relatórios financeiros',
+                'Integração com boletos e PIX',
+                'Acesso mobile',
+                'Suporte por email'
             ]
         },
         {
@@ -36,36 +36,36 @@ export default function UpgradePage() {
             price: 249.90,
             units: 60,
             popular: true,
-            tagline: 'O mais escolhido',
-            badge: '🔥 MELHOR CUSTO-BENEFÍCIO',
+            tagline: 'Mais recursos e capacidade',
+            badge: 'Recomendado',
             features: [
-                '✅ Até 60 unidades',
-                '⭐ Tudo do Básico +',
-                '🗳️ Assembleias digitais - votações online com ata automática',
-                '📊 Enquetes e pesquisas - ouça seus moradores',
-                '📁 Gestão de documentos com assinatura digital',
-                '🏊 Reservas de áreas comuns automatizadas',
-                '🔔 Notificações push em tempo real',
-                '📈 Dashboard executivo com KPIs',
-                '⚡ Suporte prioritário - resposta em até 4h'
+                'Até 60 unidades',
+                'Tudo do plano Básico',
+                'Assembleias digitais com votação online',
+                'Enquetes e pesquisas',
+                'Gestão de documentos',
+                'Reserva de áreas comuns',
+                'Notificações em tempo real',
+                'Dashboard executivo',
+                'Suporte prioritário'
             ]
         },
         {
             name: 'Premium',
             price: 399.90,
             units: 'Ilimitadas',
-            tagline: 'Máximo desempenho',
-            badge: '👑 COMPLETO',
+            tagline: 'Solução corporativa completa',
+            badge: 'Empresarial',
             features: [
-                '♾️ Unidades ilimitadas',
-                '⭐ Tudo do Avançado +',
-                '🏢 Múltiplos condomínios na mesma conta',
-                '🔌 API personalizada para integrações',
-                '📊 Relatórios customizados conforme sua necessidade',
-                '🤝 Gerente de conta dedicado',
-                '📞 Suporte VIP - WhatsApp direto',
-                '🎓 Treinamento personalizado da equipe',
-                '🔒 Backup diário automático'
+                'Unidades ilimitadas',
+                'Tudo do plano Avançado',
+                'Múltiplos condomínios',
+                'API para integrações',
+                'Relatórios personalizados',
+                'Gerente de conta dedicado',
+                'Suporte via WhatsApp',
+                'Treinamento da equipe',
+                'Backup automático diário'
             ]
         }
     ];
