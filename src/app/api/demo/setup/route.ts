@@ -96,8 +96,51 @@ export async function POST(request: NextRequest) {
                 })
                 .eq('id', demoUser!.id);
         }
+        // 5. Verificar/criar assinatura Premium para o demo ter todas as features
+        const { data: existingSubscription } = await supabaseAdmin
+            .from('subscriptions')
+            .select('id')
+            .eq('condo_id', demoCondo!.id)
+            .single();
 
-        // 5. Criar dados de exemplo se não existirem
+        if (!existingSubscription) {
+            // Buscar plano Premium
+            let { data: premiumPlan } = await supabaseAdmin
+                .from('plans')
+                .select('id')
+                .ilike('nome', '%premium%')
+                .single();
+
+            // Se não tem Premium, criar um plano demo
+            if (!premiumPlan) {
+                const { data: newPlan } = await supabaseAdmin
+                    .from('plans')
+                    .insert({
+                        nome: 'Premium Demo',
+                        descricao: 'Plano completo para demonstração',
+                        preco: 0,
+                        ativo: true
+                    })
+                    .select()
+                    .single();
+                premiumPlan = newPlan;
+            }
+
+            if (premiumPlan) {
+                await supabaseAdmin
+                    .from('subscriptions')
+                    .insert({
+                        condo_id: demoCondo!.id,
+                        plano_id: premiumPlan.id,
+                        status: 'ativa',
+                        data_inicio: new Date().toISOString().split('T')[0],
+                        data_fim: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                    });
+                console.log('[DEMO] Assinatura Premium criada');
+            }
+        }
+
+        // 6. Criar dados de exemplo se não existirem
         await createDemoData(demoCondo!.id, demoUser!.id);
 
         return NextResponse.json({

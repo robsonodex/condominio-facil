@@ -84,6 +84,10 @@ async function resetDemo() {
         await supabaseAdmin.from('units').delete().eq('condo_id', condoId);
         console.log('[DEMO RESET] Unidades limpas');
 
+        // Assinatura (para ser recriada no próximo login)
+        await supabaseAdmin.from('subscriptions').delete().eq('condo_id', condoId);
+        console.log('[DEMO RESET] Assinatura removida');
+
         console.log('[DEMO RESET] Limpeza completa!');
 
         return NextResponse.json({
