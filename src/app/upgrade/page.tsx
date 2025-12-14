@@ -127,8 +127,8 @@ export default function UpgradePage() {
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className={`block w-full text-center py-3 px-6 rounded-lg font-semibold transition-colors ${plan.popular
-                                        ? 'bg-emerald-600 text-white hover:bg-emerald-700'
-                                        : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                                    ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                                    : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
                                     }`}
                             >
                                 Assinar via WhatsApp
@@ -146,7 +146,7 @@ export default function UpgradePage() {
                     </p>
                     <div className="flex gap-4 justify-center">
                         <a
-                            href="https://wa.me/5521999999999"
+                            href="https://wa.me/5521965532247"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="bg-white text-emerald-600 px-6 py-3 rounded-lg font-semibold hover:bg-emerald-50 transition-colors"
