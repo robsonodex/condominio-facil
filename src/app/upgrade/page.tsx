@@ -25,6 +25,7 @@ export default function UpgradePage() {
                 'Gestão financeira completa',
                 'Controle de portaria digital',
                 'Avisos e comunicados',
+                'Cadastro de moradores',
                 'Relatórios financeiros',
                 'Integração com boletos e PIX',
                 'Acesso mobile',
@@ -41,10 +42,11 @@ export default function UpgradePage() {
             features: [
                 'Até 60 unidades',
                 'Tudo do plano Básico',
-                'Assembleias digitais com votação online',
+                'Assembleias digitais',
                 'Enquetes e pesquisas',
                 'Gestão de documentos',
                 'Reserva de áreas comuns',
+                'Registro de ocorrências',
                 'Notificações em tempo real',
                 'Dashboard executivo',
                 'Suporte prioritário'
@@ -60,12 +62,12 @@ export default function UpgradePage() {
                 'Unidades ilimitadas',
                 'Tudo do plano Avançado',
                 'Múltiplos condomínios',
-                'API para integrações',
+                'Controle de manutenção',
+                'Gestão de fornecedores',
                 'Relatórios personalizados',
+                'Histórico completo',
                 'Gerente de conta dedicado',
-                'Suporte via WhatsApp',
-                'Treinamento da equipe',
-                'Backup automático diário'
+                'Suporte via WhatsApp'
             ]
         }
     ];
