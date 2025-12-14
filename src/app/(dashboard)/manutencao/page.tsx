@@ -99,7 +99,7 @@ export default function ManutencaoPage() {
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                         <Wrench className="h-6 w-6 text-emerald-600" />
-                        Gestão de Manutenção
+                        Manutenção Preventiva
                     </h1>
                     <p className="text-gray-500">Gerencie manutenções preventivas e corretivas</p>
                 </div>
@@ -216,6 +216,7 @@ export default function ManutencaoPage() {
                     setEditingOrder(null);
                 }}
                 onSuccess={handleOrderSuccess}
+                onDelete={handleOrderSuccess}
                 order={editingOrder}
                 suppliers={suppliers}
             />
@@ -227,6 +228,7 @@ export default function ManutencaoPage() {
                     setEditingSupplier(null);
                 }}
                 onSuccess={handleSupplierSuccess}
+                onDelete={handleSupplierSuccess}
                 supplier={editingSupplier}
             />
         </div>

@@ -10,13 +10,29 @@ interface OrderModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
+    onDelete?: () => void;
     order?: any;
     suppliers: any[];
 }
 
-export function OrderModal({ isOpen, onClose, onSuccess, order, suppliers }: OrderModalProps) {
+export function OrderModal({ isOpen, onClose, onSuccess, onDelete, order, suppliers }: OrderModalProps) {
     const { condoId } = useUser();
     const [loading, setLoading] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+
+    const handleDelete = async () => {
+        if (!order || !confirm('Tem certeza que deseja excluir esta ordem de serviço?')) return;
+        setDeleting(true);
+        try {
+            await fetch(`/api/maintenance/orders?id=${order.id}`, { method: 'DELETE' });
+            onDelete?.();
+            onClose();
+        } catch (error) {
+            alert('Erro ao excluir ordem');
+        } finally {
+            setDeleting(false);
+        }
+    };
     const [formData, setFormData] = useState({
         titulo: order?.titulo || '',
         descricao: order?.descricao || '',
@@ -147,13 +163,22 @@ export function OrderModal({ isOpen, onClose, onSuccess, order, suppliers }: Ord
                     placeholder="0.00"
                 />
 
-                <div className="flex gap-3 justify-end pt-4">
-                    <Button type="button" variant="ghost" onClick={onClose}>
-                        Cancelar
-                    </Button>
-                    <Button type="submit" loading={loading}>
-                        {order ? 'Salvar' : 'Criar'}
-                    </Button>
+                <div className="flex gap-3 justify-between pt-4">
+                    <div>
+                        {order && (
+                            <Button type="button" variant="danger" onClick={handleDelete} loading={deleting}>
+                                Excluir
+                            </Button>
+                        )}
+                    </div>
+                    <div className="flex gap-3">
+                        <Button type="button" variant="ghost" onClick={onClose}>
+                            Cancelar
+                        </Button>
+                        <Button type="submit" loading={loading}>
+                            {order ? 'Salvar' : 'Criar'}
+                        </Button>
+                    </div>
                 </div>
             </form>
         </Modal>
@@ -164,12 +189,28 @@ interface SupplierModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
+    onDelete?: () => void;
     supplier?: any;
 }
 
-export function SupplierModal({ isOpen, onClose, onSuccess, supplier }: SupplierModalProps) {
+export function SupplierModal({ isOpen, onClose, onSuccess, onDelete, supplier }: SupplierModalProps) {
     const { condoId } = useUser();
     const [loading, setLoading] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+
+    const handleDelete = async () => {
+        if (!supplier || !confirm('Tem certeza que deseja excluir este fornecedor?')) return;
+        setDeleting(true);
+        try {
+            await fetch(`/api/maintenance/suppliers?id=${supplier.id}`, { method: 'DELETE' });
+            onDelete?.();
+            onClose();
+        } catch (error) {
+            alert('Erro ao excluir fornecedor');
+        } finally {
+            setDeleting(false);
+        }
+    };
     const [formData, setFormData] = useState({
         nome: supplier?.nome || '',
         especialidade: supplier?.especialidade || '',
@@ -250,13 +291,22 @@ export function SupplierModal({ isOpen, onClose, onSuccess, supplier }: Supplier
                     />
                 </div>
 
-                <div className="flex gap-3 justify-end pt-4">
-                    <Button type="button" variant="ghost" onClick={onClose}>
-                        Cancelar
-                    </Button>
-                    <Button type="submit" loading={loading}>
-                        {supplier ? 'Salvar' : 'Criar'}
-                    </Button>
+                <div className="flex gap-3 justify-between pt-4">
+                    <div>
+                        {supplier && (
+                            <Button type="button" variant="danger" onClick={handleDelete} loading={deleting}>
+                                Excluir
+                            </Button>
+                        )}
+                    </div>
+                    <div className="flex gap-3">
+                        <Button type="button" variant="ghost" onClick={onClose}>
+                            Cancelar
+                        </Button>
+                        <Button type="submit" loading={loading}>
+                            {supplier ? 'Salvar' : 'Criar'}
+                        </Button>
+                    </div>
                 </div>
             </form>
         </Modal>
