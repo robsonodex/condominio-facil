@@ -142,11 +142,9 @@ export default function LoginPage() {
                         <p className="text-center text-xs text-gray-400 mb-3">
                             Quer conhecer o sistema?
                         </p>
-                        <Button
+                        <button
                             type="button"
-                            variant="outline"
-                            className="w-full border-amber-300 text-amber-600 hover:bg-amber-50"
-                            loading={loading}
+                            disabled={loading}
                             onClick={async () => {
                                 setLoading(true);
                                 setError('');
@@ -179,9 +177,16 @@ export default function LoginPage() {
                                     setLoading(false);
                                 }
                             }}
+                            className="w-full group relative overflow-hidden rounded-xl bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500 p-[2px] transition-all duration-300 hover:shadow-lg hover:shadow-amber-200/50 hover:scale-[1.02] disabled:opacity-60 disabled:cursor-not-allowed"
                         >
-                            Entrar como Síndico DEMO
-                        </Button>
+                            <div className="relative flex items-center justify-center gap-2 rounded-[10px] bg-white px-4 py-3 transition-all duration-300 group-hover:bg-gradient-to-r group-hover:from-amber-50 group-hover:to-orange-50">
+                                <Sparkles className="h-5 w-5 text-amber-500 group-hover:animate-pulse" />
+                                <span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-orange-600">
+                                    Demonstração
+                                </span>
+                                {loading && <Loader2 className="h-4 w-4 text-amber-500 animate-spin" />}
+                            </div>
+                        </button>
                     </div>
                 </div>
             </div>
