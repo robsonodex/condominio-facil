@@ -5,6 +5,7 @@ import { Card, CardContent, Button, Input, Select, Table, Badge } from '@/compon
 import { Modal } from '@/components/ui/modal';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useMultiSelect } from '@/hooks/useMultiSelect';
 import { formatCurrency, formatDate, getStatusColor, getStatusLabel } from '@/lib/utils';
 import { Plus, Search, Building2, Edit, Trash2, Eye } from 'lucide-react';
 import { Condo, Plan } from '@/types/database';
@@ -40,6 +41,25 @@ export default function AdminCondominiosPage() {
         setLoading(false);
     };
 
+    const filteredCondos = condos.filter(c => {
+        const matchesSearch = c.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            c.cidade?.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesStatus = !filterStatus || c.status === filterStatus;
+        return matchesSearch && matchesStatus;
+    });
+
+    // Multi-select hook
+    const {
+        selectedIds,
+        selectedCount,
+        toggleSelect,
+        toggleSelectAll,
+        clearSelection,
+        isSelected,
+        isAllSelected,
+        hasSelection
+    } = useMultiSelect(filteredCondos);
+
     const handleDelete = async (id: string) => {
         if (!confirm('Deseja realmente excluir este condomínio?\n\nATENÇÃO: Todos os dados relacionados (unidades, moradores, financeiro, etc) serão excluídos permanentemente!')) return;
 
@@ -64,14 +84,48 @@ export default function AdminCondominiosPage() {
         }
     };
 
-    const filteredCondos = condos.filter(c => {
-        const matchesSearch = c.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            c.cidade?.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = !filterStatus || c.status === filterStatus;
-        return matchesSearch && matchesStatus;
-    });
+    const handleBulkDelete = async () => {
+        if (!confirm(`Deseja realmente excluir ${selectedCount} condomínio(s)?\n\nATENÇÃO: Todos os dados relacionados serão excluídos permanentemente!`)) return;
+
+        try {
+            const deletePromises = Array.from(selectedIds).map(id =>
+                fetch(`/api/admin/condos?id=${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${session?.access_token}` },
+                })
+            );
+
+            await Promise.all(deletePromises);
+            alert(`${selectedCount} condomínio(s) excluído(s) com sucesso!`);
+            clearSelection();
+            fetchCondos();
+        } catch (error: any) {
+            alert(`Erro ao excluir: ${error.message}`);
+        }
+    };
 
     const columns = [
+        {
+            key: 'checkbox',
+            header: () => (
+                <input
+                    type="checkbox"
+                    checked={isAllSelected()}
+                    onChange={toggleSelectAll}
+                    className="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500"
+                />
+            ),
+            render: (c: Condo) => (
+                <input
+                    type="checkbox"
+                    checked={isSelected(c.id)}
+                    onChange={() => toggleSelect(c.id)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500"
+                />
+            ),
+            className: 'w-12'
+        },
         {
             key: 'nome',
             header: 'Condomínio',
@@ -133,10 +187,18 @@ export default function AdminCondominiosPage() {
                     <h1 className="text-2xl font-bold text-gray-900">Condomínios</h1>
                     <p className="text-gray-500">Gerencie todos os condomínios da plataforma</p>
                 </div>
-                <Button onClick={() => { setEditingCondo(null); setShowModal(true); }}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Novo Condomínio
-                </Button>
+                <div className="flex gap-2">
+                    {hasSelection() && (
+                        <Button variant="ghost" onClick={handleBulkDelete} className="bg-red-50 text-red-600 hover:bg-red-100">
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Excluir {selectedCount} {selectedCount === 1 ? 'Selecionado' : 'Selecionados'}
+                        </Button>
+                    )}
+                    <Button onClick={() => { setEditingCondo(null); setShowModal(true); }}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Novo Condomínio
+                    </Button>
+                </div>
             </div>
 
             {/* Stats */}

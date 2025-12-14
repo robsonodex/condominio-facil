@@ -123,25 +123,25 @@ export default function AdminDashboardPage() {
 
             {/* Status Overview */}
             <div className="grid grid-cols-3 gap-4">
-                <Card>
+                <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0">
                     <CardContent className="py-4 text-center">
-                        <CheckCircle className="h-8 w-8 mx-auto text-emerald-500 mb-2" />
-                        <p className="text-2xl font-bold text-emerald-600">{stats.activeCondos}</p>
-                        <p className="text-sm text-gray-500">Ativos</p>
+                        <CheckCircle className="h-8 w-8 mx-auto mb-2 opacity-80" />
+                        <p className="text-2xl font-bold">{stats.activeCondos}</p>
+                        <p className="text-sm text-emerald-100">Ativos</p>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="bg-gradient-to-br from-amber-500 to-amber-600 text-white border-0">
                     <CardContent className="py-4 text-center">
-                        <AlertTriangle className="h-8 w-8 mx-auto text-yellow-500 mb-2" />
-                        <p className="text-2xl font-bold text-yellow-600">{stats.trialCondos}</p>
-                        <p className="text-sm text-gray-500">Em Teste</p>
+                        <AlertTriangle className="h-8 w-8 mx-auto mb-2 opacity-80" />
+                        <p className="text-2xl font-bold">{stats.trialCondos}</p>
+                        <p className="text-sm text-amber-100">Em Teste</p>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white border-0">
                     <CardContent className="py-4 text-center">
-                        <XCircle className="h-8 w-8 mx-auto text-red-500 mb-2" />
-                        <p className="text-2xl font-bold text-red-600">{stats.suspendedCondos}</p>
-                        <p className="text-sm text-gray-500">Suspensos</p>
+                        <XCircle className="h-8 w-8 mx-auto mb-2 opacity-80" />
+                        <p className="text-2xl font-bold">{stats.suspendedCondos}</p>
+                        <p className="text-sm text-red-100">Suspensos</p>
                     </CardContent>
                 </Card>
             </div>
