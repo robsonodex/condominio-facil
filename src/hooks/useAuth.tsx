@@ -212,14 +212,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             });
 
             if (!error && data.user) {
-                // Create user profile with ativo=false (pending email confirmation)
-                await supabase.from('users').insert({
-                    id: data.user.id,
-                    email,
-                    nome,
-                    role: 'sindico', // New registrations are síndicos (trial)
-                    ativo: false // Requires email confirmation
-                });
+                // Complete registration via API (using admin permissions to bypass RLS)
+                try {
+                    await fetch('/api/auth/complete-registration', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            userId: data.user.id,
+                            email,
+                            nome
+                        })
+                    });
+                } catch (regError) {
+                    console.error('[AUTH] Failed to complete registration:', regError);
+                }
 
                 // Send welcome email
                 try {
