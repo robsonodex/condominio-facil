@@ -172,9 +172,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const signIn = useCallback(async (email: string, password: string) => {
         try {
-            const { error } = await supabase.auth.signInWithPassword({ email, password });
-            return { error: error as Error | null };
-        } catch (err) {
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email,
+                password
+            });
+
+            if (error) throw error;
+
+            if (data.user) {
+                // Check if user is active
+                const { data: profile } = await supabase
+                    .from('users')
+                    .select('ativo, nome')
+                    .eq('id', data.user.id)
+                    .single();
+
+                if (profile && !profile.ativo) {
+                    // User not verified yet
+                    await supabase.auth.signOut();
+                    throw new Error('Sua conta ainda não foi verificada. Por favor, verifique seu email e clique no link de confirmação.');
+                }
+            }
+
+            return { error: null };
+        } catch (err: any) {
             return { error: err as Error };
         }
     }, [supabase]);
@@ -202,6 +223,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
                 // Send welcome email
                 try {
+                    // Create verification token
+                    const verificationToken = Buffer.from(data.user.id).toString('base64');
+                    const verificationUrl = `${window.location.origin}/api/auth/verify-email?token=${verificationToken}`;
+
                     await fetch('/api/email', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -210,7 +235,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                             destinatario: email,
                             dados: {
                                 nome,
-                                loginUrl: `${window.location.origin}/login`
+                                loginUrl: `${window.location.origin}/login`,
+                                verificationUrl
                             },
                             internalCall: true
                         })

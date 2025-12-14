@@ -87,7 +87,7 @@ const templates: Record<string, { subject: string; html: (data: any) => string }
                         
                         <!-- CTA Button -->
                         <div style="text-align: center; margin: 35px 0;">
-                            <a href="${sanitizeHtml(data.loginUrl)}" 
+                            <a href="${sanitizeHtml(data.verificationUrl || data.loginUrl)}" 
                                style="display: inline-block; 
                                       background: #10b981; 
                                       color: #ffffff; 
@@ -97,7 +97,7 @@ const templates: Record<string, { subject: string; html: (data: any) => string }
                                       font-weight: bold; 
                                       font-size: 16px;
                                       box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);">
-                                Acessar o Sistema →
+                                ${data.verification Url ? '✉️ Confirmar Email e Acessar' : 'Acessar o Sistema →'}
                             </a>
                         </div>
                         
