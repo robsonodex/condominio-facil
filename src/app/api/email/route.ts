@@ -647,7 +647,7 @@ export async function POST(request: NextRequest) {
         let user = null;
 
         // Templates que NÃO requerem autenticação (chamadas internas)
-        const publicTemplates = ['welcome', 'legal_acceptance_confirmed'];
+        const publicTemplates = ['welcome', 'legal_acceptance_confirmed', 'user_credentials', 'payment_received'];
         const requiresAuth = !publicTemplates.includes(tipo) || !internalCall;
 
         if (requiresAuth) {

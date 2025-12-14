@@ -185,8 +185,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 email,
                 password,
                 options: {
-                    data: { nome },
-                    emailRedirectTo: `${window.location.origin}/auth/callback`
+                    data: { nome }
+                    // Removed emailRedirectTo to prevent auto-login
                 }
             });
 
