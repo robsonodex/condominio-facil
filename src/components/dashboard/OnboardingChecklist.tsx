@@ -22,13 +22,11 @@ const CHECKLIST_ITEMS: ChecklistItem[] = [
     { key: 'cadastrar_unidades', label: 'Cadastrar unidades', icon: <Building2 className="h-4 w-4" />, href: '/unidades' },
     { key: 'cadastrar_moradores', label: 'Cadastrar moradores', icon: <Users className="h-4 w-4" />, href: '/moradores' },
     { key: 'configurar_financeiro', label: 'Configurar financeiro', icon: <DollarSign className="h-4 w-4" />, href: '/financeiro' },
-    { key: 'ativar_cobrancas', label: 'Ativar cobranças', icon: <CreditCard className="h-4 w-4" />, href: '/cobrancas' },
-    { key: 'ativar_portaria', label: 'Ativar portaria', icon: <Shield className="h-4 w-4" />, href: '/portaria' },
-    { key: 'ativar_reservas', label: 'Ativar reservas', icon: <Calendar className="h-4 w-4" />, href: '/reservas' },
-    { key: 'configurar_pwa', label: 'Configurar app/PWA', icon: <Smartphone className="h-4 w-4" />, href: '/perfil' },
-    { key: 'criar_primeiro_aviso', label: 'Criar primeiro aviso', icon: <Bell className="h-4 w-4" />, href: '/avisos' },
-    { key: 'criar_primeira_cobranca', label: 'Criar primeira cobrança', icon: <CreditCard className="h-4 w-4" />, href: '/cobrancas' },
-    { key: 'ver_relatorio_financeiro', label: 'Ver relatório financeiro', icon: <FileText className="h-4 w-4" />, href: '/relatorios' },
+    { key: 'ativar_cobrancas', label: 'Configurar cobranças', icon: <CreditCard className="h-4 w-4" />, href: '/cobrancas' },
+    { key: 'ativar_portaria', label: 'Configurar portaria', icon: <Shield className="h-4 w-4" />, href: '/portaria' },
+    { key: 'ativar_reservas', label: 'Configurar reservas', icon: <Calendar className="h-4 w-4" />, href: '/reservas' },
+    { key: 'criar_primeiro_aviso', label: 'Publicar primeiro aviso', icon: <Bell className="h-4 w-4" />, href: '/avisos' },
+    { key: 'ver_relatorio_financeiro', label: 'Visualizar relatórios', icon: <FileText className="h-4 w-4" />, href: '/relatorios' },
 ];
 
 interface OnboardingProgress {
@@ -181,8 +179,8 @@ export function OnboardingChecklist() {
                                 key={item.key}
                                 href={item.href}
                                 className={`flex items-center gap-3 p-2 rounded-lg transition-colors ${progress[item.key]
-                                        ? 'bg-emerald-50 text-emerald-700'
-                                        : 'hover:bg-gray-50 text-gray-600'
+                                    ? 'bg-emerald-50 text-emerald-700'
+                                    : 'hover:bg-gray-50 text-gray-600'
                                     }`}
                             >
                                 {progress[item.key] ? (
