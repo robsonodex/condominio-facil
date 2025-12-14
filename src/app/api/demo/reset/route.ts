@@ -4,7 +4,16 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 const DEMO_EMAIL = 'sindico.demo@condofacil.com';
 const DEMO_CONDO_NAME = 'Residencial Demo';
 
+// GET method for easy browser testing
+export async function GET(request: NextRequest) {
+    return resetDemo();
+}
+
 export async function POST(request: NextRequest) {
+    return resetDemo();
+}
+
+async function resetDemo() {
     try {
         // 1. Buscar condomínio demo
         const { data: demoCondo } = await supabaseAdmin
