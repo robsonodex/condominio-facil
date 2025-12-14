@@ -19,12 +19,16 @@ export default function UpgradePage() {
             name: 'Básico',
             price: 99.90,
             units: 20,
+            tagline: 'Perfeito para começar',
             features: [
-                'Até 20 unidades',
-                'Gestão financeira completa',
-                'Portaria digital',
-                'Avisos e comunicados',
-                'Suporte por email'
+                '✅ Até 20 unidades',
+                '💰 Gestão financeira completa - controle total de receitas e despesas',
+                '🏢 Portaria digital - registro de visitantes e encomendas',
+                '📢 Avisos e comunicados ilimitados',
+                '📊 Relatórios financeiros detalhados',
+                '💳 Integração com boletos e PIX',
+                '📱 Acesso mobile para síndicos e moradores',
+                '📧 Suporte por email em até 24h'
             ]
         },
         {
@@ -32,27 +36,36 @@ export default function UpgradePage() {
             price: 249.90,
             units: 60,
             popular: true,
+            tagline: 'O mais escolhido',
+            badge: '🔥 MELHOR CUSTO-BENEFÍCIO',
             features: [
-                'Até 60 unidades',
-                'Tudo do Básico +',
-                'Assembleias digitais',
-                'Enquetes',
-                'Gestão de documentos',
-                'Reservas de áreas comuns',
-                'Suporte prioritário'
+                '✅ Até 60 unidades',
+                '⭐ Tudo do Básico +',
+                '🗳️ Assembleias digitais - votações online com ata automática',
+                '📊 Enquetes e pesquisas - ouça seus moradores',
+                '📁 Gestão de documentos com assinatura digital',
+                '🏊 Reservas de áreas comuns automatizadas',
+                '🔔 Notificações push em tempo real',
+                '📈 Dashboard executivo com KPIs',
+                '⚡ Suporte prioritário - resposta em até 4h'
             ]
         },
         {
             name: 'Premium',
             price: 399.90,
             units: 'Ilimitadas',
+            tagline: 'Máximo desempenho',
+            badge: '👑 COMPLETO',
             features: [
-                'Unidades ilimitadas',
-                'Tudo do Avançado +',
-                'Múltiplos condomínios',
-                'API personalizada',
-                'Relatórios customizados',
-                'Gerente de conta dedicado'
+                '♾️ Unidades ilimitadas',
+                '⭐ Tudo do Avançado +',
+                '🏢 Múltiplos condomínios na mesma conta',
+                '🔌 API personalizada para integrações',
+                '📊 Relatórios customizados conforme sua necessidade',
+                '🤝 Gerente de conta dedicado',
+                '📞 Suporte VIP - WhatsApp direto',
+                '🎓 Treinamento personalizado da equipe',
+                '🔒 Backup diário automático'
             ]
         }
     ];
@@ -91,7 +104,15 @@ export default function UpgradePage() {
                             className={`relative bg-white rounded-2xl shadow-xl p-8 ${plan.popular ? 'ring-2 ring-emerald-500 scale-105' : ''
                                 }`}
                         >
-                            {plan.popular && (
+                            {plan.badge && (
+                                <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
+                                    <span className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-1 rounded-full text-sm font-bold shadow-lg">
+                                        {plan.badge}
+                                    </span>
+                                </div>
+                            )}
+
+                            {plan.popular && !plan.badge && (
                                 <div className="absolute -top-4 left-1/2 -translate-x-1/2">
                                     <span className="bg-emerald-500 text-white px-4 py-1 rounded-full text-sm font-semibold flex items-center gap-1">
                                         <Crown className="h-4 w-4" />
@@ -101,7 +122,10 @@ export default function UpgradePage() {
                             )}
 
                             <div className="text-center mb-6">
-                                <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
+                                <h3 className="text-2xl font-bold text-gray-900 mb-1">{plan.name}</h3>
+                                {plan.tagline && (
+                                    <p className="text-sm text-emerald-600 font-medium mb-3">{plan.tagline}</p>
+                                )}
                                 <div className="flex items-baseline justify-center gap-1">
                                     <span className="text-4xl font-bold text-emerald-600">
                                         R$ {plan.price.toFixed(2)}
