@@ -7,12 +7,30 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 // Cache para dados do condomínio
 let condoCache: { [key: string]: any } = {};
 
+const VIEW_AS_STORAGE_KEY = 'cf_view_as_role';
+
 export function useUser() {
     const { user, profile: authProfile, loading: authLoading } = useAuth();
     const [impersonatedProfile, setImpersonatedProfile] = useState<any>(null);
     const [impersonationLoading, setImpersonationLoading] = useState(true);
     const [isImpersonating, setIsImpersonating] = useState(false);
     const [originalAdminId, setOriginalAdminId] = useState<string | null>(null);
+    const [viewAsRole, setViewAsRole] = useState<string | null>(null);
+
+    // Load viewAsRole from localStorage
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const stored = localStorage.getItem(VIEW_AS_STORAGE_KEY);
+            if (stored) setViewAsRole(stored);
+
+            // Listen for changes from RoleViewSwitcher
+            const handleChange = (e: CustomEvent<string>) => {
+                setViewAsRole(e.detail);
+            };
+            window.addEventListener('viewAsRoleChange', handleChange as EventListener);
+            return () => window.removeEventListener('viewAsRoleChange', handleChange as EventListener);
+        }
+    }, []);
 
     // Fetch Impersonation Status
     const checkImpersonation = useCallback(async () => {

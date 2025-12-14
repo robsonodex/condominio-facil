@@ -2,6 +2,69 @@
 
 ---
 
+## ❓ DÚVIDAS RÁPIDAS (Respostas Diretas)
+
+### "Fechei a venda. O que faço agora?"
+
+| **Passo** | **Ação** | **Onde** |
+|-----------|----------|----------|
+| **1** | Acesse o painel admin | `/admin/usuarios` |
+| **2** | Clique **"+ Novo Usuário"** | Botão no topo |
+| **3** | Preencha: Nome, Email, Senha, Role = **Síndico** | Formulário |
+| **4** | Marque **"Criar novo condomínio"** | Opção que aparece |
+| **5** | Escolha o **Plano** vendido | Básico/Profissional/Avançado |
+| **6** | Marque **"Ativar imediatamente"** (se já pagou) | Checkbox |
+| **7** | Clique **Salvar** | Botão verde |
+| **8** | Envie ao cliente os dados de acesso | WhatsApp/Email |
+
+### ⚡ Resumo em 1 linha:
+> **Admin → Usuários → Novo → Síndico → Criar Condomínio → Plano → Ativar → Enviar dados**
+
+---
+
+### 📱 Template para enviar ao cliente:
+
+```
+✅ Acesso liberado!
+
+Site: https://meucondominiofacil.com/login
+Email: [email cadastrado]
+Senha: [senha criada]
+
+Acesse e comece a usar!
+Dúvidas? Me chama no WhatsApp.
+```
+
+---
+
+### "Cliente está em teste e quer pagar?"
+1. Vá em `/admin/assinaturas`
+2. Clique **📧 Cobrar** na assinatura dele
+3. Sistema envia email com link de pagamento automático
+
+### "Como dar mais dias de teste?"
+1. Vá em `/admin/assinaturas`
+2. Edite a assinatura
+3. Altere a data de expiração
+
+### "Cliente esqueceu a senha?"
+1. Peça para clicar em **"Esqueci minha senha"** no login
+2. Ou vá em `/admin/usuarios` e reset manualmente
+
+### "Como o síndico pode me pagar direto do sistema?"
+O síndico paga pela própria conta dele:
+1. Ele acessa **"Minha Assinatura"** no menu lateral
+2. Clica em **"Pagar"** ou **"Renovar"**
+3. Escolhe: **Cartão**, **PIX** ou **Boleto** (Mercado Pago)
+4. Paga e pronto! Sistema ativa automaticamente
+
+**Ou você envia a cobrança:**
+1. Vá em `/admin/assinaturas`
+2. Clique **📧 Cobrar**
+3. Cliente recebe email com link de pagamento
+
+---
+
 ## 📋 PARA O ADMINISTRADOR (Você)
 
 ### Processo Completo de Venda

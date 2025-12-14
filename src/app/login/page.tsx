@@ -180,7 +180,7 @@ export default function LoginPage() {
                                 }
                             }}
                         >
-                            🎯 Entrar como Síndico DEMO
+                            Entrar como Síndico DEMO
                         </Button>
                     </div>
                 </div>

@@ -99,10 +99,12 @@ const adminItems: NavItem[] = [
 ];
 
 import { ImpersonateModal } from '@/components/admin/ImpersonateModal';
+import { RoleViewSwitcher, useViewAsRole } from '@/components/admin/RoleViewSwitcher';
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
     const pathname = usePathname();
     const { profile, isSuperAdmin, isSuperAdminReal, isImpersonating } = useUser();
+    const viewAsRole = useViewAsRole();
     const [planFeatures, setPlanFeatures] = useState<PlanFeatures | null>(null);
     const [expandedItems, setExpandedItems] = useState<string[]>(['/governanca']);
 
@@ -131,12 +133,17 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         );
     };
 
-    const filteredNavItems = navItems.filter(item => {
-        // Superadmin sees everything
-        if (isSuperAdmin) return true;
+    // Determine effective role for filtering (superadmin can use viewAsRole)
+    const effectiveFilterRole = isSuperAdminReal && !isImpersonating && viewAsRole !== 'superadmin'
+        ? viewAsRole
+        : profile?.role || '';
 
-        // Check role permissions
-        if (item.roles && !item.roles.includes(profile?.role || '')) return false;
+    const filteredNavItems = navItems.filter(item => {
+        // Superadmin in superadmin view sees everything
+        if (isSuperAdminReal && !isImpersonating && viewAsRole === 'superadmin') return true;
+
+        // Check role permissions using effective role
+        if (item.roles && !item.roles.includes(effectiveFilterRole)) return false;
 
         // Check plan features
         if (item.requiresFeature && planFeatures) {
@@ -189,8 +196,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
                 {/* SUPERADMIN ACTIONS */}
                 {(isSuperAdminReal || isImpersonating) && (
-                    <div className="px-6 pt-4">
+                    <div className="px-6 pt-4 space-y-3">
                         <ImpersonateModal />
+                        {isSuperAdminReal && !isImpersonating && <RoleViewSwitcher />}
                     </div>
                 )}
 
