@@ -6,6 +6,7 @@ import { Sidebar, Header } from '@/components/shared';
 import { useAuth } from '@/hooks/useAuth';
 import { Loader2 } from 'lucide-react';
 import { ImpersonationBanner } from '@/components/admin/ImpersonationBanner';
+import TrialBanner from '@/components/TrialBanner';
 
 function LoadingScreen() {
     return (
@@ -54,6 +55,7 @@ export default function DashboardLayout({
     return (
         <div className="min-h-screen bg-gray-50">
             <ImpersonationBanner />
+            <TrialBanner />
             <div className="flex">
                 <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
                 <div className="flex-1 lg:ml-0">
