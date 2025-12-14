@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Loader2 } from 'lucide-react';
 import { ImpersonationBanner } from '@/components/admin/ImpersonationBanner';
 import TrialBanner from '@/components/TrialBanner';
+import { DemoBanner } from '@/components/demo/DemoBanner';
 
 function LoadingScreen() {
     return (
@@ -54,6 +55,7 @@ export default function DashboardLayout({
 
     return (
         <div className="min-h-screen bg-gray-50">
+            <DemoBanner />
             <ImpersonationBanner />
             <TrialBanner />
             <div className="flex">
