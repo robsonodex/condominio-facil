@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useUser } from '@/hooks/useUser';
+import { useState, useEffect } from 'react';
 import {
     LayoutDashboard,
     Building2,
@@ -18,7 +19,8 @@ import {
     CreditCard,
     Calendar,
     Package,
-    X
+    X,
+    Lock
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -31,6 +33,19 @@ interface NavItem {
     label: string;
     icon: React.ReactNode;
     roles?: string[];
+    requiresFeature?: string; // Feature flag from plan
+}
+
+interface PlanFeatures {
+    hasAssemblies: boolean;
+    hasPolls: boolean;
+    hasDocuments: boolean;
+    hasCommonAreas: boolean;
+    hasOccurrences: boolean;
+    hasMaintenance: boolean;
+    hasSuppliers: boolean;
+    hasMultipleCondos: boolean;
+    maxUnits: number;
 }
 
 const navItems: NavItem[] = [
@@ -44,17 +59,17 @@ const navItems: NavItem[] = [
     { href: '/usuarios', label: 'Usuários', icon: <Users className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
     { href: '/avisos', label: 'Avisos', icon: <Bell className="h-5 w-5" /> },
     { href: '/notificacoes', label: 'Notificações', icon: <Bell className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
-    { href: '/ocorrencias', label: 'Ocorrências', icon: <AlertTriangle className="h-5 w-5" /> },
-    { href: '/reservas', label: 'Reservas', icon: <Calendar className="h-5 w-5" /> },
+    { href: '/ocorrencias', label: 'Ocorrências', icon: <AlertTriangle className="h-5 w-5" />, requiresFeature: 'hasOccurrences' },
+    { href: '/reservas', label: 'Reservas', icon: <Calendar className="h-5 w-5" />, requiresFeature: 'hasCommonAreas' },
     { href: '/portaria', label: 'Portaria', icon: <UserCheck className="h-5 w-5" />, roles: ['superadmin', 'sindico', 'porteiro'] },
     { href: '/portaria/cameras', label: 'Câmeras', icon: <Settings className="h-5 w-5" />, roles: ['superadmin', 'sindico', 'porteiro'] },
     { href: '/portaria/minhas-encomendas', label: 'Minhas Encomendas', icon: <Package className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
     { href: '/relatorios', label: 'Relatórios', icon: <FileText className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
     { href: '/automacoes', label: 'Automações', icon: <Settings className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
-    { href: '/governanca/assembleias', label: 'Assembleias', icon: <Users className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
-    { href: '/governanca/enquetes', label: 'Enquetes', icon: <FileText className="h-5 w-5" /> },
-    { href: '/governanca/documents', label: 'Documentos', icon: <FileText className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
-    { href: '/manutencao', label: 'Manutenção', icon: <Settings className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
+    { href: '/governanca/assembleias', label: 'Assembleias', icon: <Users className="h-5 w-5" />, roles: ['superadmin', 'sindico'], requiresFeature: 'hasAssemblies' },
+    { href: '/governanca/enquetes', label: 'Enquetes', icon: <FileText className="h-5 w-5" />, requiresFeature: 'hasPolls' },
+    { href: '/governanca/documents', label: 'Documentos', icon: <FileText className="h-5 w-5" />, roles: ['superadmin', 'sindico'], requiresFeature: 'hasDocuments' },
+    { href: '/manutencao', label: 'Manutenção', icon: <Settings className="h-5 w-5" />, roles: ['superadmin', 'sindico'], requiresFeature: 'hasMaintenance' },
     { href: '/assinatura', label: 'Assinatura', icon: <CreditCard className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
     { href: '/perfil', label: 'Meu Perfil', icon: <Settings className="h-5 w-5" /> },
     { href: '/portaria/deliveries/list', label: 'Encomendas (Porteiro)', icon: <Package className="h-5 w-5" />, roles: ['porteiro'] },
@@ -76,19 +91,31 @@ import { ImpersonateModal } from '@/components/admin/ImpersonateModal';
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
     const pathname = usePathname();
     const { profile, isSuperAdmin, isSuperAdminReal, isImpersonating } = useUser();
+    const [planFeatures, setPlanFeatures] = useState<PlanFeatures | null>(null);
 
-    // SUPERADMIN vê TODOS os menus, sem exceção (se não estiver impersonando, ou se quiser ver)
-    // Se estiver impersonando, deve ver o que o target vê?
-    // O Dashboard já filtra os dados. O menu deve ser filtrado também?
-    // Se isSuperAdmin for true (que agora é false se impersonando syndic), o sidebar se comporta como syndic.
-    // Isso é BOM.
-
-    // Mas precisamos da opção de trocar de conta SEMPRE visível para o Superadmin REAL.
+    useEffect(() => {
+        // Fetch plan features for non-superadmins
+        if (!isSuperAdmin) {
+            fetch('/api/plan-features')
+                .then(res => res.json())
+                .then(data => setPlanFeatures(data))
+                .catch(err => console.error('[Sidebar] Error fetching plan features:', err));
+        }
+    }, [isSuperAdmin]);
 
     const filteredNavItems = navItems.filter(item => {
+        // Superadmin sees everything
         if (isSuperAdmin) return true;
-        if (!item.roles) return true;
-        return item.roles.includes(profile?.role || '');
+
+        // Check role permissions
+        if (item.roles && !item.roles.includes(profile?.role || '')) return false;
+
+        // Check plan features
+        if (item.requiresFeature && planFeatures) {
+            return planFeatures[item.requiresFeature as keyof PlanFeatures] === true;
+        }
+
+        return true;
     });
 
     return (
