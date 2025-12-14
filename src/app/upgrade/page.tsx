@@ -19,16 +19,16 @@ export default function UpgradePage() {
             name: 'Básico',
             price: 99.90,
             units: 20,
-            tagline: 'Ideal para condomínios pequenos',
+            tagline: 'Comece sua gestão digital',
             features: [
                 'Até 20 unidades',
                 'Gestão financeira completa',
-                'Controle de portaria digital',
-                'Avisos e comunicados',
+                'Controle de portaria',
                 'Cadastro de moradores',
-                'Relatórios financeiros',
-                'Integração com boletos e PIX',
-                'Acesso mobile',
+                'Avisos e comunicados',
+                'Relatórios básicos',
+                'Boletos e PIX',
+                'App mobile',
                 'Suporte por email'
             ]
         },
@@ -37,38 +37,41 @@ export default function UpgradePage() {
             price: 249.90,
             units: 60,
             popular: true,
-            tagline: 'Mais recursos e capacidade',
-            badge: 'Recomendado',
+            tagline: 'Gestão profissional completa',
+            badge: 'Mais Vendido',
+            savings: 'Economize 5 horas/mês',
             features: [
                 'Até 60 unidades',
-                'Tudo do plano Básico',
-                'Assembleias digitais',
-                'Enquetes e pesquisas',
+                'Tudo do Básico +',
+                'Assembleias digitais com votação',
+                'Enquetes e pesquisas online',
                 'Gestão de documentos',
                 'Reserva de áreas comuns',
                 'Registro de ocorrências',
                 'Notificações em tempo real',
                 'Dashboard executivo',
-                'Suporte prioritário'
-            ]
+                'Suporte prioritário (4h)'
+            ],
+            highlight: 'Escolha de 80% dos síndicos profissionais'
         },
         {
             name: 'Premium',
             price: 399.90,
             units: 'Ilimitadas',
-            tagline: 'Solução corporativa completa',
-            badge: 'Empresarial',
+            tagline: 'Tecnologia e segurança avançada',
+            badge: 'Completo',
             features: [
                 'Unidades ilimitadas',
-                'Tudo do plano Avançado',
+                'Tudo do Avançado +',
+                'Câmeras de segurança (RTSP)',
+                'Visualização ao vivo',
                 'Múltiplos condomínios',
-                'Controle de manutenção',
-                'Gestão de fornecedores',
+                'Gestão de manutenção',
+                'Controle de fornecedores',
                 'Relatórios personalizados',
-                'Histórico completo',
-                'Gerente de conta dedicado',
-                'Suporte via WhatsApp'
-            ]
+                'Suporte via WhatsApp direto'
+            ],
+            highlight: 'Veja seu condomínio de qualquer lugar'
         }
     ];
 
@@ -128,6 +131,11 @@ export default function UpgradePage() {
                                 {plan.tagline && (
                                     <p className="text-sm text-emerald-600 font-medium mb-3">{plan.tagline}</p>
                                 )}
+                                {plan.savings && (
+                                    <div className="inline-block bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-xs font-semibold mb-2">
+                                        ⏱️ {plan.savings}
+                                    </div>
+                                )}
                                 <div className="flex items-baseline justify-center gap-1">
                                     <span className="text-4xl font-bold text-emerald-600">
                                         R$ {plan.price.toFixed(2)}
@@ -139,7 +147,7 @@ export default function UpgradePage() {
                                 </p>
                             </div>
 
-                            <ul className="space-y-3 mb-8">
+                            <ul className="space-y-3 mb-6">
                                 {plan.features.map((feature, i) => (
                                     <li key={i} className="flex items-start gap-2">
                                         <Check className="h-5 w-5 text-emerald-500 flex-shrink-0 mt-0.5" />
@@ -147,6 +155,14 @@ export default function UpgradePage() {
                                     </li>
                                 ))}
                             </ul>
+
+                            {plan.highlight && (
+                                <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+                                    <p className="text-sm text-emerald-800 font-medium text-center">
+                                        ⭐ {plan.highlight}
+                                    </p>
+                                </div>
+                            )}
 
                             <a
                                 href={`https://wa.me/5521965532247?text=Olá! Quero assinar o plano ${plan.name} (R$ ${plan.price.toFixed(2)}/mês)`}
