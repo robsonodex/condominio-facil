@@ -123,7 +123,7 @@ export default function UpgradePage() {
                             </ul>
 
                             <a
-                                href={`https://wa.me/5521999999999?text=Olá! Quero assinar o plano ${plan.name} (R$ ${plan.price.toFixed(2)}/mês)`}
+                                href={`https://wa.me/5521965532247?text=Olá! Quero assinar o plano ${plan.name} (R$ ${plan.price.toFixed(2)}/mês)`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className={`block w-full text-center py-3 px-6 rounded-lg font-semibold transition-colors ${plan.popular
