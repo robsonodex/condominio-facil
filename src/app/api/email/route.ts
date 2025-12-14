@@ -97,7 +97,7 @@ const templates: Record<string, { subject: string; html: (data: any) => string }
                                       font-weight: bold; 
                                       font-size: 16px;
                                       box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);">
-                                ${data.verification Url ? '✉️ Confirmar Email e Acessar' : 'Acessar o Sistema →'}
+                                ${data.verificationUrl ? '✉️ Confirmar Email e Acessar' : 'Acessar o Sistema →'}
                             </a>
                         </div>
                         
