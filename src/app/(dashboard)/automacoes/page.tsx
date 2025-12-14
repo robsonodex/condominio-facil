@@ -172,9 +172,53 @@ export default function AutomacoesPage() {
                 </CardContent>
             </Card>
 
+            {/* Stats */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <Card
+                    className={`bg-gradient-to-br ${settings.lembrete_ativo ? 'from-blue-500 to-blue-600' : 'from-gray-400 to-gray-500'} text-white border-0 cursor-pointer hover:scale-105 transition-transform`}
+                    onClick={() => document.getElementById('regra-lembrete')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+                >
+                    <CardContent className="py-4 text-center">
+                        <Bell className="h-8 w-8 mx-auto mb-2 opacity-80" />
+                        <p className="text-sm text-white/80 mb-1">Lembrete</p>
+                        <p className="text-xs text-white/60">{settings.lembrete_ativo ? `${settings.dias_lembrete} dias` : 'Inativo'}</p>
+                    </CardContent>
+                </Card>
+                <Card
+                    className={`bg-gradient-to-br ${settings.multa_automatica ? 'from-orange-500 to-orange-600' : 'from-gray-400 to-gray-500'} text-white border-0 cursor-pointer hover:scale-105 transition-transform`}
+                    onClick={() => document.getElementById('regra-multa')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+                >
+                    <CardContent className="py-4 text-center">
+                        <Percent className="h-8 w-8 mx-auto mb-2 opacity-80" />
+                        <p className="text-sm text-white/80 mb-1">Multa</p>
+                        <p className="text-xs text-white/60">{settings.multa_automatica ? `${settings.multa_percentual}%` : 'Inativa'}</p>
+                    </CardContent>
+                </Card>
+                <Card
+                    className={`bg-gradient-to-br ${settings.cobranca_automatica ? 'from-red-500 to-red-600' : 'from-gray-400 to-gray-500'} text-white border-0 cursor-pointer hover:scale-105 transition-transform`}
+                    onClick={() => document.getElementById('regra-cobranca')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+                >
+                    <CardContent className="py-4 text-center">
+                        <DollarSign className="h-8 w-8 mx-auto mb-2 opacity-80" />
+                        <p className="text-sm text-white/80 mb-1">Cobrança</p>
+                        <p className="text-xs text-white/60">{settings.cobranca_automatica ? `${settings.dias_cobranca_automatica} dias` : 'Inativa'}</p>
+                    </CardContent>
+                </Card>
+                <Card
+                    className={`bg-gradient-to-br ${settings.relatorio_automatico ? 'from-purple-500 to-purple-600' : 'from-gray-400 to-gray-500'} text-white border-0 cursor-pointer hover:scale-105 transition-transform`}
+                    onClick={() => document.getElementById('regra-relatorio')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+                >
+                    <CardContent className="py-4 text-center">
+                        <Clock className="h-8 w-8 mx-auto mb-2 opacity-80" />
+                        <p className="text-sm text-white/80 mb-1">Relatório</p>
+                        <p className="text-xs text-white/60">{settings.relatorio_automatico ? `${settings.dias_relatorio_inadimplentes} dias` : 'Inativo'}</p>
+                    </CardContent>
+                </Card>
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Regra 1 - Lembrete */}
-                <Card>
+                <Card id="regra-lembrete">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <Bell className="h-5 w-5 text-blue-500" />
@@ -202,7 +246,7 @@ export default function AutomacoesPage() {
                 </Card>
 
                 {/* Regra 2 - Multa */}
-                <Card>
+                <Card id="regra-multa">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <Percent className="h-5 w-5 text-orange-500" />
@@ -250,7 +294,7 @@ export default function AutomacoesPage() {
                 </Card>
 
                 {/* Regra 3 - Cobrança Automática */}
-                <Card>
+                <Card id="regra-cobranca">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <DollarSign className="h-5 w-5 text-red-500" />
@@ -278,7 +322,7 @@ export default function AutomacoesPage() {
                 </Card>
 
                 {/* Regra 4 - Relatório */}
-                <Card>
+                <Card id="regra-relatorio">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <Clock className="h-5 w-5 text-purple-500" />

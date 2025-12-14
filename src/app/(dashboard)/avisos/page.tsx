@@ -93,6 +93,35 @@ export default function AvisosPage() {
                 )}
             </div>
 
+            {/* Stats */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0">
+                    <CardContent className="py-4 text-center">
+                        <Bell className="h-8 w-8 mx-auto mb-2 opacity-80" />
+                        <p className="text-2xl font-bold">{notices.length}</p>
+                        <p className="text-sm text-emerald-100">Total de Avisos</p>
+                    </CardContent>
+                </Card>
+                <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0">
+                    <CardContent className="py-4 text-center">
+                        <p className="text-2xl font-bold">{notices.filter(n => n.publico_alvo === 'todos').length}</p>
+                        <p className="text-sm text-blue-100">Para Todos</p>
+                    </CardContent>
+                </Card>
+                <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0">
+                    <CardContent className="py-4 text-center">
+                        <p className="text-2xl font-bold">{notices.filter(n => n.publico_alvo === 'somente_moradores').length}</p>
+                        <p className="text-sm text-purple-100">Moradores</p>
+                    </CardContent>
+                </Card>
+                <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white border-0">
+                    <CardContent className="py-4 text-center">
+                        <p className="text-2xl font-bold">{notices.filter(n => n.publico_alvo === 'somente_sindico_porteiro').length}</p>
+                        <p className="text-sm text-orange-100">Síndico/Porteiro</p>
+                    </CardContent>
+                </Card>
+            </div>
+
             {/* Notice List */}
             {loading ? (
                 <div className="flex justify-center py-12">

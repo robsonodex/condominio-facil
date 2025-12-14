@@ -231,27 +231,27 @@ export default function StatusPage() {
 
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="border-emerald-200 bg-emerald-50">
+                <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0">
                     <CardContent className="p-4 text-center">
-                        <CheckCircle className="h-8 w-8 text-emerald-500 mx-auto mb-2" />
-                        <p className="text-3xl font-bold text-emerald-700">{okCount}</p>
-                        <p className="text-sm text-emerald-600">Funcionando</p>
+                        <CheckCircle className="h-8 w-8 text-white mx-auto mb-2 opacity-80" />
+                        <p className="text-3xl font-bold">{okCount}</p>
+                        <p className="text-sm text-emerald-100">Funcionando</p>
                     </CardContent>
                 </Card>
 
-                <Card className="border-amber-200 bg-amber-50">
+                <Card className="bg-gradient-to-br from-amber-500 to-amber-600 text-white border-0">
                     <CardContent className="p-4 text-center">
-                        <AlertTriangle className="h-8 w-8 text-amber-500 mx-auto mb-2" />
-                        <p className="text-3xl font-bold text-amber-700">{atencaoCount}</p>
-                        <p className="text-sm text-amber-600">Atenção</p>
+                        <AlertTriangle className="h-8 w-8 text-white mx-auto mb-2 opacity-80" />
+                        <p className="text-3xl font-bold">{atencaoCount}</p>
+                        <p className="text-sm text-amber-100">Atenção</p>
                     </CardContent>
                 </Card>
 
-                <Card className="border-red-200 bg-red-50">
+                <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white border-0">
                     <CardContent className="p-4 text-center">
-                        <XCircle className="h-8 w-8 text-red-500 mx-auto mb-2" />
-                        <p className="text-3xl font-bold text-red-700">{erroCount}</p>
-                        <p className="text-sm text-red-600">Erros</p>
+                        <XCircle className="h-8 w-8 text-white mx-auto mb-2 opacity-80" />
+                        <p className="text-3xl font-bold">{erroCount}</p>
+                        <p className="text-sm text-red-100">Erros</p>
                     </CardContent>
                 </Card>
             </div>

@@ -253,11 +253,55 @@ export default function PortariaProfissionalPage() {
                     <Button variant={isFullscreen ? 'secondary' : 'outline'} size="sm" onClick={toggleFullscreen}>
                         {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
                     </Button>
-                    <Button onClick={() => setShowModal(true)}>
-                        <UserPlus className="h-4 w-4 mr-2" />
-                        Registrar Entrada
-                    </Button>
                 </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button
+                    onClick={() => { setTipo('visitante'); setShowModal(true); }}
+                    className="group relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
+                >
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center group-hover:bg-white/30 transition-colors">
+                            <Users className="h-10 w-10" />
+                        </div>
+                        <div className="text-center">
+                            <h3 className="text-2xl font-bold mb-1">Registrar Visitante</h3>
+                            <p className="text-blue-100 text-sm">Visitantes e convidados</p>
+                        </div>
+                    </div>
+                </button>
+
+                <button
+                    onClick={() => { setTipo('prestador_servico'); setShowModal(true); }}
+                    className="group relative overflow-hidden bg-gradient-to-br from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
+                >
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center group-hover:bg-white/30 transition-colors">
+                            <Shield className="h-10 w-10" />
+                        </div>
+                        <div className="text-center">
+                            <h3 className="text-2xl font-bold mb-1">Registrar Prestador</h3>
+                            <p className="text-orange-100 text-sm">Serviços e manutenção</p>
+                        </div>
+                    </div>
+                </button>
+
+                <button
+                    onClick={() => { setTipo('entrega'); setShowModal(true); }}
+                    className="group relative overflow-hidden bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
+                >
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center group-hover:bg-white/30 transition-colors">
+                            <Car className="h-10 w-10" />
+                        </div>
+                        <div className="text-center">
+                            <h3 className="text-2xl font-bold mb-1">Registrar Veículo</h3>
+                            <p className="text-green-100 text-sm">Entregas e veículos</p>
+                        </div>
+                    </div>
+                </button>
             </div>
 
             {/* Stats */}

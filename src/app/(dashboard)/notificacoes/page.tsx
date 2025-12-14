@@ -193,24 +193,34 @@ export default function NotificacoesPage() {
 
             {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                {TIPO_OPTIONS.map(opt => {
-                    const count = notifications.filter(n => n.tipo === opt.value).length;
-                    return (
-                        <Card key={opt.value}>
-                            <CardContent className="p-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                                        {opt.icon}
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-500">{opt.label.split(' ')[1]}</p>
-                                        <p className="text-2xl font-bold">{count}</p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    );
-                })}
+                <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0">
+                    <CardContent className="py-4 text-center">
+                        <Smartphone className="h-8 w-8 mx-auto mb-2 opacity-80" />
+                        <p className="text-2xl font-bold">{notifications.filter(n => n.tipo === 'push').length}</p>
+                        <p className="text-sm text-purple-100">Push</p>
+                    </CardContent>
+                </Card>
+                <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white border-0">
+                    <CardContent className="py-4 text-center">
+                        <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-80" />
+                        <p className="text-2xl font-bold">{notifications.filter(n => n.tipo === 'whatsapp').length}</p>
+                        <p className="text-sm text-green-100">WhatsApp</p>
+                    </CardContent>
+                </Card>
+                <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0">
+                    <CardContent className="py-4 text-center">
+                        <Mail className="h-8 w-8 mx-auto mb-2 opacity-80" />
+                        <p className="text-2xl font-bold">{notifications.filter(n => n.tipo === 'email').length}</p>
+                        <p className="text-sm text-blue-100">Email</p>
+                    </CardContent>
+                </Card>
+                <Card className="bg-gradient-to-br from-amber-500 to-amber-600 text-white border-0">
+                    <CardContent className="py-4 text-center">
+                        <Bell className="h-8 w-8 mx-auto mb-2 opacity-80" />
+                        <p className="text-2xl font-bold">{notifications.filter(n => n.tipo === 'aviso').length}</p>
+                        <p className="text-sm text-amber-100">Avisos</p>
+                    </CardContent>
+                </Card>
             </div>
 
             {/* History */}

@@ -231,6 +231,38 @@ export default function ReservasPage() {
                 </div>
             </div>
 
+            {/* Stats */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0">
+                    <CardContent className="py-4 text-center">
+                        <Calendar className="h-8 w-8 mx-auto mb-2 opacity-80" />
+                        <p className="text-2xl font-bold">{reservations.length}</p>
+                        <p className="text-sm text-purple-100">Total de Reservas</p>
+                    </CardContent>
+                </Card>
+                <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0">
+                    <CardContent className="py-4 text-center">
+                        <CheckCircle className="h-8 w-8 mx-auto mb-2 opacity-80" />
+                        <p className="text-2xl font-bold">{reservations.filter(r => r.status === 'aprovada').length}</p>
+                        <p className="text-sm text-emerald-100">Aprovadas</p>
+                    </CardContent>
+                </Card>
+                <Card className="bg-gradient-to-br from-amber-500 to-amber-600 text-white border-0">
+                    <CardContent className="py-4 text-center">
+                        <Clock className="h-8 w-8 mx-auto mb-2 opacity-80" />
+                        <p className="text-2xl font-bold">{reservations.filter(r => r.status === 'pendente').length}</p>
+                        <p className="text-sm text-amber-100">Pendentes</p>
+                    </CardContent>
+                </Card>
+                <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0">
+                    <CardContent className="py-4 text-center">
+                        <MapPin className="h-8 w-8 mx-auto mb-2 opacity-80" />
+                        <p className="text-2xl font-bold">{areas.length}</p>
+                        <p className="text-sm text-blue-100">Áreas Disponíveis</p>
+                    </CardContent>
+                </Card>
+            </div>
+
             {/* Seletor de Área */}
             <div className="flex flex-wrap gap-4 items-center">
                 <Select
@@ -282,7 +314,7 @@ export default function ReservasPage() {
                                     <div className="space-y-1 mt-1">
                                         {dayReservations.slice(0, 2).map(r => (
                                             <div key={r.id} className={`text-xs px-1 rounded truncate ${r.status === 'aprovada' ? 'bg-emerald-100 text-emerald-700' :
-                                                    r.status === 'pendente' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'
+                                                r.status === 'pendente' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'
                                                 }`}>
                                                 {r.horario_inicio.slice(0, 5)} - {r.user?.nome?.split(' ')[0] || 'Reserva'}
                                             </div>

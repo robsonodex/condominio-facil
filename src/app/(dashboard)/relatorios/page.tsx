@@ -142,6 +142,55 @@ export default function RelatoriosPage() {
                 <p className="text-gray-500">Exporte relatórios em PDF ou Excel</p>
             </div>
 
+            {/* Stats */}
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                <Card
+                    className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0 cursor-pointer hover:scale-105 transition-transform"
+                    onClick={() => setReportType('financeiro')}
+                >
+                    <CardContent className="py-4 text-center">
+                        <FileText className="h-6 w-6 mx-auto mb-1 opacity-80" />
+                        <p className="text-xs text-emerald-100">Financeiro</p>
+                    </CardContent>
+                </Card>
+                <Card
+                    className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 cursor-pointer hover:scale-105 transition-transform"
+                    onClick={() => setReportType('cobrancas')}
+                >
+                    <CardContent className="py-4 text-center">
+                        <FileText className="h-6 w-6 mx-auto mb-1 opacity-80" />
+                        <p className="text-xs text-blue-100">Cobranças</p>
+                    </CardContent>
+                </Card>
+                <Card
+                    className="bg-gradient-to-br from-orange-500 to-orange-600 text-white border-0 cursor-pointer hover:scale-105 transition-transform"
+                    onClick={() => setReportType('ocorrencias')}
+                >
+                    <CardContent className="py-4 text-center">
+                        <FileText className="h-6 w-6 mx-auto mb-1 opacity-80" />
+                        <p className="text-xs text-orange-100">Ocorrências</p>
+                    </CardContent>
+                </Card>
+                <Card
+                    className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0 cursor-pointer hover:scale-105 transition-transform"
+                    onClick={() => setReportType('moradores')}
+                >
+                    <CardContent className="py-4 text-center">
+                        <FileText className="h-6 w-6 mx-auto mb-1 opacity-80" />
+                        <p className="text-xs text-purple-100">Moradores</p>
+                    </CardContent>
+                </Card>
+                <Card
+                    className="bg-gradient-to-br from-indigo-500 to-indigo-600 text-white border-0 cursor-pointer hover:scale-105 transition-transform"
+                    onClick={() => setReportType('unidades')}
+                >
+                    <CardContent className="py-4 text-center">
+                        <FileText className="h-6 w-6 mx-auto mb-1 opacity-80" />
+                        <p className="text-xs text-indigo-100">Unidades</p>
+                    </CardContent>
+                </Card>
+            </div>
+
             {/* Filtros */}
             <Card>
                 <CardContent className="p-6">

@@ -141,13 +141,26 @@ const detailedFeatures = [
     {
         icon: Vote,
         title: 'Governança Digital',
-        description: 'Enquetes, assembleias virtuais e documentos do condomínio.',
+        description: 'Modernize a gestão democrática do condomínio com três módulos integrados: Enquetes para consultas rápidas, Assembleias com ata digital e Documentos centralizados.',
         screenshot: '/screenshots/governanca.png',
         benefits: [
-            'Votações online',
-            'Assembleias com ata digital',
-            'Repositório de documentos',
-            'Resultados em tempo real'
+            'Enquetes - Votações online com resultados em tempo real',
+            'Assembleias - Pautas, votações e atas digitais',
+            'Documentos - Repositório centralizado e organizado',
+            'Transparência e participação democrática'
+        ],
+        isNew: true
+    },
+    {
+        icon: Wrench,
+        title: 'Gestão de Manutenção',
+        description: 'Gerencie manutenções preventivas e corretivas do condomínio.',
+        screenshot: '/screenshots/manutencao.png',
+        benefits: [
+            'Agendamento de serviços',
+            'Controle de fornecedores',
+            'Histórico de manutenções',
+            'Notificações automáticas'
         ],
         isNew: true
     },
@@ -178,54 +191,62 @@ const detailedFeatures = [
     },
 ];
 
+
 const plans = [
     {
         name: 'Básico',
         price: '99,90',
         units: 'Até 20 unidades',
+        tagline: 'Comece sua gestão digital',
         features: [
-            'Gestão Financeira',
-            'Cadastro de Moradores',
-            'Avisos e Comunicados',
-            'PIX com QR Code',
-            'Suporte por Email',
+            'Gestão financeira completa',
+            'Cadastro de moradores',
+            'Avisos e comunicados',
+            'Boletos e PIX',
+            'App mobile (PWA)',
         ],
-        notIncluded: ['Portaria Virtual', 'Reservas', 'Relatórios Avançados'],
+        notIncluded: ['Portaria', 'Ocorrências', 'Assembleias', 'Câmeras', 'Enquetes'],
         popular: false,
     },
     {
         name: 'Profissional',
-        price: '179,90',
-        units: 'Até 40 unidades',
+        price: '249,90',
+        units: 'Até 50 unidades',
+        tagline: 'Gestão profissional completa',
+        badge: 'Mais Vendido',
+        savings: 'Economize 5 horas/mês',
         features: [
-            'Tudo do Básico',
-            'Portaria Virtual',
-            'Reservas de Áreas',
-            'Controle de Ocorrências',
-            'Gestão de Encomendas',
-            'Boletos Mercado Pago',
-            'WhatsApp Automático',
+            'Tudo do Básico +',
+            'Portaria virtual profissional',
+            'Gestão de encomendas',
+            'Reserva de áreas comuns',
+            'Registro de ocorrências',
+            'WhatsApp automático',
             'Relatórios PDF/Excel',
-            'Suporte Prioritário',
+            'Suporte prioritário',
         ],
-        notIncluded: [],
+        notIncluded: ['Câmeras', 'Governança', 'Automações'],
         popular: true,
+        highlight: 'Escolha de 80% dos síndicos profissionais'
     },
     {
-        name: 'Avançado',
-        price: '249,90',
-        units: 'Até 60 unidades',
+        name: 'Premium',
+        price: '399,90',
+        units: 'Unidades ilimitadas',
+        tagline: 'Tecnologia e segurança avançada',
         features: [
-            'Tudo do Profissional',
-            'Câmeras ao Vivo',
-            'Governança Digital',
-            'Automações de Cobrança',
-            'Multi-condomínios',
-            'Suporte 24/7',
-            'Treinamento Online',
+            'Tudo do Profissional +',
+            'Câmeras de segurança ao vivo',
+            'Governança digital completa',
+            'Enquetes e assembleias online',
+            'Automações de inadimplência',
+            'Múltiplos condomínios',
+            'Gestão de manutenção',
+            'Suporte via WhatsApp direto',
         ],
         notIncluded: [],
         popular: false,
+        highlight: 'Veja seu condomínio de qualquer lugar'
     },
 ];
 
@@ -274,8 +295,8 @@ export default function LandingPage() {
                         "applicationCategory": "BusinessApplication",
                         "offers": {
                             "@type": "AggregateOffer",
-                            "lowPrice": "99.90",
-                            "highPrice": "249.90",
+                            "lowPrice": "49.90",
+                            "highPrice": "199.90",
                             "priceCurrency": "BRL"
                         },
                         "description": "Sistema completo para gestão de condomínios com PIX, WhatsApp, portaria e muito mais",
@@ -467,8 +488,14 @@ export default function LandingPage() {
                                     </ul>
                                 </div>
                                 <div className="flex-1">
-                                    <div className="relative rounded-2xl overflow-hidden shadow-xl border border-gray-200 bg-gradient-to-br from-emerald-50 to-blue-50 aspect-video flex items-center justify-center">
-                                        <feature.icon className="h-24 w-24 text-emerald-200" />
+                                    <div className="relative rounded-2xl overflow-hidden shadow-xl border border-gray-200 bg-gradient-to-br from-gray-50 to-gray-100 aspect-video flex items-center justify-center p-4">
+                                        <Image
+                                            src={feature.screenshot}
+                                            alt={feature.title}
+                                            width={800}
+                                            height={450}
+                                            className="w-full h-full object-contain"
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -503,16 +530,24 @@ export default function LandingPage() {
                             >
                                 {plan.popular && (
                                     <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-emerald-600 text-white px-6 py-1.5 rounded-full text-sm font-semibold shadow-lg">
-                                        Mais Popular
+                                        {plan.badge || 'Mais Popular'}
                                     </div>
                                 )}
-                                <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
-                                <p className="text-gray-500 text-sm mb-6">{plan.units}</p>
+                                <h3 className="text-2xl font-bold text-gray-900 mb-1">{plan.name}</h3>
+                                {plan.tagline && (
+                                    <p className="text-emerald-600 text-sm font-medium mb-3">{plan.tagline}</p>
+                                )}
+                                <p className="text-gray-500 text-sm mb-4">{plan.units}</p>
+                                {plan.savings && (
+                                    <div className="inline-block bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-xs font-semibold mb-3">
+                                        ⏱️ {plan.savings}
+                                    </div>
+                                )}
                                 <div className="mb-6">
                                     <span className="text-5xl font-bold text-gray-900">R$ {plan.price}</span>
                                     <span className="text-gray-500 text-lg">/mês</span>
                                 </div>
-                                <ul className="space-y-3 mb-8">
+                                <ul className="space-y-3 mb-6">
                                     {plan.features.map((feature, fIndex) => (
                                         <li key={fIndex} className="flex items-start gap-3 text-gray-700">
                                             <Check className="h-5 w-5 text-emerald-600 flex-shrink-0 mt-0.5" />
@@ -526,6 +561,13 @@ export default function LandingPage() {
                                         </li>
                                     ))}
                                 </ul>
+                                {plan.highlight && (
+                                    <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+                                        <p className="text-sm text-emerald-800 font-medium text-center">
+                                            ⭐ {plan.highlight}
+                                        </p>
+                                    </div>
+                                )}
                                 <Link
                                     href={`/register?plan=${plan.name.toLowerCase()}`}
                                     className={`block text-center py-4 rounded-xl font-semibold transition-all ${plan.popular
@@ -549,26 +591,32 @@ export default function LandingPage() {
                                         <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Funcionalidade</th>
                                         <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Básico</th>
                                         <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900 bg-emerald-50">Profissional</th>
-                                        <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Avançado</th>
+                                        <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Premium</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200">
                                     {[
-                                        { name: 'Dashboard & Financeiro', basic: true, pro: true, adv: true },
-                                        { name: 'PIX com QR Code', basic: true, pro: true, adv: true },
+                                        { name: 'Dashboard Completo', basic: true, pro: true, adv: true },
+                                        { name: 'Gestão Financeira', basic: true, pro: true, adv: true },
                                         { name: 'Cadastro de Moradores', basic: true, pro: true, adv: true },
+                                        { name: 'Cadastro de Unidades', basic: true, pro: true, adv: true },
                                         { name: 'Avisos e Comunicados', basic: true, pro: true, adv: true },
+                                        { name: 'Geração de Boletos/PIX', basic: true, pro: true, adv: true },
+                                        { name: 'App Mobile (PWA)', basic: true, pro: true, adv: true },
                                         { name: 'Portaria Virtual', basic: false, pro: true, adv: true },
-                                        { name: 'Reservas de Áreas', basic: false, pro: true, adv: true },
                                         { name: 'Gestão de Encomendas', basic: false, pro: true, adv: true },
+                                        { name: 'Reservas de Áreas Comuns', basic: false, pro: true, adv: true },
                                         { name: 'Controle de Ocorrências', basic: false, pro: true, adv: true },
-                                        { name: 'WhatsApp Automático', basic: false, pro: true, adv: true },
-                                        { name: 'Boletos Mercado Pago', basic: false, pro: true, adv: true },
+                                        { name: 'Notificações WhatsApp', basic: false, pro: true, adv: true },
                                         { name: 'Relatórios PDF/Excel', basic: false, pro: true, adv: true },
-                                        { name: 'Câmeras ao Vivo', basic: false, pro: false, adv: true },
+                                        { name: 'Cobranças Personalizadas', basic: false, pro: true, adv: true },
+                                        { name: 'Câmeras de Segurança', basic: false, pro: false, adv: true },
                                         { name: 'Governança Digital', basic: false, pro: false, adv: true },
-                                        { name: 'Automações de Cobrança', basic: false, pro: false, adv: true },
-                                        { name: 'Multi-condomínios', basic: false, pro: false, adv: true },
+                                        { name: 'Enquetes e Assembleias', basic: false, pro: false, adv: true },
+                                        { name: 'Automações de Inadimplência', basic: false, pro: false, adv: true },
+                                        { name: 'Gestão de Manutenção', basic: false, pro: false, adv: true },
+                                        { name: 'Múltiplos Condomínios', basic: false, pro: false, adv: true },
+                                        { name: 'Suporte WhatsApp Direto', basic: false, pro: false, adv: true },
                                     ].map((row, index) => (
                                         <tr key={index} className="hover:bg-gray-50">
                                             <td className="px-6 py-4 text-sm text-gray-900">{row.name}</td>

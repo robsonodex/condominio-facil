@@ -20,7 +20,10 @@ import {
     Calendar,
     Package,
     X,
-    Lock
+    Lock,
+    Vote,
+    ChevronDown,
+    ChevronRight
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -33,7 +36,8 @@ interface NavItem {
     label: string;
     icon: React.ReactNode;
     roles?: string[];
-    requiresFeature?: string; // Feature flag from plan
+    requiresFeature?: string;
+    subItems?: NavItem[];
 }
 
 interface PlanFeatures {
@@ -66,9 +70,17 @@ const navItems: NavItem[] = [
     { href: '/portaria/minhas-encomendas', label: 'Minhas Encomendas', icon: <Package className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
     { href: '/relatorios', label: 'Relatórios', icon: <FileText className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
     { href: '/automacoes', label: 'Automações', icon: <Settings className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
-    { href: '/governanca/assembleias', label: 'Assembleias', icon: <Users className="h-5 w-5" />, roles: ['superadmin', 'sindico'], requiresFeature: 'hasAssemblies' },
-    { href: '/governanca/enquetes', label: 'Enquetes', icon: <FileText className="h-5 w-5" />, requiresFeature: 'hasPolls' },
-    { href: '/governanca/documents', label: 'Documentos', icon: <FileText className="h-5 w-5" />, roles: ['superadmin', 'sindico'], requiresFeature: 'hasDocuments' },
+    {
+        href: '/governanca',
+        label: 'Governança',
+        icon: <Vote className="h-5 w-5" />,
+        roles: ['superadmin', 'sindico'],
+        subItems: [
+            { href: '/governanca/enquetes', label: 'Enquetes', icon: <FileText className="h-4 w-4" />, requiresFeature: 'hasPolls' },
+            { href: '/governanca/assembleias', label: 'Assembleias', icon: <Users className="h-4 w-4" />, requiresFeature: 'hasAssemblies' },
+            { href: '/governanca/documents', label: 'Documentos', icon: <FileText className="h-4 w-4" />, requiresFeature: 'hasDocuments' },
+        ]
+    },
     { href: '/manutencao', label: 'Manutenção', icon: <Settings className="h-5 w-5" />, roles: ['superadmin', 'sindico'], requiresFeature: 'hasMaintenance' },
     { href: '/assinatura', label: 'Assinatura', icon: <CreditCard className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
     { href: '/perfil', label: 'Meu Perfil', icon: <Settings className="h-5 w-5" /> },
@@ -92,6 +104,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     const pathname = usePathname();
     const { profile, isSuperAdmin, isSuperAdminReal, isImpersonating } = useUser();
     const [planFeatures, setPlanFeatures] = useState<PlanFeatures | null>(null);
+    const [expandedItems, setExpandedItems] = useState<string[]>(['/governanca']);
 
     useEffect(() => {
         // Fetch plan features for non-superadmins
@@ -102,6 +115,21 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 .catch(err => console.error('[Sidebar] Error fetching plan features:', err));
         }
     }, [isSuperAdmin]);
+
+    // Auto-expand Governança if on a sub-route
+    useEffect(() => {
+        if (pathname.startsWith('/governanca')) {
+            setExpandedItems(prev => [...new Set([...prev, '/governanca'])]);
+        }
+    }, [pathname]);
+
+    const toggleExpand = (href: string) => {
+        setExpandedItems(prev =>
+            prev.includes(href)
+                ? prev.filter(item => item !== href)
+                : [...prev, href]
+        );
+    };
 
     const filteredNavItems = navItems.filter(item => {
         // Superadmin sees everything
@@ -160,7 +188,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 </div>
 
                 {/* SUPERADMIN ACTIONS */}
-                {(isSuperAdminReal || isImpersonating) && ( // Show if real admin, even if impersonating
+                {(isSuperAdminReal || isImpersonating) && (
                     <div className="px-6 pt-4">
                         <ImpersonateModal />
                     </div>
@@ -189,12 +217,50 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                         {isSuperAdmin ? 'Condomínio' : 'Menu'}
                     </p>
                     {filteredNavItems.map((item) => (
-                        <NavLink
-                            key={item.href}
-                            item={item}
-                            isActive={pathname.startsWith(item.href)}
-                            onClick={onClose}
-                        />
+                        <div key={item.href}>
+                            {item.subItems ? (
+                                <>
+                                    <button
+                                        onClick={() => toggleExpand(item.href)}
+                                        className={cn(
+                                            'w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                                            pathname.startsWith(item.href)
+                                                ? 'bg-emerald-50 text-emerald-700'
+                                                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                                        )}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            {item.icon}
+                                            {item.label}
+                                        </div>
+                                        {expandedItems.includes(item.href) ? (
+                                            <ChevronDown className="h-4 w-4" />
+                                        ) : (
+                                            <ChevronRight className="h-4 w-4" />
+                                        )}
+                                    </button>
+                                    {expandedItems.includes(item.href) && (
+                                        <div className="ml-4 mt-1 space-y-1">
+                                            {item.subItems.map(subItem => (
+                                                <NavLink
+                                                    key={subItem.href}
+                                                    item={subItem}
+                                                    isActive={pathname === subItem.href}
+                                                    onClick={onClose}
+                                                    isSubItem
+                                                />
+                                            ))}
+                                        </div>
+                                    )}
+                                </>
+                            ) : (
+                                <NavLink
+                                    item={item}
+                                    isActive={pathname.startsWith(item.href)}
+                                    onClick={onClose}
+                                />
+                            )}
+                        </div>
                     ))}
                 </nav>
             </aside>
@@ -202,13 +268,14 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     );
 }
 
-function NavLink({ item, isActive, onClick }: { item: NavItem; isActive: boolean; onClick: () => void }) {
+function NavLink({ item, isActive, onClick, isSubItem }: { item: NavItem; isActive: boolean; onClick: () => void; isSubItem?: boolean }) {
     return (
         <Link
             href={item.href}
             onClick={onClick}
             className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                isSubItem && 'text-xs pl-4',
                 isActive
                     ? 'bg-emerald-50 text-emerald-700'
                     : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
