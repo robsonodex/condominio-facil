@@ -237,24 +237,30 @@ async function createDemoData(condoId: string, userId: string) {
         // ==========================================
         // AVISOS (5)
         // ==========================================
-        await supabaseAdmin.from('notices').insert([
-            { condo_id: condoId, titulo: '🎉 Bem-vindo ao Modo Demonstração!', descricao: 'Este é um ambiente de demonstração completo. Explore todas as funcionalidades do Condomínio Fácil!', prioridade: 'alta', created_by: userId },
-            { condo_id: condoId, titulo: '🔧 Manutenção Preventiva dos Elevadores', descricao: 'A manutenção preventiva dos elevadores será realizada no próximo sábado, das 8h às 12h. Pedimos a compreensão de todos.', prioridade: 'media', created_by: userId },
-            { condo_id: condoId, titulo: '📅 Reunião Ordinária de Condomínio', descricao: 'Convocamos todos os condôminos para a reunião ordinária que acontecerá dia 20 às 19h no salão de festas. Pauta: prestação de contas e melhorias.', prioridade: 'alta', created_by: userId },
-            { condo_id: condoId, titulo: '🌳 Jardinagem das Áreas Comuns', descricao: 'Informamos que a empresa de jardinagem realizará a poda das árvores e manutenção do jardim nesta semana.', prioridade: 'baixa', created_by: userId },
-            { condo_id: condoId, titulo: '🚗 Atualização de Cadastro de Veículos', descricao: 'Solicitamos que todos os moradores atualizem o cadastro de seus veículos na portaria até o final do mês.', prioridade: 'media', created_by: userId },
+        console.log('[DEMO] Criando avisos...');
+        const { error: noticesError } = await supabaseAdmin.from('notices').insert([
+            { condo_id: condoId, titulo: 'Manutenção Elevador', conteudo: 'Manutenção preventiva dia 20/01', created_by: userId },
+            { condo_id: condoId, titulo: 'Limpeza Caixa Dágua', conteudo: 'Limpeza dia 25/01', created_by: userId },
+            { condo_id: condoId, titulo: 'Assembleia', conteudo: 'Assembleia dia 30/01 às 19h', created_by: userId },
+            { condo_id: condoId, titulo: 'Pintura Fachada', conteudo: 'Início da pintura - 2 semanas', created_by: userId },
+            { condo_id: condoId, titulo: 'Horário Piscina', conteudo: 'Novo horário: 8h às 20h', created_by: userId },
         ]);
+        if (noticesError) console.error('[DEMO] Erro avisos:', noticesError);
+        else console.log('[DEMO] Avisos: 5');
 
         // ==========================================
         // OCORRÊNCIAS (5)
         // ==========================================
-        await supabaseAdmin.from('occurrences').insert([
-            { condo_id: condoId, titulo: 'Vazamento no teto da garagem', descricao: 'Identificado vazamento próximo à vaga 15. Necessita reparo urgente.', categoria: 'manutencao', prioridade: 'alta', status: 'em_andamento', reported_by: userId },
-            { condo_id: condoId, titulo: 'Barulho excessivo Apt 302', descricao: 'Reclamação de som alto após às 22h no apartamento 302.', categoria: 'convivencia', prioridade: 'media', status: 'pendente', reported_by: userId },
-            { condo_id: condoId, titulo: 'Lâmpada queimada no corredor', descricao: 'Lâmpada do corredor do 2º andar bloco A está queimada.', categoria: 'manutencao', prioridade: 'baixa', status: 'resolvida', reported_by: userId },
-            { condo_id: condoId, titulo: 'Estacionamento irregular', descricao: 'Veículo estacionado em vaga de idoso sem autorização.', categoria: 'estacionamento', prioridade: 'media', status: 'pendente', reported_by: userId },
-            { condo_id: condoId, titulo: 'Animal solto na área comum', descricao: 'Cachorro sem coleira visto na área do playground.', categoria: 'animais', prioridade: 'baixa', status: 'resolvida', reported_by: userId },
+        console.log('[DEMO] Criando ocorrências...');
+        const { error: occError } = await supabaseAdmin.from('occurrences').insert([
+            { condo_id: condoId, titulo: 'Barulho excessivo', descricao: 'Barulho apto 301', user_id: userId, status: 'aberta' },
+            { condo_id: condoId, titulo: 'Vazamento', descricao: 'Vazamento apto 102', user_id: userId, status: 'em_andamento' },
+            { condo_id: condoId, titulo: 'Lâmpada queimada', descricao: 'Corredor 2º andar', user_id: userId, status: 'resolvida' },
+            { condo_id: condoId, titulo: 'Portão defeito', descricao: 'Portão garagem', user_id: userId, status: 'aberta' },
+            { condo_id: condoId, titulo: 'Interfone', descricao: 'Interfone apto 201', user_id: userId, status: 'em_andamento' },
         ]);
+        if (occError) console.error('[DEMO] Erro ocorrências:', occError);
+        else console.log('[DEMO] Ocorrências: 5');
 
         // ==========================================
         // VISITANTES (10)
