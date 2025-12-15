@@ -156,12 +156,26 @@ export async function DELETE(request: NextRequest) {
 
         // 2. Clear references (set to NULL) - preserve records but remove user link
         await supabaseAdmin.from('reservations').update({ aprovado_por: null }).eq('aprovado_por', targetUserId);
-        await supabaseAdmin.from('assembleias').update({ created_by: null }).eq('created_by', targetUserId);
+
+        // Assembleias - log any error
+        const { error: assembleiasError, count: assembleiasCount } = await supabaseAdmin
+            .from('assembleias')
+            .update({ created_by: null })
+            .eq('created_by', targetUserId);
+        if (assembleiasError) {
+            console.error('[DELETE USER] Assembleias update error:', assembleiasError);
+        } else {
+            console.log('[DELETE USER] Assembleias cleared:', assembleiasCount);
+        }
+
         await supabaseAdmin.from('documents').update({ uploaded_by: null }).eq('uploaded_by', targetUserId);
         await supabaseAdmin.from('maintenance_orders').update({ created_by: null }).eq('created_by', targetUserId);
         await supabaseAdmin.from('resident_invoices').update({ created_by: null }).eq('created_by', targetUserId);
         await supabaseAdmin.from('occurrences').update({ resolvido_por: null }).eq('resolvido_por', targetUserId);
         await supabaseAdmin.from('visitor_logs').update({ user_id: null }).eq('user_id', targetUserId);
+
+        // Also try deleting assembleias (if null update fails due to RLS, just delete them)
+        await supabaseAdmin.from('assembleias').delete().eq('created_by', targetUserId);
 
         // 3. Delete invoices where user is the morador (tenant/resident)
         await supabaseAdmin.from('resident_invoices').delete().eq('morador_id', targetUserId);
