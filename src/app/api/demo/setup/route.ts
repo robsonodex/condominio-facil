@@ -221,14 +221,18 @@ async function createDemoData(condoId: string, userId: string) {
         for (let i = 0; i < moradores.length && i < insertedUnits.length; i++) {
             const { error: residentError } = await supabaseAdmin.from('residents').insert({
                 condo_id: condoId,
-                unidade_id: insertedUnits[i].id,
-                ...moradores[i],
-                tipo: i === 0 ? 'proprietario' : (i % 3 === 0 ? 'inquilino' : 'proprietario'),
-                ativo: true
+                unit_id: insertedUnits[i].id,
+                nome: moradores[i].nome,
+                email: moradores[i].email,
+                telefone: moradores[i].telefone,
+                cpf: moradores[i].cpf
             });
 
             if (residentError) {
                 console.error(`[DEMO] Erro ao criar morador ${i}:`, residentError);
+                console.error(`[DEMO] Tentando com unit_id: ${insertedUnits[i].id}`);
+            } else {
+                console.log(`[DEMO] Morador ${i} criado com sucesso`);
             }
         }
         console.log('[DEMO] Moradores criados:', moradores.length);
@@ -264,7 +268,8 @@ async function createDemoData(condoId: string, userId: string) {
         // ==========================================
         // VISITANTES (10)
         // ==========================================
-        await supabaseAdmin.from('visitors').insert([
+        console.log('[DEMO] Criando visitantes...');
+        const { error: visitorsError } = await supabaseAdmin.from('visitors').insert([
             { condo_id: condoId, nome: 'Entregador iFood', tipo: 'delivery', destino: 'Apt 101', observacao: 'Pedido de comida', status: 'saiu', created_by: userId },
             { condo_id: condoId, nome: 'José da Manutenção', tipo: 'prestador', destino: 'Apt 203', observacao: 'Conserto do chuveiro', status: 'no_condominio', created_by: userId },
             { condo_id: condoId, nome: 'Dra. Mariana', tipo: 'visitante', destino: 'Apt 102', observacao: 'Visita médica', status: 'saiu', created_by: userId },
@@ -276,6 +281,8 @@ async function createDemoData(condoId: string, userId: string) {
             { condo_id: condoId, nome: 'Amigos do Pedro', tipo: 'visitante', destino: 'Apt 103', observacao: 'Festa de aniversário', status: 'no_condominio', created_by: userId },
             { condo_id: condoId, nome: 'Uber Eats', tipo: 'delivery', destino: 'Apt 201', observacao: 'Pedido restaurante', status: 'saiu', created_by: userId },
         ]);
+        if (visitorsError) console.error('[DEMO] Erro visitantes:', visitorsError);
+        else console.log('[DEMO] Visitantes: 10');
 
         // ==========================================
         // LANÇAMENTOS FINANCEIROS (20)
@@ -306,46 +313,58 @@ async function createDemoData(condoId: string, userId: string) {
             { tipo: 'despesa', categoria: 'Água', descricao: 'Conta água próximo mês', valor: 1000, status: 'pendente' },
         ];
 
+        console.log('[DEMO] Criando lançamentos financeiros...');
         for (const entry of financialEntries) {
-            await supabaseAdmin.from('financial_entries').insert({
+            const { error: finError } = await supabaseAdmin.from('financial_entries').insert({
                 condo_id: condoId,
                 ...entry,
                 data_vencimento: today
             });
+            if (finError) console.error('[DEMO] Erro financeiro:', finError);
         }
+        console.log('[DEMO] Financeiro: 20');
 
         // ==========================================
         // FORNECEDORES (3)
         // ==========================================
-        const { data: suppliersData } = await supabaseAdmin.from('maintenance_suppliers').insert([
+        console.log('[DEMO] Criando fornecedores...');
+        const { data: suppliersData, error: suppliersError } = await supabaseAdmin.from('maintenance_suppliers').insert([
             { condo_id: condoId, nome: 'Hidráulica Silva', especialidade: 'Encanador', telefone: '(11) 91234-5678', email: 'hidraulica.silva@demo.com', rating: 4.8, total_servicos: 15, ativo: true },
             { condo_id: condoId, nome: 'Elétrica Rápida', especialidade: 'Eletricista', telefone: '(11) 92345-6789', email: 'eletrica.rapida@demo.com', rating: 4.5, total_servicos: 22, ativo: true },
             { condo_id: condoId, nome: 'Pinturas Premium', especialidade: 'Pintor', telefone: '(11) 93456-7890', email: 'pinturas.premium@demo.com', rating: 4.9, total_servicos: 8, ativo: true },
         ]).select();
+        if (suppliersError) console.error('[DEMO] Erro fornecedores:', suppliersError);
+        else console.log('[DEMO] Fornecedores: 3');
 
         // ==========================================
         // MANUTENÇÕES (5)
         // ==========================================
+        console.log('[DEMO] Criando manutenções...');
         if (suppliersData && suppliersData.length > 0) {
-            await supabaseAdmin.from('maintenance_orders').insert([
+            const { error: maintError } = await supabaseAdmin.from('maintenance_orders').insert([
                 { condo_id: condoId, titulo: 'Revisão do sistema hidráulico', descricao: 'Manutenção preventiva anual', tipo: 'preventiva', prioridade: 'media', status: 'concluido', local: 'Casa de máquinas', fornecedor_id: suppliersData[0].id, valor_estimado: 800, valor_realizado: 750, data_agendada: today, data_conclusao: today, created_by: userId },
                 { condo_id: condoId, titulo: 'Troca de lâmpadas LED', descricao: 'Substituição de lâmpadas antigas por LED', tipo: 'preventiva', prioridade: 'baixa', status: 'concluido', local: 'Corredores', fornecedor_id: suppliersData[1].id, valor_estimado: 500, valor_realizado: 480, data_agendada: today, data_conclusao: today, created_by: userId },
                 { condo_id: condoId, titulo: 'Reparo vazamento garagem', descricao: 'Conserto urgente de vazamento na garagem', tipo: 'corretiva', prioridade: 'alta', status: 'em_execucao', local: 'Garagem B', fornecedor_id: suppliersData[0].id, valor_estimado: 1200, data_agendada: today, created_by: userId },
                 { condo_id: condoId, titulo: 'Pintura do hall de entrada', descricao: 'Renovação da pintura do hall', tipo: 'preventiva', prioridade: 'media', status: 'agendado', local: 'Hall entrada', fornecedor_id: suppliersData[2].id, valor_estimado: 2500, data_agendada: today, created_by: userId },
                 { condo_id: condoId, titulo: 'Manutenção portão eletrônico', descricao: 'Lubrificação e ajustes do motor', tipo: 'preventiva', prioridade: 'media', status: 'agendado', local: 'Portão principal', fornecedor_id: suppliersData[1].id, valor_estimado: 350, data_agendada: today, created_by: userId },
             ]);
+            if (maintError) console.error('[DEMO] Erro manutenções:', maintError);
+            else console.log('[DEMO] Manutenções: 5');
         }
 
         // ==========================================
         // ENCOMENDAS (5)
         // ==========================================
-        await supabaseAdmin.from('deliveries').insert([
+        console.log('[DEMO] Criando encomendas...');
+        const { error: deliveriesError } = await supabaseAdmin.from('deliveries').insert([
             { condo_id: condoId, destinatario: 'João Carlos Silva', unidade: '101', remetente: 'Amazon', tipo: 'pacote', status: 'aguardando', observacao: 'Caixa grande', created_by: userId },
             { condo_id: condoId, destinatario: 'Maria Fernanda Santos', unidade: '102', remetente: 'Mercado Livre', tipo: 'pacote', status: 'entregue', observacao: 'Envelope pequeno', created_by: userId },
             { condo_id: condoId, destinatario: 'Pedro Henrique Costa', unidade: '103', remetente: 'Magazine Luiza', tipo: 'pacote', status: 'aguardando', observacao: 'Eletrodoméstico', created_by: userId },
             { condo_id: condoId, destinatario: 'Ana Beatriz Oliveira', unidade: '201', remetente: 'Correios', tipo: 'carta', status: 'entregue', observacao: 'Carta registrada', created_by: userId },
-            { condo_id: condoId, destinatario: 'Carlos Eduardo Pereira', unidade: '202', remetente: 'Shopee', tipo: 'pacote', status: 'aguardando', observacao: 'Múltiplos pacotes', created_by: userId },
+            { condo_id: condoId, destinatario: 'Carlos Eduardo Pereira', unidade: '202', remetente: 'Shopee', tipo: 'pacote', status: 'aguardando', observacao: 'Eletrônicos', created_by: userId },
         ]);
+        if (deliveriesError) console.error('[DEMO] Erro encomendas:', deliveriesError);
+        else console.log('[DEMO] Encomendas: 5');
 
         // ==========================================
         // ENQUETES (2)
