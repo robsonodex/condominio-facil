@@ -7,7 +7,7 @@ import { Button } from './button';
 
 interface Column<T> {
     key: keyof T | string;
-    header: string;
+    header: string | React.ReactNode | (() => React.ReactNode);
     render?: (item: T) => React.ReactNode;
     className?: string;
 }
@@ -57,7 +57,7 @@ export function Table<T extends { id: string }>({
                                         column.className
                                     )}
                                 >
-                                    {column.header}
+                                    {typeof column.header === 'function' ? column.header() : column.header}
                                 </th>
                             ))}
                         </tr>
