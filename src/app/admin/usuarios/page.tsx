@@ -100,17 +100,38 @@ export default function AdminUsuariosPage() {
         if (!confirm(`⚠️ Tem certeza que deseja EXCLUIR PERMANENTEMENTE ${selectedCount} usuário(s)?\n\nEsta ação é IRREVERSÍVEL!`)) return;
 
         try {
-            const deletePromises = Array.from(selectedIds).map(id =>
-                fetch(`/api/user/delete?id=${id}`, {
-                    method: 'DELETE',
-                    credentials: 'include',
-                })
-            );
+            let successCount = 0;
+            let errorCount = 0;
+            const errors: string[] = [];
 
-            await Promise.all(deletePromises);
-            alert(`✅ ${selectedCount} usuário(s) excluído(s) com sucesso!`);
-            clearSelection();
-            fetchUsers();
+            for (const id of Array.from(selectedIds)) {
+                try {
+                    const response = await fetch(`/api/user/delete?id=${id}`, {
+                        method: 'DELETE',
+                        credentials: 'include',
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok && data.success) {
+                        successCount++;
+                    } else {
+                        errorCount++;
+                        errors.push(data.error || 'Erro desconhecido');
+                    }
+                } catch (err: any) {
+                    errorCount++;
+                    errors.push(err.message);
+                }
+            }
+
+            if (successCount > 0) {
+                alert(`✅ ${successCount} usuário(s) excluído(s) com sucesso!${errorCount > 0 ? `\n\n❌ ${errorCount} erro(s): ${errors.join(', ')}` : ''}`);
+                clearSelection();
+                fetchUsers();
+            } else {
+                alert(`❌ Nenhum usuário foi excluído.\n\nErros: ${errors.join(', ')}`);
+            }
         } catch (error: any) {
             alert(`❌ Erro ao excluir: ${error.message}`);
         }
