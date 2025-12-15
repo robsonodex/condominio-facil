@@ -169,10 +169,68 @@ export async function POST(request: NextRequest) {
             }, { status: 500 });
         }
 
+        // 8. Send welcome emails
+        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://meucondominiofacil.com';
+
+        // 8.1 Send credentials email to new user
+        try {
+            await fetch(`${baseUrl}/api/email`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tipo: 'user_credentials',
+                    destinatario: email,
+                    dados: {
+                        nome,
+                        email,
+                        password: senha,
+                        role: role === 'sindico' ? 'Síndico' : role === 'porteiro' ? 'Porteiro' : 'Morador',
+                        condoNome: condo_nome || '',
+                        loginUrl: `${baseUrl}/login`
+                    },
+                    internalCall: true
+                })
+            });
+            console.log('[ADMIN_CREATE_USER] Credentials email sent to:', email);
+        } catch (emailError) {
+            console.error('[ADMIN_CREATE_USER] Failed to send credentials email:', emailError);
+        }
+
+        // 8.2 Send trial/active email for síndico with new condo
+        if (role === 'sindico' && condo_nome && finalCondoId) {
+            try {
+                const emailType = periodo_teste ? 'condo_trial' : 'condo_active';
+                const dataFim = new Date();
+                dataFim.setDate(dataFim.getDate() + 7);
+
+                await fetch(`${baseUrl}/api/email`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tipo: emailType,
+                        destinatario: email,
+                        dados: {
+                            nome,
+                            condoNome: condo_nome,
+                            dataFim: dataFim.toLocaleDateString('pt-BR'),
+                            plano: 'Profissional',
+                            proximoVencimento: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('pt-BR'),
+                            loginUrl: `${baseUrl}/login`
+                        },
+                        condoId: finalCondoId,
+                        internalCall: true
+                    })
+                });
+                console.log(`[ADMIN_CREATE_USER] ${emailType} email sent to:`, email);
+            } catch (emailError) {
+                console.error('[ADMIN_CREATE_USER] Failed to send trial/active email:', emailError);
+            }
+        }
+
         // Success Message Construction
         let message = `Usuário "${nome}" criado com sucesso!`;
         if (role === 'sindico' && condo_nome) {
-            message += ` Condomínio "${condo_nome}" criado em modo ${periodo_teste ? 'TESTE' : 'ATIVO'}.`;
+            message += ` Condomínio "${condo_nome}" criado em modo ${periodo_teste ? 'TESTE' : 'ATIVO'}. E-mail de boas-vindas enviado.`;
         }
 
         return NextResponse.json({
