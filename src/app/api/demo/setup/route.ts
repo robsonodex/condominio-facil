@@ -179,13 +179,7 @@ async function createDemoData(condoId: string, userId: string) {
                         condo_id: condoId,
                         bloco,
                         numero_unidade: `${andar}0${num}`,
-                        andar,
-                        tipo: 'apartamento',
-                        area: 65 + (num * 5),
-                        quartos: 2 + (num % 2),
-                        banheiros: 2,
-                        vagas_garagem: 1,
-                        status: 'ocupada'
+                        tipo: 'apartamento'
                     });
                 }
             }
