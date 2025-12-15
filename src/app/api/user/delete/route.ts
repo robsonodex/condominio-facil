@@ -135,9 +135,18 @@ export async function DELETE(request: NextRequest) {
         }
 
         // Delete related records first (to avoid FK constraints)
-        // Delete residents
-        await supabaseAdmin.from('residents').delete().eq('user_id', targetUserId);
-        console.log('[DELETE USER] Deleted residents');
+        // Delete residents - supabaseAdmin should bypass RLS
+        const { data: deletedResidents, error: residentsDeleteError } = await supabaseAdmin
+            .from('residents')
+            .delete()
+            .eq('user_id', targetUserId)
+            .select();
+
+        if (residentsDeleteError) {
+            console.error('[DELETE USER] Residents delete error:', residentsDeleteError);
+        } else {
+            console.log('[DELETE USER] Deleted residents:', deletedResidents?.length || 0);
+        }
 
         // Clear aprovado_por from reservations (don't delete reservations, just clear the reference)
         await supabaseAdmin.from('reservations').update({ aprovado_por: null }).eq('aprovado_por', targetUserId);
