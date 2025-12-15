@@ -349,10 +349,70 @@ function CondoModal({ isOpen, onClose, onSuccess, condo, plans }: {
             data_fim_teste: dataFimTeste || null,
         };
 
+        const previousStatus = condo?.status;
+        let insertedCondoId = condo?.id;
+
         if (condo) {
             await supabase.from('condos').update(data).eq('id', condo.id);
         } else {
-            await supabase.from('condos').insert(data);
+            const { data: insertedData } = await supabase.from('condos').insert(data).select('id').single();
+            insertedCondoId = insertedData?.id;
+        }
+
+        // Enviar e-mail quando status muda ou novo condomínio é criado
+        const statusChanged = previousStatus !== status || !condo;
+        const hasEmail = emailContato && emailContato.trim() !== '';
+
+        if (statusChanged && hasEmail && insertedCondoId) {
+            try {
+                // Buscar plano selecionado
+                const selectedPlan = plans.find(p => p.id === planoId);
+
+                // Definir template baseado no status
+                let emailType = '';
+                let emailData: any = {
+                    nome: nome,
+                    condoNome: nome,
+                    loginUrl: 'https://meucondominiofacil.com/login'
+                };
+
+                if (status === 'teste') {
+                    emailType = 'condo_trial';
+                    emailData.dataFim = dataFimTeste ? new Date(dataFimTeste).toLocaleDateString('pt-BR') : '';
+                } else if (status === 'ativo') {
+                    emailType = 'condo_active';
+                    emailData.plano = selectedPlan?.nome_plano || 'Profissional';
+                    // Próximo vencimento: 30 dias a partir de hoje
+                    const nextDate = new Date();
+                    nextDate.setDate(nextDate.getDate() + 30);
+                    emailData.proximoVencimento = nextDate.toLocaleDateString('pt-BR');
+                } else if (status === 'suspenso') {
+                    emailType = 'condo_suspended';
+                }
+
+                if (emailType) {
+                    const response = await fetch('/api/email', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            tipo: emailType,
+                            destinatario: emailContato,
+                            dados: emailData,
+                            condoId: insertedCondoId,
+                            internalCall: true
+                        })
+                    });
+
+                    if (response.ok) {
+                        console.log(`[CONDO] Email ${emailType} enviado para ${emailContato}`);
+                    } else {
+                        console.error(`[CONDO] Falha ao enviar email ${emailType}`);
+                    }
+                }
+            } catch (emailError) {
+                console.error('[CONDO] Erro ao enviar email:', emailError);
+                // Não bloquear a operação por falha de email
+            }
         }
 
         onSuccess();
