@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/hooks/useUser';
 import { Plus, Search, Home, Edit, Trash2 } from 'lucide-react';
 import { Unit } from '@/types/database';
+import { useMultiSelect } from '@/hooks/useMultiSelect';
 
 function UnidadesSkeleton() {
     return (
@@ -80,7 +81,72 @@ export default function UnidadesPage() {
         return matchesSearch && matchesBloco;
     });
 
+    // Multi-select hook
+    const {
+        selectedIds,
+        selectedCount,
+        toggleSelect,
+        toggleSelectAll,
+        clearSelection,
+        isSelected,
+        isAllSelected,
+        hasSelection
+    } = useMultiSelect(filteredUnits);
+
+    const handleBulkDelete = async () => {
+        if (!confirm(`⚠️ Tem certeza que deseja EXCLUIR PERMANENTEMENTE ${selectedCount} unidade(s)?\n\nEsta ação é IRREVERSÍVEL!`)) return;
+
+        try {
+            let successCount = 0;
+            let errorCount = 0;
+
+            for (const id of Array.from(selectedIds)) {
+                try {
+                    const response = await fetch(`/api/units?id=${id}`, { method: 'DELETE' });
+                    if (response.ok) {
+                        successCount++;
+                    } else {
+                        errorCount++;
+                    }
+                } catch {
+                    errorCount++;
+                }
+            }
+
+            if (successCount > 0) {
+                alert(`✅ ${successCount} unidade(s) excluída(s) com sucesso!${errorCount > 0 ? `\n\n❌ ${errorCount} erro(s)` : ''}`);
+                clearSelection();
+                fetchUnits();
+            } else {
+                alert(`❌ Nenhuma unidade foi excluída.`);
+            }
+        } catch (error: any) {
+            alert(`❌ Erro ao excluir: ${error.message}`);
+        }
+    };
+
     const columns = [
+        {
+            key: 'checkbox',
+            header: () => (
+                <input
+                    type="checkbox"
+                    checked={isAllSelected()}
+                    onChange={toggleSelectAll}
+                    className="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500"
+                />
+            ),
+            render: (u: Unit) => (
+                <input
+                    type="checkbox"
+                    checked={isSelected(u.id)}
+                    onChange={() => toggleSelect(u.id)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500"
+                />
+            ),
+            className: 'w-12'
+        },
         { key: 'bloco', header: 'Bloco', render: (u: Unit) => u.bloco || '-' },
         { key: 'numero_unidade', header: 'Número' },
         { key: 'metragem', header: 'Metragem', render: (u: Unit) => u.metragem ? `${u.metragem}m²` : '-' },
@@ -116,10 +182,18 @@ export default function UnidadesPage() {
                     <h1 className="text-2xl font-bold text-gray-900">Unidades</h1>
                     <p className="text-gray-500">Gerencie os apartamentos/casas do condomínio</p>
                 </div>
-                <Button onClick={() => { setEditingUnit(null); setShowModal(true); }}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Nova Unidade
-                </Button>
+                <div className="flex gap-2">
+                    {hasSelection() && (
+                        <Button variant="ghost" onClick={handleBulkDelete} className="bg-red-50 text-red-600 hover:bg-red-100">
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Excluir {selectedCount} {selectedCount === 1 ? 'Selecionada' : 'Selecionadas'}
+                        </Button>
+                    )}
+                    <Button onClick={() => { setEditingUnit(null); setShowModal(true); }}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Nova Unidade
+                    </Button>
+                </div>
             </div>
 
             {/* Filters */}
