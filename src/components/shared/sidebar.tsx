@@ -138,10 +138,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         ? viewAsRole
         : profile?.role || '';
 
-    const filteredNavItems = navItems.filter(item => {
-        // Superadmin in superadmin view sees everything
-        if (isSuperAdminReal && !isImpersonating && viewAsRole === 'superadmin') return true;
 
+    const filteredNavItems = navItems.filter(item => {
+        // SuperAdmin should NOT see operational items - they were removed from roles
         // Check role permissions using effective role
         if (item.roles && !item.roles.includes(effectiveFilterRole)) return false;
 
