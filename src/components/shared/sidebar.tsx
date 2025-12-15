@@ -220,9 +220,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                         </>
                     )}
 
-                    <p className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                        {isSuperAdmin ? 'Condomínio' : 'Menu'}
-                    </p>
+                    {filteredNavItems.length > 0 && (
+                        <p className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                            {isSuperAdmin ? 'Condomínio' : 'Menu'}
+                        </p>
+                    )}
                     {filteredNavItems.map((item) => (
                         <div key={item.href}>
                             {item.subItems ? (
@@ -248,7 +250,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                                     </button>
                                     {expandedItems.includes(item.href) && (
                                         <div className="ml-4 mt-1 space-y-1">
-                                            {item.subItems.map(subItem => (
+                                            {item.subItems.map((subItem) => (
                                                 <NavLink
                                                     key={subItem.href}
                                                     item={subItem}
