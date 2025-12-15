@@ -159,15 +159,7 @@ export async function POST(request: NextRequest) {
 }
 
 async function createDemoData(condoId: string, userId: string) {
-    // Verificar se já tem unidades
-    const { count: unitsCount } = await supabaseAdmin
-        .from('units')
-        .select('id', { count: 'exact', head: true })
-        .eq('condo_id', condoId);
-
-    if (unitsCount && unitsCount > 0) {
-        return; // Já tem dados
-    }
+    console.log('[DEMO] Iniciando criação de dados para condo:', condoId);
 
     const now = new Date();
     const today = now.toISOString().split('T')[0];
@@ -192,6 +184,7 @@ async function createDemoData(condoId: string, userId: string) {
         }
     }
     const { data: insertedUnits } = await supabaseAdmin.from('units').insert(units).select();
+    console.log('[DEMO] Unidades criadas:', insertedUnits?.length || 0);
 
     // ==========================================
     // MORADORES (10 pessoas realistas)
