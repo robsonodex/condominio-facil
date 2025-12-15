@@ -9,17 +9,46 @@ export async function DELETE(request: NextRequest) {
     try {
         console.log('[DELETE USER] Starting delete request...');
 
-        // Get session from request
-        const session = await getSessionFromReq(request);
-        if (!session) {
-            console.log('[DELETE USER] No session found');
+        // Get session from cookies
+        const cookieStore = request.cookies;
+        const accessToken = cookieStore.get('sb-access-token')?.value;
+        const refreshToken = cookieStore.get('sb-refresh-token')?.value;
+
+        if (!accessToken) {
+            console.log('[DELETE USER] No access token found');
             return NextResponse.json(
                 { error: 'Não autorizado. Faça login para continuar.', success: false },
                 { status: 401 }
             );
         }
 
-        console.log('[DELETE USER] Session:', session.email, session.role);
+        // Verify user with Supabase
+        const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(accessToken);
+
+        if (authError || !user) {
+            console.log('[DELETE USER] Auth error:', authError?.message);
+            return NextResponse.json(
+                { error: 'Sessão inválida. Faça login novamente.', success: false },
+                { status: 401 }
+            );
+        }
+
+        // Get user profile
+        const { data: profile } = await supabaseAdmin
+            .from('users')
+            .select('role, condo_id')
+            .eq('id', user.id)
+            .single();
+
+        if (!profile) {
+            return NextResponse.json(
+                { error: 'Perfil não encontrado', success: false },
+                { status: 404 }
+            );
+        }
+
+        console.log('[DELETE USER] Session:', user.email, profile.role);
+
 
         const { searchParams } = new URL(request.url);
         const targetUserId = searchParams.get('id');
@@ -34,8 +63,11 @@ export async function DELETE(request: NextRequest) {
         console.log('[DELETE USER] Target user ID:', targetUserId);
 
         // Check permission - only superadmin and síndico can delete
-        if (!session.isSuperadmin && !session.isSindico) {
-            console.log('[DELETE USER] Permission denied for role:', session.role);
+        const isSuperadmin = profile.role === 'superadmin';
+        const isSindico = profile.role === 'sindico';
+
+        if (!isSuperadmin && !isSindico) {
+            console.log('[DELETE USER] Permission denied for role:', profile.role);
             return NextResponse.json({
                 error: 'Acesso negado',
                 message: 'Apenas administradores podem excluir usuários.',
@@ -77,7 +109,7 @@ export async function DELETE(request: NextRequest) {
         }
 
         // Síndico can only delete users from their own condo
-        if (session.isSindico && !session.isSuperadmin && targetUser.condo_id !== session.condoId) {
+        if (isSindico && !isSuperadmin && targetUser.condo_id !== profile.condo_id) {
             return NextResponse.json({
                 error: 'Você só pode excluir usuários do seu condomínio',
                 success: false,
@@ -116,7 +148,8 @@ export async function DELETE(request: NextRequest) {
             }, { status: 500 });
         }
 
-        console.log(`[DELETE USER] SUCCESS - User ${session.email} deleted user ${targetUserId}`);
+
+        console.log(`[DELETE USER] SUCCESS - User ${user.email} deleted user ${targetUserId}`);
 
         return NextResponse.json({
             success: true,
@@ -137,8 +170,21 @@ export async function DELETE(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
     try {
-        const session = await getSessionFromReq(request);
-        if (!session) {
+        // Get session from cookies
+        const cookieStore = request.cookies;
+        const accessToken = cookieStore.get('sb-access-token')?.value;
+
+        if (!accessToken) {
+            return NextResponse.json(
+                { error: 'Não autorizado' },
+                { status: 401 }
+            );
+        }
+
+        // Verify user
+        const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(accessToken);
+
+        if (authError || !user) {
             return NextResponse.json(
                 { error: 'Não autorizado' },
                 { status: 401 }
@@ -148,7 +194,7 @@ export async function GET(request: NextRequest) {
         const { data: profile, error } = await supabaseAdmin
             .from('users')
             .select('*')
-            .eq('id', session.userId)
+            .eq('id', user.id)
             .single();
 
         if (error || !profile) {
