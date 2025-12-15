@@ -139,6 +139,14 @@ export async function DELETE(request: NextRequest) {
         await supabaseAdmin.from('residents').delete().eq('user_id', targetUserId);
         console.log('[DELETE USER] Deleted residents');
 
+        // Clear aprovado_por from reservations (don't delete reservations, just clear the reference)
+        await supabaseAdmin.from('reservations').update({ aprovado_por: null }).eq('aprovado_por', targetUserId);
+        console.log('[DELETE USER] Cleared reservations aprovado_por');
+
+        // Delete reservations created by this user
+        await supabaseAdmin.from('reservations').delete().eq('user_id', targetUserId);
+        console.log('[DELETE USER] Deleted user reservations');
+
         // Delete user profile
         const { error: deleteError } = await supabaseAdmin
             .from('users')
