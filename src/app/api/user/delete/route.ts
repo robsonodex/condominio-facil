@@ -9,13 +9,13 @@ export async function DELETE(request: NextRequest) {
     try {
         console.log('[DELETE USER] Starting delete request...');
 
-        // Get session from cookies
-        const cookieStore = request.cookies;
-        const accessToken = cookieStore.get('sb-access-token')?.value;
-        const refreshToken = cookieStore.get('sb-refresh-token')?.value;
+        // Get auth token from Supabase cookie
+        const cookieHeader = request.headers.get('cookie') || '';
+        const tokenMatch = cookieHeader.match(/sb-[^-]+-auth-token=([^;]+)/);
+        const accessToken = tokenMatch ? decodeURIComponent(tokenMatch[1]) : null;
 
         if (!accessToken) {
-            console.log('[DELETE USER] No access token found');
+            console.log('[DELETE USER] No access token found in cookies');
             return NextResponse.json(
                 { error: 'Não autorizado. Faça login para continuar.', success: false },
                 { status: 401 }
@@ -170,9 +170,10 @@ export async function DELETE(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
     try {
-        // Get session from cookies
-        const cookieStore = request.cookies;
-        const accessToken = cookieStore.get('sb-access-token')?.value;
+        // Get auth token from Supabase cookie
+        const cookieHeader = request.headers.get('cookie') || '';
+        const tokenMatch = cookieHeader.match(/sb-[^-]+-auth-token=([^;]+)/);
+        const accessToken = tokenMatch ? decodeURIComponent(tokenMatch[1]) : null;
 
         if (!accessToken) {
             return NextResponse.json(
