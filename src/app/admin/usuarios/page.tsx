@@ -106,9 +106,16 @@ export default function AdminUsuariosPage() {
 
             for (const id of Array.from(selectedIds)) {
                 try {
+                    // Get current session token
+                    const { data: { session } } = await supabase.auth.getSession();
+                    const token = session?.access_token;
+
                     const response = await fetch(`/api/user/delete?id=${id}`, {
                         method: 'DELETE',
                         credentials: 'include',
+                        headers: token ? {
+                            'Authorization': `Bearer ${token}`
+                        } : {}
                     });
 
                     const data = await response.json();

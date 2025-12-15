@@ -9,13 +9,19 @@ export async function DELETE(request: NextRequest) {
     try {
         console.log('[DELETE USER] Starting delete request...');
 
-        // Get auth token from Supabase cookie
-        const cookieHeader = request.headers.get('cookie') || '';
-        const tokenMatch = cookieHeader.match(/sb-[^-]+-auth-token=([^;]+)/);
-        const accessToken = tokenMatch ? decodeURIComponent(tokenMatch[1]) : null;
+        // Try to get token from Authorization header first (sent by frontend)
+        const authHeader = request.headers.get('authorization');
+        let accessToken = authHeader?.replace('Bearer ', '');
+
+        // Fallback to cookie if no auth header
+        if (!accessToken) {
+            const cookieHeader = request.headers.get('cookie') || '';
+            const tokenMatch = cookieHeader.match(/sb-[^-]+-auth-token=([^;]+)/);
+            accessToken = tokenMatch ? decodeURIComponent(tokenMatch[1]) : null;
+        }
 
         if (!accessToken) {
-            console.log('[DELETE USER] No access token found in cookies');
+            console.log('[DELETE USER] No access token found');
             return NextResponse.json(
                 { error: 'Não autorizado. Faça login para continuar.', success: false },
                 { status: 401 }
