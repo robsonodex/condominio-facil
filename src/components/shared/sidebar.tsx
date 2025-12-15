@@ -70,7 +70,17 @@ const navItems: NavItem[] = [
     { href: '/portaria/minhas-encomendas', label: 'Minhas Encomendas', icon: <Package className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
     { href: '/relatorios', label: 'Relatórios', icon: <FileText className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
     { href: '/automacoes', label: 'Automações', icon: <Settings className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
-    { href: '/governanca', label: 'Governança', icon: <Vote className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
+    {
+        href: '/governanca',
+        label: 'Governança',
+        icon: <Vote className="h-5 w-5" />,
+        roles: ['superadmin', 'sindico'],
+        subItems: [
+            { href: '/governanca/enquetes', label: 'Enquetes', icon: <FileText className="h-4 w-4" /> },
+            { href: '/governanca/assembleias', label: 'Assembleias', icon: <Users className="h-4 w-4" /> },
+            { href: '/governanca/documents', label: 'Documentos', icon: <FileText className="h-4 w-4" /> },
+        ]
+    },
     { href: '/manutencao', label: 'Manutenção Preventiva', icon: <Settings className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
     { href: '/assinatura', label: 'Assinatura', icon: <CreditCard className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
     { href: '/perfil', label: 'Meu Perfil', icon: <Settings className="h-5 w-5" /> },
