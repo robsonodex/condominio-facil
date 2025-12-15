@@ -343,7 +343,7 @@ function UserModal({ isOpen, onClose, onSuccess, user, condos, plans, subscripti
     const [email, setEmail] = useState('');
     const [senha, setSenha] = useState('');
     const [telefone, setTelefone] = useState('');
-    const [role, setRole] = useState('morador');
+    const [role, setRole] = useState('sindico');
     const [condoId, setCondoId] = useState('');
     const [ativo, setAtivo] = useState(true);
     // Campos extras para síndico
@@ -373,7 +373,7 @@ function UserModal({ isOpen, onClose, onSuccess, user, condos, plans, subscripti
             setEmail('');
             setSenha('');
             setTelefone('');
-            setRole('morador');
+            setRole('sindico');
             setCondoId('');
             setAtivo(true);
             setCondoNome('');
@@ -494,7 +494,23 @@ function UserModal({ isOpen, onClose, onSuccess, user, condos, plans, subscripti
                 <Input
                     label="Telefone"
                     value={telefone}
-                    onChange={(e) => setTelefone(e.target.value)}
+                    onChange={(e) => {
+                        // Formatar telefone com (DDD)
+                        let value = e.target.value.replace(/\D/g, '');
+                        if (value.length > 0) {
+                            if (value.length <= 2) {
+                                value = `(${value}`;
+                            } else if (value.length <= 6) {
+                                value = `(${value.slice(0, 2)}) ${value.slice(2)}`;
+                            } else if (value.length <= 10) {
+                                value = `(${value.slice(0, 2)}) ${value.slice(2, 6)}-${value.slice(6)}`;
+                            } else {
+                                value = `(${value.slice(0, 2)}) ${value.slice(2, 7)}-${value.slice(7, 11)}`;
+                            }
+                        }
+                        setTelefone(value);
+                    }}
+                    placeholder="(11) 99999-9999"
                 />
 
                 <div className="grid grid-cols-2 gap-4">
@@ -503,8 +519,6 @@ function UserModal({ isOpen, onClose, onSuccess, user, condos, plans, subscripti
                         value={role}
                         onChange={(e) => setRole(e.target.value)}
                         options={[
-                            { value: 'morador', label: 'Morador' },
-                            { value: 'porteiro', label: 'Porteiro' },
                             { value: 'sindico', label: 'Síndico' },
                             { value: 'superadmin', label: 'Super Admin' },
                         ]}
