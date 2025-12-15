@@ -68,7 +68,22 @@ export async function getPlanFeatures(condoId: string): Promise<PlanFeatures> {
             };
         }
 
-        // Premium plan (all features)
+        // Premium plan (all features) - also catches "demo" plans
+        if (planName.includes('premium') || planName.includes('demo')) {
+            return {
+                hasAssemblies: true,
+                hasPolls: true,
+                hasDocuments: true,
+                hasCommonAreas: true,
+                hasOccurrences: true,
+                hasMaintenance: true,
+                hasSuppliers: true,
+                hasMultipleCondos: true,
+                maxUnits: 999999
+            };
+        }
+
+        // Default: all features (better UX than blocking)
         return {
             hasAssemblies: true,
             hasPolls: true,
@@ -77,8 +92,8 @@ export async function getPlanFeatures(condoId: string): Promise<PlanFeatures> {
             hasOccurrences: true,
             hasMaintenance: true,
             hasSuppliers: true,
-            hasMultipleCondos: true,
-            maxUnits: 999999
+            hasMultipleCondos: false,
+            maxUnits: 100
         };
     } catch (error) {
         console.error('[Plan Features] Error:', error);
