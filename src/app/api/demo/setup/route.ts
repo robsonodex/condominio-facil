@@ -142,14 +142,15 @@ export async function POST(request: NextRequest) {
 
         // 6. Criar dados de exemplo
         console.log('[DEMO SETUP] Chamando createDemoData para condo:', demoCondo!.id);
-        await createDemoData(demoCondo!.id, demoUser!.id);
+        const demoLogs = await createDemoData(demoCondo!.id, demoUser!.id);
         console.log('[DEMO SETUP] createDemoData concluído');
 
         return NextResponse.json({
             success: true,
             email: DEMO_EMAIL,
             password: DEMO_PASSWORD,
-            message: 'Ambiente demo pronto!'
+            message: 'Ambiente demo pronto!',
+            logs: demoLogs // Retornar logs para debug
         });
 
     } catch (error: any) {
@@ -161,6 +162,8 @@ export async function POST(request: NextRequest) {
 }
 
 async function createDemoData(condoId: string, userId: string) {
+    const logs: string[] = [];
+    logs.push('[DEMO] Iniciando criação de dados para condo: ' + condoId);
     console.log('[DEMO] Iniciando criação de dados para condo:', condoId);
 
     try {
@@ -392,9 +395,12 @@ async function createDemoData(condoId: string, userId: string) {
         ]);
 
         console.log('[DEMO] Dados de demonstração criados com sucesso!');
+        logs.push('[DEMO] ✅ Dados criados com sucesso!');
+        return logs;
     } catch (error: any) {
         console.error('[DEMO] ERRO CRÍTICO ao criar dados:', error);
         console.error('[DEMO] Stack:', error.stack);
+        logs.push('[DEMO] ❌ ERRO: ' + error.message);
         throw error; // Re-throw para o handler principal pegar
     }
 }
