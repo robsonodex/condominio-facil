@@ -134,35 +134,39 @@ export async function DELETE(request: NextRequest) {
             console.log('[DELETE USER] Auth delete exception (may be OK):', authErr);
         }
 
-        // Delete related records first (to avoid FK constraints)
-        // Delete residents - supabaseAdmin should bypass RLS
-        const { data: deletedResidents, error: residentsDeleteError } = await supabaseAdmin
-            .from('residents')
-            .delete()
-            .eq('user_id', targetUserId)
-            .select();
+        // ========================================
+        // COMPREHENSIVE CLEANUP - ALL USER FOREIGN KEYS
+        // ========================================
 
-        if (residentsDeleteError) {
-            console.error('[DELETE USER] Residents delete error:', residentsDeleteError);
-        } else {
-            console.log('[DELETE USER] Deleted residents:', deletedResidents?.length || 0);
-        }
+        console.log('[DELETE USER] Starting comprehensive cleanup...');
 
-        // Clear aprovado_por from reservations (don't delete reservations, just clear the reference)
-        await supabaseAdmin.from('reservations').update({ aprovado_por: null }).eq('aprovado_por', targetUserId);
-        console.log('[DELETE USER] Cleared reservations aprovado_por');
-
-        // Delete reservations created by this user
+        // 1. Delete user's own records
+        await supabaseAdmin.from('residents').delete().eq('user_id', targetUserId);
         await supabaseAdmin.from('reservations').delete().eq('user_id', targetUserId);
-        console.log('[DELETE USER] Deleted user reservations');
-
-        // Delete notifications sent by this user
-        await supabaseAdmin.from('notifications_sent').delete().eq('sender_id', targetUserId);
-        console.log('[DELETE USER] Deleted notifications_sent');
-
-        // Delete poll votes by this user
         await supabaseAdmin.from('enquete_votes').delete().eq('user_id', targetUserId);
-        console.log('[DELETE USER] Deleted enquete_votes');
+        await supabaseAdmin.from('notifications_sent').delete().eq('sender_id', targetUserId);
+        await supabaseAdmin.from('deliveries').delete().eq('created_by', targetUserId);
+        await supabaseAdmin.from('assembly_presence').delete().eq('user_id', targetUserId);
+        await supabaseAdmin.from('system_logs').delete().eq('user_id', targetUserId);
+        await supabaseAdmin.from('impersonations').delete().eq('impersonator_id', targetUserId);
+        await supabaseAdmin.from('impersonations').delete().eq('target_user_id', targetUserId);
+        await supabaseAdmin.from('camera_access_logs').delete().eq('user_id', targetUserId);
+        await supabaseAdmin.from('camera_events').delete().eq('user_id', targetUserId);
+        await supabaseAdmin.from('camera_alerts').delete().eq('user_id', targetUserId);
+
+        // 2. Clear references (set to NULL) - preserve records but remove user link
+        await supabaseAdmin.from('reservations').update({ aprovado_por: null }).eq('aprovado_por', targetUserId);
+        await supabaseAdmin.from('assembleias').update({ created_by: null }).eq('created_by', targetUserId);
+        await supabaseAdmin.from('documents').update({ uploaded_by: null }).eq('uploaded_by', targetUserId);
+        await supabaseAdmin.from('maintenance_orders').update({ created_by: null }).eq('created_by', targetUserId);
+        await supabaseAdmin.from('resident_invoices').update({ created_by: null }).eq('created_by', targetUserId);
+        await supabaseAdmin.from('occurrences').update({ resolvido_por: null }).eq('resolvido_por', targetUserId);
+        await supabaseAdmin.from('visitor_logs').update({ user_id: null }).eq('user_id', targetUserId);
+
+        // 3. Delete invoices where user is the morador (tenant/resident)
+        await supabaseAdmin.from('resident_invoices').delete().eq('morador_id', targetUserId);
+
+        console.log('[DELETE USER] Comprehensive cleanup completed');
 
         // Delete user profile
         const { error: deleteError } = await supabaseAdmin
