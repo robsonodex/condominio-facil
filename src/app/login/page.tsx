@@ -149,7 +149,7 @@ export default function LoginPage() {
                                 setLoading(true);
                                 setError('');
                                 try {
-                                    // Login direto - o setup roda automaticamente se necessário
+                                    // 1. Fazer login primeiro
                                     const { error: signInError } = await signIn(
                                         'sindico.demo@condofacil.com',
                                         'demo123456'
@@ -161,11 +161,21 @@ export default function LoginPage() {
                                         return;
                                     }
 
-                                    // Chamar setup em background (não bloqueia)
-                                    fetch('/api/demo/setup', { method: 'POST' }).catch(console.error);
+                                    // 2. Garantir que dados sejam criados ANTES de redirecionar
+                                    console.log('[DEMO] Criando dados...');
+                                    const setupRes = await fetch('/api/demo/setup', { method: 'POST' });
+                                    const setupData = await setupRes.json();
 
+                                    if (!setupRes.ok) {
+                                        console.error('[DEMO] Erro no setup:', setupData);
+                                    } else {
+                                        console.log('[DEMO] Setup completo:', setupData);
+                                    }
+
+                                    // 3. Redirecionar
                                     router.push('/dashboard');
                                 } catch (err: any) {
+                                    console.error('[DEMO] Erro:', err);
                                     setError('Erro: ' + err.message);
                                     setLoading(false);
                                 }
@@ -175,7 +185,7 @@ export default function LoginPage() {
                             <div className="relative flex items-center justify-center gap-2 rounded-[10px] bg-white px-4 py-3 transition-all duration-300 group-hover:bg-gradient-to-r group-hover:from-amber-50 group-hover:to-orange-50">
                                 <Sparkles className="h-5 w-5 text-amber-500 group-hover:animate-pulse" />
                                 <span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-orange-600">
-                                    Demonstração
+                                    {loading ? 'Preparando demo...' : 'Demonstração'}
                                 </span>
                                 {loading && <Loader2 className="h-4 w-4 text-amber-500 animate-spin" />}
                             </div>

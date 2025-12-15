@@ -140,8 +140,10 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        // 6. Criar dados de exemplo se não existirem
+        // 6. Criar dados de exemplo
+        console.log('[DEMO SETUP] Chamando createDemoData para condo:', demoCondo!.id);
         await createDemoData(demoCondo!.id, demoUser!.id);
+        console.log('[DEMO SETUP] createDemoData concluído');
 
         return NextResponse.json({
             success: true,
