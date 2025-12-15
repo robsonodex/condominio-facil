@@ -1,6 +1,45 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+// Routes that SuperAdmin should NOT access (operational condo pages)
+const BLOCKED_FOR_SUPERADMIN = [
+    '/ocorrencias',
+    '/avisos',
+    '/moradores',
+    '/unidades',
+    '/financeiro',
+    '/reservas',
+    '/cobrancas',
+    '/minhas-cobrancas',
+    '/portaria',
+    '/manutencao',
+    '/alugueis',
+    '/boletos',
+    '/notificacoes',
+    '/automacoes',
+    '/usuarios',
+    '/governanca',
+    '/relatorios',
+    '/assinatura',
+    '/status',
+    '/configuracoes',
+];
+
+// Routes that SuperAdmin CAN access
+const ALLOWED_FOR_SUPERADMIN = [
+    '/admin',
+    '/dashboard',
+    '/perfil',
+    '/suporte',
+    '/api',
+    '/login',
+    '/register',
+    '/landing',
+    '/termos',
+    '/privacidade',
+    '/contrato',
+];
+
 export async function updateSession(request: NextRequest) {
     let supabaseResponse = NextResponse.next({
         request,
@@ -29,15 +68,34 @@ export async function updateSession(request: NextRequest) {
         }
     )
 
-    // IMPORTANT: Avoid writing any logic between createServerClient and
-    // supabase.auth.getUser(). A simple mistake could make it very hard to debug
-    // issues with users being randomly logged out.
-
     const {
         data: { user },
     } = await supabase.auth.getUser()
 
-    // Just refresh the session, don't redirect
-    // Individual pages handle their own auth requirements
+    // If user is logged in, check if they are SuperAdmin accessing blocked routes
+    if (user) {
+        const pathname = request.nextUrl.pathname;
+
+        // Check if route is blocked for SuperAdmin
+        const isBlockedRoute = BLOCKED_FOR_SUPERADMIN.some(route =>
+            pathname === route || pathname.startsWith(route + '/')
+        );
+
+        if (isBlockedRoute) {
+            // Get user profile to check role
+            const { data: profile } = await supabase
+                .from('users')
+                .select('role')
+                .eq('id', user.id)
+                .single();
+
+            // If SuperAdmin, redirect to admin dashboard
+            if (profile?.role === 'superadmin') {
+                return NextResponse.redirect(new URL('/admin', request.url));
+            }
+        }
+    }
+
     return supabaseResponse
 }
+
