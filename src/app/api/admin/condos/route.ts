@@ -94,6 +94,38 @@ export async function DELETE(request: NextRequest) {
             console.log('[DELETE CONDO] Cleared unidade_id from users');
         }
 
+        // 8.7. Delete deliveries
+        await supabaseAdmin.from('deliveries').delete().eq('condo_id', condoId);
+        console.log('[DELETE CONDO] Deleted deliveries');
+
+        // 8.8. Delete maintenance_orders
+        await supabaseAdmin.from('maintenance_orders').delete().eq('condo_id', condoId);
+        console.log('[DELETE CONDO] Deleted maintenance_orders');
+
+        // 8.9. Delete maintenance_suppliers
+        await supabaseAdmin.from('maintenance_suppliers').delete().eq('condo_id', condoId);
+        console.log('[DELETE CONDO] Deleted maintenance_suppliers');
+
+        // 8.10. Delete polls (enquetes)
+        await supabaseAdmin.from('polls').delete().eq('condo_id', condoId);
+        console.log('[DELETE CONDO] Deleted polls');
+
+        // 8.11. Delete assemblies
+        await supabaseAdmin.from('assemblies').delete().eq('condo_id', condoId);
+        console.log('[DELETE CONDO] Deleted assemblies');
+
+        // 8.12. Delete documents
+        await supabaseAdmin.from('documents').delete().eq('condo_id', condoId);
+        console.log('[DELETE CONDO] Deleted documents');
+
+        // 8.13. Delete common_areas
+        await supabaseAdmin.from('common_areas').delete().eq('condo_id', condoId);
+        console.log('[DELETE CONDO] Deleted common_areas');
+
+        // 8.14. Delete reservations
+        await supabaseAdmin.from('reservations').delete().eq('condo_id', condoId);
+        console.log('[DELETE CONDO] Deleted reservations');
+
         // 9. Delete units
         await supabaseAdmin.from('units').delete().eq('condo_id', condoId);
         console.log('[DELETE CONDO] Deleted units');
