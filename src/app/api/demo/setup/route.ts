@@ -178,8 +178,7 @@ async function createDemoData(condoId: string, userId: string) {
                     units.push({
                         condo_id: condoId,
                         bloco,
-                        numero_unidade: `${andar}0${num}`,
-                        tipo: 'apartamento'
+                        numero_unidade: `${andar}0${num}`
                     });
                 }
             }
