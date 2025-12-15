@@ -149,17 +149,7 @@ export default function LoginPage() {
                                 setLoading(true);
                                 setError('');
                                 try {
-                                    // Primeiro, garantir que o ambiente demo existe
-                                    const setupRes = await fetch('/api/demo/setup', { method: 'POST' });
-                                    const setupData = await setupRes.json();
-
-                                    if (!setupRes.ok) {
-                                        setError(setupData.error || 'Erro ao configurar demo');
-                                        setLoading(false);
-                                        return;
-                                    }
-
-                                    // Agora fazer login
+                                    // Login direto - o setup roda automaticamente se necessário
                                     const { error: signInError } = await signIn(
                                         'sindico.demo@condofacil.com',
                                         'demo123456'
@@ -170,6 +160,9 @@ export default function LoginPage() {
                                         setLoading(false);
                                         return;
                                     }
+
+                                    // Chamar setup em background (não bloqueia)
+                                    fetch('/api/demo/setup', { method: 'POST' }).catch(console.error);
 
                                     router.push('/dashboard');
                                 } catch (err: any) {
