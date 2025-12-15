@@ -368,7 +368,10 @@ function UserModal({ isOpen, onClose, onSuccess, user, condos, plans, subscripti
             setPlanoId('');
             setPeriodoTeste(true);
             setAtivarImediatamente(false);
+            setUsarAssinaturaExistente(false);
+            setSelectedSubscriptionId('');
         } else {
+            // Reset completo para novo usuário
             setNome('');
             setEmail('');
             setSenha('');
@@ -380,8 +383,10 @@ function UserModal({ isOpen, onClose, onSuccess, user, condos, plans, subscripti
             setPlanoId('');
             setPeriodoTeste(true);
             setAtivarImediatamente(false);
+            setUsarAssinaturaExistente(false);
+            setSelectedSubscriptionId('');
         }
-    }, [user]);
+    }, [user, isOpen]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
