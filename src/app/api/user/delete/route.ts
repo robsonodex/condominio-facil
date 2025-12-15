@@ -122,13 +122,25 @@ export async function DELETE(request: NextRequest) {
             }, { status: 403 });
         }
 
-        // Delete from auth first (ignore error if user not in auth)
+        // ========================================
+        // REVOGAR TODAS AS SESSÕES DO USUÁRIO ANTES DE DELETAR
+        // Isso força o logout imediato em todos os dispositivos
+        // ========================================
+        try {
+            // O método admin.signOut revoga todas as sessões do usuário
+            await supabaseAdmin.auth.admin.signOut(targetUserId, 'global');
+            console.log('[DELETE USER] All sessions revoked for user:', targetUserId);
+        } catch (signOutErr: any) {
+            console.log('[DELETE USER] SignOut error (may be OK if user has no sessions):', signOutErr.message);
+        }
+
+        // Delete from auth (isso também remove o usuário permanentemente)
         try {
             const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(targetUserId);
             if (authDeleteError) {
                 console.log('[DELETE USER] Auth delete error (may be OK):', authDeleteError.message);
             } else {
-                console.log('[DELETE USER] Auth user deleted');
+                console.log('[DELETE USER] Auth user deleted successfully');
             }
         } catch (authErr) {
             console.log('[DELETE USER] Auth delete exception (may be OK):', authErr);
