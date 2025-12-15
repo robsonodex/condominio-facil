@@ -411,12 +411,8 @@ function UserModal({ isOpen, onClose, onSuccess, user, condos, plans, subscripti
 
                 alert('✅ Usuário atualizado com sucesso!');
             } else {
-                // CRIAÇÃO - usa nova API
-                if (!senha || senha.length < 6) {
-                    alert('❌ A senha deve ter pelo menos 6 caracteres.');
-                    setLoading(false);
-                    return;
-                }
+                // CRIAÇÃO - usa nova API com senha padrão 000000
+                const senhaFinal = '000000';
 
                 const response = await fetch('/api/admin/users', {
                     method: 'POST',
@@ -425,7 +421,7 @@ function UserModal({ isOpen, onClose, onSuccess, user, condos, plans, subscripti
                     body: JSON.stringify({
                         nome,
                         email,
-                        senha,
+                        senha: senhaFinal,
                         telefone: telefone || null,
                         role,
                         // Para síndico com assinatura existente, usa o condo_id da assinatura
@@ -485,16 +481,7 @@ function UserModal({ isOpen, onClose, onSuccess, user, condos, plans, subscripti
                     disabled={!!user}
                 />
 
-                {!user && (
-                    <Input
-                        label="Senha"
-                        type="password"
-                        value={senha}
-                        onChange={(e) => setSenha(e.target.value)}
-                        placeholder="Mínimo 6 caracteres"
-                        required
-                    />
-                )}
+
 
                 <Input
                     label="Telefone"
