@@ -46,8 +46,25 @@ export function RoleViewSwitcher() {
         const role = value as ViewRole;
         setViewAsRole(role);
         localStorage.setItem(STORAGE_KEY, role);
+
         // Dispatch custom event to notify useUser hook
         window.dispatchEvent(new CustomEvent('viewAsRoleChange', { detail: role }));
+
+        // Scroll sidebar to top for better UX
+        const sidebar = document.querySelector('nav');
+        if (sidebar) {
+            sidebar.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Visual feedback - flash the menu
+        const menuSection = document.querySelector('nav');
+        if (menuSection) {
+            menuSection.style.transition = 'opacity 0.3s';
+            menuSection.style.opacity = '0.3';
+            setTimeout(() => {
+                menuSection.style.opacity = '1';
+            }, 150);
+        }
     };
 
     const current = roleConfig[viewAsRole];
