@@ -224,68 +224,65 @@ async function createDemoData(condoId: string, userId: string) {
         for (let i = 0; i < moradores.length && i < insertedUnits.length; i++) {
             const { error: residentError } = await supabaseAdmin.from('residents').insert({
                 condo_id: condoId,
-                unit_id: insertedUnits[i].id,
-                nome: moradores[i].nome,
-                email: moradores[i].email,
-                telefone: moradores[i].telefone,
-                cpf: moradores[i].cpf
+                user_id: userId,
+                unidade_id: insertedUnits[i].id,
+                tipo: i === 0 ? 'proprietario' : 'inquilino',
+                ativo: true
             });
 
             if (residentError) {
                 console.error(`[DEMO] Erro ao criar morador ${i}:`, residentError);
-                console.error(`[DEMO] Tentando com unit_id: ${insertedUnits[i].id}`);
+                logs.push(`[DEMO] ❌ Erro morador ${i}: ` + residentError.message);
             } else {
                 console.log(`[DEMO] Morador ${i} criado com sucesso`);
+                logs.push(`[DEMO] ✅ Morador ${i} criado`);
             }
         }
         console.log('[DEMO] Moradores criados:', moradores.length);
+        logs.push('[DEMO] Moradores: ' + moradores.length);
 
         // ==========================================
         // AVISOS (5)
         // ==========================================
         console.log('[DEMO] Criando avisos...');
+        logs.push('[DEMO] Criando avisos...');
         const { error: noticesError } = await supabaseAdmin.from('notices').insert([
-            { condo_id: condoId, titulo: 'Manutenção Elevador', conteudo: 'Manutenção preventiva dia 20/01', created_by: userId },
-            { condo_id: condoId, titulo: 'Limpeza Caixa Dágua', conteudo: 'Limpeza dia 25/01', created_by: userId },
-            { condo_id: condoId, titulo: 'Assembleia', conteudo: 'Assembleia dia 30/01 às 19h', created_by: userId },
-            { condo_id: condoId, titulo: 'Pintura Fachada', conteudo: 'Início da pintura - 2 semanas', created_by: userId },
-            { condo_id: condoId, titulo: 'Horário Piscina', conteudo: 'Novo horário: 8h às 20h', created_by: userId },
+            { condo_id: condoId, titulo: 'Manutenção Elevador', mensagem: 'Manutenção preventiva dia 20/01', publico_alvo: 'todos', data_publicacao: now.toISOString() },
+            { condo_id: condoId, titulo: 'Limpeza Caixa Dágua', mensagem: 'Limpeza dia 25/01', publico_alvo: 'todos', data_publicacao: now.toISOString() },
+            { condo_id: condoId, titulo: 'Assembleia', mensagem: 'Assembleia dia 30/01 às 19h', publico_alvo: 'todos', data_publicacao: now.toISOString() },
+            { condo_id: condoId, titulo: 'Pintura Fachada', mensagem: 'Início da pintura - 2 semanas', publico_alvo: 'todos', data_publicacao: now.toISOString() },
+            { condo_id: condoId, titulo: 'Horário Piscina', mensagem: 'Novo horário: 8h às 20h', publico_alvo: 'todos', data_publicacao: now.toISOString() },
         ]);
-        if (noticesError) console.error('[DEMO] Erro avisos:', noticesError);
-        else console.log('[DEMO] Avisos: 5');
+        if (noticesError) { console.error('[DEMO] Erro avisos:', noticesError); logs.push('[DEMO] ❌ Erro avisos: ' + noticesError.message); }
+        else { console.log('[DEMO] Avisos: 5'); logs.push('[DEMO] ✅ Avisos: 5'); }
 
         // ==========================================
         // OCORRÊNCIAS (5)
         // ==========================================
         console.log('[DEMO] Criando ocorrências...');
+        logs.push('[DEMO] Criando ocorrências...');
         const { error: occError } = await supabaseAdmin.from('occurrences').insert([
-            { condo_id: condoId, titulo: 'Barulho excessivo', descricao: 'Barulho apto 301', user_id: userId, status: 'aberta' },
-            { condo_id: condoId, titulo: 'Vazamento', descricao: 'Vazamento apto 102', user_id: userId, status: 'em_andamento' },
-            { condo_id: condoId, titulo: 'Lâmpada queimada', descricao: 'Corredor 2º andar', user_id: userId, status: 'resolvida' },
-            { condo_id: condoId, titulo: 'Portão defeito', descricao: 'Portão garagem', user_id: userId, status: 'aberta' },
-            { condo_id: condoId, titulo: 'Interfone', descricao: 'Interfone apto 201', user_id: userId, status: 'em_andamento' },
+            { condo_id: condoId, unidade_id: insertedUnits[0]?.id, criado_por_user_id: userId, tipo: 'manutencao', titulo: 'Barulho excessivo', descricao: 'Barulho apto 301', status: 'aberta', prioridade: 'media', data_abertura: now.toISOString() },
+            { condo_id: condoId, unidade_id: insertedUnits[1]?.id, criado_por_user_id: userId, tipo: 'manutencao', titulo: 'Vazamento', descricao: 'Vazamento apto 102', status: 'em_andamento', prioridade: 'alta', data_abertura: now.toISOString() },
+            { condo_id: condoId, unidade_id: insertedUnits[2]?.id, criado_por_user_id: userId, tipo: 'manutencao', titulo: 'Lâmpada queimada', descricao: 'Corredor 2º andar', status: 'resolvida', prioridade: 'baixa', data_abertura: now.toISOString() },
+            { condo_id: condoId, unidade_id: insertedUnits[3]?.id, criado_por_user_id: userId, tipo: 'seguranca', titulo: 'Portão defeito', descricao: 'Portão garagem', status: 'aberta', prioridade: 'alta', data_abertura: now.toISOString() },
+            { condo_id: condoId, unidade_id: insertedUnits[4]?.id, criado_por_user_id: userId, tipo: 'manutencao', titulo: 'Interfone', descricao: 'Interfone apto 201', status: 'em_andamento', prioridade: 'media', data_abertura: now.toISOString() },
         ]);
-        if (occError) console.error('[DEMO] Erro ocorrências:', occError);
-        else console.log('[DEMO] Ocorrências: 5');
+        if (occError) { console.error('[DEMO] Erro ocorrências:', occError); logs.push('[DEMO] ❌ Erro ocorrências: ' + occError.message); }
+        else { console.log('[DEMO] Ocorrências: 5'); logs.push('[DEMO] ✅ Ocorrências: 5'); }
 
         // ==========================================
         // VISITANTES (10)
         // ==========================================
         console.log('[DEMO] Criando visitantes...');
+        logs.push('[DEMO] Criando visitantes...');
         const { error: visitorsError } = await supabaseAdmin.from('visitors').insert([
-            { condo_id: condoId, nome: 'Entregador iFood', tipo: 'delivery', destino: 'Apt 101', observacao: 'Pedido de comida', status: 'saiu', created_by: userId },
-            { condo_id: condoId, nome: 'José da Manutenção', tipo: 'prestador', destino: 'Apt 203', observacao: 'Conserto do chuveiro', status: 'no_condominio', created_by: userId },
-            { condo_id: condoId, nome: 'Dra. Mariana', tipo: 'visitante', destino: 'Apt 102', observacao: 'Visita médica', status: 'saiu', created_by: userId },
-            { condo_id: condoId, nome: 'Correios', tipo: 'delivery', destino: 'Portaria', observacao: 'Entrega de encomenda', status: 'saiu', created_by: userId },
-            { condo_id: condoId, nome: 'Família do Sr. João', tipo: 'visitante', destino: 'Apt 101', observacao: 'Visita familiar', status: 'no_condominio', created_by: userId },
-            { condo_id: condoId, nome: 'Técnico NET', tipo: 'prestador', destino: 'Apt 301', observacao: 'Instalação internet', status: 'saiu', created_by: userId },
-            { condo_id: condoId, nome: 'Entregador Amazon', tipo: 'delivery', destino: 'Portaria', observacao: 'Pacote grande', status: 'saiu', created_by: userId },
-            { condo_id: condoId, nome: 'Representante Comercial', tipo: 'visitante', destino: 'Apt 202', observacao: 'Reunião de negócios', status: 'saiu', created_by: userId },
-            { condo_id: condoId, nome: 'Amigos do Pedro', tipo: 'visitante', destino: 'Apt 103', observacao: 'Festa de aniversário', status: 'no_condominio', created_by: userId },
-            { condo_id: condoId, nome: 'Uber Eats', tipo: 'delivery', destino: 'Apt 201', observacao: 'Pedido restaurante', status: 'saiu', created_by: userId },
+            { condo_id: condoId, unidade_id: insertedUnits[0]?.id, nome: 'Entregador iFood', tipo: 'delivery', data_hora_entrada: now.toISOString(), registrado_por_user_id: userId, observacoes: 'Pedido de comida' },
+            { condo_id: condoId, unidade_id: insertedUnits[1]?.id, nome: 'José da Manutenção', tipo: 'prestador', data_hora_entrada: now.toISOString(), registrado_por_user_id: userId, observacoes: 'Conserto do chuveiro' },
+            { condo_id: condoId, unidade_id: insertedUnits[2]?.id, nome: 'Dra. Mariana', tipo: 'visitante', data_hora_entrada: now.toISOString(), data_hora_saida: now.toISOString(), registrado_por_user_id: userId, observacoes: 'Visita médica' },
         ]);
-        if (visitorsError) console.error('[DEMO] Erro visitantes:', visitorsError);
-        else console.log('[DEMO] Visitantes: 10');
+        if (visitorsError) { console.error('[DEMO] Erro visitantes:', visitorsError); logs.push('[DEMO] ❌ Erro visitantes: ' + visitorsError.message); }
+        else { console.log('[DEMO] Visitantes: 3'); logs.push('[DEMO] ✅ Visitantes: 3'); }
 
         // ==========================================
         // LANÇAMENTOS FINANCEIROS (20)
@@ -359,15 +356,14 @@ async function createDemoData(condoId: string, userId: string) {
         // ENCOMENDAS (5)
         // ==========================================
         console.log('[DEMO] Criando encomendas...');
+        logs.push('[DEMO] Criando encomendas...');
         const { error: deliveriesError } = await supabaseAdmin.from('deliveries').insert([
-            { condo_id: condoId, destinatario: 'João Carlos Silva', unidade: '101', remetente: 'Amazon', tipo: 'pacote', status: 'aguardando', observacao: 'Caixa grande', created_by: userId },
-            { condo_id: condoId, destinatario: 'Maria Fernanda Santos', unidade: '102', remetente: 'Mercado Livre', tipo: 'pacote', status: 'entregue', observacao: 'Envelope pequeno', created_by: userId },
-            { condo_id: condoId, destinatario: 'Pedro Henrique Costa', unidade: '103', remetente: 'Magazine Luiza', tipo: 'pacote', status: 'aguardando', observacao: 'Eletrodoméstico', created_by: userId },
-            { condo_id: condoId, destinatario: 'Ana Beatriz Oliveira', unidade: '201', remetente: 'Correios', tipo: 'carta', status: 'entregue', observacao: 'Carta registrada', created_by: userId },
-            { condo_id: condoId, destinatario: 'Carlos Eduardo Pereira', unidade: '202', remetente: 'Shopee', tipo: 'pacote', status: 'aguardando', observacao: 'Eletrônicos', created_by: userId },
+            { condo_id: condoId, unit_id: insertedUnits[0]?.id, created_by: userId, received_at: now.toISOString(), delivered_by: 'Amazon', type: 'package', status: 'pending', notes: 'Caixa grande' },
+            { condo_id: condoId, unit_id: insertedUnits[1]?.id, created_by: userId, received_at: now.toISOString(), delivered_by: 'Mercado Livre', type: 'package', status: 'delivered', notes: 'Envelope pequeno' },
+            { condo_id: condoId, unit_id: insertedUnits[2]?.id, created_by: userId, received_at: now.toISOString(), delivered_by: 'Magazine Luiza', type: 'package', status: 'pending', notes: 'Eletrodoméstico' },
         ]);
-        if (deliveriesError) console.error('[DEMO] Erro encomendas:', deliveriesError);
-        else console.log('[DEMO] Encomendas: 5');
+        if (deliveriesError) { console.error('[DEMO] Erro encomendas:', deliveriesError); logs.push('[DEMO] ❌ Erro encomendas: ' + deliveriesError.message); }
+        else { console.log('[DEMO] Encomendas: 3'); logs.push('[DEMO] ✅ Encomendas: 3'); }
 
         // ==========================================
         // ENQUETES (2)
