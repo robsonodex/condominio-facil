@@ -151,6 +151,10 @@ export async function DELETE(request: NextRequest) {
         await supabaseAdmin.from('notifications_sent').delete().eq('sender_id', targetUserId);
         console.log('[DELETE USER] Deleted notifications_sent');
 
+        // Delete poll votes by this user
+        await supabaseAdmin.from('enquete_votes').delete().eq('user_id', targetUserId);
+        console.log('[DELETE USER] Deleted enquete_votes');
+
         // Delete user profile
         const { error: deleteError } = await supabaseAdmin
             .from('users')

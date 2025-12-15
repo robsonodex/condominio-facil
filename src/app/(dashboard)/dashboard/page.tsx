@@ -195,21 +195,23 @@ export default function DashboardPage() {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Link href="/unidades" className="block transition-transform hover:scale-105">
-                    <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0 h-full cursor-pointer">
-                        <CardContent className="pt-6">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm text-emerald-100">Unidades</p>
-                                    <p className="text-3xl font-bold">{stats?.totalUnidades}</p>
+                {!isSuperAdmin && (
+                    <Link href="/unidades" className="block transition-transform hover:scale-105">
+                        <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0 h-full cursor-pointer">
+                            <CardContent className="pt-6">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-emerald-100">Unidades</p>
+                                        <p className="text-3xl font-bold">{stats?.totalUnidades}</p>
+                                    </div>
+                                    <div className="p-3 bg-white/20 rounded-lg">
+                                        <Home className="h-6 w-6" />
+                                    </div>
                                 </div>
-                                <div className="p-3 bg-white/20 rounded-lg">
-                                    <Home className="h-6 w-6" />
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </Link>
+                            </CardContent>
+                        </Card>
+                    </Link>
+                )}
 
                 <Link href="/financeiro" className="block transition-transform hover:scale-105">
                     <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white border-0 h-full cursor-pointer">
