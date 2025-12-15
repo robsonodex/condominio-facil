@@ -81,7 +81,7 @@ const navItems: NavItem[] = [
             { href: '/governanca/documents', label: 'Documentos', icon: <FileText className="h-4 w-4" />, requiresFeature: 'hasDocuments' },
         ]
     },
-    { href: '/manutencao', label: 'Manutenção', icon: <Settings className="h-5 w-5" />, roles: ['superadmin', 'sindico'], requiresFeature: 'hasMaintenance' },
+    { href: '/manutencao', label: 'Manutenção Preventiva', icon: <Settings className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
     { href: '/assinatura', label: 'Assinatura', icon: <CreditCard className="h-5 w-5" />, roles: ['superadmin', 'sindico'] },
     { href: '/perfil', label: 'Meu Perfil', icon: <Settings className="h-5 w-5" /> },
     { href: '/portaria/deliveries/list', label: 'Encomendas (Porteiro)', icon: <Package className="h-5 w-5" />, roles: ['porteiro'] },
