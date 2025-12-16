@@ -226,11 +226,22 @@ export async function PUT(req: NextRequest) {
             .eq('id', authUser.id)
             .single();
 
-        if (userData?.role !== 'superadmin') {
-            return NextResponse.json({ error: 'Apenas admins podem alterar status' }, { status: 403 });
-        }
-
         const { chat_id, status } = await req.json();
+
+        // Verificar se o usuário pode atualizar este chat
+        const { data: chatData } = await supabaseAdmin
+            .from('support_chats')
+            .select('user_id')
+            .eq('id', chat_id)
+            .single();
+
+        // Permitir se for superadmin OU se for o dono do chat
+        const isOwner = chatData?.user_id === authUser.id;
+        const isSuperAdmin = userData?.role === 'superadmin';
+
+        if (!isOwner && !isSuperAdmin) {
+            return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
+        }
 
         const { error } = await supabaseAdmin
             .from('support_chats')

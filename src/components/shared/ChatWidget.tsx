@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { MessageCircle, X, Send, Loader2, ArrowLeft } from 'lucide-react';
+import { MessageCircle, X, Send, Loader2, ArrowLeft, XCircle } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { createClient } from '@/lib/supabase/client';
@@ -178,6 +178,29 @@ export function ChatWidget() {
         }
     };
 
+    const handleCloseChat = async () => {
+        if (!currentChat) return;
+        if (!confirm('Encerrar esta conversa?')) return;
+
+        try {
+            await fetch('/api/support-chat', {
+                method: 'PUT',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({
+                    chat_id: currentChat.id,
+                    status: 'fechado',
+                }),
+            });
+            setCurrentChat({ ...currentChat, status: 'fechado' });
+            fetchChats();
+            alert('✅ Conversa encerrada!');
+            setView('list');
+            setCurrentChat(null);
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'aberto': return 'bg-blue-100 text-blue-700';
@@ -230,6 +253,15 @@ export function ChatWidget() {
                             </h3>
                             {view === 'list' && <p className="text-sm text-emerald-100">Como podemos ajudar?</p>}
                         </div>
+                        {view === 'chat' && currentChat?.status !== 'fechado' && (
+                            <button
+                                onClick={handleCloseChat}
+                                className="hover:bg-white/20 p-1 rounded text-white/80 hover:text-white"
+                                title="Encerrar conversa"
+                            >
+                                <XCircle className="h-5 w-5" />
+                            </button>
+                        )}
                     </div>
 
                     {/* Content */}
@@ -314,8 +346,8 @@ export function ChatWidget() {
                                         >
                                             <div
                                                 className={`max-w-[80%] p-3 rounded-2xl ${msg.sender_type === 'user'
-                                                        ? 'bg-emerald-500 text-white rounded-br-md'
-                                                        : 'bg-gray-100 text-gray-900 rounded-bl-md'
+                                                    ? 'bg-emerald-500 text-white rounded-br-md'
+                                                    : 'bg-gray-100 text-gray-900 rounded-bl-md'
                                                     }`}
                                             >
                                                 {msg.sender_type === 'admin' && (
