@@ -132,8 +132,8 @@ export default function AdminCobrancasPage() {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${session?.access_token}`,
                     },
+                    credentials: 'include',
                     body: JSON.stringify({
                         subscription_id: subId,
                         custom_message: chargeDesc || `Cobrança mensal - ${sub.plan?.nome_plano || 'Plano'}`,
