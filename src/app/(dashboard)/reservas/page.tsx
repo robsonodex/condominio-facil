@@ -6,7 +6,7 @@ import { Modal } from '@/components/ui/modal';
 import { useAuth } from '@/hooks/useAuth';
 import { useUser } from '@/hooks/useUser';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { Calendar, Plus, CheckCircle, XCircle, Clock, MapPin, Users, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar, Plus, CheckCircle, XCircle, Clock, MapPin, Users, ChevronLeft, ChevronRight, Edit2 } from 'lucide-react';
 
 interface CommonArea {
     id: string;
@@ -45,6 +45,7 @@ export default function ReservasPage() {
     const [showModal, setShowModal] = useState(false);
     const [showAreaModal, setShowAreaModal] = useState(false);
     const [selectedDate, setSelectedDate] = useState('');
+    const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
 
     // Form states
     const [horarioInicio, setHorarioInicio] = useState('08:00');
@@ -175,6 +176,70 @@ export default function ReservasPage() {
         setNumConvidados('0');
         setObservacoes('');
         setSelectedDate('');
+        setEditingReservation(null);
+    };
+
+    const openEditModal = (reservation: Reservation) => {
+        setEditingReservation(reservation);
+        setSelectedArea(reservation.area_id);
+        setSelectedDate(reservation.data_reserva);
+        setHorarioInicio(reservation.horario_inicio);
+        setHorarioFim(reservation.horario_fim);
+        setNumConvidados(String(reservation.num_convidados));
+        setObservacoes(reservation.observacoes || '');
+        setShowModal(true);
+    };
+
+    const handleSaveReservation = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedDate || !selectedArea) return;
+
+        setSaving(true);
+        try {
+            if (editingReservation) {
+                // Atualizar reserva existente
+                const res = await fetch('/api/reservations', {
+                    method: 'PUT',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({
+                        id: editingReservation.id,
+                        action: 'update',
+                        data_reserva: selectedDate,
+                        horario_inicio: horarioInicio,
+                        horario_fim: horarioFim,
+                        num_convidados: parseInt(numConvidados),
+                        observacoes,
+                    }),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error);
+                alert(`✅ Reserva atualizada!`);
+            } else {
+                // Criar nova reserva
+                const res = await fetch('/api/reservations', {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({
+                        area_id: selectedArea,
+                        data_reserva: selectedDate,
+                        horario_inicio: horarioInicio,
+                        horario_fim: horarioFim,
+                        num_convidados: parseInt(numConvidados),
+                        observacoes,
+                    }),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error);
+                alert(`✅ ${data.message}`);
+            }
+            setShowModal(false);
+            fetchReservations();
+            resetForm();
+        } catch (e: any) {
+            alert(`❌ ${e.message}`);
+        } finally {
+            setSaving(false);
+        }
     };
 
     const getDaysInMonth = () => {
@@ -361,6 +426,9 @@ export default function ReservasPage() {
                                             <Button size="sm" onClick={() => handleAction(r.id, 'aprovar')}>
                                                 <CheckCircle className="h-4 w-4 mr-1" /> Aprovar
                                             </Button>
+                                            <Button size="sm" variant="outline" onClick={() => openEditModal(r)}>
+                                                <Edit2 className="h-4 w-4 mr-1" /> Editar
+                                            </Button>
                                             <Button size="sm" variant="ghost" onClick={() => handleAction(r.id, 'rejeitar')}>
                                                 <XCircle className="h-4 w-4 mr-1" /> Rejeitar
                                             </Button>
@@ -394,6 +462,9 @@ export default function ReservasPage() {
                                         <p className="text-sm text-gray-600">{r.user?.nome} • {r.horario_inicio} às {r.horario_fim}</p>
                                     </div>
                                     <div className="flex gap-2">
+                                        <Button size="sm" variant="outline" onClick={() => openEditModal(r)}>
+                                            <Edit2 className="h-4 w-4 mr-1" /> Editar
+                                        </Button>
                                         <Button size="sm" variant="danger" onClick={() => handleAction(r.id, 'cancelar')}>
                                             Cancelar
                                         </Button>
@@ -405,9 +476,9 @@ export default function ReservasPage() {
                 </Card>
             )}
 
-            {/* Modal Nova Reserva */}
-            <Modal isOpen={showModal} onClose={() => { setShowModal(false); resetForm(); }} title="Nova Reserva" size="md">
-                <form onSubmit={handleCreateReservation} className="space-y-4">
+            {/* Modal Nova/Editar Reserva */}
+            <Modal isOpen={showModal} onClose={() => { setShowModal(false); resetForm(); }} title={editingReservation ? 'Editar Reserva' : 'Nova Reserva'} size="md">
+                <form onSubmit={handleSaveReservation} className="space-y-4">
                     <Select
                         label="Espaço *"
                         value={selectedArea}
