@@ -46,6 +46,7 @@ export default function NotificacoesPage() {
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [sending, setSending] = useState(false);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false); // New state for upgrade modal
     const supabase = createClient();
 
     // Form state
@@ -278,14 +279,25 @@ export default function NotificacoesPage() {
                                 <button
                                     key={opt.value}
                                     type="button"
-                                    onClick={() => setTipo(opt.value)}
+                                    onClick={() => {
+                                        if (opt.value === 'whatsapp' && !condo?.whatsapp_active) {
+                                            setShowUpgradeModal(true);
+                                            return;
+                                        }
+                                        setTipo(opt.value);
+                                    }}
                                     className={`p-3 rounded-lg border-2 flex items-center gap-2 transition-colors ${tipo === opt.value
                                         ? 'border-emerald-500 bg-emerald-50'
                                         : 'border-gray-200 hover:border-gray-300'
-                                        }`}
+                                        } ${opt.value === 'whatsapp' && !condo?.whatsapp_active ? 'opacity-75 bg-gray-50' : ''}`}
                                 >
                                     {opt.icon}
-                                    <span className="text-sm">{opt.label.split(' ')[1]}</span>
+                                    <span className="text-sm flex items-center gap-1">
+                                        {opt.label.replace('📱 ', '').replace('💬 ', '').replace('📧 ', '').replace('📢 ', '')}
+                                        {opt.value === 'whatsapp' && !condo?.whatsapp_active && (
+                                            <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full border border-amber-200 font-medium">PRO</span>
+                                        )}
+                                    </span>
                                 </button>
                             ))}
                         </div>
@@ -346,6 +358,45 @@ export default function NotificacoesPage() {
                         </Button>
                     </div>
                 </form>
+            </Modal>
+            {/* Upgrade Modal */}
+            <Modal
+                isOpen={showUpgradeModal}
+                onClose={() => setShowUpgradeModal(false)}
+                title="Funcionalidade Premium"
+            >
+                <div className="text-center space-y-4 py-4">
+                    <div className="bg-green-100 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                        <MessageSquare className="h-8 w-8 text-green-600" />
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900">
+                        Ative o Envio via WhatsApp
+                    </h3>
+                    <p className="text-gray-600">
+                        Para enviar notificações automáticas via WhatsApp, é necessário contratar o servidor dedicado.
+                    </p>
+                    <div className="bg-gray-50 p-4 rounded-lg text-left text-sm space-y-2 border border-gray-200">
+                        <p className="font-semibold text-gray-700">Com o plano WhatsApp você tem:</p>
+                        <ul className="space-y-1 text-gray-600">
+                            <li>✨ Envio ilimitado de mensagens</li>
+                            <li>⚡ Notificações instantâneas</li>
+                            <li>🤖 Automação de cobranças e avisos</li>
+                        </ul>
+                    </div>
+                    <div className="pt-4 flex gap-3">
+                        <Button variant="outline" onClick={() => setShowUpgradeModal(false)} className="flex-1">
+                            Agora não
+                        </Button>
+                        <Button
+                            className="flex-1 bg-green-600 hover:bg-green-700"
+                            onClick={() => {
+                                window.location.href = '/configuracoes/integracao-whatsapp';
+                            }}
+                        >
+                            Ver Planos
+                        </Button>
+                    </div>
+                </div>
             </Modal>
         </div>
     );

@@ -43,6 +43,7 @@ export interface Condo {
     pix_tipo: 'cpf' | 'cnpj' | 'email' | 'telefone' | 'aleatoria' | null;
     pix_nome_recebedor: string | null;
     pix_cidade: string | null;
+    whatsapp_active?: boolean;
     created_at: string;
     updated_at: string;
     // Relations
