@@ -5,7 +5,7 @@ import { Card, CardContent, Button, Select, Table, Badge, Input, Textarea } from
 import { Modal } from '@/components/ui/modal';
 import { createClient } from '@/lib/supabase/client';
 import { formatCurrency, formatDate, getStatusColor, getStatusLabel } from '@/lib/utils';
-import { CreditCard, Send, Bell, Mail, DollarSign } from 'lucide-react';
+import { CreditCard, Send, Bell, Mail, DollarSign, Edit, Save } from 'lucide-react';
 
 export default function AdminAssinaturasPage() {
     const [subscriptions, setSubscriptions] = useState<any[]>([]);
@@ -19,6 +19,13 @@ export default function AdminAssinaturasPage() {
     const [billingAction, setBillingAction] = useState<'email' | 'notification' | 'both'>('both');
     const [customMessage, setCustomMessage] = useState('');
     const [sending, setSending] = useState(false);
+
+    // Modal edição de valor
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editingSub, setEditingSub] = useState<any>(null);
+    const [novoValor, setNovoValor] = useState('');
+    const [observacoes, setObservacoes] = useState('');
+    const [savingValue, setSavingValue] = useState(false);
 
     useEffect(() => {
         fetchSubscriptions();
@@ -44,6 +51,41 @@ export default function AdminAssinaturasPage() {
             setSubscriptions([]);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const openEditModal = (sub: any) => {
+        setEditingSub(sub);
+        setNovoValor((sub.valor_mensal_cobrado || sub.plan?.valor_mensal || 0).toFixed(2));
+        setObservacoes(sub.observacoes || '');
+        setShowEditModal(true);
+    };
+
+    const handleSaveValue = async () => {
+        if (!editingSub) return;
+
+        setSavingValue(true);
+        try {
+            const { error } = await supabase
+                .from('subscriptions')
+                .update({
+                    valor_mensal_cobrado: parseFloat(novoValor),
+                    observacoes: observacoes || null,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', editingSub.id);
+
+            if (error) {
+                alert(`❌ Erro: ${error.message}`);
+            } else {
+                alert('✅ Valor atualizado com sucesso!');
+                setShowEditModal(false);
+                fetchSubscriptions();
+            }
+        } catch (e: any) {
+            alert(`❌ Erro: ${e.message}`);
+        } finally {
+            setSavingValue(false);
         }
     };
 
@@ -144,13 +186,23 @@ export default function AdminAssinaturasPage() {
             key: 'actions',
             header: 'Ações',
             render: (s: any) => (
-                <Button
-                    size="sm"
-                    onClick={() => openBillingModal(s)}
-                >
-                    <DollarSign className="h-4 w-4 mr-1" />
-                    Cobrar
-                </Button>
+                <div className="flex gap-2">
+                    <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => openEditModal(s)}
+                        title="Editar valor"
+                    >
+                        <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        size="sm"
+                        onClick={() => openBillingModal(s)}
+                    >
+                        <DollarSign className="h-4 w-4 mr-1" />
+                        Cobrar
+                    </Button>
+                </div>
             )
         },
     ];
@@ -328,6 +380,64 @@ export default function AdminAssinaturasPage() {
                         <Button onClick={handleSendBilling} loading={sending}>
                             <Send className="h-4 w-4 mr-2" />
                             Enviar Cobrança
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Edit Value Modal */}
+            <Modal
+                isOpen={showEditModal}
+                onClose={() => setShowEditModal(false)}
+                title="Editar Valor Personalizado"
+            >
+                <div className="space-y-6">
+                    {/* Info */}
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <p className="font-semibold text-blue-800">{editingSub?.condo?.nome}</p>
+                        <p className="text-sm text-blue-600">Plano: {editingSub?.plan?.nome_plano}</p>
+                        <p className="text-sm text-blue-500">Valor padrão do plano: {formatCurrency(editingSub?.plan?.valor_mensal || 0)}</p>
+                    </div>
+
+                    {/* Form */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Valor Mensal Personalizado (R$)
+                        </label>
+                        <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={novoValor}
+                            onChange={(e) => setNovoValor(e.target.value)}
+                            placeholder="Ex: 79.90"
+                            className="text-lg font-bold"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                            Deixe diferente do plano para aplicar desconto ou acréscimo
+                        </p>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Observações (opcional)
+                        </label>
+                        <Textarea
+                            value={observacoes}
+                            onChange={(e) => setObservacoes(e.target.value)}
+                            rows={3}
+                            placeholder="Ex: Desconto promocional 1º ano, Acréscimo por módulo extra..."
+                        />
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-3 justify-end pt-4 border-t">
+                        <Button variant="ghost" onClick={() => setShowEditModal(false)}>
+                            Cancelar
+                        </Button>
+                        <Button onClick={handleSaveValue} loading={savingValue}>
+                            <Save className="h-4 w-4 mr-2" />
+                            Salvar Valor
                         </Button>
                     </div>
                 </div>
