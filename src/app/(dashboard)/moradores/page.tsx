@@ -405,8 +405,10 @@ function ResidentModal({ isOpen, onClose, onSuccess, condoId, units, resident, s
                     label="Unidade"
                     value={unidadeId}
                     onChange={(e) => setUnidadeId(e.target.value)}
-                    options={units.map(u => ({ value: u.id, label: `${u.bloco || ''} ${u.numero_unidade}` }))}
-                    placeholder="Selecione a unidade"
+                    options={[
+                        { value: '', label: 'Selecione a unidade...' },
+                        ...units.map(u => ({ value: u.id, label: `${u.bloco || ''} ${u.numero_unidade}` }))
+                    ]}
                     required
                 />
 
