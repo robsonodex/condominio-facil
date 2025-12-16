@@ -46,6 +46,7 @@ export default function PortariaProfissionalPage() {
     const [nome, setNome] = useState('');
     const [documento, setDocumento] = useState('');
     const [tipo, setTipo] = useState('visitante');
+    const [tipoFixo, setTipoFixo] = useState(false); // Se true, não mostra Select de tipo
     const [placa, setPlaca] = useState('');
     const [unidadeId, setUnidadeId] = useState('');
     const [observacoes, setObservacoes] = useState('');
@@ -203,6 +204,7 @@ export default function PortariaProfissionalPage() {
         setNome('');
         setDocumento('');
         setTipo('visitante');
+        setTipoFixo(false);
         setPlaca('');
         setUnidadeId('');
         setObservacoes('');
@@ -259,7 +261,7 @@ export default function PortariaProfissionalPage() {
             {/* Quick Actions */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <button
-                    onClick={() => { setTipo('visitante'); setShowModal(true); }}
+                    onClick={() => { setTipo('visitante'); setTipoFixo(true); setShowModal(true); }}
                     className="group relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
                 >
                     <div className="flex flex-col items-center gap-4">
@@ -274,7 +276,7 @@ export default function PortariaProfissionalPage() {
                 </button>
 
                 <button
-                    onClick={() => { setTipo('prestador_servico'); setShowModal(true); }}
+                    onClick={() => { setTipo('prestador_servico'); setTipoFixo(true); setShowModal(true); }}
                     className="group relative overflow-hidden bg-gradient-to-br from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
                 >
                     <div className="flex flex-col items-center gap-4">
@@ -289,7 +291,7 @@ export default function PortariaProfissionalPage() {
                 </button>
 
                 <button
-                    onClick={() => { setTipo('entrega'); setShowModal(true); }}
+                    onClick={() => { setTipo(''); setTipoFixo(false); setShowModal(true); }}
                     className="group relative overflow-hidden bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
                 >
                     <div className="flex flex-col items-center gap-4">
@@ -453,16 +455,26 @@ export default function PortariaProfissionalPage() {
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                        <Select
-                            label="Tipo"
-                            value={tipo}
-                            onChange={(e) => setTipo(e.target.value)}
-                            options={[
-                                { value: 'visitante', label: 'Visitante' },
-                                { value: 'prestador_servico', label: 'Prestador de Serviço' },
-                                { value: 'entrega', label: 'Entrega' },
-                            ]}
-                        />
+                        {!tipoFixo ? (
+                            <Select
+                                label="Tipo"
+                                value={tipo}
+                                onChange={(e) => setTipo(e.target.value)}
+                                options={[
+                                    { value: '', label: 'Selecione...' },
+                                    { value: 'visitante', label: 'Visitante' },
+                                    { value: 'prestador_servico', label: 'Prestador de Serviço' },
+                                    { value: 'entrega', label: 'Entrega' },
+                                ]}
+                            />
+                        ) : (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                                <div className="px-3 py-2 bg-gray-100 rounded-lg font-medium text-gray-700">
+                                    {tipo === 'visitante' ? 'Visitante' : tipo === 'prestador_servico' ? 'Prestador de Serviço' : 'Entrega'}
+                                </div>
+                            </div>
+                        )}
                         <Select
                             label="Destino (Unidade)"
                             value={unidadeId}
