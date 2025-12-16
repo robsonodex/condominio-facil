@@ -90,9 +90,25 @@ export function OnboardingChecklist() {
                 const { count } = await supabase.from('financial_entries').select('*', { count: 'exact', head: true }).eq('condo_id', condoId);
                 return (count || 0) > 0;
             },
+            ativar_cobrancas: async () => {
+                const { count } = await supabase.from('resident_invoices').select('*', { count: 'exact', head: true }).eq('condo_id', condoId);
+                return (count || 0) > 0;
+            },
+            ativar_portaria: async () => {
+                const { count } = await supabase.from('visitor_logs').select('*', { count: 'exact', head: true }).eq('condo_id', condoId);
+                return (count || 0) > 0;
+            },
+            ativar_reservas: async () => {
+                const { count } = await supabase.from('common_areas').select('*', { count: 'exact', head: true }).eq('condo_id', condoId);
+                return (count || 0) > 0;
+            },
             criar_primeiro_aviso: async () => {
                 const { count } = await supabase.from('notices').select('*', { count: 'exact', head: true }).eq('condo_id', condoId);
                 return (count || 0) > 0;
+            },
+            ver_relatorio_financeiro: async () => {
+                // Marcar como concluído se o usuário acessou relatórios (verificar via progress existente)
+                return false; // Este será marcado manualmente ao visitar a página
             },
         };
 
