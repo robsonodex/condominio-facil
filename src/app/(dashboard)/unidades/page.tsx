@@ -5,6 +5,7 @@ import { Card, CardContent, Button, Input, Select, Table, CardSkeleton, TableSke
 import { Modal } from '@/components/ui/modal';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/hooks/useUser';
+import { useAuth } from '@/hooks/useAuth';
 import { Plus, Search, Home, Edit, Trash2 } from 'lucide-react';
 import { Unit } from '@/types/database';
 import { useMultiSelect } from '@/hooks/useMultiSelect';
@@ -21,6 +22,7 @@ function UnidadesSkeleton() {
 
 export default function UnidadesPage() {
     const { condoId, loading: userLoading, isSuperAdmin } = useUser();
+    const { session } = useAuth();
     const [units, setUnits] = useState<Unit[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -29,6 +31,11 @@ export default function UnidadesPage() {
     const [filterBloco, setFilterBloco] = useState('');
     const [blocos, setBlocos] = useState<string[]>([]);
     const supabase = useMemo(() => createClient(), []);
+
+    const getAuthHeaders = () => ({
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session?.access_token}`,
+    });
 
     useEffect(() => {
         if (!userLoading && condoId) fetchUnits();
@@ -62,7 +69,11 @@ export default function UnidadesPage() {
     const handleDelete = async (id: string) => {
         if (!confirm('Deseja realmente excluir esta unidade?')) return;
         try {
-            const response = await fetch(`/api/units?id=${id}`, { method: 'DELETE', credentials: 'include' });
+            const response = await fetch(`/api/units?id=${id}`, {
+                method: 'DELETE',
+                headers: getAuthHeaders(),
+                credentials: 'include'
+            });
             if (!response.ok) {
                 const data = await response.json();
                 throw new Error(data.error || 'Erro ao excluir unidade');
@@ -102,7 +113,11 @@ export default function UnidadesPage() {
 
             for (const id of Array.from(selectedIds)) {
                 try {
-                    const response = await fetch(`/api/units?id=${id}`, { method: 'DELETE', credentials: 'include' });
+                    const response = await fetch(`/api/units?id=${id}`, {
+                        method: 'DELETE',
+                        headers: getAuthHeaders(),
+                        credentials: 'include'
+                    });
                     if (response.ok) {
                         successCount++;
                     } else {
@@ -266,17 +281,19 @@ export default function UnidadesPage() {
                 onSuccess={fetchUnits}
                 condoId={condoId}
                 unit={editingUnit}
+                session={session}
             />
         </div>
     );
 }
 
-function UnitModal({ isOpen, onClose, onSuccess, condoId, unit }: {
+function UnitModal({ isOpen, onClose, onSuccess, condoId, unit, session }: {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
     condoId: string | null | undefined;
     unit: Unit | null;
+    session: any;
 }) {
     const [loading, setLoading] = useState(false);
     const [bloco, setBloco] = useState('');
@@ -319,7 +336,10 @@ function UnitModal({ isOpen, onClose, onSuccess, condoId, unit }: {
 
             const response = await fetch('/api/units', {
                 method: unit ? 'PUT' : 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session?.access_token}`,
+                },
                 credentials: 'include',
                 body: JSON.stringify(unit ? { id: unit.id, ...data } : data),
             });
