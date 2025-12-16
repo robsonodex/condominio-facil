@@ -106,7 +106,6 @@ export default function PortariaProfissionalPage() {
             placa_veiculo: placa,
             unidade_id: unidadeId || null,
             observacoes,
-            foto_url: capturedPhoto,
             registrado_por_user_id: profile?.id,
         });
 
