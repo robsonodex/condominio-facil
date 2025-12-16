@@ -176,9 +176,10 @@ export async function PATCH(request: NextRequest) {
                                 'Content-Type': 'application/json',
                             },
                             body: JSON.stringify({
-                                to: targetEmail,
-                                template: emailTemplate,
-                                data: emailData
+                                tipo: emailTemplate,
+                                destinatario: targetEmail,
+                                dados: emailData,
+                                internalCall: true
                             })
                         });
 
