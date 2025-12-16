@@ -70,6 +70,9 @@ O **Condomínio Fácil** é uma plataforma SaaS (Software como Serviço) para ge
 - Cria e edita planos de assinatura
 - Visualiza métricas financeiras (MRR, churn, etc.)
 - Ativa/suspende condomínios
+- **Gerencia usuários com ID Cliente único** ✅ NOVO v5.3
+- **Gerencia condomínios com ID Condo único** ✅ NOVO v5.3
+- **Busca por ID Cliente ou ID Condo** ✅ NOVO v5.3
 
 **Onde acessa:** `/admin`
 
@@ -473,21 +476,78 @@ O síndico pode pagar diretamente pela página `/assinatura`:
 
 ## 🔐 Segurança
 
+### Autenticação e Sessão
 - **Autenticação**: Supabase Auth (email/senha)
+- **Sessão Segura**: Expira automaticamente ao fechar o navegador ✅ NOVO v5.3
+- **Token via Header**: Authorization Bearer para todas as chamadas API ✅ NOVO v5.3
+- **Senha Padrão**: Novos usuários cadastrados via admin recebem senha `000000` ✅ NOVO v5.3
+
+### Proteção de Dados
 - **RLS**: Row Level Security no banco
 - **Multi-tenant**: Dados isolados por condomínio
 - **HTTPS**: Certificado SSL automático na Vercel
 
+### Exclusão de Usuários ✅ NOVO v5.3
+- **Logout Imediato**: Ao excluir um usuário, todas as sessões são revogadas instantaneamente
+- **Aplicável a todos**: Síndico, Porteiro, Morador - todos são deslogados imediatamente ao serem excluídos
+- **Segurança**: `signOut global` antes de deletar o usuário do Auth
+
 ---
 
-## 🚀 Próximos Passos Recomendados
+## 🆔 Sistema de Identificação ✅ NOVO v5.3
 
-1. **Criar landing page** para vender o sistema
-2. **Integrar gateway de pagamento** (Stripe/MP)
-3. **Criar checkout** com seleção de planos
-4. **Adicionar onboarding** para novos clientes
-5. **Implementar emails automáticos** (boas-vindas, cobrança)
-6. **Adicionar analytics** (Google Analytics, Mixpanel)
+### ID Cliente (Síndicos)
+- Cada síndico cadastrado recebe um **ID sequencial único** (#1, #2, #3...)
+- Visível no **Painel Admin → Usuários**
+- Busca por ID no campo de pesquisa
+- Exibido no **WhatsApp** ao enviar comprovante de pagamento
+
+### ID Condo (Condomínios)
+- Cada condomínio cadastrado recebe um **ID sequencial único** (#1, #2, #3...)
+- Visível no **Painel Admin → Condomínios**
+- Facilita identificação e suporte ao cliente
+
+### WhatsApp Integrado
+- Número: **(21) 96553-2247**
+- Mensagem inclui dados completos:
+  - ID Cliente, Nome, E-mail, Telefone
+  - Condomínio, Plano, Valor
+
+---
+
+## 📧 Sistema de E-mails ✅ NOVO v5.3
+
+### E-mails Automáticos
+- **Credenciais de Acesso**: Enviado ao cadastrar novo síndico
+  - Contém: E-mail, Senha (000000), Link de login
+- **Ativação de Plano**: Enviado com nome correto do plano (Básico, Profissional, etc.)
+- **Trial 7 Dias**: Notificação de início do período de teste
+- **Condomínio Ativo**: Confirmação de ativação
+
+### Templates Disponíveis
+- `welcome` - Boas-vindas
+- `user_credentials` - Credenciais de acesso
+- `condo_trial` - Período de teste
+- `condo_active` - Condomínio ativado
+- `condo_suspended` - Condomínio suspenso
+- `resident_invoice` - Fatura do morador
+
+---
+
+## ✅ Funcionalidades Implementadas (Resumo v5.3)
+
+| Funcionalidade | Status |
+|----------------|--------|
+| ID Cliente sequencial para síndicos | ✅ Implementado |
+| ID Condo sequencial para condomínios | ✅ Implementado |
+| Busca por ID no painel admin | ✅ Implementado |
+| Sessão expira ao fechar navegador | ✅ Implementado |
+| Logout imediato ao excluir usuário | ✅ Implementado |
+| Senha padrão 000000 para novos usuários | ✅ Implementado |
+| E-mail com plano correto (não fixo) | ✅ Implementado |
+| WhatsApp com dados completos do cliente | ✅ Implementado |
+| Reset de formulário ao criar novo usuário | ✅ Implementado |
+| Token de autenticação via Authorization header | ✅ Implementado |
 
 ---
 
@@ -500,4 +560,7 @@ Para dúvidas técnicas, consulte:
 
 ---
 
-© 2024 Condomínio Fácil - Todos os direitos reservados
+**Versão do Manual:** 5.3  
+**Última atualização:** 16/12/2025
+
+© 2025 Condomínio Fácil - Todos os direitos reservados

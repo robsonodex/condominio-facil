@@ -36,6 +36,9 @@
 - ✅ Cancele quando quiser
 - ✅ Dados criptografados e seguros
 - ✅ Acesso mobile e web
+- ✅ **ID Cliente único para identificação rápida** ✅ NOVO v5.3
+- ✅ **E-mails automáticos de ativação e credenciais** ✅ NOVO v5.3
+- ✅ **Sessão segura (expira ao fechar navegador)** ✅ NOVO v5.3
 
 ---
 
@@ -363,5 +366,5 @@ Equipe Condomínio Fácil
 
 ---
 
-**Última atualização**: 09/12/2025
-**Versão**: 2.0 (com Landing Page e Checkout Mercado Pago integrados)
+**Última atualização**: 16/12/2025
+**Versão**: 5.3 (com ID Cliente, E-mails automáticos e Sessão Segura)
