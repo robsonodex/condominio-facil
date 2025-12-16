@@ -328,29 +328,36 @@ export default function ReservasPage() {
                 </CardContent>
             </Card>
 
-            {/* Lista de Reservas Pendentes (Síndico) */}
-            {(isSindico || isSuperAdmin) && reservations.filter(r => r.status === 'pendente').length > 0 && (
-                <Card>
+            {/* Lista de Reservas Aguardando Aprovação (Síndico) */}
+            {(isSindico || isSuperAdmin) && (
+                <Card className="border-amber-200">
                     <CardContent className="p-4">
-                        <h3 className="font-semibold mb-3">Reservas Aguardando Aprovação</h3>
-                        <div className="space-y-2">
-                            {reservations.filter(r => r.status === 'pendente').map(r => (
-                                <div key={r.id} className="flex items-center justify-between p-3 bg-amber-50 rounded-lg">
-                                    <div>
-                                        <p className="font-medium">{r.area?.nome} - {formatDate(r.data_reserva)}</p>
-                                        <p className="text-sm text-gray-600">{r.user?.nome} • {r.horario_inicio} às {r.horario_fim}</p>
+                        <h3 className="font-semibold mb-3 flex items-center gap-2">
+                            <Clock className="h-5 w-5 text-amber-500" />
+                            Reservas Aguardando Aprovação
+                        </h3>
+                        {reservations.filter(r => r.status === 'pendente').length > 0 ? (
+                            <div className="space-y-2">
+                                {reservations.filter(r => r.status === 'pendente').map(r => (
+                                    <div key={r.id} className="flex items-center justify-between p-3 bg-amber-50 rounded-lg">
+                                        <div>
+                                            <p className="font-medium">{r.area?.nome} - {formatDate(r.data_reserva)}</p>
+                                            <p className="text-sm text-gray-600">{r.user?.nome} • {r.horario_inicio} às {r.horario_fim}</p>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <Button size="sm" onClick={() => handleAction(r.id, 'aprovar')}>
+                                                <CheckCircle className="h-4 w-4 mr-1" /> Aprovar
+                                            </Button>
+                                            <Button size="sm" variant="ghost" onClick={() => handleAction(r.id, 'rejeitar')}>
+                                                <XCircle className="h-4 w-4 mr-1" /> Rejeitar
+                                            </Button>
+                                        </div>
                                     </div>
-                                    <div className="flex gap-2">
-                                        <Button size="sm" onClick={() => handleAction(r.id, 'aprovar')}>
-                                            <CheckCircle className="h-4 w-4 mr-1" /> Aprovar
-                                        </Button>
-                                        <Button size="sm" variant="ghost" onClick={() => handleAction(r.id, 'rejeitar')}>
-                                            <XCircle className="h-4 w-4 mr-1" /> Rejeitar
-                                        </Button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-gray-500 text-sm">Nenhuma reserva pendente de aprovação.</p>
+                        )}
                     </CardContent>
                 </Card>
             )}
