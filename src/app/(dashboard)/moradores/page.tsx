@@ -5,6 +5,7 @@ import { Card, CardContent, Button, Input, Select, Table, Badge, CardSkeleton, T
 import { Modal } from '@/components/ui/modal';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/hooks/useUser';
+import { useAuth } from '@/hooks/useAuth';
 import { formatPhone } from '@/lib/utils';
 import { Plus, Search, Users, Edit, Trash2 } from 'lucide-react';
 import { Unit } from '@/types/database';
@@ -27,6 +28,7 @@ function MoradoresSkeleton() {
 
 export default function MoradoresPage() {
     const { condoId, isSindico, isSuperAdmin, loading: userLoading } = useUser();
+    const { session } = useAuth();
     const [residents, setResidents] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -253,19 +255,21 @@ export default function MoradoresPage() {
                     condoId={condoId}
                     units={units}
                     resident={editingResident}
+                    session={session}
                 />
             )}
         </div>
     );
 }
 
-function ResidentModal({ isOpen, onClose, onSuccess, condoId, units, resident }: {
+function ResidentModal({ isOpen, onClose, onSuccess, condoId, units, resident, session }: {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
     condoId: string | null | undefined;
     units: Unit[];
     resident: any;
+    session: any;
 }) {
     const [loading, setLoading] = useState(false);
     const [nome, setNome] = useState('');
@@ -305,7 +309,10 @@ function ResidentModal({ isOpen, onClose, onSuccess, condoId, units, resident }:
                 // Update via API
                 const response = await fetch('/api/residents', {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session?.access_token}`,
+                    },
                     credentials: 'include',
                     body: JSON.stringify({
                         id: resident.id,
@@ -326,7 +333,10 @@ function ResidentModal({ isOpen, onClose, onSuccess, condoId, units, resident }:
                 // Create via API
                 const response = await fetch('/api/residents', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session?.access_token}`,
+                    },
                     credentials: 'include',
                     body: JSON.stringify({
                         nome,
