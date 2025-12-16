@@ -5,7 +5,7 @@ import { Card, CardContent, Button, Select, Table, Badge, Input, Textarea } from
 import { Modal } from '@/components/ui/modal';
 import { createClient } from '@/lib/supabase/client';
 import { formatCurrency, formatDate, getStatusColor, getStatusLabel } from '@/lib/utils';
-import { CreditCard, Send, Bell, Mail, DollarSign, Edit, Save } from 'lucide-react';
+import { CreditCard, Send, Bell, Mail, DollarSign, Edit, Save, PlusCircle } from 'lucide-react';
 
 export default function AdminAssinaturasPage() {
     const [subscriptions, setSubscriptions] = useState<any[]>([]);
@@ -26,6 +26,12 @@ export default function AdminAssinaturasPage() {
     const [novoValor, setNovoValor] = useState('');
     const [observacoes, setObservacoes] = useState('');
     const [savingValue, setSavingValue] = useState(false);
+
+    // Modal cobrança avulsa
+    const [showChargeModal, setShowChargeModal] = useState(false);
+    const [chargeValor, setChargeValor] = useState('');
+    const [chargeDescricao, setChargeDescricao] = useState('');
+    const [charging, setCharging] = useState(false);
 
     useEffect(() => {
         fetchSubscriptions();
@@ -86,6 +92,42 @@ export default function AdminAssinaturasPage() {
             alert(`❌ Erro: ${e.message}`);
         } finally {
             setSavingValue(false);
+        }
+    };
+
+    const openChargeModal = (sub: any) => {
+        setSelectedSub(sub);
+        setChargeValor('');
+        setChargeDescricao('');
+        setShowChargeModal(true);
+    };
+
+    const handleCreateCharge = async () => {
+        if (!selectedSub || !chargeValor || !chargeDescricao) {
+            alert('Preencha valor e descrição');
+            return;
+        }
+
+        setCharging(true);
+        try {
+            const { error } = await supabase
+                .from('admin_charges')
+                .insert({
+                    condo_id: selectedSub.condo_id,
+                    valor: parseFloat(chargeValor),
+                    descricao: chargeDescricao,
+                    status: 'pendente'
+                });
+
+            if (error) throw error;
+
+            alert('✅ Cobrança avulsa registrada com sucesso!');
+            setShowChargeModal(false);
+            // Aqui poderia disparar notificação/email se desejado
+        } catch (e: any) {
+            alert(`❌ Erro: ${e.message}`);
+        } finally {
+            setCharging(false);
         }
     };
 
@@ -201,6 +243,14 @@ export default function AdminAssinaturasPage() {
                     >
                         <DollarSign className="h-4 w-4 mr-1" />
                         Cobrar
+                    </Button>
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => openChargeModal(s)}
+                        title="Cobrança Avulsa (Setup/Extra)"
+                    >
+                        <PlusCircle className="h-4 w-4" />
                     </Button>
                 </div>
             )
@@ -442,7 +492,56 @@ export default function AdminAssinaturasPage() {
                     </div>
                 </div>
             </Modal>
+
+            {/* Modal Cobrança Avulsa */}
+            <Modal
+                isOpen={showChargeModal}
+                onClose={() => setShowChargeModal(false)}
+                title="Nova Cobrança Avulsa"
+            >
+                <div className="space-y-6">
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+                        <p className="font-semibold text-emerald-800">{selectedSub?.condo?.nome}</p>
+                        <p className="text-sm text-emerald-600">Síndico: {selectedSub?.condo?.email_contato}</p>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Descrição da Cobrança *
+                        </label>
+                        <Input
+                            value={chargeDescricao}
+                            onChange={(e) => setChargeDescricao(e.target.value)}
+                            placeholder="Ex: Taxa de Implantação, Configuração Inicial..."
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Valor (R$) *
+                        </label>
+                        <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={chargeValor}
+                            onChange={(e) => setChargeValor(e.target.value)}
+                            className="text-lg font-bold"
+                            placeholder="0.00"
+                        />
+                    </div>
+
+                    <div className="flex gap-3 justify-end pt-4 border-t">
+                        <Button variant="ghost" onClick={() => setShowChargeModal(false)}>
+                            Cancelar
+                        </Button>
+                        <Button onClick={handleCreateCharge} loading={charging}>
+                            <PlusCircle className="h-4 w-4 mr-2" />
+                            Criar Cobrança
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 }
-
