@@ -414,10 +414,21 @@ function UserModal({ isOpen, onClose, onSuccess, user, condos, plans, subscripti
                 // CRIAÇÃO - usa nova API com senha padrão 000000
                 const senhaFinal = '000000';
 
+                // Obter token de sessão para enviar via Authorization header
+                const { data: { session: currentSession } } = await supabase.auth.getSession();
+                if (!currentSession?.access_token) {
+                    alert('❌ Sessão expirada. Por favor, faça login novamente.');
+                    setLoading(false);
+                    return;
+                }
+
                 const response = await fetch('/api/admin/users', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include', // IMPORTANTE: enviar cookies de autenticação
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentSession.access_token}`
+                    },
+                    credentials: 'include',
                     body: JSON.stringify({
                         nome,
                         email,
