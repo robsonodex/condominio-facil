@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, Button, Badge, Textarea } from '@/components/ui';
 import { useUser } from '@/hooks/useUser';
+import { useAuth } from '@/hooks/useAuth';
 import { formatDate } from '@/lib/utils';
 import { ArrowLeft, Send, Clock, User, Tag, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 import Link from 'next/link';
@@ -36,6 +37,7 @@ export default function TicketDetailsPage() {
     const params = useParams();
     const ticketId = params?.id as string;
     const { profile, isSuperAdmin } = useUser();
+    const { session } = useAuth();
 
     const [ticket, setTicket] = useState<Ticket | null>(null);
     const [loading, setLoading] = useState(true);
@@ -49,7 +51,10 @@ export default function TicketDetailsPage() {
     }, [ticketId]);
 
     const fetchTicket = async () => {
-        const res = await fetch(`/api/support/tickets/${ticketId}`);
+        const res = await fetch(`/api/support/tickets/${ticketId}`, {
+            headers: { 'Authorization': `Bearer ${session?.access_token}` },
+            credentials: 'include'
+        });
         const data = await res.json();
 
         if (res.ok) {
@@ -65,7 +70,11 @@ export default function TicketDetailsPage() {
         try {
             const res = await fetch(`/api/support/tickets/${ticketId}/messages`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session?.access_token}`,
+                },
+                credentials: 'include',
                 body: JSON.stringify({ message: newMessage })
             });
 
@@ -84,7 +93,11 @@ export default function TicketDetailsPage() {
     const updateStatus = async (newStatus: string) => {
         const res = await fetch(`/api/support/tickets/${ticketId}`, {
             method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session?.access_token}`,
+            },
+            credentials: 'include',
             body: JSON.stringify({ status: newStatus })
         });
 
@@ -98,7 +111,11 @@ export default function TicketDetailsPage() {
 
         const res = await fetch(`/api/support/tickets/${ticketId}/close`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session?.access_token}`,
+            },
+            credentials: 'include',
             body: JSON.stringify({})
         });
 

@@ -4,11 +4,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { Package, Search, Filter, CheckCircle, RotateCcw, RefreshCw, ChevronRight } from 'lucide-react';
 
 export default function DeliveryListPage() {
     const router = useRouter();
     const supabase = createClient();
+    const { session } = useAuth();
     const [deliveries, setDeliveries] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [filterStatus, setFilterStatus] = useState('');
@@ -22,7 +24,10 @@ export default function DeliveryListPage() {
         if (filterStatus) url += `status=${filterStatus}&`;
 
         try {
-            const res = await fetch(url);
+            const res = await fetch(url, {
+                headers: { 'Authorization': `Bearer ${session?.access_token}` },
+                credentials: 'include'
+            });
             const json = await res.json();
             if (json.data) {
                 setDeliveries(json.data);
@@ -41,7 +46,11 @@ export default function DeliveryListPage() {
     const handleConfirm = async (id: string) => {
         if (!confirm('Confirmar retirada desta entrega?')) return;
         try {
-            const res = await fetch(`/api/portaria/deliveries/${id}/confirm`, { method: 'POST' });
+            const res = await fetch(`/api/portaria/deliveries/${id}/confirm`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${session?.access_token}` },
+                credentials: 'include'
+            });
             if (res.ok) {
                 fetchDeliveries();
             } else {
@@ -59,7 +68,11 @@ export default function DeliveryListPage() {
         try {
             const res = await fetch(`/api/portaria/deliveries/${id}/return`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session?.access_token}`,
+                },
+                credentials: 'include',
                 body: JSON.stringify({ reason })
             });
             if (res.ok) {

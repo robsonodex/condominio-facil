@@ -66,14 +66,20 @@ export default function CamerasPage() {
     const fetchData = async () => {
         try {
             // Buscar gateway
-            const gwRes = await fetch(`/api/cameras/gateways?condo_id=${condoId}`);
+            const gwRes = await fetch(`/api/cameras/gateways?condo_id=${condoId}`, {
+                headers: { 'Authorization': `Bearer ${session?.access_token}` },
+                credentials: 'include'
+            });
             const gwData = await gwRes.json();
             if (gwData.gateways?.length > 0) {
                 setGateway(gwData.gateways[0]);
             }
 
             // Buscar câmeras
-            const camRes = await fetch(`/api/cameras?condo_id=${condoId}`);
+            const camRes = await fetch(`/api/cameras?condo_id=${condoId}`, {
+                headers: { 'Authorization': `Bearer ${session?.access_token}` },
+                credentials: 'include'
+            });
             const camData = await camRes.json();
             setCameras(camData.cameras || []);
         } catch (error) {
@@ -85,7 +91,11 @@ export default function CamerasPage() {
 
     const handleProbe = async (cameraId: string) => {
         try {
-            const res = await fetch(`/api/cameras/${cameraId}/probe`, { method: 'POST' });
+            const res = await fetch(`/api/cameras/${cameraId}/probe`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${session?.access_token}` },
+                credentials: 'include'
+            });
             const data = await res.json();
 
             if (data.success) {
@@ -129,7 +139,11 @@ export default function CamerasPage() {
         try {
             const res = await fetch('/api/cameras', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session?.access_token}`,
+                },
+                credentials: 'include',
                 body: JSON.stringify({
                     condo_id: condoId,
                     nome: formNome,
