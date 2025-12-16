@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
-import { createClient as createServiceRoleClient } from '@supabase/supabase-js';
+import { supabaseAdmin, getSessionFromReq } from '@/lib/supabase/admin';
 
 /**
  * GET /api/admin/subscriptions
@@ -9,30 +8,16 @@ import { createClient as createServiceRoleClient } from '@supabase/supabase-js';
  */
 export async function GET(request: NextRequest) {
     try {
-        const supabase = await createClient();
-
         // Verificar autenticação
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
+        const session = await getSessionFromReq(request);
+        if (!session) {
             return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
         }
 
         // Verificar se é superadmin
-        const { data: profile } = await supabase
-            .from('users')
-            .select('role')
-            .eq('email', user.email)
-            .single();
-
-        if (!profile || profile.role !== 'superadmin') {
+        if (!session.isSuperadmin) {
             return NextResponse.json({ error: 'Apenas superadmin' }, { status: 403 });
         }
-
-        // Usar service role para contornar RLS
-        const supabaseAdmin = createServiceRoleClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY!
-        );
 
         // Buscar parâmetros de filtro
         const { searchParams } = new URL(request.url);
