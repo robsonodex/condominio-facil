@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { MessageCircle, X, Send, Loader2, ArrowLeft, XCircle } from 'lucide-react';
+import { MessageCircle, X, Send, Loader2, ArrowLeft, XCircle, Paperclip, Image as ImageIcon, FileText } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { createClient } from '@/lib/supabase/client';
@@ -13,6 +13,8 @@ interface Message {
     sender_id: string;
     created_at: string;
     sender?: { nome: string };
+    attachment_url?: string;
+    attachment_type?: string;
 }
 
 interface Chat {
@@ -35,8 +37,10 @@ export function ChatWidget() {
     const [newSubject, setNewSubject] = useState('');
     const [loading, setLoading] = useState(false);
     const [sending, setSending] = useState(false);
+    const [uploading, setUploading] = useState(false);
     const [userId, setUserId] = useState<string>('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const getAuthHeaders = () => ({
         'Content-Type': 'application/json',
@@ -150,11 +154,49 @@ export function ChatWidget() {
         }
     };
 
-    const handleSendMessage = async () => {
-        if (!newMessage || !currentChat) return;
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !currentChat) return;
+
+        // Validar tamanho (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            alert('Arquivo muito grande. Máximo 5MB.');
+            return;
+        }
+
+        setUploading(true);
+        try {
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${userId}/${Date.now()}.${fileExt}`;
+            const { error: uploadError } = await supabase.storage
+                .from('support-attachments')
+                .upload(fileName, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('support-attachments')
+                .getPublicUrl(fileName);
+
+            const attachmentType = file.type.startsWith('image/') ? 'image' : 'file';
+
+            // Send message with attachment
+            await handleSendMessage(undefined, publicUrl, attachmentType);
+
+        } catch (error) {
+            console.error('Erro ao enviar arquivo:', error);
+            alert('Erro ao enviar arquivo.');
+        } finally {
+            setUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
+
+    const handleSendMessage = async (e?: any, attachmentUrl?: string, attachmentType?: string) => {
+        if ((!newMessage && !attachmentUrl) || !currentChat) return;
 
         const tempMessage = newMessage;
-        setNewMessage('');
+        if (!attachmentUrl) setNewMessage(''); // Only clear text if regular sending
         setSending(true);
 
         // Optimistic update
@@ -164,6 +206,8 @@ export function ChatWidget() {
             sender_type: 'user',
             sender_id: userId,
             created_at: new Date().toISOString(),
+            attachment_url: attachmentUrl,
+            attachment_type: attachmentType
         };
         setMessages(prev => [...prev, optimisticMsg]);
 
@@ -175,8 +219,14 @@ export function ChatWidget() {
                     action: 'send_message',
                     chat_id: currentChat.id,
                     mensagem: tempMessage,
+                    attachment_url: attachmentUrl,
+                    attachment_type: attachmentType
                 }),
             });
+
+            // Clear message if it was sent successfully via API (in case we didn't clear it before)
+            if (attachmentUrl) setNewMessage('');
+
         } catch (e) {
             console.error(e);
         } finally {
@@ -359,7 +409,33 @@ export function ChatWidget() {
                                                 {msg.sender_type === 'admin' && (
                                                     <p className="text-xs font-medium text-emerald-600 mb-1">Suporte</p>
                                                 )}
-                                                <p className="text-sm">{msg.mensagem}</p>
+
+                                                {msg.attachment_url && (
+                                                    <div className="mb-2">
+                                                        {msg.attachment_type === 'image' ? (
+                                                            <a href={msg.attachment_url} target="_blank" rel="noopener noreferrer" className="block">
+                                                                <img
+                                                                    src={msg.attachment_url}
+                                                                    alt="Anexo"
+                                                                    className="max-w-full rounded-lg border border-white/20 max-h-48 object-cover"
+                                                                />
+                                                            </a>
+                                                        ) : (
+                                                            <a
+                                                                href={msg.attachment_url}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className={`flex items-center gap-2 p-2 rounded-lg ${msg.sender_type === 'user' ? 'bg-white/20 hover:bg-white/30' : 'bg-gray-200 hover:bg-gray-300'
+                                                                    } transition`}
+                                                            >
+                                                                <FileText className="h-5 w-5" />
+                                                                <span className="text-sm underline">Ver Anexo</span>
+                                                            </a>
+                                                        )}
+                                                    </div>
+                                                )}
+
+                                                <p className="text-sm whitespace-pre-wrap">{msg.mensagem}</p>
                                                 <p className={`text-xs mt-1 ${msg.sender_type === 'user' ? 'text-emerald-100' : 'text-gray-500'}`}>
                                                     {new Date(msg.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                                                 </p>
@@ -375,7 +451,26 @@ export function ChatWidget() {
                     {/* Input de mensagem (apenas na view chat) */}
                     {view === 'chat' && (
                         <div className="border-t p-3 bg-gray-50">
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                className="hidden"
+                                onChange={handleFileUpload}
+                                accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
+                            />
                             <div className="flex gap-2">
+                                <button
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={sending || uploading}
+                                    className="w-10 h-10 bg-gray-200 text-gray-600 rounded-full flex items-center justify-center hover:bg-gray-300 disabled:opacity-50 transition"
+                                    title="Anexar arquivo"
+                                >
+                                    {uploading ? (
+                                        <Loader2 className="h-5 w-5 animate-spin" />
+                                    ) : (
+                                        <Paperclip className="h-5 w-5" />
+                                    )}
+                                </button>
                                 <input
                                     type="text"
                                     value={newMessage}
@@ -385,8 +480,8 @@ export function ChatWidget() {
                                     className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                                 />
                                 <button
-                                    onClick={handleSendMessage}
-                                    disabled={!newMessage || sending}
+                                    onClick={() => handleSendMessage()}
+                                    disabled={!newMessage || sending || uploading}
                                     className="w-10 h-10 bg-emerald-500 text-white rounded-full flex items-center justify-center hover:bg-emerald-600 disabled:opacity-50"
                                 >
                                     <Send className="h-5 w-5" />

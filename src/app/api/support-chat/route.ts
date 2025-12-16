@@ -200,10 +200,10 @@ export async function POST(req: NextRequest) {
         }
 
         if (action === 'send_message') {
-            const { chat_id, mensagem } = body;
+            const { chat_id, mensagem, attachment_url, attachment_type } = body;
 
-            if (!chat_id || !mensagem) {
-                return NextResponse.json({ error: 'Chat e mensagem são obrigatórios' }, { status: 400 });
+            if (!chat_id || (!mensagem && !attachment_url)) {
+                return NextResponse.json({ error: 'Chat e mensagem (ou anexo) são obrigatórios' }, { status: 400 });
             }
 
             const senderType = userData?.role === 'superadmin' ? 'admin' : 'user';
@@ -215,7 +215,9 @@ export async function POST(req: NextRequest) {
                     chat_id,
                     sender_id: authUser.id,
                     sender_type: senderType,
-                    mensagem,
+                    mensagem: mensagem || '', // Mensagem pode ser vazia se tiver anexo
+                    attachment_url,
+                    attachment_type,
                 })
                 .select()
                 .single();
