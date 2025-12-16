@@ -11,6 +11,7 @@ import { Plus, Download, DollarSign, TrendingUp, TrendingDown, AlertCircle, Edit
 import { FinancialEntry } from '@/types/database';
 
 const CATEGORIAS_RECEITA = [
+    { value: '', label: 'Selecione a categoria...' },
     { value: 'taxa_condominio', label: 'Taxa de Condomínio' },
     { value: 'fundo_reserva', label: 'Fundo de Reserva' },
     { value: 'multa', label: 'Multa' },
@@ -19,6 +20,7 @@ const CATEGORIAS_RECEITA = [
 ];
 
 const CATEGORIAS_DESPESA = [
+    { value: '', label: 'Selecione a categoria...' },
     { value: 'agua', label: 'Água' },
     { value: 'luz', label: 'Luz' },
     { value: 'gas', label: 'Gás' },
@@ -358,7 +360,26 @@ function NewEntryModal({ isOpen, onClose, onSuccess, condoId, editingEntry, sess
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!condoId) return;
+
+        if (!condoId) {
+            alert('Erro: Condomínio não identificado. Faça login novamente.');
+            return;
+        }
+
+        if (!categoria) {
+            alert('Por favor, selecione uma categoria.');
+            return;
+        }
+
+        if (!valor || parseFloat(valor) <= 0) {
+            alert('Por favor, informe um valor válido.');
+            return;
+        }
+
+        if (!dataVencimento) {
+            alert('Por favor, informe a data de vencimento.');
+            return;
+        }
 
         setLoading(true);
         try {
