@@ -28,6 +28,24 @@ export default function RelatoriosPage() {
         setEndDate(end.toISOString().split('T')[0]);
     }, []);
 
+    // Marcar checklist como visualizado
+    useEffect(() => {
+        const markChecklistItem = async () => {
+            if (!condoId) return;
+            try {
+                await supabase
+                    .from('onboarding_progress')
+                    .upsert({
+                        condo_id: condoId,
+                        ver_relatorio_financeiro: true
+                    }, { onConflict: 'condo_id' });
+            } catch (e) {
+                // Ignore errors
+            }
+        };
+        markChecklistItem();
+    }, [condoId]);
+
     const fetchReportData = async () => {
         if (!condoId) return [];
 
