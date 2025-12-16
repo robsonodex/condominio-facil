@@ -153,6 +153,20 @@ export async function POST(request: NextRequest) {
         }
 
         // 7. Create Profile
+        // Gerar cliente_id para síndicos (ID sequencial)
+        let clienteId = null;
+        if (role === 'sindico') {
+            const { data: maxIdRow } = await supabaseAdmin
+                .from('users')
+                .select('cliente_id')
+                .eq('role', 'sindico')
+                .order('cliente_id', { ascending: false })
+                .limit(1)
+                .single();
+
+            clienteId = (maxIdRow?.cliente_id || 0) + 1;
+        }
+
         const { error: dbError } = await supabaseAdmin
             .from('users')
             .insert({
@@ -162,7 +176,8 @@ export async function POST(request: NextRequest) {
                 telefone: telefone || null,
                 role: role || 'morador',
                 condo_id: finalCondoId,
-                ativo: ativo !== false
+                ativo: ativo !== false,
+                cliente_id: clienteId
             });
 
         if (dbError) {

@@ -79,7 +79,8 @@ export default function AdminUsuariosPage() {
 
     const filteredUsers = users.filter(u => {
         const matchesSearch = u.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            u.email?.toLowerCase().includes(searchTerm.toLowerCase());
+            u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (u.cliente_id && u.cliente_id.toString().includes(searchTerm));
         const matchesRole = !filterRole || u.role === filterRole;
         return matchesSearch && matchesRole;
     });
@@ -165,6 +166,15 @@ export default function AdminUsuariosPage() {
                 />
             ),
             className: 'w-12'
+        },
+        {
+            key: 'cliente_id',
+            header: 'ID Cliente',
+            render: (u: any) => u.role === 'sindico' && u.cliente_id ? (
+                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-bold">
+                    #{u.cliente_id}
+                </span>
+            ) : '-'
         },
         {
             key: 'nome',
@@ -285,7 +295,7 @@ export default function AdminUsuariosPage() {
                     <Input
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        placeholder="Buscar por nome ou email..."
+                        placeholder="Buscar por nome, email ou ID cliente..."
                         className="pl-10"
                     />
                 </div>

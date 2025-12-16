@@ -306,12 +306,19 @@ export default function AssinaturaPage() {
                                             className="w-full border-emerald-500 text-emerald-700 hover:bg-emerald-100"
                                             onClick={() => {
                                                 const msg = encodeURIComponent(
-                                                    `Olá! Segue comprovante de pagamento da mensalidade do Condomínio Fácil.\n\n` +
-                                                    `Condomínio: ${profile?.condo_nome || 'N/A'}\n` +
+                                                    `Olá! Segue comprovante de pagamento.\n\n` +
+                                                    `📋 *DADOS DO CLIENTE*\n` +
+                                                    `ID Cliente: #${profile?.cliente_id || 'N/A'}\n` +
+                                                    `Nome: ${profile?.nome || 'N/A'}\n` +
+                                                    `E-mail: ${profile?.email || 'N/A'}\n` +
+                                                    `Telefone: ${profile?.telefone || 'N/A'}\n` +
+                                                    `Condomínio: ${profile?.condo_nome || 'N/A'}\n\n` +
+                                                    `💰 *PAGAMENTO*\n` +
+                                                    `Plano: ${subscription?.plan?.nome_plano || 'N/A'}\n` +
                                                     `Valor: ${formatCurrency(subscription?.valor_mensal_cobrado || 49.90)}\n\n` +
                                                     `Por favor, confirmem o recebimento.`
                                                 );
-                                                window.open(`https://wa.me/5588999999999?text=${msg}`, '_blank');
+                                                window.open(`https://wa.me/5521965532247?text=${msg}`, '_blank');
                                             }}
                                         >
                                             📱 Enviar Comprovante via WhatsApp
@@ -350,31 +357,33 @@ export default function AssinaturaPage() {
             </Card>
 
             {/* PIX Code */}
-            {pixCode && (
-                <Card className="border-emerald-200 bg-emerald-50">
-                    <CardHeader>
-                        <CardTitle className="text-emerald-700 flex items-center gap-2">
-                            <QrCode className="h-5 w-5" />
-                            PIX Gerado - Copie e Pague
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-4">
-                            <div className="p-4 bg-white rounded-lg border border-emerald-200">
-                                <p className="text-xs text-gray-500 mb-2">Código PIX Copia e Cola:</p>
-                                <p className="font-mono text-sm break-all">{pixCode}</p>
+            {
+                pixCode && (
+                    <Card className="border-emerald-200 bg-emerald-50">
+                        <CardHeader>
+                            <CardTitle className="text-emerald-700 flex items-center gap-2">
+                                <QrCode className="h-5 w-5" />
+                                PIX Gerado - Copie e Pague
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                                <div className="p-4 bg-white rounded-lg border border-emerald-200">
+                                    <p className="text-xs text-gray-500 mb-2">Código PIX Copia e Cola:</p>
+                                    <p className="font-mono text-sm break-all">{pixCode}</p>
+                                </div>
+                                <Button onClick={copyPixCode} className="w-full" variant={copied ? 'outline' : 'primary'}>
+                                    <Copy className="h-4 w-4 mr-2" />
+                                    {copied ? 'Copiado!' : 'Copiar Código PIX'}
+                                </Button>
+                                <p className="text-sm text-emerald-700 text-center">
+                                    Abra o app do seu banco, escolha PIX → Colar Código e pague!
+                                </p>
                             </div>
-                            <Button onClick={copyPixCode} className="w-full" variant={copied ? 'outline' : 'primary'}>
-                                <Copy className="h-4 w-4 mr-2" />
-                                {copied ? 'Copiado!' : 'Copiar Código PIX'}
-                            </Button>
-                            <p className="text-sm text-emerald-700 text-center">
-                                Abra o app do seu banco, escolha PIX → Colar Código e pague!
-                            </p>
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
+                        </CardContent>
+                    </Card>
+                )
+            }
 
             {/* Payment History */}
             <Card>
@@ -412,6 +421,6 @@ export default function AssinaturaPage() {
                     )}
                 </CardContent>
             </Card>
-        </div>
+        </div >
     );
 }
