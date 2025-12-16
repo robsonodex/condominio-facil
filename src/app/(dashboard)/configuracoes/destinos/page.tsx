@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, Button, Input, Table, Badge } from '@/components/ui';
 import { Modal } from '@/components/ui/modal';
 import { useUser } from '@/hooks/useUser';
+import { useAuth } from '@/hooks/useAuth';
 import { Plus, Edit, Trash2, MapPin, Building2 } from 'lucide-react';
 
 interface Destination {
@@ -15,6 +16,7 @@ interface Destination {
 
 export default function DestinosPage() {
     const { isSindico, isSuperAdmin, loading: userLoading } = useUser();
+    const { session } = useAuth();
     const [destinations, setDestinations] = useState<Destination[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -30,7 +32,10 @@ export default function DestinosPage() {
     const fetchDestinations = async () => {
         setLoading(true);
         try {
-            const res = await fetch('/api/destinations', { credentials: 'include' });
+            const res = await fetch('/api/destinations', {
+                headers: { 'Authorization': `Bearer ${session?.access_token}` },
+                credentials: 'include'
+            });
             const data = await res.json();
             setDestinations(data.destinations || []);
         } catch (error) {
@@ -52,7 +57,10 @@ export default function DestinosPage() {
 
             const res = await fetch('/api/destinations', {
                 method,
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session?.access_token}`,
+                },
                 credentials: 'include',
                 body: JSON.stringify(body),
             });
@@ -76,6 +84,7 @@ export default function DestinosPage() {
         try {
             const res = await fetch(`/api/destinations?id=${id}`, {
                 method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${session?.access_token}` },
                 credentials: 'include',
             });
 

@@ -4,11 +4,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { Camera, Save, ArrowLeft, Upload, Check } from 'lucide-react';
 
 export default function NewDeliveryPage() {
     const router = useRouter();
     const supabase = createClient();
+    const { session } = useAuth();
 
     const [loading, setLoading] = useState(false);
     const [units, setUnits] = useState<any[]>([]);
@@ -119,7 +121,10 @@ export default function NewDeliveryPage() {
 
             const response = await fetch('/api/portaria/deliveries', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session?.access_token}`,
+                },
                 credentials: 'include',
                 body: JSON.stringify({
                     ...formData,

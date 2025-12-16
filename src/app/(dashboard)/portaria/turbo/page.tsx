@@ -3,9 +3,11 @@ import React, { useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/hooks/useUser';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function TurboPage() {
     const { user } = useUser();
+    const { session } = useAuth();
     const router = useRouter();
     const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -32,13 +34,20 @@ export default function TurboPage() {
 
             // alert("Processando...");
 
-            const upload = await fetch('/api/portaria/upload-photo', { method: 'POST', body: fd });
+            const upload = await fetch('/api/portaria/upload-photo', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${session?.access_token}` },
+                body: fd
+            });
             if (!upload.ok) throw new Error('Upload failed');
             const { photo_url } = await upload.json();
 
             const res = await fetch('/api/portaria/turbo-entry', {
                 method: 'POST',
-                headers: { 'content-type': 'application/json' },
+                headers: {
+                    'content-type': 'application/json',
+                    'Authorization': `Bearer ${session?.access_token}`,
+                },
                 body: JSON.stringify({ entry_type: type, photo_url })
             });
 

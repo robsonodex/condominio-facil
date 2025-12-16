@@ -3,12 +3,14 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, Button, Input, Select, Textarea } from '@/components/ui';
 import { useUser } from '@/hooks/useUser';
+import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Send, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 
 export default function NovoTicketPage() {
     const { profile, condoId } = useUser();
+    const { session } = useAuth();
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
@@ -28,7 +30,11 @@ export default function NovoTicketPage() {
         try {
             const res = await fetch('/api/support/tickets', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session?.access_token}`,
+                },
+                credentials: 'include',
                 body: JSON.stringify(formData)
             });
 

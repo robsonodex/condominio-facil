@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, Button, Badge, Modal, Input, Select } from '@/components/ui';
 import { useUser } from '@/hooks/useUser';
+import { useAuth } from '@/hooks/useAuth';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
 import { Plus, FileText, Send, Eye, Home, Users, Calendar, DollarSign } from 'lucide-react';
@@ -54,6 +55,7 @@ export default function AlugueisPage() {
     });
 
     const supabase = createClient();
+    const { session } = useAuth();
 
     useEffect(() => {
         if (condoId) {
@@ -92,7 +94,10 @@ export default function AlugueisPage() {
 
         const response = await fetch('/api/contracts/rent', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session?.access_token}`,
+            },
             credentials: 'include',
             body: JSON.stringify({
                 ...formData,
@@ -128,7 +133,10 @@ export default function AlugueisPage() {
 
         const response = await fetch('/api/checkout/rent', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session?.access_token}`,
+            },
             credentials: 'include',
             body: JSON.stringify({
                 contract_id: contractId,

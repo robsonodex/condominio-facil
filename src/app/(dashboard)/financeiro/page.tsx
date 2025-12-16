@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, Button, Input, Select, Badge,
 import { Modal } from '@/components/ui/modal';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/hooks/useUser';
+import { useAuth } from '@/hooks/useAuth';
 import { formatCurrency, formatDate, getStatusColor, getStatusLabel } from '@/lib/utils';
 import { Plus, Download, DollarSign, TrendingUp, TrendingDown, AlertCircle, Edit2, Trash2 } from 'lucide-react';
 import { FinancialEntry } from '@/types/database';
@@ -39,6 +40,7 @@ const STATUS_OPTIONS = [
 
 export default function FinanceiroPage() {
     const { condoId, isMorador, isSuperAdmin, isSindico, profile, loading: userLoading } = useUser();
+    const { session } = useAuth();
     const [entries, setEntries] = useState<FinancialEntry[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -298,18 +300,20 @@ export default function FinanceiroPage() {
                     onSuccess={() => { fetchEntries(); setEditingEntry(null); }}
                     condoId={condoId}
                     editingEntry={editingEntry}
+                    session={session}
                 />
             )}
         </div>
     );
 }
 
-function NewEntryModal({ isOpen, onClose, onSuccess, condoId, editingEntry }: {
+function NewEntryModal({ isOpen, onClose, onSuccess, condoId, editingEntry, session }: {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
     condoId: string | null | undefined;
     editingEntry?: FinancialEntry | null;
+    session: any;
 }) {
     const [loading, setLoading] = useState(false);
     const [tipo, setTipo] = useState('receita');
@@ -381,7 +385,10 @@ function NewEntryModal({ isOpen, onClose, onSuccess, condoId, editingEntry }: {
                 // Create new entry
                 const response = await fetch('/api/financial/entries', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session?.access_token}`,
+                    },
                     credentials: 'include',
                     body: JSON.stringify(entryData),
                 });
