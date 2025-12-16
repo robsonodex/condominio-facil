@@ -146,6 +146,21 @@ Data: ${new Date().toLocaleString('pt-BR')}
                 </Card>
             </div>
 
+            {/* Prazo de Implantação */}
+            <Card className="bg-blue-50 border-blue-200">
+                <CardContent className="p-4 flex items-center gap-4">
+                    <div className="bg-blue-100 p-3 rounded-full">
+                        <Clock className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <div>
+                        <h4 className="font-semibold text-blue-900">Prazo de Implantação</h4>
+                        <p className="text-sm text-blue-800">
+                            Após o envio de todos os dados solicitados, o prazo para conclusão da integração é de <strong>até 7 dias úteis</strong>.
+                        </p>
+                    </div>
+                </CardContent>
+            </Card>
+
             {/* Requisitos */}
             <Card>
                 <CardContent className="p-6">
