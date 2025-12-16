@@ -163,13 +163,13 @@ Data: ${new Date().toLocaleString('pt-BR')}
                                 <p className="text-sm text-gray-500">Configuração de Servidor</p>
                             </div>
                             <div className="text-3xl font-bold text-emerald-700">
-                                R$ 499,00 <span className="text-sm font-normal text-gray-500">unicos</span>
+                                R$ 697,00 <span className="text-sm font-normal text-gray-500">unicos</span>
                             </div>
                             <ul className="text-sm text-gray-600 space-y-2 text-left bg-white p-4 rounded-lg border border-emerald-100">
-                                <li className="flex items-center gap-2">✅ Setup de Servidor Linux (VPS)</li>
-                                <li className="flex items-center gap-2">✅ Instalação Evolution API</li>
-                                <li className="flex items-center gap-2">✅ Configuração de Webhooks</li>
-                                <li className="flex items-center gap-2">✅ Testes de Conexão</li>
+                                <li className="flex items-center gap-2">✅ Configuração completa</li>
+                                <li className="flex items-center gap-2">✅ Ambiente dedicado</li>
+                                <li className="flex items-center gap-2">✅ Testes + validação</li>
+                                <li className="flex items-center gap-2">✅ Setup de VPS + Evolution API</li>
                             </ul>
                         </CardContent>
                     </Card>
@@ -186,15 +186,15 @@ Data: ${new Date().toLocaleString('pt-BR')}
                             </div>
                             <div className="space-y-2">
                                 <div className="text-3xl font-bold text-blue-700">
-                                    + R$ 97,00 <span className="text-sm font-normal text-gray-500">/mês</span>
+                                    + R$ 149,00 <span className="text-sm font-normal text-gray-500">/mês</span>
                                 </div>
                                 <p className="text-xs text-gray-500">Adicional ao plano existente</p>
                             </div>
                             <ul className="text-sm text-gray-600 space-y-2 text-left bg-white p-4 rounded-lg border border-blue-100">
+                                <li className="flex items-center gap-2">✅ VPS Dedicada</li>
                                 <li className="flex items-center gap-2">✅ Monitoramento 24/7</li>
                                 <li className="flex items-center gap-2">✅ Atualizações de Segurança</li>
-                                <li className="flex items-center gap-2">✅ Backup de Configurações</li>
-                                <li className="flex items-center gap-2">✅ Suporte Especializado</li>
+                                <li className="flex items-center gap-2">✅ Suporte Técnico Especializado</li>
                             </ul>
                         </CardContent>
                     </Card>
@@ -283,7 +283,7 @@ Data: ${new Date().toLocaleString('pt-BR')}
                                 className="w-full bg-emerald-600 hover:bg-emerald-700"
                             >
                                 <Send className="h-4 w-4 mr-2" />
-                                Solicitar Instalação (R$ 499,00)
+                                Solicitar Instalação (R$ 697,00)
                             </Button>
                         </div>
 
