@@ -132,8 +132,34 @@ export async function getSessionFromReq(req: Request): Promise<{
 
         console.log('[GET_SESSION] Token length:', accessToken.length);
 
+        // Tentar extrair refresh token
+        let refreshToken = '';
+        if (tokenFromCookie) {
+            try {
+                const parsed = JSON.parse(tokenFromCookie);
+                refreshToken = parsed.refresh_token || parsed[0]?.refresh_token || '';
+            } catch {
+                // Ignore parse errors
+            }
+        }
+
         // Verify token and get user
-        const { data: { user }, error } = await supabaseAdmin.auth.getUser(accessToken);
+        let userData = await supabaseAdmin.auth.getUser(accessToken);
+
+        // Se token expirado e temos refresh token, tentar renovar
+        if (userData.error && userData.error.message.includes('expired') && refreshToken) {
+            console.log('[GET_SESSION] Token expired, trying refresh...');
+            const { data: refreshData, error: refreshError } = await supabaseAdmin.auth.refreshSession({
+                refresh_token: refreshToken
+            });
+
+            if (!refreshError && refreshData.session) {
+                console.log('[GET_SESSION] Token refreshed successfully');
+                userData = await supabaseAdmin.auth.getUser(refreshData.session.access_token);
+            }
+        }
+
+        const { data: { user }, error } = userData;
 
         if (error) {
             console.error('[GET_SESSION] Auth error:', error.message);
