@@ -217,12 +217,25 @@ export default function ReservasPage() {
                     </h1>
                     <p className="text-gray-500">Agende o uso de salões, churrasqueiras e outras áreas</p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                     {(isSindico || isSuperAdmin) && (
-                        <Button variant="outline" onClick={() => setShowAreaModal(true)}>
-                            <Plus className="h-4 w-4 mr-2" />
-                            Nova Área
-                        </Button>
+                        <>
+                            <Button variant="outline" onClick={() => setShowAreaModal(true)}>
+                                <Plus className="h-4 w-4 mr-2" />
+                                Nova Área
+                            </Button>
+                            <Button
+                                variant="outline"
+                                className="border-amber-500 text-amber-600 hover:bg-amber-50"
+                                onClick={() => {
+                                    const section = document.getElementById('secao-aprovacao');
+                                    section?.scrollIntoView({ behavior: 'smooth' });
+                                }}
+                            >
+                                <Clock className="h-4 w-4 mr-2" />
+                                Aprovar Pendentes ({reservations.filter(r => r.status === 'pendente').length})
+                            </Button>
+                        </>
                     )}
                     <Button onClick={() => { setSelectedDate(new Date().toISOString().split('T')[0]); setShowModal(true); }}>
                         <Plus className="h-4 w-4 mr-2" />
@@ -330,7 +343,7 @@ export default function ReservasPage() {
 
             {/* Lista de Reservas Aguardando Aprovação (Síndico) */}
             {(isSindico || isSuperAdmin) && (
-                <Card className="border-amber-200">
+                <Card id="secao-aprovacao" className="border-amber-200">
                     <CardContent className="p-4">
                         <h3 className="font-semibold mb-3 flex items-center gap-2">
                             <Clock className="h-5 w-5 text-amber-500" />
@@ -351,6 +364,9 @@ export default function ReservasPage() {
                                             <Button size="sm" variant="ghost" onClick={() => handleAction(r.id, 'rejeitar')}>
                                                 <XCircle className="h-4 w-4 mr-1" /> Rejeitar
                                             </Button>
+                                            <Button size="sm" variant="danger" onClick={() => handleAction(r.id, 'cancelar')}>
+                                                Cancelar
+                                            </Button>
                                         </div>
                                     </div>
                                 ))}
@@ -362,9 +378,46 @@ export default function ReservasPage() {
                 </Card>
             )}
 
+            {/* Lista de Todas as Reservas (Síndico pode cancelar) */}
+            {(isSindico || isSuperAdmin) && reservations.filter(r => r.status === 'aprovada').length > 0 && (
+                <Card>
+                    <CardContent className="p-4">
+                        <h3 className="font-semibold mb-3 flex items-center gap-2">
+                            <CheckCircle className="h-5 w-5 text-emerald-500" />
+                            Reservas Aprovadas
+                        </h3>
+                        <div className="space-y-2">
+                            {reservations.filter(r => r.status === 'aprovada').map(r => (
+                                <div key={r.id} className="flex items-center justify-between p-3 bg-emerald-50 rounded-lg">
+                                    <div>
+                                        <p className="font-medium">{r.area?.nome} - {formatDate(r.data_reserva)}</p>
+                                        <p className="text-sm text-gray-600">{r.user?.nome} • {r.horario_inicio} às {r.horario_fim}</p>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <Button size="sm" variant="danger" onClick={() => handleAction(r.id, 'cancelar')}>
+                                            Cancelar
+                                        </Button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
             {/* Modal Nova Reserva */}
             <Modal isOpen={showModal} onClose={() => { setShowModal(false); resetForm(); }} title="Nova Reserva" size="md">
                 <form onSubmit={handleCreateReservation} className="space-y-4">
+                    <Select
+                        label="Espaço *"
+                        value={selectedArea}
+                        onChange={(e) => setSelectedArea(e.target.value)}
+                        options={[
+                            { value: '', label: 'Selecione um espaço...' },
+                            ...areas.map(a => ({ value: a.id, label: a.nome }))
+                        ]}
+                        required
+                    />
                     <Input label="Data" type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} required />
                     <div className="grid grid-cols-2 gap-4">
                         <Input label="Início" type="time" value={horarioInicio} onChange={(e) => setHorarioInicio(e.target.value)} required />
