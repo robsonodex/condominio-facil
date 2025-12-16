@@ -127,6 +127,15 @@ export default function AdminCondominiosPage() {
             className: 'w-12'
         },
         {
+            key: 'condo_numero',
+            header: 'ID Condo',
+            render: (c: Condo) => c.condo_numero ? (
+                <span className="px-2 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold">
+                    #{c.condo_numero}
+                </span>
+            ) : '-'
+        },
+        {
             key: 'nome',
             header: 'Condomínio',
             render: (c: Condo) => (

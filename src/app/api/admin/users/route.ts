@@ -116,6 +116,16 @@ export async function POST(request: NextRequest) {
                 dataRenovacao.setMonth(dataRenovacao.getMonth() + 1);
             }
 
+            // Gerar condo_numero sequencial
+            const { data: maxCondoRow } = await supabaseAdmin
+                .from('condos')
+                .select('condo_numero')
+                .order('condo_numero', { ascending: false })
+                .limit(1)
+                .single();
+
+            const condoNumero = (maxCondoRow?.condo_numero || 0) + 1;
+
             // Create Condo
             const { data: newCondo, error: condoError } = await supabaseAdmin
                 .from('condos')
@@ -125,8 +135,9 @@ export async function POST(request: NextRequest) {
                     status: condoStatus,
                     data_inicio: hoje.toISOString().split('T')[0],
                     data_fim_teste: periodo_teste ? dataRenovacao.toISOString().split('T')[0] : null,
+                    condo_numero: condoNumero,
                 })
-                .select('id')
+                .select('id, condo_numero')
                 .single();
 
             if (condoError) {

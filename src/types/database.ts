@@ -37,6 +37,7 @@ export interface Condo {
     status: CondoStatus;
     data_inicio: string;
     data_fim_teste: string | null;
+    condo_numero: number | null;
     created_at: string;
     updated_at: string;
     // Relations
@@ -66,6 +67,7 @@ export interface User {
     role: UserRole;
     condo_id: string | null;
     unidade_id: string | null;
+    cliente_id: number | null;
     ativo: boolean;
     created_at: string;
     updated_at: string;
