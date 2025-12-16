@@ -37,9 +37,9 @@ export default function RelatoriosPage() {
                     .from('financial_entries')
                     .select('*')
                     .eq('condo_id', condoId)
-                    .gte('data', startDate)
-                    .lte('data', endDate)
-                    .order('data', { ascending: false });
+                    .gte('data_vencimento', startDate)
+                    .lte('data_vencimento', endDate)
+                    .order('data_vencimento', { ascending: false });
                 return data || [];
             }
             case 'cobrancas': {
