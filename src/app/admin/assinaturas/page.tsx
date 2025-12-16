@@ -77,6 +77,7 @@ export default function AdminAssinaturasPage() {
             const response = await fetch('/api/admin/subscriptions', {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({
                     id: editingSub.id,
                     valor_mensal_cobrado: parseFloat(novoValor),

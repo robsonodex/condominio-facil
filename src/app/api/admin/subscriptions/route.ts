@@ -135,7 +135,7 @@ export async function PATCH(request: NextRequest) {
         // Enviar Email se houve mudança de status
         if (status && status !== currentSub.status) {
             const condoName = currentSub.condo?.nome || 'seu condomínio';
-            const syndicEmail = currentSub.condo?.email_contato; // O email do síndico geralmente está no contato do condomínio ou na tabela users (aqui assumindo via condo)
+            const syndicEmail = currentSub.condo?.email_contato;
 
             // Buscar email do user síndico se não tiver no condo
             let targetEmail = syndicEmail;
@@ -149,61 +149,45 @@ export async function PATCH(request: NextRequest) {
                 targetEmail = syndicUser?.email;
             }
 
-            if (targetEmail) { // Só envia se tiver email
-                let subject = '';
-                let htmlContent = '';
+            if (targetEmail) {
+                let emailTemplate = '';
+                let emailData: any = {
+                    condoNome: condoName,
+                    planNome: currentSub.plan?.nome_plano || 'Padrão',
+                    appUrl: process.env.NEXT_PUBLIC_APP_URL || 'https://www.meucondominiofacil.com'
+                };
 
-                // 1. ATIVAÇÃO (trialing -> ativo ou qualquer -> ativo)
+                // Determinar template baseado no novo status
                 if (status === 'ativo') {
-                    subject = `🚀 Assinatura Ativada - ${condoName}`;
-                    htmlContent = `
-                        <h1>Sua conta está ativa!</h1>
-                        <p>Olá,</p>
-                        <p>Temos o prazer de informar que a assinatura do <strong>${condoName}</strong> foi ativada com sucesso!</p>
-                        <p>Agora você tem acesso completo aos recursos do seu plano <strong>${currentSub.plan?.nome_plano}</strong>.</p>
-                        <p>Acesse o painel para começar:</p>
-                        <p><a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard" style="background: #10b981; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Acessar Painel</a></p>
-                    `;
-                }
-                // 2. PERÍODO DE TESTE (any -> trialing)
-                else if (status === 'trialing') {
-                    subject = `🧪 Período de Teste Iniciado - ${condoName}`;
-                    htmlContent = `
-                        <h1>Bem-vindo ao Período de Teste!</h1>
-                        <p>Olá,</p>
-                        <p>O período de teste (trial) para o <strong>${condoName}</strong> foi iniciado.</p>
-                        <p>Aproveite para explorar todas as funcionalidades da plataforma.</p>
-                        <p>Se precisar de ajuda, nosso suporte está à disposição.</p>
-                        <p><a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard">Acessar Painel</a></p>
-                    `;
-                }
-                // 3. SUSPENSÃO / CANCELAMENTO (active/trialing -> cancelado/inativo)
-                else if (status === 'cancelado' || status === 'inativo') {
-                    subject = `⚠️ Aviso de Suspensão - ${condoName}`;
-                    htmlContent = `
-                        <h1>Assinatura Suspensa</h1>
-                        <p>Olá,</p>
-                        <p>Informamos que a assinatura do <strong>${condoName}</strong> foi marcada como <strong>${status === 'cancelado' ? 'Cancelada' : 'Inativa'}</strong>.</p>
-                        <p>Se isso for um erro ou se desejar regularizar sua situação, por favor entre em contato com nosso suporte financeiro.</p>
-                        <p>Dados para contato: financeiro@meucondominiofacil.com</p>
-                    `;
+                    emailTemplate = 'condo_active';
+                } else if (status === 'trialing') {
+                    emailTemplate = 'condo_trial';
+                    emailData.trialDays = 7;
+                } else if (status === 'cancelado' || status === 'inativo') {
+                    emailTemplate = 'condo_suspended';
+                    emailData.reason = 'Pagamento não identificado ou solicitação de cancelamento.';
                 }
 
-                if (subject && htmlContent) {
+                if (emailTemplate) {
                     try {
-                        await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/emails/send`, {
+                        const emailRes = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/email`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`
                             },
                             body: JSON.stringify({
                                 to: targetEmail,
-                                subject,
-                                html: htmlContent
+                                template: emailTemplate,
+                                data: emailData
                             })
                         });
-                        console.log(`Email de mudança de status enviado para ${targetEmail}`);
+
+                        if (emailRes.ok) {
+                            console.log(`Email de status '${status}' enviado para ${targetEmail}`);
+                        } else {
+                            const errData = await emailRes.json();
+                            console.error('Erro ao enviar email:', errData);
+                        }
                     } catch (emailErr) {
                         console.error('Erro ao enviar email de status:', emailErr);
                     }
