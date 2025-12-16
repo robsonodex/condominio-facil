@@ -120,6 +120,7 @@ export default function NewDeliveryPage() {
             const response = await fetch('/api/portaria/deliveries', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({
                     ...formData,
                     photo_url

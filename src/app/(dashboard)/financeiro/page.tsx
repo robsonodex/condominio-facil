@@ -382,6 +382,7 @@ function NewEntryModal({ isOpen, onClose, onSuccess, condoId, editingEntry }: {
                 const response = await fetch('/api/financial/entries', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
                     body: JSON.stringify(entryData),
                 });
 

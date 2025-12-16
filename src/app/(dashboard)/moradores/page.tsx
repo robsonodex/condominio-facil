@@ -305,6 +305,7 @@ function ResidentModal({ isOpen, onClose, onSuccess, condoId, units, resident }:
                 const response = await fetch('/api/residents', {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
                     body: JSON.stringify({
                         id: resident.id,
                         user_id: resident.user_id,
@@ -325,6 +326,7 @@ function ResidentModal({ isOpen, onClose, onSuccess, condoId, units, resident }:
                 const response = await fetch('/api/residents', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
                     body: JSON.stringify({
                         nome,
                         email,

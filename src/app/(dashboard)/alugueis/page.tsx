@@ -65,7 +65,7 @@ export default function AlugueisPage() {
         setLoading(true);
 
         // Buscar contratos
-        const contractsRes = await fetch('/api/contracts/rent');
+        const contractsRes = await fetch('/api/contracts/rent', { credentials: 'include' });
         const contractsData = await contractsRes.json();
         setContracts(contractsData.contracts || []);
 
@@ -93,6 +93,7 @@ export default function AlugueisPage() {
         const response = await fetch('/api/contracts/rent', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify({
                 ...formData,
                 monthly_rent: parseFloat(formData.monthly_rent),
@@ -128,6 +129,7 @@ export default function AlugueisPage() {
         const response = await fetch('/api/checkout/rent', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify({
                 contract_id: contractId,
                 payment_method: 'boleto'

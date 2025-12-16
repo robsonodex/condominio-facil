@@ -62,7 +62,7 @@ export default function UnidadesPage() {
     const handleDelete = async (id: string) => {
         if (!confirm('Deseja realmente excluir esta unidade?')) return;
         try {
-            const response = await fetch(`/api/units?id=${id}`, { method: 'DELETE' });
+            const response = await fetch(`/api/units?id=${id}`, { method: 'DELETE', credentials: 'include' });
             if (!response.ok) {
                 const data = await response.json();
                 throw new Error(data.error || 'Erro ao excluir unidade');
@@ -102,7 +102,7 @@ export default function UnidadesPage() {
 
             for (const id of Array.from(selectedIds)) {
                 try {
-                    const response = await fetch(`/api/units?id=${id}`, { method: 'DELETE' });
+                    const response = await fetch(`/api/units?id=${id}`, { method: 'DELETE', credentials: 'include' });
                     if (response.ok) {
                         successCount++;
                     } else {
@@ -320,6 +320,7 @@ function UnitModal({ isOpen, onClose, onSuccess, condoId, unit }: {
             const response = await fetch('/api/units', {
                 method: unit ? 'PUT' : 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify(unit ? { id: unit.id, ...data } : data),
             });
 
