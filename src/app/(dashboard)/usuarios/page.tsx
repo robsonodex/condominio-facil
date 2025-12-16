@@ -168,6 +168,31 @@ export default function UsuariosCondoPage() {
         setSuccess('');
     };
 
+    const resetUserPassword = async (user: UserItem) => {
+        if (!confirm(`Resetar senha de ${user.nome}?\n\nUma nova senha será gerada e enviada por email.`)) return;
+
+        try {
+            const res = await fetch('/api/usuarios/reset-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session?.access_token}`,
+                },
+                body: JSON.stringify({ userId: user.id }),
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                alert(`✅ ${data.message}\n\nO usuário foi notificado por email.`);
+            } else {
+                alert(`❌ Erro: ${data.error}`);
+            }
+        } catch (err: any) {
+            alert(`❌ Erro: ${err.message}`);
+        }
+    };
+
     const generatePassword = () => {
         const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
         let password = '';
@@ -242,6 +267,17 @@ export default function UsuariosCondoPage() {
                                                 >
                                                     <Edit2 className="h-4 w-4" />
                                                 </Button>
+                                                {user.role !== 'sindico' && (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                                                        onClick={() => resetUserPassword(user)}
+                                                        title="Resetar Senha"
+                                                    >
+                                                        <Key className="h-4 w-4" />
+                                                    </Button>
+                                                )}
                                                 <Button
                                                     size="sm"
                                                     variant={user.ativo ? 'ghost' : 'primary'}
