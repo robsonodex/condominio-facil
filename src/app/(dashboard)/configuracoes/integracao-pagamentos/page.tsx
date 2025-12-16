@@ -326,28 +326,20 @@ Data: ${new Date().toLocaleString('pt-BR')}
                             </div>
                             <div>
                                 <h4 className="font-bold text-gray-900">Mensalidade do Módulo</h4>
-                                <p className="text-sm text-gray-500">Valor recorrente</p>
+                                <p className="text-sm text-gray-500">Valor recorrente fixo</p>
                             </div>
                             <div className="space-y-2">
-                                <div className="text-2xl font-bold text-blue-700">
-                                    R$ 6,00 <span className="text-sm font-normal text-gray-500">/unidade</span>
+                                <div className="text-3xl font-bold text-blue-700">
+                                    R$ 199,00 <span className="text-sm font-normal text-gray-500">/mês</span>
                                 </div>
-                                <p className="text-xs text-gray-500">Para condomínios acima de 20 uni.</p>
+                                <p className="text-xs text-gray-500">Preço único para qualquer tamanho de condomínio</p>
                             </div>
-                            <div className="bg-white p-4 rounded-lg border border-blue-100 text-sm">
-                                <div className="flex justify-between items-center py-1 border-b">
-                                    <span className="text-gray-600">Até 20 unidades</span>
-                                    <span className="font-semibold text-blue-700">R$ 150/mês (fixo)</span>
-                                </div>
-                                <div className="flex justify-between items-center py-1 border-b">
-                                    <span className="text-gray-600">21 a 100 unidades</span>
-                                    <span className="font-semibold text-blue-700">R$ 6,00/uni</span>
-                                </div>
-                                <div className="flex justify-between items-center py-1">
-                                    <span className="text-gray-600">Acima de 100</span>
-                                    <span className="font-semibold text-blue-700">Sob consulta</span>
-                                </div>
-                            </div>
+                            <ul className="text-sm text-gray-600 space-y-2 text-left bg-white p-4 rounded-lg border border-blue-100">
+                                <li className="flex items-center gap-2">✅ Geração Ilimitada de Boletos/PIX</li>
+                                <li className="flex items-center gap-2">✅ Conciliação Automática</li>
+                                <li className="flex items-center gap-2">✅ Relatórios Financeiros Detalhados</li>
+                                <li className="flex items-center gap-2">✅ Suporte Técnico Contínuo</li>
+                            </ul>
                         </CardContent>
                     </Card>
                 </div>
