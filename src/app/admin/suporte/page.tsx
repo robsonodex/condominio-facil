@@ -87,7 +87,11 @@ export default function AdminSuportePage() {
                     if (newMsg.sender_id !== userId) {
                         setMessages(prev => [...prev, newMsg]);
                         // Notificação sonora
-                        new Audio('/notification.mp3').play().catch(() => { });
+                        try {
+                            const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleBALbLzO6JVhGBdft9DpmGQXE2C31OmaZhQPY7fU6JtkFBBkt9TomGQWE2O31OiaZRUQYbfT6JllFRFit9TomGQXE2O31OaZZBUQYrfT55ljFRFht9PmmWMVEWK30+aZYxURYrfT5pljFRFitdPmmWMVEGK10+aZYxUQYbXS5pljFRBhtdLlmGMVD2G00OWXYhYPYbPQ5JdiFg9hs9DklmIWD2Gzz+OVYRYPYbPP45VhFg9hs8/jlWEWD2GzzeKUYBYOYbPN4pRgFg5hss3ilGAWDmGyzOGTXxYOYLLM4ZNfFg5gssvgkl8WDV+yy+CSXxYNX7HL35FeFg1fsMvfkV4WDV+wy9+RXhYNX7DL35FeFg1fsMvfkV4WDV+wy9+RXhYNX7DL35FeFAxesMvfkV0VC16wy9+RXRULXa/K3pBcFQtdr8rekFwVC12uyN2PWxULXK7I3Y9bFQtcrcjdjlsVC1ytyN2OWxULXK3I3Y5bFQtcrMfcjVoVC1usxtqMWhULW6zG2oxaFAtbrMbai1oUC1usxdqLWRQLWqzF2YtZFAtaq8TYilkUC1qrxNiKWRQLWavE2IlYFAtZq8TYiVgUC1mqw9eIWBQLWanD1ohYEwtZqcPWiFcTC1mow9WIVBMLWKPB04ZUFA==');
+                            audio.volume = 0.5;
+                            audio.play().catch(() => { });
+                        } catch (e) { }
                     }
                 }
             )
@@ -251,8 +255,8 @@ export default function AdminSuportePage() {
                                         key={chat.id}
                                         onClick={() => selectChat(chat)}
                                         className={`w-full p-3 rounded-lg text-left transition ${selectedChat?.id === chat.id
-                                                ? 'bg-emerald-50 border-2 border-emerald-500'
-                                                : 'bg-gray-50 hover:bg-gray-100'
+                                            ? 'bg-emerald-50 border-2 border-emerald-500'
+                                            : 'bg-gray-50 hover:bg-gray-100'
                                             }`}
                                     >
                                         <div className="flex items-center justify-between">
@@ -310,8 +314,8 @@ export default function AdminSuportePage() {
                                         >
                                             <div
                                                 className={`max-w-[70%] p-3 rounded-2xl ${msg.sender_type === 'admin'
-                                                        ? 'bg-emerald-500 text-white rounded-br-md'
-                                                        : 'bg-gray-100 text-gray-900 rounded-bl-md'
+                                                    ? 'bg-emerald-500 text-white rounded-br-md'
+                                                    : 'bg-gray-100 text-gray-900 rounded-bl-md'
                                                     }`}
                                             >
                                                 <p className="text-sm">{msg.mensagem}</p>
