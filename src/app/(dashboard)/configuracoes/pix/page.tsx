@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, Button, Input, Select } from '@/components/ui';
 import { useUser, useCondo } from '@/hooks/useUser';
 import { createClient } from '@/lib/supabase/client';
-import { gerarPixPayload, gerarPixQRCodeUrl, validarChavePix, formatarChavePix } from '@/lib/pix-qrcode';
+import { validarChavePix, formatarChavePix } from '@/lib/pix-qrcode';
 import { Settings, QrCode, Save, CheckCircle, AlertCircle, Copy } from 'lucide-react';
 
 export default function ConfiguracoesPixPage() {
@@ -22,10 +22,6 @@ export default function ConfiguracoesPixPage() {
     const [pixCidade, setPixCidade] = useState('');
     const [erro, setErro] = useState('');
 
-    // QR Code preview
-    const [qrCodeUrl, setQrCodeUrl] = useState('');
-    const [pixPayload, setPixPayload] = useState('');
-
     useEffect(() => {
         if (condo) {
             setPixTipo(condo.pix_tipo || '');
@@ -34,28 +30,6 @@ export default function ConfiguracoesPixPage() {
             setPixCidade(condo.pix_cidade || condo.cidade?.toUpperCase().replace(/[^A-Z ]/g, '') || 'SAO PAULO');
         }
     }, [condo]);
-
-    // Gera preview do QR Code quando dados mudam
-    useEffect(() => {
-        if (pixChave && pixNome && pixCidade && pixTipo) {
-            const validation = validarChavePix(pixTipo, pixChave);
-            if (validation.valido) {
-                const payload = gerarPixPayload({
-                    chave: pixChave,
-                    nome: pixNome,
-                    cidade: pixCidade,
-                    descricao: 'CONDO',
-                });
-                setPixPayload(payload);
-                setQrCodeUrl(gerarPixQRCodeUrl(payload, 200));
-                setErro('');
-            } else {
-                setErro(validation.erro || 'Chave inválida');
-                setQrCodeUrl('');
-                setPixPayload('');
-            }
-        }
-    }, [pixChave, pixNome, pixCidade, pixTipo]);
 
     const handleSave = async () => {
         if (!condoId) return;
@@ -206,49 +180,48 @@ export default function ConfiguracoesPixPage() {
                     </CardContent>
                 </Card>
 
-                {/* Preview QR Code */}
+                {/* Dados para Transferência */}
                 <Card>
                     <CardContent className="p-6 space-y-6">
                         <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                            <QrCode className="h-5 w-5" />
-                            Preview do QR Code
+                            <CheckCircle className="h-5 w-5 text-emerald-500" />
+                            Dados para Transferência
                         </h3>
 
-                        {qrCodeUrl ? (
-                            <div className="text-center space-y-4">
-                                <div className="bg-white p-4 rounded-lg border inline-block">
-                                    <img
-                                        src={qrCodeUrl}
-                                        alt="QR Code PIX"
-                                        className="mx-auto"
-                                        width={200}
-                                        height={200}
-                                    />
+                        {pixChave ? (
+                            <div className="text-center space-y-6 py-4">
+                                <div className="space-y-2">
+                                    <p className="text-sm text-gray-500">Chave PIX ({pixTipo.toUpperCase()})</p>
+                                    <div className="flex items-center justify-center gap-2">
+                                        <p className="font-mono text-xl text-gray-900 font-bold">
+                                            {formatarChavePix(pixTipo, pixChave)}
+                                        </p>
+                                    </div>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(pixChave);
+                                            setCopied(true);
+                                            setTimeout(() => setCopied(false), 2000);
+                                        }}
+                                        className="mt-2"
+                                    >
+                                        <Copy className="h-4 w-4 mr-2" />
+                                        {copied ? 'Copiado!' : 'Copiar Chave'}
+                                    </Button>
                                 </div>
 
-                                <div className="text-sm text-gray-600 space-y-1">
-                                    <p><strong>Recebedor:</strong> {pixNome.toUpperCase()}</p>
-                                    <p><strong>Chave:</strong> {formatarChavePix(pixTipo, pixChave)}</p>
+                                <div className="border-t pt-4 space-y-2 text-sm text-gray-600">
+                                    <p><strong>Nome:</strong> {pixNome.toUpperCase()}</p>
+                                    <p><strong>Cidade:</strong> {pixCidade.toUpperCase()}</p>
                                 </div>
-
-                                <Button
-                                    variant="outline"
-                                    onClick={copyToClipboard}
-                                    className="w-full"
-                                >
-                                    <Copy className="h-4 w-4 mr-2" />
-                                    {copied ? 'Copiado!' : 'Copiar PIX Copia e Cola'}
-                                </Button>
-
-                                <p className="text-xs text-gray-400">
-                                    Este é um preview. O QR Code real incluirá o valor da cobrança.
-                                </p>
                             </div>
                         ) : (
                             <div className="text-center py-12">
-                                <QrCode className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                                <AlertCircle className="h-16 w-16 text-gray-200 mx-auto mb-4" />
                                 <p className="text-gray-500">
-                                    Preencha os dados do PIX para ver o preview do QR Code
+                                    Preencha e salve os dados ao lado para visualizar os dados de transferência.
                                 </p>
                             </div>
                         )}
@@ -262,7 +235,7 @@ export default function ConfiguracoesPixPage() {
                     <h4 className="font-medium text-blue-800 mb-2">💡 Como funciona?</h4>
                     <ul className="text-sm text-blue-700 space-y-1">
                         <li>• Configure a chave PIX do condomínio acima</li>
-                        <li>• Ao criar cobranças para moradores, o QR Code será gerado automaticamente</li>
+                        <li>• Os moradores verão os dados bancários para transferência</li>
                         <li>• O morador paga direto para a conta do condomínio</li>
                         <li>• Você marca o pagamento como recebido no sistema</li>
                     </ul>
