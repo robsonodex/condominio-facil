@@ -8,6 +8,7 @@ import { Loader2 } from 'lucide-react';
 import { ImpersonationBanner } from '@/components/admin/ImpersonationBanner';
 import TrialBanner from '@/components/TrialBanner';
 import { DemoBanner } from '@/components/demo/DemoBanner';
+import { SupportButton } from '@/components/shared/SupportButton';
 
 function LoadingScreen() {
     return (
@@ -69,6 +70,7 @@ export default function DashboardLayout({
                     </main>
                 </div>
             </div>
+            <SupportButton planType="profissional" />
         </div>
     );
 }

@@ -23,7 +23,8 @@ import {
     Lock,
     Vote,
     ChevronDown,
-    ChevronRight
+    ChevronRight,
+    Lightbulb
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -83,6 +84,7 @@ const navItems: NavItem[] = [
     },
     { href: '/manutencao', label: 'Manutenção Preventiva', icon: <Settings className="h-5 w-5" />, roles: ['sindico'] },
     { href: '/assinatura', label: 'Assinatura', icon: <CreditCard className="h-5 w-5" />, roles: ['sindico'] },
+    { href: '/sugestoes', label: 'Sugestões', icon: <Lightbulb className="h-5 w-5" />, roles: ['sindico', 'morador', 'inquilino', 'porteiro'] },
     { href: '/perfil', label: 'Meu Perfil', icon: <Settings className="h-5 w-5" /> },
     { href: '/portaria/deliveries/list', label: 'Encomendas (Porteiro)', icon: <Package className="h-5 w-5" />, roles: ['porteiro'] },
     { href: '/app/deliveries', label: 'Minhas Encomendas (Morador)', icon: <Package className="h-5 w-5" />, roles: ['morador', 'inquilino'] },
