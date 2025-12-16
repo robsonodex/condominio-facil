@@ -27,7 +27,10 @@ CREATE TABLE IF NOT EXISTS suggestion_votes (
     UNIQUE(suggestion_id, user_id)
 );
 
--- Funções RPC
+-- Funções RPC - remover existentes primeiro
+DROP FUNCTION IF EXISTS increment_suggestion_votes(UUID);
+DROP FUNCTION IF EXISTS decrement_suggestion_votes(UUID);
+
 CREATE OR REPLACE FUNCTION increment_suggestion_votes(p_suggestion_id UUID)
 RETURNS void AS $$
 BEGIN
