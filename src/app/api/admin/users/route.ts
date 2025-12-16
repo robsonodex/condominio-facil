@@ -90,14 +90,17 @@ export async function POST(request: NextRequest) {
         }
 
         let finalCondoId = condo_id || null;
+        let planData: { valor_mensal?: number; nome_plano?: string } | null = null;
 
         // 6. Handle Sindico Setup (Condo + Subscription)
         if (role === 'sindico' && condo_nome && plano_id) {
             const { data: plan } = await supabaseAdmin
                 .from('plans')
-                .select('valor_mensal')
+                .select('valor_mensal, nome_plano')
                 .eq('id', plano_id)
                 .single();
+
+            planData = plan;
 
             const hoje = new Date();
             let dataRenovacao = new Date(hoje);
@@ -213,7 +216,7 @@ export async function POST(request: NextRequest) {
                             nome,
                             condoNome: condo_nome,
                             dataFim: dataFim.toLocaleDateString('pt-BR'),
-                            plano: 'Profissional',
+                            plano: planData?.nome_plano || 'Básico',
                             proximoVencimento: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('pt-BR'),
                             loginUrl: `${baseUrl}/login`
                         },

@@ -61,16 +61,16 @@ export default function AssinaturaPage() {
 
             setSubscription(subData);
 
-            // Fetch payment history
+            // Fetch payment history (usar invoices em vez de payments)
             const { data: payData, error: payError } = await supabase
-                .from('payments')
-                .select('*')
+                .from('invoices')
+                .select('id, valor, status, pix_code, data_vencimento, data_pagamento, created_at')
                 .eq('condo_id', condoId)
                 .order('created_at', { ascending: false })
                 .limit(10);
 
             if (payError) {
-                console.error('Error fetching payments:', payError);
+                console.error('Error fetching invoices:', payError);
             }
 
             setPayments(payData || []);
@@ -87,9 +87,20 @@ export default function AssinaturaPage() {
 
         setGeneratingCheckout(true);
         try {
+            // Obter token de sessão para enviar via Authorization header
+            const { data: { session: currentSession } } = await supabase.auth.getSession();
+            if (!currentSession?.access_token) {
+                alert('❌ Sessão expirada. Por favor, faça login novamente.');
+                setGeneratingCheckout(false);
+                return;
+            }
+
             const response = await fetch('/api/checkout', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${currentSession.access_token}`
+                },
                 body: JSON.stringify({
                     condoId: condoId,
                     planId: (subscription as any).plano_id || (subscription as any).plan?.id,
@@ -122,12 +133,23 @@ export default function AssinaturaPage() {
         setGeneratingPix(true);
 
         try {
+            // Obter token de sessão para enviar via Authorization header
+            const { data: { session: currentSession } } = await supabase.auth.getSession();
+            if (!currentSession?.access_token) {
+                alert('❌ Sessão expirada. Por favor, faça login novamente.');
+                setGeneratingPix(false);
+                return;
+            }
+
             const valor = subscription?.valor_mensal_cobrado || subscription?.plan?.valor_mensal || 49.90;
 
             // Call PIX API
             const response = await fetch('/api/pix', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${currentSession.access_token}`
+                },
                 body: JSON.stringify({
                     valor,
                     descricao: 'Mensalidade Condomínio Fácil',
@@ -141,19 +163,22 @@ export default function AssinaturaPage() {
                 throw new Error(data.error || 'Erro ao gerar PIX');
             }
 
-            // Save to database
+            // Save to database (usar invoices em vez de payments)
             const { error } = await supabase
-                .from('payments')
+                .from('invoices')
                 .insert({
                     condo_id: condoId,
                     valor: valor,
                     status: 'pendente',
                     pix_code: data.pixCode,
-                    txid: data.txid,
+                    metodo_pagamento: 'pix',
                     data_vencimento: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
                 });
 
-            if (error) throw error;
+            if (error) {
+                console.error('Error saving invoice:', error);
+                // Não bloquear se der erro ao salvar - o PIX foi gerado
+            }
 
             setPixCode(data.pixCode);
             fetchData();
