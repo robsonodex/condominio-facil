@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { Card, CardContent, Button, Badge } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { createClient } from '@/lib/supabase/client';
-import { MessageCircle, Send, CheckCircle, Clock, XCircle, Users, Loader2 } from 'lucide-react';
+import { MessageCircle, Send, CheckCircle, Clock, XCircle, Users, Loader2, Trash2 } from 'lucide-react';
 
 interface Message {
     id: string;
@@ -198,6 +198,25 @@ export default function AdminSuportePage() {
         }
     };
 
+    const handleDeleteChat = async (chatId: string) => {
+        if (!confirm('Tem certeza que deseja excluir esta conversa? Esta ação não pode ser desfeita.')) return;
+
+        try {
+            // Primeiro excluir mensagens
+            await supabase.from('chat_messages').delete().eq('chat_id', chatId);
+            // Depois excluir o chat
+            await supabase.from('support_chats').delete().eq('id', chatId);
+
+            alert('✅ Conversa excluída!');
+            setSelectedChat(null);
+            setMessages([]);
+            fetchChats();
+        } catch (e) {
+            console.error(e);
+            alert('❌ Erro ao excluir conversa');
+        }
+    };
+
     const getStatusBadge = (status: string) => {
         switch (status) {
             case 'aberto': return <Badge variant="primary"><Clock className="h-3 w-3 mr-1" /> Aberto</Badge>;
@@ -318,6 +337,14 @@ export default function AdminSuportePage() {
                                                     <XCircle className="h-4 w-4 mr-1" /> Fechar
                                                 </Button>
                                             )}
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                onClick={() => handleDeleteChat(selectedChat.id)}
+                                                className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
                                         </div>
                                     </div>
                                 </div>
