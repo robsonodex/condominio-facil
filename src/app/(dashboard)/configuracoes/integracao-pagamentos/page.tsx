@@ -307,7 +307,7 @@ Data: ${new Date().toLocaleString('pt-BR')}
                                 <p className="text-sm text-gray-500">Pagamento único</p>
                             </div>
                             <div className="text-3xl font-bold text-emerald-700">
-                                <span className="text-lg font-normal text-gray-500">A partir de</span> R$ 900
+                                R$ 999,00
                             </div>
                             <ul className="text-sm text-gray-600 space-y-2 text-left bg-white p-4 rounded-lg border border-emerald-100">
                                 <li className="flex items-center gap-2">✅ Configuração Mercado Pago</li>
