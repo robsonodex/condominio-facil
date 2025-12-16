@@ -300,7 +300,16 @@ function ResidentModal({ isOpen, onClose, onSuccess, condoId, units, resident, s
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!condoId || !unidadeId) return;
+
+        if (!condoId) {
+            alert('Erro: Condomínio não identificado. Faça login novamente.');
+            return;
+        }
+
+        if (!unidadeId) {
+            alert('Por favor, selecione uma unidade para o morador.');
+            return;
+        }
 
         setLoading(true);
 
