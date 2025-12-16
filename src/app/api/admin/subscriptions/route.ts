@@ -152,6 +152,7 @@ export async function PATCH(request: NextRequest) {
             if (targetEmail) {
                 let emailTemplate = '';
                 let emailData: any = {
+                    nome: condoName,
                     condoNome: condoName,
                     planNome: currentSub.plan?.nome_plano || 'Padrão',
                     appUrl: process.env.NEXT_PUBLIC_APP_URL || 'https://www.meucondominiofacil.com'
