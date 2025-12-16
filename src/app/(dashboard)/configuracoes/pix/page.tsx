@@ -27,7 +27,7 @@ export default function ConfiguracoesPixPage() {
             setPixTipo(condo.pix_tipo || '');
             setPixChave(condo.pix_chave || '');
             setPixNome(condo.pix_nome_recebedor || condo.nome || '');
-            setPixCidade(condo.pix_cidade || condo.cidade?.toUpperCase().replace(/[^A-Z ]/g, '') || 'SAO PAULO');
+            setPixCidade(condo.pix_cidade || condo.cidade?.toUpperCase().replace(/[^A-Z ]/g, '') || '');
         }
     }, [condo]);
 
@@ -72,13 +72,7 @@ export default function ConfiguracoesPixPage() {
         }
     };
 
-    const copyToClipboard = async () => {
-        if (pixPayload) {
-            await navigator.clipboard.writeText(pixPayload);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        }
-    };
+
 
     if (!isSindico && !isSuperAdmin) {
         return (
@@ -149,7 +143,7 @@ export default function ConfiguracoesPixPage() {
                                 label="Cidade"
                                 value={pixCidade}
                                 onChange={(e) => setPixCidade(e.target.value)}
-                                placeholder="SAO PAULO"
+                                placeholder="Nome da cidade"
                                 helperText="Cidade sem acentos, em maiúsculas"
                             />
                         </div>

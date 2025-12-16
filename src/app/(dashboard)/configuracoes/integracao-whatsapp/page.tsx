@@ -147,162 +147,159 @@ Data: ${new Date().toLocaleString('pt-BR')}
             <p className="text-sm text-blue-800">
                 Após o envio de todos os dados solicitados, o prazo para conclusão da integração é de <strong>até 7 dias úteis</strong>.
             </p>
-        </div>
-        </CardContent >
-    </Card >
 
-        {/* Planos de Preços */ }
-        < div className = "space-y-4" >
-        <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-            <DollarSign className="h-5 w-5 text-emerald-600" />
-            Valores de Investimento
-        </h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Implantação */}
-            <Card className="border-emerald-100 bg-gradient-to-b from-emerald-50 to-white">
-                <CardContent className="p-6 text-center space-y-4">
-                    <div className="bg-emerald-100 p-3 rounded-full w-12 h-12 flex items-center justify-center mx-auto">
-                        <Server className="h-6 w-6 text-emerald-600" />
-                    </div>
-                    <div>
-                        <h4 className="font-bold text-gray-900">Implantação VPS</h4>
-                        <p className="text-sm text-gray-500">Configuração de Servidor</p>
-                    </div>
-                    <div className="text-3xl font-bold text-emerald-700">
-                        R$ 697,00 <span className="text-sm font-normal text-gray-500">unicos</span>
-                    </div>
-                    <ul className="text-sm text-gray-600 space-y-2 text-left bg-white p-4 rounded-lg border border-emerald-100">
-                        <li className="flex items-center gap-2">✅ Configuração completa</li>
-                        <li className="flex items-center gap-2">✅ Ambiente dedicado</li>
-                        <li className="flex items-center gap-2">✅ Testes + validação</li>
-                        <li className="flex items-center gap-2">✅ Setup de VPS + Evolution API</li>
-                    </ul>
-                </CardContent>
-            </Card>
-
-            {/* Mensalidade */}
-            <Card className="border-blue-100 bg-gradient-to-b from-blue-50 to-white">
-                <CardContent className="p-6 text-center space-y-4">
-                    <div className="bg-blue-100 p-3 rounded-full w-12 h-12 flex items-center justify-center mx-auto">
-                        <Activity className="h-6 w-6 text-blue-600" />
-                    </div>
-                    <div>
-                        <h4 className="font-bold text-gray-900">Gestão de Infraestrutura</h4>
-                        <p className="text-sm text-gray-500">Manutenção Mensal</p>
-                    </div>
-                    <div className="space-y-2">
-                        <div className="text-3xl font-bold text-blue-700">
-                            + R$ 149,00 <span className="text-sm font-normal text-gray-500">/mês</span>
-                        </div>
-                        <p className="text-xs text-gray-500">Adicional ao plano existente</p>
-                    </div>
-                    <ul className="text-sm text-gray-600 space-y-2 text-left bg-white p-4 rounded-lg border border-blue-100">
-                        <li className="flex items-center gap-2">✅ VPS Dedicada</li>
-                        <li className="flex items-center gap-2">✅ Monitoramento 24/7</li>
-                        <li className="flex items-center gap-2">✅ Atualizações de Segurança</li>
-                        <li className="flex items-center gap-2">✅ Suporte Técnico Especializado</li>
-                    </ul>
-                </CardContent>
-            </Card>
-        </div>
-    </div >
-
-        {/* Termos de Responsabilidade */ }
-        < Card className = "border-amber-200 bg-amber-50" >
-            <CardContent className="p-6">
-                <h3 className="font-semibold text-amber-800 flex items-center gap-2 mb-4">
-                    <Shield className="h-5 w-5" />
-                    Requisitos e Responsabilidades
+            {/* Planos de Preços */}
+            <div className="space-y-4">
+                <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                    <DollarSign className="h-5 w-5 text-emerald-600" />
+                    Valores de Investimento
                 </h3>
-                <div className="text-sm text-amber-900 space-y-3">
-                    <div className="bg-white p-4 rounded border border-amber-300 space-y-2">
-                        <p><strong>1. Chip Dedicado</strong><br />
-                            O condomínio deve fornecer um número de celular (chip físico ou virtual) EXCLUSIVO para o sistema. Não use seu número pessoal.</p>
 
-                        <p><strong>2. Risco de Banimento</strong><br />
-                            O WhatsApp possui regras rígidas contra SPAM. O condomínio é responsável por usar o sistema de forma ética. O banimento do número pelo WhatsApp não é responsabilidade da plataforma.</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Implantação */}
+                    <Card className="border-emerald-100 bg-gradient-to-b from-emerald-50 to-white">
+                        <CardContent className="p-6 text-center space-y-4">
+                            <div className="bg-emerald-100 p-3 rounded-full w-12 h-12 flex items-center justify-center mx-auto">
+                                <Server className="h-6 w-6 text-emerald-600" />
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-gray-900">Implantação VPS</h4>
+                                <p className="text-sm text-gray-500">Configuração de Servidor</p>
+                            </div>
+                            <div className="text-3xl font-bold text-emerald-700">
+                                R$ 697,00 <span className="text-sm font-normal text-gray-500">unicos</span>
+                            </div>
+                            <ul className="text-sm text-gray-600 space-y-2 text-left bg-white p-4 rounded-lg border border-emerald-100">
+                                <li className="flex items-center gap-2">✅ Configuração completa</li>
+                                <li className="flex items-center gap-2">✅ Ambiente dedicado</li>
+                                <li className="flex items-center gap-2">✅ Testes + validação</li>
+                                <li className="flex items-center gap-2">✅ Setup de VPS + Evolution API</li>
+                            </ul>
+                        </CardContent>
+                    </Card>
 
-                        <p><strong>3. Aparelho Conectado</strong><br />
-                            Para a conexão inicial (QR Code), é necessário um celular. A Evolution API mantém a conexão, mas o chip precisa estar ativo para receber o SMS de verificação se necessário.</p>
+                    {/* Mensalidade */}
+                    <Card className="border-blue-100 bg-gradient-to-b from-blue-50 to-white">
+                        <CardContent className="p-6 text-center space-y-4">
+                            <div className="bg-blue-100 p-3 rounded-full w-12 h-12 flex items-center justify-center mx-auto">
+                                <Activity className="h-6 w-6 text-blue-600" />
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-gray-900">Gestão de Infraestrutura</h4>
+                                <p className="text-sm text-gray-500">Manutenção Mensal</p>
+                            </div>
+                            <div className="space-y-2">
+                                <div className="text-3xl font-bold text-blue-700">
+                                    + R$ 149,00 <span className="text-sm font-normal text-gray-500">/mês</span>
+                                </div>
+                                <p className="text-xs text-gray-500">Adicional ao plano existente</p>
+                            </div>
+                            <ul className="text-sm text-gray-600 space-y-2 text-left bg-white p-4 rounded-lg border border-blue-100">
+                                <li className="flex items-center gap-2">✅ VPS Dedicada</li>
+                                <li className="flex items-center gap-2">✅ Monitoramento 24/7</li>
+                                <li className="flex items-center gap-2">✅ Atualizações de Segurança</li>
+                                <li className="flex items-center gap-2">✅ Suporte Técnico Especializado</li>
+                            </ul>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+
+            {/* Termos de Responsabilidade */}
+            <Card className="border-amber-200 bg-amber-50">
+                <CardContent className="p-6">
+                    <h3 className="font-semibold text-amber-800 flex items-center gap-2 mb-4">
+                        <Shield className="h-5 w-5" />
+                        Requisitos e Responsabilidades
+                    </h3>
+                    <div className="text-sm text-amber-900 space-y-3">
+                        <div className="bg-white p-4 rounded border border-amber-300 space-y-2">
+                            <p><strong>1. Chip Dedicado</strong><br />
+                                O condomínio deve fornecer um número de celular (chip físico ou virtual) EXCLUSIVO para o sistema. Não use seu número pessoal.</p>
+
+                            <p><strong>2. Risco de Banimento</strong><br />
+                                O WhatsApp possui regras rígidas contra SPAM. O condomínio é responsável por usar o sistema de forma ética. O banimento do número pelo WhatsApp não é responsabilidade da plataforma.</p>
+
+                            <p><strong>3. Aparelho Conectado</strong><br />
+                                Para a conexão inicial (QR Code), é necessário um celular. A Evolution API mantém a conexão, mas o chip precisa estar ativo para receber o SMS de verificação se necessário.</p>
+                        </div>
+
+                        <label className="flex items-start gap-3 cursor-pointer mt-4">
+                            <input
+                                type="checkbox"
+                                checked={aceitouTermos}
+                                onChange={(e) => setAceitouTermos(e.target.checked)}
+                                className="mt-1 h-5 w-5 rounded border-amber-400 text-emerald-600 focus:ring-emerald-500"
+                            />
+                            <span className="text-amber-900">
+                                <strong>Li e compreendo</strong> os requisitos acima. Desejo prosseguir com a contratação da infraestrutura dedicada.
+                            </span>
+                        </label>
                     </div>
+                </CardContent>
+            </Card>
 
-                    <label className="flex items-start gap-3 cursor-pointer mt-4">
-                        <input
-                            type="checkbox"
-                            checked={aceitouTermos}
-                            onChange={(e) => setAceitouTermos(e.target.checked)}
-                            className="mt-1 h-5 w-5 rounded border-amber-400 text-emerald-600 focus:ring-emerald-500"
+            {/* Formulário */}
+            <Card>
+                <CardContent className="p-6">
+                    <h3 className="font-semibold text-gray-900 flex items-center gap-2 mb-4">
+                        <Server className="h-5 w-5 text-emerald-500" />
+                        Solicitar Infraestrutura
+                    </h3>
+
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <Input
+                                label="Nome do Responsável *"
+                                value={nomeSindico}
+                                onChange={(e) => setNomeSindico(e.target.value)}
+                                required
+                            />
+                            <Input
+                                label="Email para Contato *"
+                                type="email"
+                                value={emailContato}
+                                onChange={(e) => setEmailContato(e.target.value)}
+                                required
+                            />
+                            <Input
+                                label="Telefone/WhatsApp *"
+                                value={telefone}
+                                onChange={(e) => setTelefone(e.target.value)}
+                                placeholder="(11) 99999-9999"
+                                required
+                            />
+                        </div>
+
+                        <Textarea
+                            label="Observações (opcional)"
+                            value={observacoes}
+                            onChange={(e) => setObservacoes(e.target.value)}
+                            rows={3}
+                            placeholder="Já possui chip? Dúvidas sobre a VPS?"
                         />
-                        <span className="text-amber-900">
-                            <strong>Li e compreendo</strong> os requisitos acima. Desejo prosseguir com a contratação da infraestrutura dedicada.
-                        </span>
-                    </label>
-                </div>
-            </CardContent>
-    </Card >
 
-        {/* Formulário */ }
-        < Card >
-        <CardContent className="p-6">
-            <h3 className="font-semibold text-gray-900 flex items-center gap-2 mb-4">
-                <Server className="h-5 w-5 text-emerald-500" />
-                Solicitar Infraestrutura
-            </h3>
+                        <div className="pt-4">
+                            <Button
+                                type="submit"
+                                loading={loading}
+                                disabled={!aceitouTermos}
+                                className="w-full bg-emerald-600 hover:bg-emerald-700"
+                            >
+                                <Send className="h-4 w-4 mr-2" />
+                                Solicitar Instalação (R$ 697,00)
+                            </Button>
+                        </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Input
-                        label="Nome do Responsável *"
-                        value={nomeSindico}
-                        onChange={(e) => setNomeSindico(e.target.value)}
-                        required
-                    />
-                    <Input
-                        label="Email para Contato *"
-                        type="email"
-                        value={emailContato}
-                        onChange={(e) => setEmailContato(e.target.value)}
-                        required
-                    />
-                    <Input
-                        label="Telefone/WhatsApp *"
-                        value={telefone}
-                        onChange={(e) => setTelefone(e.target.value)}
-                        placeholder="(11) 99999-9999"
-                        required
-                    />
-                </div>
-
-                <Textarea
-                    label="Observações (opcional)"
-                    value={observacoes}
-                    onChange={(e) => setObservacoes(e.target.value)}
-                    rows={3}
-                    placeholder="Já possui chip? Dúvidas sobre a VPS?"
-                />
-
-                <div className="pt-4">
-                    <Button
-                        type="submit"
-                        loading={loading}
-                        disabled={!aceitouTermos}
-                        className="w-full bg-emerald-600 hover:bg-emerald-700"
-                    >
-                        <Send className="h-4 w-4 mr-2" />
-                        Solicitar Instalação (R$ 697,00)
-                    </Button>
-                </div>
-
-                {!aceitouTermos && (
-                    <p className="text-center text-sm text-amber-600">
-                        <AlertTriangle className="h-4 w-4 inline mr-1" />
-                        Aceite os termos para continuar
-                    </p>
-                )}
-            </form>
-        </CardContent>
-    </Card >
-        </div >
+                        {!aceitouTermos && (
+                            <p className="text-center text-sm text-amber-600">
+                                <AlertTriangle className="h-4 w-4 inline mr-1" />
+                                Aceite os termos para continuar
+                            </p>
+                        )}
+                    </form>
+                </CardContent>
+            </Card>
+        </div>
     );
 }

@@ -24,6 +24,7 @@ export default function AdminAssinaturasPage() {
     const [showEditModal, setShowEditModal] = useState(false);
     const [editingSub, setEditingSub] = useState<any>(null);
     const [novoValor, setNovoValor] = useState('');
+    const [novoStatus, setNovoStatus] = useState('');
     const [observacoes, setObservacoes] = useState('');
     const [savingValue, setSavingValue] = useState(false);
 
@@ -63,6 +64,7 @@ export default function AdminAssinaturasPage() {
     const openEditModal = (sub: any) => {
         setEditingSub(sub);
         setNovoValor((sub.valor_mensal_cobrado || sub.plan?.valor_mensal || 0).toFixed(2));
+        setNovoStatus(sub.status || '');
         setObservacoes(sub.observacoes || '');
         setShowEditModal(true);
     };
@@ -72,19 +74,23 @@ export default function AdminAssinaturasPage() {
 
         setSavingValue(true);
         try {
-            const { error } = await supabase
-                .from('subscriptions')
-                .update({
+            const response = await fetch('/api/admin/subscriptions', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: editingSub.id,
                     valor_mensal_cobrado: parseFloat(novoValor),
-                    observacoes: observacoes || null,
-                    updated_at: new Date().toISOString()
+                    status: novoStatus,
+                    observacoes: observacoes || undefined
                 })
-                .eq('id', editingSub.id);
+            });
 
-            if (error) {
-                alert(`❌ Erro: ${error.message}`);
+            const data = await response.json();
+
+            if (!response.ok) {
+                alert(`❌ Erro: ${data.error}`);
             } else {
-                alert('✅ Valor atualizado com sucesso!');
+                alert('✅ Assinatura atualizada com sucesso!' + (novoStatus !== editingSub.status ? ' (Email enviado)' : ''));
                 setShowEditModal(false);
                 fetchSubscriptions();
             }
@@ -447,6 +453,28 @@ export default function AdminAssinaturasPage() {
                         <p className="font-semibold text-blue-800">{editingSub?.condo?.nome}</p>
                         <p className="text-sm text-blue-600">Plano: {editingSub?.plan?.nome_plano}</p>
                         <p className="text-sm text-blue-500">Valor padrão do plano: {formatCurrency(editingSub?.plan?.valor_mensal || 0)}</p>
+                    </div>
+
+                    {/* Status Update */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Status da Assinatura
+                        </label>
+                        <Select
+                            value={novoStatus}
+                            onChange={(e) => setNovoStatus(e.target.value)}
+                            options={[
+                                { value: 'ativo', label: 'Ativo' },
+                                { value: 'trialing', label: 'Em Teste (Trial)' },
+                                { value: 'pendente_pagamento', label: 'Pendente Pagamento' },
+                                { value: 'cancelado', label: 'Cancelado' },
+                                { value: 'inativo', label: 'Inativo' },
+                            ]}
+                            className="w-full"
+                        />
+                        <p className="text-xs text-yellow-600 mt-1">
+                            ⚠️ Alterar o status para Ativo, Trial ou Cancelado enviará um email automático para o síndico.
+                        </p>
                     </div>
 
                     {/* Form */}
