@@ -23,7 +23,7 @@ const CHECKLIST_ITEMS: ChecklistItem[] = [
     { key: 'cadastrar_moradores', label: 'Cadastrar moradores', icon: <Users className="h-4 w-4" />, href: '/moradores' },
     { key: 'configurar_financeiro', label: 'Configurar financeiro', icon: <DollarSign className="h-4 w-4" />, href: '/financeiro' },
     { key: 'ativar_cobrancas', label: 'Configurar cobranças', icon: <CreditCard className="h-4 w-4" />, href: '/cobrancas' },
-    { key: 'ativar_portaria', label: 'Configurar portaria', icon: <Shield className="h-4 w-4" />, href: '/portaria' },
+    { key: 'cadastrar_porteiro', label: 'Cadastrar porteiro', icon: <Shield className="h-4 w-4" />, href: '/usuarios' },
     { key: 'ativar_reservas', label: 'Configurar reservas', icon: <Calendar className="h-4 w-4" />, href: '/reservas' },
     { key: 'criar_primeiro_aviso', label: 'Publicar primeiro aviso', icon: <Bell className="h-4 w-4" />, href: '/avisos' },
     { key: 'ver_relatorio_financeiro', label: 'Visualizar relatórios', icon: <FileText className="h-4 w-4" />, href: '/relatorios' },
@@ -94,8 +94,8 @@ export function OnboardingChecklist() {
                 const { count } = await supabase.from('resident_invoices').select('*', { count: 'exact', head: true }).eq('condo_id', condoId);
                 return (count || 0) > 0;
             },
-            ativar_portaria: async () => {
-                const { count } = await supabase.from('visitor_logs').select('*', { count: 'exact', head: true }).eq('condo_id', condoId);
+            cadastrar_porteiro: async () => {
+                const { count } = await supabase.from('users').select('*', { count: 'exact', head: true }).eq('condo_id', condoId).eq('role', 'porteiro');
                 return (count || 0) > 0;
             },
             ativar_reservas: async () => {
