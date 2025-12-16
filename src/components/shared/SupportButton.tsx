@@ -16,13 +16,11 @@ export function SupportButton({ planType = 'basico', userName }: SupportButtonPr
     const supportOptions = {
         basico: [
             { icon: <Mail className="h-5 w-5" />, label: 'Email', desc: 'Resposta em até 48h', action: 'mailto:suporte@meucondominiofacil.com' },
-            { icon: <ExternalLink className="h-5 w-5" />, label: 'FAQ / Ajuda', desc: 'Base de conhecimento', action: '/ajuda' },
             { icon: <Lightbulb className="h-5 w-5" />, label: 'Sugerir Melhoria', desc: 'Envie sua ideia', action: '/sugestoes' },
         ],
         profissional: [
             { icon: <MessageCircle className="h-5 w-5" />, label: 'Chat ao Vivo', desc: 'Horário comercial', action: 'chat' },
             { icon: <Mail className="h-5 w-5" />, label: 'Email Prioritário', desc: 'Resposta em até 24h', action: 'mailto:prioridade@meucondominiofacil.com' },
-            { icon: <ExternalLink className="h-5 w-5" />, label: 'FAQ / Ajuda', desc: 'Base de conhecimento', action: '/ajuda' },
             { icon: <Lightbulb className="h-5 w-5" />, label: 'Sugerir Melhoria', desc: 'Envie sua ideia', action: '/sugestoes' },
         ],
         enterprise: [
@@ -60,8 +58,8 @@ export function SupportButton({ planType = 'basico', userName }: SupportButtonPr
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className={`fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110 ${isOpen
-                        ? 'bg-gray-600 hover:bg-gray-700'
-                        : 'bg-emerald-500 hover:bg-emerald-600'
+                    ? 'bg-gray-600 hover:bg-gray-700'
+                    : 'bg-emerald-500 hover:bg-emerald-600'
                     }`}
             >
                 {isOpen ? (
