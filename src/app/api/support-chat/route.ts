@@ -38,11 +38,12 @@ export async function GET(req: NextRequest) {
         if (chatId) {
             const { data: messages, error } = await supabaseAdmin
                 .from('chat_messages')
-                .select('*, sender:users!sender_id(nome)')
+                .select('*')
                 .eq('chat_id', chatId)
                 .order('created_at', { ascending: true });
 
             if (error) {
+                console.error('Erro ao buscar mensagens:', error);
                 return NextResponse.json({ error: 'Erro ao buscar mensagens' }, { status: 500 });
             }
 
@@ -53,13 +54,13 @@ export async function GET(req: NextRequest) {
                 .eq('chat_id', chatId)
                 .neq('sender_id', authUser.id);
 
-            return NextResponse.json({ messages });
+            return NextResponse.json({ messages: messages || [] });
         }
 
         // Buscar chats
         let query = supabaseAdmin
             .from('support_chats')
-            .select('*, user:users!user_id(nome, email), atendente:users!atendente_id(nome)')
+            .select('*')
             .order('ultima_mensagem_at', { ascending: false });
 
         if (userData?.role !== 'superadmin') {
@@ -73,8 +74,16 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: 'Erro ao buscar chats' }, { status: 500 });
         }
 
-        // Contar mensagens não lidas
-        const chatsWithUnread = await Promise.all((chats || []).map(async (chat) => {
+        // Buscar informações dos usuários
+        const chatsWithDetails = await Promise.all((chats || []).map(async (chat) => {
+            // Buscar usuário
+            const { data: user } = await supabaseAdmin
+                .from('users')
+                .select('nome, email')
+                .eq('id', chat.user_id)
+                .single();
+
+            // Contar mensagens não lidas
             const { count } = await supabaseAdmin
                 .from('chat_messages')
                 .select('*', { count: 'exact', head: true })
@@ -82,11 +91,15 @@ export async function GET(req: NextRequest) {
                 .eq('lida', false)
                 .neq('sender_id', authUser.id);
 
-            return { ...chat, unread_count: count || 0 };
+            return {
+                ...chat,
+                user: user || { nome: 'Usuário', email: '' },
+                unread_count: count || 0
+            };
         }));
 
         return NextResponse.json({
-            chats: chatsWithUnread,
+            chats: chatsWithDetails,
             isAdmin: userData?.role === 'superadmin',
             userId: authUser.id
         });
