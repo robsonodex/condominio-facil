@@ -154,9 +154,9 @@ export function OnboardingChecklist() {
     const completedCount = CHECKLIST_ITEMS.filter(item => progress[item.key]).length;
     const percentage = Math.round((completedCount / CHECKLIST_ITEMS.length) * 100);
 
-    // Não mostrar se não for síndico ou se já concluiu há mais de 30 dias
+    // Não mostrar se não for síndico ou se já concluiu
     if (!isSindico || loading) return null;
-    if (progress.completed_at && new Date(progress.completed_at as any) < new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)) return null;
+    if (progress.completed_at) return null; // Sumiu após concluir
 
     return (
         <Card className="mb-6 border-emerald-200 bg-gradient-to-r from-emerald-50 to-white">
