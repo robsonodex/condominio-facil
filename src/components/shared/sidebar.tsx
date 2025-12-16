@@ -25,7 +25,8 @@ import {
     ChevronDown,
     ChevronRight,
     Lightbulb,
-    MessageCircle
+    MessageCircle,
+    QrCode
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -84,6 +85,7 @@ const navItems: NavItem[] = [
         ]
     },
     { href: '/manutencao', label: 'Manutenção Preventiva', icon: <Settings className="h-5 w-5" />, roles: ['sindico'] },
+    { href: '/configuracoes/pix', label: 'Configurar PIX', icon: <QrCode className="h-5 w-5" />, roles: ['sindico'] },
     { href: '/assinatura', label: 'Assinatura', icon: <CreditCard className="h-5 w-5" />, roles: ['sindico'] },
     { href: '/sugestoes', label: 'Sugestões', icon: <Lightbulb className="h-5 w-5" />, roles: ['sindico', 'morador', 'inquilino', 'porteiro'] },
     { href: '/perfil', label: 'Meu Perfil', icon: <Settings className="h-5 w-5" /> },

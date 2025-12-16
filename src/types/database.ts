@@ -38,6 +38,11 @@ export interface Condo {
     data_inicio: string;
     data_fim_teste: string | null;
     condo_numero: number | null;
+    // Campos PIX
+    pix_chave: string | null;
+    pix_tipo: 'cpf' | 'cnpj' | 'email' | 'telefone' | 'aleatoria' | null;
+    pix_nome_recebedor: string | null;
+    pix_cidade: string | null;
     created_at: string;
     updated_at: string;
     // Relations
