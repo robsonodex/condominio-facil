@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { Card, CardContent, Button, Input, Select, Modal, Badge, TableSkeleton } from '@/components/ui';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/hooks/useUser';
+import { useAuth } from '@/hooks/useAuth';
 import { formatDate, getRoleLabel, formatPhone } from '@/lib/utils';
 import { UserPlus, Edit2, Key, Trash2 } from 'lucide-react';
 
@@ -28,6 +29,7 @@ function UsuariosSkeleton() {
 
 export default function UsuariosCondoPage() {
     const { profile, condoId, isSindico, isSuperAdmin, loading: userLoading } = useUser();
+    const { session } = useAuth();
     const [users, setUsers] = useState<UserItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -82,7 +84,10 @@ export default function UsuariosCondoPage() {
                 // This prevents auto-login bug (síndico being logged out)
                 const response = await fetch('/api/usuarios/create', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session?.access_token}`,
+                    },
                     credentials: 'include',
                     body: JSON.stringify({
                         email: formData.email,
