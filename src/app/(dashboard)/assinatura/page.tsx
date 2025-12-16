@@ -338,7 +338,7 @@ export default function AssinaturaPage() {
                                         variant="outline"
                                     >
                                         <QrCode className="h-4 w-4 mr-2" />
-                                        {generatingPix ? 'Gerando...' : 'Gerar QR Code'}
+                                        {generatingPix ? 'Gerando...' : 'Gerar Chave PIX'}
                                     </Button>
                                 </div>
                             </div>
