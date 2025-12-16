@@ -141,3 +141,24 @@ export function getPriorityColor(priority: string) {
       return 'secondary';
   }
 }
+
+/**
+ * Formata telefone no padrão brasileiro (XX) XXXXX-XXXX
+ * Aceita entrada com ou sem formatação prévia
+ */
+export function formatPhone(value: string): string {
+  // Remove tudo que não é número
+  const numbers = value.replace(/\D/g, '');
+
+  // Limita a 11 dígitos (DDD + 9 dígitos)
+  const limited = numbers.slice(0, 11);
+
+  // Aplica a máscara progressivamente
+  if (limited.length <= 2) {
+    return limited.length > 0 ? `(${limited}` : '';
+  }
+  if (limited.length <= 7) {
+    return `(${limited.slice(0, 2)}) ${limited.slice(2)}`;
+  }
+  return `(${limited.slice(0, 2)}) ${limited.slice(2, 7)}-${limited.slice(7)}`;
+}

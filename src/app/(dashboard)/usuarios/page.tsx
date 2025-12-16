@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { Card, CardContent, Button, Input, Select, Modal, Badge, TableSkeleton } from '@/components/ui';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/hooks/useUser';
-import { formatDate, getRoleLabel } from '@/lib/utils';
+import { formatDate, getRoleLabel, formatPhone } from '@/lib/utils';
 import { UserPlus, Edit2, Key, Trash2 } from 'lucide-react';
 
 interface UserItem {
@@ -307,7 +307,7 @@ export default function UsuariosCondoPage() {
                     <Input
                         label="Telefone"
                         value={formData.telefone}
-                        onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                        onChange={(e) => setFormData({ ...formData, telefone: formatPhone(e.target.value) })}
                         placeholder="(00) 00000-0000"
                     />
 

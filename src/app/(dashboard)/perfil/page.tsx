@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, Button, Input } from '@/components/ui';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { formatPhone } from '@/lib/utils';
 import { User, Lock, Phone, Save } from 'lucide-react';
 
 export default function PerfilPage() {
@@ -129,7 +130,7 @@ export default function PerfilPage() {
                         <Input
                             label="Telefone"
                             value={formData.telefone}
-                            onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                            onChange={(e) => setFormData({ ...formData, telefone: formatPhone(e.target.value) })}
                             placeholder="(00) 00000-0000"
                         />
 

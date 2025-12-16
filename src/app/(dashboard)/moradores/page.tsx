@@ -5,6 +5,7 @@ import { Card, CardContent, Button, Input, Select, Table, Badge, CardSkeleton, T
 import { Modal } from '@/components/ui/modal';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/hooks/useUser';
+import { formatPhone } from '@/lib/utils';
 import { Plus, Search, Users, Edit, Trash2 } from 'lucide-react';
 import { Unit } from '@/types/database';
 
@@ -377,7 +378,7 @@ function ResidentModal({ isOpen, onClose, onSuccess, condoId, units, resident }:
                 <Input
                     label="Telefone"
                     value={telefone}
-                    onChange={(e) => setTelefone(e.target.value)}
+                    onChange={(e) => setTelefone(formatPhone(e.target.value))}
                     placeholder="(11) 99999-9999"
                 />
 
