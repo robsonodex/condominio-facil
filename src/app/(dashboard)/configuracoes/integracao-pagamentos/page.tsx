@@ -288,17 +288,74 @@ Data: ${new Date().toLocaleString('pt-BR')}
                 </CardContent>
             </Card>
 
-            {/* Info de preço */}
-            <Card className="bg-gray-50">
-                <CardContent className="p-4 text-center">
-                    <p className="text-gray-600">
-                        💰 <strong>Taxa de Implantação:</strong> A combinar (consulte nossa equipe)
-                    </p>
-                    <p className="text-sm text-gray-500 mt-1">
-                        Inclui configuração completa, testes e suporte inicial
-                    </p>
-                </CardContent>
-            </Card>
+            {/* Planos de Preços */}
+            <div className="space-y-4">
+                <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                    <DollarSign className="h-5 w-5 text-emerald-600" />
+                    Investimento Estimado
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Implantação */}
+                    <Card className="border-emerald-100 bg-gradient-to-b from-emerald-50 to-white">
+                        <CardContent className="p-6 text-center space-y-4">
+                            <div className="bg-emerald-100 p-3 rounded-full w-12 h-12 flex items-center justify-center mx-auto">
+                                <Zap className="h-6 w-6 text-emerald-600" />
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-gray-900">Taxa de Implantação</h4>
+                                <p className="text-sm text-gray-500">Pagamento único</p>
+                            </div>
+                            <div className="text-3xl font-bold text-emerald-700">
+                                <span className="text-lg font-normal text-gray-500">A partir de</span> R$ 900
+                            </div>
+                            <ul className="text-sm text-gray-600 space-y-2 text-left bg-white p-4 rounded-lg border border-emerald-100">
+                                <li className="flex items-center gap-2">✅ Configuração Mercado Pago</li>
+                                <li className="flex items-center gap-2">✅ Importação de Moradores</li>
+                                <li className="flex items-center gap-2">✅ Treinamento do Síndico</li>
+                                <li className="flex items-center gap-2">✅ Suporte Prioritário 30 dias</li>
+                            </ul>
+                        </CardContent>
+                    </Card>
+
+                    {/* Mensalidade */}
+                    <Card className="border-blue-100 bg-gradient-to-b from-blue-50 to-white">
+                        <CardContent className="p-6 text-center space-y-4">
+                            <div className="bg-blue-100 p-3 rounded-full w-12 h-12 flex items-center justify-center mx-auto">
+                                <Clock className="h-6 w-6 text-blue-600" />
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-gray-900">Mensalidade do Módulo</h4>
+                                <p className="text-sm text-gray-500">Valor recorrente</p>
+                            </div>
+                            <div className="space-y-2">
+                                <div className="text-2xl font-bold text-blue-700">
+                                    R$ 6,00 <span className="text-sm font-normal text-gray-500">/unidade</span>
+                                </div>
+                                <p className="text-xs text-gray-500">Para condomínios acima de 20 uni.</p>
+                            </div>
+                            <div className="bg-white p-4 rounded-lg border border-blue-100 text-sm">
+                                <div className="flex justify-between items-center py-1 border-b">
+                                    <span className="text-gray-600">Até 20 unidades</span>
+                                    <span className="font-semibold text-blue-700">R$ 150/mês (fixo)</span>
+                                </div>
+                                <div className="flex justify-between items-center py-1 border-b">
+                                    <span className="text-gray-600">21 a 100 unidades</span>
+                                    <span className="font-semibold text-blue-700">R$ 6,00/uni</span>
+                                </div>
+                                <div className="flex justify-between items-center py-1">
+                                    <span className="text-gray-600">Acima de 100</span>
+                                    <span className="font-semibold text-blue-700">Sob consulta</span>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                <p className="text-center text-xs text-gray-500 mt-4">
+                    * Valores podem variar conforme complexidade e localização. Solicite uma proposta formal.
+                </p>
+            </div>
         </div>
     );
 }
