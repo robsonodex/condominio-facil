@@ -15,19 +15,22 @@ import {
     AlertTriangle,
     UserCheck,
     FileText,
-    Settings,
     CreditCard,
     Calendar,
     Package,
     X,
     Lock,
+    Settings,
+    LogOut,
+    Menu,
+    Shield,
+    QrCode,
+    Zap,
+    MessageCircle,
     Vote,
     ChevronDown,
     ChevronRight,
-    Lightbulb,
-    MessageCircle,
-    QrCode,
-    Zap
+    Lightbulb
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -86,6 +89,7 @@ const navItems: NavItem[] = [
         ]
     },
     { href: '/manutencao', label: 'Manutenção Preventiva', icon: <Settings className="h-5 w-5" />, roles: ['sindico'] },
+    { href: '/configuracoes/integracao-whatsapp', label: 'WhatsApp Oficial', icon: <MessageCircle className="h-5 w-5 text-green-500" />, roles: ['sindico'] },
     { href: '/configuracoes/integracao-pagamentos', label: 'Integração Premium', icon: <Zap className="h-5 w-5 text-amber-400" />, roles: ['sindico'] },
     { href: '/configuracoes/pix', label: 'Configurar PIX', icon: <QrCode className="h-5 w-5" />, roles: ['sindico'] },
     { href: '/assinatura', label: 'Assinatura', icon: <CreditCard className="h-5 w-5" />, roles: ['sindico'] },
