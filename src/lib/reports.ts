@@ -1,12 +1,6 @@
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
-
-declare module 'jspdf' {
-    interface jsPDF {
-        autoTable: (options: any) => jsPDF;
-    }
-}
 
 interface ReportConfig {
     title: string;
@@ -76,7 +70,7 @@ export function generatePDF(config: ReportConfig): void {
         })
     );
 
-    doc.autoTable({
+    autoTable(doc, {
         head: [columns.map(c => c.header)],
         body: tableData,
         startY: subtitle ? 52 : 45,
