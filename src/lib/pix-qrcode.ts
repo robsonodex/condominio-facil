@@ -86,7 +86,8 @@ export function gerarPixPayload(params: PixParams): string {
     payload += formatTLV('59', removeAccents(nome));
 
     // ID 60 - Merchant City
-    payload += formatTLV('60', removeAccents(cidade));
+    // Cidade deve ter no máximo 15 caracteres segundo a spec do BR Code
+    payload += formatTLV('60', removeAccents(cidade).substring(0, 15));
 
     // ID 62 - Additional Data Field Template
     if (txid) {
