@@ -167,6 +167,35 @@ export async function POST(req: NextRequest) {
                     mensagem,
                 });
 
+            // Se for solicitação de integração (baseado no assunto), notificar admin por email
+            if (assunto.includes('Integração de Pagamentos')) {
+                try {
+                    await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/emails/send`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`
+                        },
+                        body: JSON.stringify({
+                            to: 'admin@condominiofacil.com', // Email do admin
+                            subject: `🚀 Nova Solicitação Premium: ${userData?.condo_id}`,
+                            html: `
+                                <h1>Nova Solicitação de Integração</h1>
+                                <p><strong>Assunto:</strong> ${assunto}</p>
+                                <p><strong>Solicitante:</strong> ${userData?.nome}</p>
+                                <hr/>
+                                <div style="white-space: pre-wrap;">${mensagem}</div>
+                                <hr/>
+                                <p><a href="${process.env.NEXT_PUBLIC_APP_URL}/admin/suporte">Acessar Painel de Suporte</a></p>
+                            `
+                        })
+                    });
+                } catch (emailErr) {
+                    console.error('Erro ao enviar email para admin:', emailErr);
+                    // Não falhar o request principal se o email falhar
+                }
+            }
+
             return NextResponse.json({ success: true, chat });
         }
 
