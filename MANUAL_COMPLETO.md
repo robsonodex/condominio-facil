@@ -2,7 +2,9 @@
 
 ## 📋 Visão Geral
 
-O **Condomínio Fácil** é uma plataforma SaaS (Software como Serviço) para gestão de condomínios pequenos e médios no Brasil. O sistema permite que síndicos, porteiros e moradores gerenciem todas as operações do condomínio de forma simples e organizada.
+O **Condomínio Fácil** é uma plataforma SaaS (Software como Serviço) **100% WEB** para gestão de condomínios pequenos e médios no Brasil. O sistema permite que síndicos, porteiros e moradores gerenciem todas as operações do condomínio de forma simples e organizada através do navegador.
+
+> ⚠️ **IMPORTANTE**: O Condomínio Fácil é um **sistema WEB** acessível via navegador. **NÃO existe aplicativo nativo para Android ou iOS**. O sistema pode ser instalado como PWA (Progressive Web App) na tela inicial do celular, funcionando como um app.
 
 ---
 
@@ -49,6 +51,15 @@ O **Condomínio Fácil** é uma plataforma SaaS (Software como Serviço) para ge
 | **Profissional** | R$ 99,90 | Até 50 | Básico + Ocorrências + Portaria |
 | **Enterprise** | R$ 199,90 | Ilimitado | Tudo + Relatórios + Suporte prioritário |
 
+### Serviços de Implantação (Opcionais) ⚙️
+
+> Os serviços abaixo são **contratados separadamente** e requerem implantação pela equipe técnica.
+
+| Serviço | Taxa de Implantação | Mensalidade Adicional | Disponível para |
+|---------|--------------------|-----------------------|-----------------|
+| **Integração Bancária** (Mercado Pago, Asaas, bancos) | R$ 999,00 | R$ 199,00/mês | Profissional e Enterprise |
+| **WhatsApp Automático** (Evolution API) | R$ 697,00 | R$ 149,00/mês | Profissional e Enterprise |
+
 ### Status de Assinatura
 
 | Status | Significado |
@@ -70,9 +81,9 @@ O **Condomínio Fácil** é uma plataforma SaaS (Software como Serviço) para ge
 - Cria e edita planos de assinatura
 - Visualiza métricas financeiras (MRR, churn, etc.)
 - Ativa/suspende condomínios
-- **Gerencia usuários com ID Cliente único** ✅ NOVO v5.3
-- **Gerencia condomínios com ID Condo único** ✅ NOVO v5.3
-- **Busca por ID Cliente ou ID Condo** ✅ NOVO v5.3
+- **Gerencia usuários com ID Cliente único**
+- **Gerencia condomínios com ID Condo único**
+- **Realiza implantações de integrações**
 
 **Onde acessa:** `/admin`
 
@@ -115,107 +126,35 @@ O **Condomínio Fácil** é uma plataforma SaaS (Software como Serviço) para ge
 
 ---
 
-## 📱 APLICATIVO MOBILE (NOVO!)
+## 📱 ACESSO MOBILE (PWA)
 
-### Visão Geral
+> ⚠️ **ATENÇÃO**: O Condomínio Fácil **NÃO possui aplicativo nativo** para Android ou iOS. O acesso móvel é feito através do **navegador** ou **PWA** (Progressive Web App).
 
-O **Condomínio Fácil Mobile** é o aplicativo oficial para Android e iOS que oferece acesso completo ao sistema diretamente do smartphone.
+### O que é PWA?
 
-**Repositório**: https://github.com/robsonodex/app-condominio-facil.git
+PWA (Progressive Web App) é uma tecnologia que permite **instalar o site como se fosse um aplicativo** na tela inicial do celular. Funciona 100% online via navegador.
 
-### Plataformas Suportadas
-- ✅ **Android** 5.0+ (API 21+)
-- ✅ **iOS** 13.0+
-- ✅ Desenvolvido com React Native + Expo
+### Como Instalar (Android)
+1. Acesse o sistema pelo Chrome
+2. Toque nos 3 pontos (menu)
+3. Selecione "Instalar app" ou "Adicionar à tela inicial"
+4. O ícone aparece na tela inicial
 
-### Funcionalidades do App Mobile
+### Como Instalar (iPhone)
+1. Acesse o sistema pelo Safari
+2. Toque no botão Compartilhar
+3. Selecione "Adicionar à Tela de Início"
 
-#### 1. Autenticação
-- Login com email/senha
-- Modo DEMO para síndicos
-- Recuperação de senha
-- Armazenamento seguro de tokens
-- Impersonação (SuperAdmin)
-
-#### 2. Dashboard Mobile
-- Estatísticas em tempo real
-- Resumo financeiro
-- Ações rápidas
-- Pull-to-refresh
-
-#### 3. Gestão Financeira
-- CRUD completo de lançamentos
-- Filtros por tipo e período
-- Visualização de saldo
-
-#### 4. Moradores
-- CRUD completo
-- Proprietários e inquilinos
-- Vinculação com unidades
-
-#### 5. Ocorrências
-- CRUD com workflow de status
-- 4 níveis de prioridade
-- Categorização
-- Filtros dinâmicos
-
-#### 6. Avisos
-- CRUD completo
-- Apenas Síndico/SuperAdmin podem criar
-- Todos podem visualizar
-
-#### 7. Reservas
-- Booking de áreas comuns
-- Salão, churrasqueira, quadra, piscina, academia
-- Gestão de horários
-
-#### 8. Portaria Professional
-- **Visitantes**: Check-in/check-out, registro de documentos
-- **Encomendas**: Registro, rastreamento, coleta
-- **Dashboard**: Estatísticas em tempo real
-
-#### 9. Governança
-- **Enquetes**: Sistema de votação
-- **Assembleias**: Gestão e presença
-- **Documentos**: Upload e download
-
-#### 10. SuperAdmin Mobile
-- Gestão de condomínios
-- Gestão de usuários
-- Gestão de assinaturas
-
-#### 11. Features Avançadas
-- ✅ **Push Notifications** (Expo Notifications)
-- ✅ **Câmera** (para visitantes e ocorrências)
-- ✅ **Upload de Arquivos** (documentos)
-
-### Tecnologias do App
-- React Native + Expo SDK 50
-- TypeScript
-- Expo Router (navegação)
-- Zustand + TanStack Query (estado)
-- Supabase (backend)
-- Expo SecureStore (segurança)
-
-### Build do App
-```bash
-# Android APK
-npx eas build -p android --profile preview
-
-# iOS IPA
-npx eas build -p ios --profile preview
-```
-
-### Estatísticas do App Mobile
-- **13 módulos** completos
-- **12 serviços API**
-- **5 componentes UI** reutilizáveis
-- **~6.500 linhas** de código
-- **100% funcional** e pronto para produção
+### Recursos do PWA
+- ✅ Ícone na tela inicial
+- ✅ Abre em tela cheia (sem barra do navegador)
+- ✅ Funciona offline (páginas visitadas em cache)
+- ❌ NÃO é um app nativo
+- ❌ NÃO está nas lojas (Play Store / App Store)
 
 ---
 
-## 📊 Módulos do Sistema (Web + Mobile)
+## 📊 Módulos do Sistema (Web)
 
 ### 1. Dashboard
 - Visão geral com KPIs
@@ -226,14 +165,14 @@ npx eas build -p ios --profile preview
 ### 2. Financeiro (`/financeiro`)
 - Lançar receitas (taxas de condomínio)
 - Lançar despesas (água, luz, manutenção)
-- **Editar e excluir lançamentos** ✅
+- Editar e excluir lançamentos
 - Visualizar inadimplência
 - Filtrar por período
 
 ### 3. Cobranças (`/cobrancas`)
 - Criar cobranças para moradores
-- Integração Mercado Pago (PIX, Boleto, Cartão)
-- **Exibir morador e inquilino** ✅
+- **⚙️ Integração Mercado Pago** *(mediante implantação)*
+- Exibir morador e inquilino
 - Cancelar cobranças
 
 ### 4. Unidades (`/unidades`)
@@ -257,28 +196,28 @@ npx eas build -p ios --profile preview
 - Classificar por tipo (barulho, manutenção, etc.)
 - Definir prioridade
 - Acompanhar status
-- **Excluir ocorrências** ✅
+- Excluir ocorrências
 
-### 8. Reservas de Áreas Comuns (`/reservas`) ✅ NOVO
-- **Calendário interativo** mensal
-- **Cadastrar áreas** (salão, churrasqueira, piscina)
+### 8. Reservas de Áreas Comuns (`/reservas`)
+- Calendário interativo mensal
+- Cadastrar áreas (salão, churrasqueira, piscina)
 - Reservar com horário início/fim
-- **Verificação automática** de conflitos
-- Fluxo de **aprovação** (síndico)
+- Verificação automática de conflitos
+- Fluxo de aprovação (síndico)
 - Taxa opcional por reserva
 
-### 9. Portaria Profissional (`/portaria`) ✅ ATUALIZADO
-- **Modo tela cheia** para porteiros
-- **Entrada/saída rápida** com um clique
-- **Captura de foto** via webcam
-- **Impressão de crachá** de visitante
-- Busca por **CPF, placa ou nome**
-- **Estatísticas** em tempo real
+### 9. Portaria Profissional (`/portaria`)
+- Modo tela cheia para porteiros
+- Entrada/saída rápida com um clique
+- Captura de foto via webcam
+- Impressão de crachá de visitante
+- Busca por CPF, placa ou nome
+- Estatísticas em tempo real
 - Histórico diário
 
-### 10. Relatórios (`/relatorios`) ✅ NOVO
-- **Exportar PDF** profissional com logo
-- **Exportar Excel** (XLSX)
+### 10. Relatórios (`/relatorios`)
+- Exportar PDF profissional com logo
+- Exportar Excel (XLSX)
 - Tipos disponíveis:
   - Financeiro (receitas/despesas)
   - Cobranças de moradores
@@ -290,142 +229,96 @@ npx eas build -p ios --profile preview
 ### 11. Assinatura (`/assinatura`)
 - Visualizar plano atual
 - Gerar pagamento (cartão, boleto)
-- **PIX estático** com chave fixa ✅
-- **Botão WhatsApp** para enviar comprovante ✅
+- PIX estático com chave fixa
+- Botão WhatsApp para enviar comprovante
 
 ### 12. Meu Perfil (`/perfil`)
 - Editar dados pessoais
 - Alterar senha
 - Ver informações da conta
 
-### 13. Status Geral (`/status`) ✅ NOVO v5.2
-- **Visão de saúde** de todos os módulos
+### 13. Status Geral (`/status`)
+- Visão de saúde de todos os módulos
 - Indicadores: OK (verde), Atenção (amarelo), Erro (vermelho)
-- Módulos monitorados:
-  - Financeiro (entradas/saídas)
-  - Cobranças Mercado Pago
-  - Portaria (visitantes)
-  - Reservas (conflitos)
-  - Usuários (pendentes)
-  - Unidades (ocupação)
-  - PWA
-  - RLS/Segurança
-  - Assinatura
-- **Ações rápidas** para correção
+- Ações rápidas para correção
 
-### 14. Notificações (`/notificacoes`) ✅ NOVO v5.2
-- **Central de envio** multi-canal
-- Canais: Push, WhatsApp, Email, Aviso Interno
-- Destinatários:
-  - Todos os moradores
-  - Bloco específico
-  - Unidade específica
-  - Porteiros
-- **Histórico de envios** com status
+### 14. Notificações (`/notificacoes`)
+- Central de envio multi-canal
+- Canais: Push, Email, Aviso Interno
+- **⚙️ WhatsApp** *(mediante implantação)*
+- Histórico de envios com status
 
-### 15. Automações de Inadimplência (`/automacoes`) ✅ NOVO v5.2
-- **Configurar regras automáticas**:
-  - Lembrete após X dias de atraso
-  - Multa automática após Y dias
-  - Cobrança MP após Z dias
-  - Relatório mensal de inadimplentes
-- Parâmetros:
-  - Percentual de multa
-  - Juros diários
-- **Liga/desliga** cada automação
+### 15. Automações de Inadimplência (`/automacoes`)
+- Configurar regras automáticas
+- Parâmetros de multa e juros
+- Liga/desliga cada automação
 
-### 16. Câmeras (`/portaria/cameras`) ✅ NOVO v5.2
-- **Visualização ao vivo** (sem gravação)
-- Stream via WebRTC ou HLS
-- **Captura de snapshot** (expira em 24h)
-- Requisitos das câmeras:
-  - RTSP habilitado
-  - ONVIF Perfil S
-  - H.264, IP fixo, cabeada
-- **Validação de rede** (mesma LAN do gateway)
-- Probe de status (online/offline)
+### 16. Encomendas e Mensageria (`/portaria/deliveries`)
+- Recebimento na Portaria com foto
+- Registro de código de rastreio
+- Retirada com histórico
+- **⚙️ Notificações WhatsApp** *(mediante implantação)*
 
-### 17. Modo Demo ✅ NOVO v5.2
-- **Botão na tela de login**
-- Cria automaticamente:
-  - Usuário síndico demo
-  - Condomínio "Residencial Demo"
-  - Unidades de exemplo
-  - Avisos e lançamentos
-- Ideal para **demonstrações comerciais**
-
-### 18. Painel de Erros (`/admin/erros`) ✅ NOVO v5.2
-- **Apenas SuperAdmin**
-- Monitoramento de:
-  - Erros do sistema
-  - Problemas de integridade
-  - Unidades sem morador
-  - Moradores sem unidade
-- **Prioridades**: Alta, Média, Baixa
-- **Ações**: Marcar como resolvido
+### 17. Modo Demo
+- Botão na tela de login
+- Cria ambiente de demonstração automaticamente
+- Ideal para demonstrações comerciais
 
 ---
 
-### 19. Encomendas e Mensageria (`/portaria/deliveries`) ✅ NOVO v5.1
-- **Recebimento na Portaria**:
-  - Cadastro rápido com **foto da encomenda**
-  - Registro de código de rastreio e remetente
-  - Seleção de unidade/morador
-- **Notificações Automáticas**:
-  - Envio imediato de **WhatsApp e Email** para o morador
-  - Link seguro para confirmação
-- **Retirada**:
-  - Morador confirma retirada pelo app (ou porteiro dá baixa)
-  - Histórico completo de quem recebeu e quando
-- **Gestão**:
-  - Painel de pendentes
-  - Registro de devoluções
+## 🔌 Integrações (Mediante Implantação)
+
+> ⚠️ **IMPORTANTE**: As integrações abaixo **NÃO estão inclusas** nos planos padrão. São serviços de implantação contratados separadamente, com taxas específicas.
+
+### Integração Bancária
+
+Permite gerar boletos e PIX dinâmicos diretamente do sistema, com conciliação automática.
+
+**Bancos/Gateways suportados:**
+- Mercado Pago ✅
+- Asaas ✅
+- PagSeguro ✅
+- Banco do Brasil, Itaú, Bradesco, Santander (via API/CNAB)
+- Outros sob consulta
+
+**Requisitos para implantação:**
+1. CNPJ ativo do condomínio
+2. Conta no banco/gateway desejado
+3. Credenciais de API fornecidas pelo cliente
+4. Documento comprovando síndico autorizado
+
+**Valores:**
+- Taxa de implantação: R$ 999,00 (único)
+- Mensalidade do módulo: R$ 199,00/mês
+
+📄 **Documentação completa:** `docs/INTEGRACAO_BANCARIA.md`
 
 ---
 
-## 📲 PWA - App Instalável ✅ NOVO
+### Integração WhatsApp
 
-O sistema pode ser instalado como aplicativo no celular:
+Permite enviar mensagens automáticas para moradores (cobranças, avisos, encomendas).
 
-### Como Instalar (Android)
-1. Acesse o sistema pelo Chrome
-2. Toque nos 3 pontos (menu)
-3. Selecione "Instalar app"
-4. O ícone aparece na tela inicial
+**Tecnologia:** Evolution API em servidor dedicado
 
-### Como Instalar (iPhone)
-1. Acesse o sistema pelo Safari
-2. Toque no botão Compartilhar
-3. Selecione "Adicionar à Tela de Início"
+**Requisitos para implantação:**
+1. Chip de celular exclusivo para o condomínio
+2. Disponibilidade para escanear QR Code
+3. Compreensão dos riscos de banimento pelo WhatsApp
 
-### Recursos PWA
-- ✅ Ícone na tela inicial
-- ✅ Funciona offline (páginas visitadas)
-- ✅ Notificações push
-- ✅ Experiência de app nativo
+**Valores:**
+- Taxa de implantação: R$ 697,00 (único)
+- Mensalidade de infraestrutura: R$ 149,00/mês
+
+📄 **Documentação completa:** `docs/INTEGRACAO_WHATSAPP.md`
 
 ---
 
-## 📱 WhatsApp Integration ✅ NOVO
+## 💳 Como Receber Pagamentos (Suas Assinaturas)
 
-### Mensagens Automáticas
-O sistema gera links WhatsApp prontos para:
-- **Cobranças** - Enviar lembrete de pagamento
-- **Reservas** - Confirmar ou notificar pendência
-- **Avisos** - Comunicar moradores
-- **Visitantes** - Autorização de entrada
-- **Boas-vindas** - Novo morador
+### Sistema Integrado
 
-### PIX via WhatsApp
-Botão para enviar código PIX com mensagem formatada.
-
----
-
-## 💳 Como Receber Pagamentos
-
-### Sistema Integrado (Atual)
-
-O sistema possui duas formas de pagamento integradas:
+O sistema possui duas formas de pagamento para cobrar **seus clientes** (síndicos):
 
 #### 1. Cobrança por Email (Admin)
 1. Acesse `/admin/assinaturas`
@@ -440,7 +333,7 @@ O síndico pode pagar diretamente pela página `/assinatura`:
 
 ---
 
-### Configuração do Mercado Pago
+### Configuração do Mercado Pago (Sua Conta)
 
 1. Criar conta em [mercadopago.com.br](https://mercadopago.com.br)
 2. Ir em **Credenciais** e copiar o **Access Token**
@@ -450,16 +343,6 @@ O síndico pode pagar diretamente pela página `/assinatura`:
    ```
 
 **Taxas:** ~4.99% por transação + IOF
-
----
-
-### Documentação Adicional
-
-| Documento | Descrição |
-|-----------|-----------|
-| `GUIA_VENDAS.md` | Processo completo de venda para admin e síndico |
-| `MUDANCA_DOMINIO.md` | O que mudar ao trocar de domínio |
-| `DOCUMENTATION.md` | Documentação técnica completa |
 
 ---
 
@@ -478,76 +361,57 @@ O síndico pode pagar diretamente pela página `/assinatura`:
 
 ### Autenticação e Sessão
 - **Autenticação**: Supabase Auth (email/senha)
-- **Sessão Segura**: Expira automaticamente ao fechar o navegador ✅ NOVO v5.3
-- **Token via Header**: Authorization Bearer para todas as chamadas API ✅ NOVO v5.3
-- **Senha Padrão**: Novos usuários cadastrados via admin recebem senha `000000` ✅ NOVO v5.3
+- **Sessão Segura**: Expira automaticamente ao fechar o navegador
+- **Token via Header**: Authorization Bearer para todas as chamadas API
+- **Senha Padrão**: Novos usuários recebem senha `000000`
 
 ### Proteção de Dados
 - **RLS**: Row Level Security no banco
 - **Multi-tenant**: Dados isolados por condomínio
 - **HTTPS**: Certificado SSL automático na Vercel
 
-### Exclusão de Usuários ✅ NOVO v5.3
-- **Logout Imediato**: Ao excluir um usuário, todas as sessões são revogadas instantaneamente
-- **Aplicável a todos**: Síndico, Porteiro, Morador - todos são deslogados imediatamente ao serem excluídos
-- **Segurança**: `signOut global` antes de deletar o usuário do Auth
+### Exclusão de Usuários
+- **Logout Imediato**: Ao excluir um usuário, todas as sessões são revogadas
+- **Aplicável a todos**: Síndico, Porteiro, Morador
 
 ---
 
-## 🆔 Sistema de Identificação ✅ NOVO v5.3
+## 🆔 Sistema de Identificação
 
 ### ID Cliente (Síndicos)
-- Cada síndico cadastrado recebe um **ID sequencial único** (#1, #2, #3...)
+- Cada síndico recebe um **ID sequencial único** (#1, #2, #3...)
 - Visível no **Painel Admin → Usuários**
 - Busca por ID no campo de pesquisa
-- Exibido no **WhatsApp** ao enviar comprovante de pagamento
 
 ### ID Condo (Condomínios)
-- Cada condomínio cadastrado recebe um **ID sequencial único** (#1, #2, #3...)
+- Cada condomínio recebe um **ID sequencial único** (#1, #2, #3...)
 - Visível no **Painel Admin → Condomínios**
-- Facilita identificação e suporte ao cliente
-
-### WhatsApp Integrado
-- Número: **(21) 96553-2247**
-- Mensagem inclui dados completos:
-  - ID Cliente, Nome, E-mail, Telefone
-  - Condomínio, Plano, Valor
 
 ---
 
-## 📧 Sistema de E-mails ✅ NOVO v5.3
+## 📧 Sistema de E-mails
 
 ### E-mails Automáticos
 - **Credenciais de Acesso**: Enviado ao cadastrar novo síndico
-  - Contém: E-mail, Senha (000000), Link de login
-- **Ativação de Plano**: Enviado com nome correto do plano (Básico, Profissional, etc.)
+- **Ativação de Plano**: Confirmação com nome do plano
 - **Trial 7 Dias**: Notificação de início do período de teste
 - **Condomínio Ativo**: Confirmação de ativação
 
-### Templates Disponíveis
-- `welcome` - Boas-vindas
-- `user_credentials` - Credenciais de acesso
-- `condo_trial` - Período de teste
-- `condo_active` - Condomínio ativado
-- `condo_suspended` - Condomínio suspenso
-- `resident_invoice` - Fatura do morador
-
 ---
 
-## ✅ Funcionalidades Implementadas (Resumo v5.3)
+## ❓ Perguntas Frequentes
 
-| Funcionalidade | Status |
-|----------------|--------|
-| ID Cliente sequencial para síndicos | ✅ Implementado |
-| ID Condo sequencial para condomínios | ✅ Implementado |
-| Busca por ID no painel admin | ✅ Implementado |
-| Sessão expira ao fechar navegador | ✅ Implementado |
-| Logout imediato ao excluir usuário | ✅ Implementado |
-| Senha padrão 000000 para novos usuários | ✅ Implementado |
-| E-mail com plano correto (não fixo) | ✅ Implementado |
-| WhatsApp com dados completos do cliente | ✅ Implementado |
-| Reset de formulário ao criar novo usuário | ✅ Implementado |
-| Token de autenticação via Authorization header | ✅ Implementado |
+### "Tem aplicativo para celular?"
+> **Não.** O Condomínio Fácil é um sistema 100% WEB. Você acessa pelo navegador do celular ou pode instalar como PWA (que parece um app, mas não está nas lojas).
+
+### "O WhatsApp automático já vem incluso?"
+> **Não.** O envio automático de WhatsApp é um serviço de implantação contratado separadamente. O sistema WEB está pronto; a integração requer VPS dedicada e chip exclusivo do condomínio.
+
+### "Posso gerar boletos pelo sistema?"
+> **Depende.** O sistema permite cadastrar cobranças manualmente. A geração automática de boletos/PIX via banco requer contratação do serviço de Integração Bancária (implantação à parte).
+
+### "Os dados ficam seguros?"
+> **Sim.** Usamos a mesma tecnologia de criptografia que bancos usam. Dados armazenados em servidores seguros com backup automático.
 
 ---
 
@@ -556,11 +420,25 @@ O síndico pode pagar diretamente pela página `/assinatura`:
 Para dúvidas técnicas, consulte:
 - `DOCUMENTATION.md` - Documentação técnica
 - `DEPLOY.md` - Guia de deploy
-- `supabase/schema.sql` - Estrutura do banco
+- `docs/INTEGRACAO_BANCARIA.md` - Integração com bancos
+- `docs/INTEGRACAO_WHATSAPP.md` - Integração WhatsApp
 
 ---
 
-**Versão do Manual:** 5.3  
-**Última atualização:** 16/12/2025
+## 📚 Documentação Adicional
+
+| Documento | Descrição |
+|-----------|-----------|
+| `GUIA_VENDAS.md` | Processo completo de venda |
+| `VENDAS.md` | Scripts e argumentos de venda |
+| `DEPLOY.md` | Como fazer deploy do sistema |
+| `docs/INTEGRACAO_BANCARIA.md` | Manual de integração bancária |
+| `docs/INTEGRACAO_WHATSAPP.md` | Manual de integração WhatsApp |
+
+---
+
+**Versão do Manual:** 6.0  
+**Última atualização:** 17/12/2025  
+**CNPJ:** 57.444.727/0001-85
 
 © 2025 Condomínio Fácil - Todos os direitos reservados

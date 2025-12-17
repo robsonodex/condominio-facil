@@ -1,6 +1,18 @@
-# Condomínio Fácil
+# Meu Condomínio Fácil
 
-Sistema SaaS multi-tenant para gestão de condomínios pequenos no Brasil.
+Sistema SaaS **100% WEB** para gestão de condomínios pequenos e médios no Brasil.
+
+**CNPJ:** 57.444.727/0001-85
+
+---
+
+## ⚠️ AVISO IMPORTANTE
+
+Este sistema é **100% WEB** (acessado via navegador). **NÃO existe aplicativo nativo** para Android ou iOS.
+
+O acesso mobile é feito através do navegador ou via PWA (Progressive Web App) instalado na tela inicial do celular.
+
+---
 
 ## 🚀 Tecnologias
 
@@ -10,12 +22,9 @@ Sistema SaaS multi-tenant para gestão de condomínios pequenos no Brasil.
 - **Backend**: Supabase (PostgreSQL + Auth + Storage)
 - **PDF**: jsPDF
 - **Gráficos**: Recharts
+- **Hospedagem**: Vercel
 
-### Aplicativo Mobile (NOVO!)
-- **Framework**: React Native + Expo SDK 50
-- **Navegação**: Expo Router
-- **Estado**: Zustand + TanStack Query
-- **Repositório**: https://github.com/robsonodex/app-condominio-facil.git
+---
 
 ## 📋 Funcionalidades
 
@@ -26,41 +35,45 @@ Sistema SaaS multi-tenant para gestão de condomínios pequenos no Brasil.
 3. **Porteiro** - Controle de visitantes e registro de ocorrências
 4. **Morador** - Visualização de avisos, boletos e ocorrências
 
-### Módulos Web
+### Módulos Inclusos (por plano)
 
-- ✅ Dashboard com KPIs e gráficos
-- ✅ Gestão de Unidades (CRUD)
-- ✅ Gestão de Moradores (CRUD)
-- ✅ Financeiro (receitas/despesas, inadimplência)
-- ✅ Avisos/Comunicados
-- ✅ Ocorrências (reclamações, manutenção, incidentes)
-- ✅ Portaria (entrada/saída de visitantes)
-- ✅ Relatórios com geração de PDF
-- ✅ Painel SuperAdmin (condomínios, planos, usuários, assinaturas)
+| Módulo | Básico | Profissional | Premium |
+|--------|--------|--------------|---------|
+| Dashboard | ✅ | ✅ | ✅ |
+| Gestão Financeira | ✅ | ✅ | ✅ |
+| Moradores | ✅ | ✅ | ✅ |
+| Unidades | ✅ | ✅ | ✅ |
+| Avisos | ✅ | ✅ | ✅ |
+| Cobranças (manual) | ✅ | ✅ | ✅ |
+| Portaria Virtual | ❌ | ✅ | ✅ |
+| Encomendas | ❌ | ✅ | ✅ |
+| Reservas | ❌ | ✅ | ✅ |
+| Ocorrências | ❌ | ✅ | ✅ |
+| Relatórios | ❌ | ✅ | ✅ |
+| Câmeras | ❌ | ❌ | ✅ |
+| Governança | ❌ | ❌ | ✅ |
+| Automações | ❌ | ❌ | ✅ |
 
-### Módulos Mobile (13 completos!)
+### Serviços de Implantação (Opcionais)
 
-- ✅ Dashboard com estatísticas em tempo real
-- ✅ Gestão Financeira (CRUD)
-- ✅ Moradores (CRUD)
-- ✅ Ocorrências (CRUD com workflow)
-- ✅ Avisos (CRUD com RBAC)
-- ✅ Reservas de áreas comuns
-- ✅ Portaria (visitantes + encomendas)
-- ✅ Governança (enquetes, assembleias, documentos)
-- ✅ SuperAdmin (condos, users, assinaturas)
-- ✅ Push Notifications
-- ✅ Câmera integrada
-- ✅ Upload de arquivos
+⚠️ **NÃO inclusos nos planos padrão** - contratados separadamente:
 
-📱 **Documentação completa**: [MOBILE_APP.md](./MOBILE_APP.md)
+| Serviço | Descrição | Implantação | Mensal |
+|---------|-----------|-------------|--------|
+| Integração Bancária | PIX dinâmico, boleto automático, conciliação | R$ 999 | +R$ 199 |
+| Integração WhatsApp | Mensagens automáticas via Evolution API | R$ 697 | +R$ 149 |
 
-## 🛠️ Instalação
+**Disponível para**: Planos Profissional e Premium
+
+---
+
+## 🛠️ Instalação (Desenvolvimento)
 
 ### 1. Clone o projeto
 
 ```bash
-cd d:\saas\condominio-facil
+git clone [repo-url]
+cd condominio-facil
 ```
 
 ### 2. Instale as dependências
@@ -78,6 +91,7 @@ npm install
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://seu-projeto.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=sua-chave-anon
+SUPABASE_SERVICE_ROLE_KEY=sua-service-role-key
 ```
 
 ### 4. Configure a Autenticação no Supabase
@@ -95,37 +109,30 @@ npm run dev
 
 Acesse: http://localhost:3000
 
+---
+
 ## 📁 Estrutura do Projeto
 
 ```
 src/
 ├── app/
 │   ├── (auth)/           # Páginas de autenticação
-│   │   ├── login/
-│   │   ├── register/
-│   │   └── forgot-password/
 │   ├── (dashboard)/      # Páginas protegidas
-│   │   ├── dashboard/
-│   │   ├── financeiro/
-│   │   ├── moradores/
-│   │   ├── unidades/
-│   │   ├── avisos/
-│   │   ├── ocorrencias/
-│   │   ├── portaria/
-│   │   └── relatorios/
+│   ├── (public)/         # Páginas públicas (landing, termos)
 │   └── admin/            # Painel SuperAdmin
-│       ├── condominios/
-│       ├── planos/
-│       ├── assinaturas/
-│       └── usuarios/
 ├── components/
-│   ├── ui/               # Componentes base (Button, Input, Card, etc)
-│   └── shared/           # Componentes compartilhados (Sidebar, Header)
-├── hooks/                # Custom hooks (useAuth, useUser)
+│   ├── ui/               # Componentes base
+│   └── shared/           # Componentes compartilhados
+├── hooks/                # Custom hooks
 ├── lib/                  # Utilitários e configurações
-│   └── supabase/         # Clientes Supabase
+│   ├── supabase/         # Clientes Supabase
+│   ├── integrations/     # Service de integrações multi-tenant
+│   ├── whatsapp/         # Providers WhatsApp
+│   └── payments/         # Providers pagamentos
 └── types/                # TypeScript types
 ```
+
+---
 
 ## 🔒 Segurança
 
@@ -133,30 +140,41 @@ src/
 - Multi-tenant: dados isolados por condomínio
 - Autenticação via Supabase Auth
 - Middleware de proteção de rotas
+- Conformidade com LGPD
+
+---
 
 ## 📊 Banco de Dados
 
-O schema inclui 12 tabelas principais:
+Principais tabelas:
 
-1. `plans` - Planos de assinatura
-2. `condos` - Condomínios
-3. `units` - Unidades/apartamentos
-4. `users` - Usuários
-5. `residents` - Moradores
-6. `financial_entries` - Lançamentos financeiros
-7. `notices` - Avisos/comunicados
-8. `notice_reads` - Controle de leitura
-9. `occurrences` - Ocorrências
-10. `visitors` - Visitantes
-11. `subscriptions` - Assinaturas
-12. `financial_reports` - Relatórios gerados
+- `plans` - Planos de assinatura
+- `condos` - Condomínios
+- `units` - Unidades/apartamentos
+- `users` - Usuários
+- `residents` - Moradores
+- `financial_entries` - Lançamentos financeiros
+- `notices` - Avisos/comunicados
+- `occurrences` - Ocorrências
+- `visitors` - Visitantes
+- `subscriptions` - Assinaturas
+- `condo_integrations` - Credenciais de integração multi-tenant
 
-## 🤖 Automações
+---
 
-Funções SQL para executar via pg_cron ou Supabase Scheduled Functions:
+## 📚 Documentação
 
-- `update_overdue_financial_entries()` - Atualiza status de pagamentos atrasados
-- `suspend_expired_trials()` - Suspende condomínios com trial expirado
+| Arquivo | Descrição |
+|---------|-----------|
+| `MANUAL_COMPLETO.md` | Manual completo do sistema |
+| `VENDAS.md` | Guia de vendas e scripts |
+| `DEPLOY.md` | Guia de deploy |
+| `docs/INTEGRACAO_BANCARIA.md` | Manual de integração bancária |
+| `docs/INTEGRACAO_WHATSAPP.md` | Manual de integração WhatsApp |
+| `legal/termos_uso_v1.0.md` | Termos de uso |
+| `legal/lgpd_v1.0.md` | Política LGPD |
+
+---
 
 ## 🚀 Deploy
 
@@ -170,6 +188,14 @@ Funções SQL para executar via pg_cron ou Supabase Scheduled Functions:
 npm run build
 ```
 
+---
+
 ## 📝 Licença
 
 Projeto privado - Todos os direitos reservados.
+
+**CNPJ:** 57.444.727/0001-85
+
+---
+
+**Última atualização:** 17/12/2025
