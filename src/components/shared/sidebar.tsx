@@ -48,16 +48,23 @@ interface NavItem {
 }
 
 interface PlanFeatures {
+    // Plano Profissional+
+    hasOccurrences: boolean;
+    hasCommonAreas: boolean;
+    hasReports: boolean;
+    hasDeliveries: boolean;
+    // Plano Premium
     hasAssemblies: boolean;
     hasPolls: boolean;
     hasDocuments: boolean;
-    hasCommonAreas: boolean;
-    hasOccurrences: boolean;
     hasMaintenance: boolean;
     hasSuppliers: boolean;
     hasMultipleCondos: boolean;
+    hasCameras: boolean;
+    hasAutomations: boolean;
     maxUnits: number;
 }
+
 
 const navItems: NavItem[] = [
     { href: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" />, roles: ['sindico', 'morador', 'inquilino', 'porteiro'] },
@@ -70,34 +77,39 @@ const navItems: NavItem[] = [
     { href: '/usuarios', label: 'Usuários', icon: <Users className="h-5 w-5" />, roles: ['sindico'] },
     { href: '/avisos', label: 'Avisos', icon: <Bell className="h-5 w-5" />, roles: ['sindico', 'morador', 'inquilino', 'porteiro'] },
     { href: '/notificacoes', label: 'Notificações', icon: <Bell className="h-5 w-5" />, roles: ['sindico'] },
-    { href: '/ocorrencias', label: 'Ocorrências', icon: <AlertTriangle className="h-5 w-5" />, roles: ['sindico', 'morador', 'inquilino', 'porteiro'] },
-    { href: '/reservas', label: 'Reservas', icon: <Calendar className="h-5 w-5" />, roles: ['sindico', 'morador', 'inquilino'] },
-    { href: '/portaria', label: 'Portaria', icon: <UserCheck className="h-5 w-5" />, roles: ['porteiro'] },
-    { href: '/portaria/cameras', label: 'Câmeras', icon: <Settings className="h-5 w-5" />, roles: ['porteiro'] },
-    { href: '/portaria/minhas-encomendas', label: 'Minhas Encomendas', icon: <Package className="h-5 w-5" />, roles: ['morador', 'inquilino'] },
-    { href: '/relatorios', label: 'Relatórios', icon: <FileText className="h-5 w-5" />, roles: ['sindico'] },
-    { href: '/automacoes', label: 'Automações', icon: <Settings className="h-5 w-5" />, roles: ['sindico'] },
+    // Módulos restritos por plano - Profissional+
+    { href: '/ocorrencias', label: 'Ocorrências', icon: <AlertTriangle className="h-5 w-5" />, roles: ['sindico', 'morador', 'inquilino', 'porteiro'], requiresFeature: 'hasOccurrences' },
+    { href: '/reservas', label: 'Reservas', icon: <Calendar className="h-5 w-5" />, roles: ['sindico', 'morador', 'inquilino'], requiresFeature: 'hasCommonAreas' },
+    { href: '/portaria', label: 'Portaria', icon: <UserCheck className="h-5 w-5" />, roles: ['porteiro'], requiresFeature: 'hasOccurrences' },
+    { href: '/portaria/cameras', label: 'Câmeras', icon: <Settings className="h-5 w-5" />, roles: ['porteiro'], requiresFeature: 'hasMaintenance' },
+    { href: '/portaria/minhas-encomendas', label: 'Minhas Encomendas', icon: <Package className="h-5 w-5" />, roles: ['morador', 'inquilino'], requiresFeature: 'hasOccurrences' },
+    { href: '/relatorios', label: 'Relatórios', icon: <FileText className="h-5 w-5" />, roles: ['sindico'], requiresFeature: 'hasOccurrences' },
+    // Módulos restritos por plano - Premium
+    { href: '/automacoes', label: 'Automações', icon: <Settings className="h-5 w-5" />, roles: ['sindico'], requiresFeature: 'hasMaintenance' },
     {
         href: '/governanca',
         label: 'Governança',
         icon: <Vote className="h-5 w-5" />,
         roles: ['sindico'],
+        requiresFeature: 'hasAssemblies',
         subItems: [
             { href: '/governanca/enquetes', label: 'Enquetes', icon: <FileText className="h-4 w-4" /> },
             { href: '/governanca/assembleias', label: 'Assembleias', icon: <Users className="h-4 w-4" /> },
             { href: '/governanca/documents', label: 'Documentos', icon: <FileText className="h-4 w-4" /> },
         ]
     },
-    { href: '/manutencao', label: 'Manutenção Preventiva', icon: <Settings className="h-5 w-5" />, roles: ['sindico'] },
+    { href: '/manutencao', label: 'Manutenção Preventiva', icon: <Settings className="h-5 w-5" />, roles: ['sindico'], requiresFeature: 'hasMaintenance' },
+    // Configurações (sempre visíveis para síndico)
     { href: '/configuracoes/integracao-whatsapp', label: 'WhatsApp Oficial', icon: <MessageCircle className="h-5 w-5 text-green-500" />, roles: ['sindico'] },
     { href: '/configuracoes/integracao-pagamentos', label: 'Integração Premium', icon: <Zap className="h-5 w-5 text-amber-400" />, roles: ['sindico'] },
     { href: '/configuracoes/pix', label: 'Configurar PIX', icon: <QrCode className="h-5 w-5" />, roles: ['sindico'] },
     { href: '/assinatura', label: 'Assinatura', icon: <CreditCard className="h-5 w-5" />, roles: ['sindico'] },
     { href: '/sugestoes', label: 'Sugestões', icon: <Lightbulb className="h-5 w-5" />, roles: ['sindico', 'morador', 'inquilino', 'porteiro'] },
     { href: '/perfil', label: 'Meu Perfil', icon: <Settings className="h-5 w-5" /> },
-    { href: '/portaria/deliveries/list', label: 'Encomendas (Porteiro)', icon: <Package className="h-5 w-5" />, roles: ['porteiro'] },
-    { href: '/app/deliveries', label: 'Minhas Encomendas (Morador)', icon: <Package className="h-5 w-5" />, roles: ['morador', 'inquilino'] },
+    { href: '/portaria/deliveries/list', label: 'Encomendas (Porteiro)', icon: <Package className="h-5 w-5" />, roles: ['porteiro'], requiresFeature: 'hasOccurrences' },
+    { href: '/app/deliveries', label: 'Minhas Encomendas (Morador)', icon: <Package className="h-5 w-5" />, roles: ['morador', 'inquilino'], requiresFeature: 'hasOccurrences' },
 ];
+
 
 const adminItems: NavItem[] = [
     { href: '/admin', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
