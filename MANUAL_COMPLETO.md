@@ -47,9 +47,9 @@ O **Condomínio Fácil** é uma plataforma SaaS (Software como Serviço) **100% 
 
 | Plano | Preço Mensal | Unidades | Funcionalidades |
 |-------|--------------|----------|-----------------|
-| **Básico** | R$ 49,90 | Até 20 | Financeiro, Moradores, Avisos |
-| **Profissional** | R$ 99,90 | Até 50 | Básico + Ocorrências + Portaria |
-| **Enterprise** | R$ 199,90 | Ilimitado | Tudo + Relatórios + Suporte prioritário |
+| **Básico** | R$ 99,90 | Até 20 | Financeiro, Moradores, Avisos, App Móvel |
+| **Profissional** | R$ 249,90 | Até 50 | Básico + Portaria + Ocorrências + Reservas + Relatórios + Integrações |
+| **Premium** | R$ 399,90 | Ilimitado | Profissional + Câmeras + Governança + Assistente IA + Múltiplos Condos |
 
 ### Serviços de Implantação (Opcionais) ⚙️
 
@@ -57,8 +57,9 @@ O **Condomínio Fácil** é uma plataforma SaaS (Software como Serviço) **100% 
 
 | Serviço | Taxa de Implantação | Mensalidade Adicional | Disponível para |
 |---------|--------------------|-----------------------|-----------------|
-| **Integração Bancária** (Mercado Pago, Asaas, bancos) | R$ 999,00 | R$ 199,00/mês | Profissional e Enterprise |
-| **WhatsApp Automático** (Evolution API) | R$ 697,00 | R$ 149,00/mês | Profissional e Enterprise |
+| **Integração Bancária** (Mercado Pago, Asaas, bancos) | R$ 999,00 | R$ 199,00/mês | Profissional e Premium |
+| **WhatsApp Automático** (Evolution API) | R$ 697,00 | R$ 149,00/mês | Profissional e Premium |
+| **Assistente IA** (Chatbot treinado) | R$ 997,00 | R$ 149,00/mês | Apenas Premium |
 
 ### Status de Assinatura
 
@@ -182,6 +183,7 @@ PWA (Progressive Web App) é uma tecnologia que permite **instalar o site como s
 
 ### 5. Moradores (`/moradores`)
 - Cadastrar moradores
+- **Importar moradores via CSV** (novo!)
 - Vincular à unidade
 - Definir como proprietário ou inquilino
 - Status: ativo/inativo
@@ -263,6 +265,14 @@ PWA (Progressive Web App) é uma tecnologia que permite **instalar o site como s
 - Botão na tela de login
 - Cria ambiente de demonstração automaticamente
 - Ideal para demonstrações comerciais
+
+### 18. Assistente IA (`/configuracoes/assistente`) ✨ NOVO
+- Chatbot treinado com documentos do condomínio
+- Responde perguntas dos moradores 24h
+- Configuração de persona e tom de resposta
+- Upload de documentos (regimento, convenção, atas)
+- **Implantação: R$ 997,00 + R$ 149/mês**
+- Disponível apenas para plano Premium
 
 ---
 
@@ -437,8 +447,8 @@ Para dúvidas técnicas, consulte:
 
 ---
 
-**Versão do Manual:** 6.0  
-**Última atualização:** 17/12/2025  
+**Versão do Manual:** 7.0  
+**Última atualização:** 20/12/2025  
 **CNPJ:** 57.444.727/0001-85
 
 © 2025 Condomínio Fácil - Todos os direitos reservados
