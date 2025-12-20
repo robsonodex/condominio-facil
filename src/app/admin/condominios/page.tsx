@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useMultiSelect } from '@/hooks/useMultiSelect';
 import { formatCurrency, formatDate, getStatusColor, getStatusLabel } from '@/lib/utils';
-import { Plus, Search, Building2, Edit, Trash2, Eye } from 'lucide-react';
+import { Plus, Search, Building2, Edit, Trash2, Eye, Bot } from 'lucide-react';
 import { Condo, Plan } from '@/types/database';
 
 export default function AdminCondominiosPage() {
@@ -104,6 +104,15 @@ export default function AdminCondominiosPage() {
         }
     };
 
+    const handleToggleAI = async (id: string, ativo: boolean) => {
+        try {
+            await supabase.from('condos').update({ ai_ativo: ativo }).eq('id', id);
+            setCondos(prev => prev.map(c => c.id === id ? { ...c, ai_ativo: ativo } : c));
+        } catch (error: any) {
+            alert(`Erro ao atualizar IA: ${error.message}`);
+        }
+    };
+
     const columns = [
         {
             key: 'checkbox',
@@ -165,6 +174,20 @@ export default function AdminCondominiosPage() {
             key: 'data_fim_teste',
             header: 'Fim Trial',
             render: (c: Condo) => c.data_fim_teste ? formatDate(c.data_fim_teste) : '-'
+        },
+        {
+            key: 'ai_ativo',
+            header: 'IA',
+            className: 'text-center',
+            render: (c: Condo) => (
+                <button
+                    onClick={(e) => { e.stopPropagation(); handleToggleAI(c.id, !c.ai_ativo); }}
+                    className={`p-1.5 rounded-lg transition-colors ${c.ai_ativo ? 'bg-purple-100 text-purple-600 hover:bg-purple-200' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'}`}
+                    title={c.ai_ativo ? 'IA Ativa - Clique para desativar' : 'IA Inativa - Clique para ativar'}
+                >
+                    <Bot className="h-4 w-4" />
+                </button>
+            )
         },
         {
             key: 'actions',

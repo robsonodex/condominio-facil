@@ -44,6 +44,8 @@ export interface Condo {
     pix_nome_recebedor: string | null;
     pix_cidade: string | null;
     whatsapp_active?: boolean;
+    // Módulo IA
+    ai_ativo?: boolean;
     created_at: string;
     updated_at: string;
     // Relations
