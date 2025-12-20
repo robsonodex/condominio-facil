@@ -2,12 +2,12 @@ import { View, Platform } from "react-native";
 import { WebView } from "react-native-webview";
 import { StatusBar } from "expo-status-bar";
 
-// URL de produção (para mobile)
-const PRODUCTION_URL = "https://www.meucondominiofacil.com";
-// URL local para desenvolvimento (para web - evita bloqueio de iframe)
-const DEV_URL = "http://localhost:3000";
+// URL de produção - versão mobile exclusiva (/app)
+const PRODUCTION_URL = "https://www.meucondominiofacil.com/app";
+// URL local para desenvolvimento
+const DEV_URL = "http://localhost:3000/app";
 
-// Em mobile, sempre usa produção. Em web, usa localhost para evitar bloqueio de iframe
+// Em mobile, sempre usa produção. Em web, usa localhost
 const getSiteUrl = () => {
     if (Platform.OS === "web") {
         return DEV_URL;
@@ -40,13 +40,13 @@ export default function App() {
     // Em dispositivos nativos (iOS/Android), usamos WebView
     return (
         <View style={{ flex: 1 }}>
-           <WebView
-    source={{ uri: siteUrl }}
-    style={{ flex: 1 }}
-    userAgent="MeuCondominioApp Android"
-    javaScriptEnabled
-    domStorageEnabled
-/>
+            <WebView
+                source={{ uri: siteUrl }}
+                style={{ flex: 1 }}
+                userAgent="MeuCondominioApp Android"
+                javaScriptEnabled
+                domStorageEnabled
+            />
 
         </View>
     );
