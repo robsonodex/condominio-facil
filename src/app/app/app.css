@@ -1,0 +1,287 @@
+/**
+ * CSS ISOLADO PARA VERSÃO MOBILE APP
+ * 
+ * ⚠️ Este arquivo NÃO afeta o site web!
+ * Usado APENAS nas rotas /app/*
+ */
+
+/* ==========================================
+   VARIÁVEIS MOBILE
+   ========================================== */
+:root {
+    --app-header-height: 56px;
+    --app-bottom-nav-height: 64px;
+    --app-safe-bottom: env(safe-area-inset-bottom, 0px);
+    --app-safe-top: env(safe-area-inset-top, 0px);
+    
+    /* Cores */
+    --app-primary: #10b981;
+    --app-primary-dark: #059669;
+    --app-bg: #f9fafb;
+    --app-card-bg: #ffffff;
+    --app-text: #111827;
+    --app-text-muted: #6b7280;
+    --app-border: #e5e7eb;
+    
+    /* Touch targets */
+    --app-touch-min: 44px;
+    --app-radius: 12px;
+}
+
+/* ==========================================
+   LAYOUT PRINCIPAL
+   ========================================== */
+.app-layout {
+    min-height: 100dvh;
+    background: var(--app-bg);
+    display: flex;
+    flex-direction: column;
+}
+
+.app-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--app-header-height);
+    padding-top: var(--app-safe-top);
+    background: var(--app-primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.app-header h1 {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.app-content {
+    flex: 1;
+    padding-top: calc(var(--app-header-height) + var(--app-safe-top));
+    padding-bottom: calc(var(--app-bottom-nav-height) + var(--app-safe-bottom) + 16px);
+    padding-left: 16px;
+    padding-right: 16px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* ==========================================
+   BOTTOM NAVIGATION
+   ========================================== */
+.app-bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: calc(var(--app-bottom-nav-height) + var(--app-safe-bottom));
+    padding-bottom: var(--app-safe-bottom);
+    background: var(--app-card-bg);
+    border-top: 1px solid var(--app-border);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 100;
+}
+
+.app-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: var(--app-touch-min);
+    min-height: var(--app-touch-min);
+    padding: 8px 12px;
+    color: var(--app-text-muted);
+    text-decoration: none;
+    transition: color 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.app-nav-item.active {
+    color: var(--app-primary);
+}
+
+.app-nav-item:active {
+    transform: scale(0.95);
+}
+
+.app-nav-item svg {
+    width: 24px;
+    height: 24px;
+    margin-bottom: 4px;
+}
+
+.app-nav-item span {
+    font-size: 11px;
+    font-weight: 500;
+}
+
+/* ==========================================
+   COMPONENTES MOBILE
+   ========================================== */
+
+/* Cards */
+.app-card {
+    background: var(--app-card-bg);
+    border-radius: var(--app-radius);
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.app-card-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--app-text);
+    margin-bottom: 8px;
+}
+
+/* Botões */
+.app-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: var(--app-touch-min);
+    padding: 12px 24px;
+    border-radius: var(--app-radius);
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.app-button:active {
+    transform: scale(0.98);
+}
+
+.app-button-primary {
+    background: var(--app-primary);
+    color: white;
+}
+
+.app-button-primary:active {
+    background: var(--app-primary-dark);
+}
+
+.app-button-outline {
+    background: transparent;
+    border: 2px solid var(--app-primary);
+    color: var(--app-primary);
+}
+
+/* Inputs */
+.app-input {
+    width: 100%;
+    min-height: var(--app-touch-min);
+    padding: 12px 16px;
+    border: 1px solid var(--app-border);
+    border-radius: var(--app-radius);
+    font-size: 16px;
+    background: white;
+    transition: border-color 0.2s;
+}
+
+.app-input:focus {
+    outline: none;
+    border-color: var(--app-primary);
+}
+
+/* Lista */
+.app-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.app-list-item {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    background: var(--app-card-bg);
+    border-bottom: 1px solid var(--app-border);
+    min-height: var(--app-touch-min);
+    -webkit-tap-highlight-color: transparent;
+}
+
+.app-list-item:first-child {
+    border-radius: var(--app-radius) var(--app-radius) 0 0;
+}
+
+.app-list-item:last-child {
+    border-radius: 0 0 var(--app-radius) var(--app-radius);
+    border-bottom: none;
+}
+
+.app-list-item:active {
+    background: #f3f4f6;
+}
+
+/* ==========================================
+   UTILITÁRIOS
+   ========================================== */
+.app-text-center { text-align: center; }
+.app-text-muted { color: var(--app-text-muted); }
+.app-mt-4 { margin-top: 16px; }
+.app-mb-4 { margin-bottom: 16px; }
+.app-gap-2 { gap: 8px; }
+.app-gap-4 { gap: 16px; }
+.app-flex { display: flex; }
+.app-flex-col { flex-direction: column; }
+.app-items-center { align-items: center; }
+.app-justify-center { justify-content: center; }
+.app-w-full { width: 100%; }
+
+/* ==========================================
+   LOADING
+   ========================================== */
+.app-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+}
+
+.app-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--app-border);
+    border-top-color: var(--app-primary);
+    border-radius: 50%;
+    animation: app-spin 0.8s linear infinite;
+}
+
+@keyframes app-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ==========================================
+   FEEDBACK VISUAL
+   ========================================== */
+.app-ripple {
+    position: relative;
+    overflow: hidden;
+}
+
+.app-ripple::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle, rgba(0,0,0,0.1) 10%, transparent 10%);
+    background-size: 1000% 1000%;
+    background-position: center;
+    opacity: 0;
+    transition: background-size 0.5s, opacity 0.5s;
+}
+
+.app-ripple:active::after {
+    background-size: 100% 100%;
+    opacity: 1;
+    transition: 0s;
+}

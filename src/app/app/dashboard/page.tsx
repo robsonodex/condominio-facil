@@ -1,0 +1,173 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
+import { MobileHeader, BottomNav } from '@/components/mobile';
+import { Bell, AlertTriangle, DollarSign, ChevronRight } from 'lucide-react';
+import Link from 'next/link';
+
+interface UserProfile {
+    id: string;
+    nome: string;
+    email: string;
+    role: string;
+    condo_id: string;
+}
+
+interface Notice {
+    id: string;
+    titulo: string;
+    data_publicacao: string;
+}
+
+/**
+ * Dashboard Mobile
+ * Tela principal com cards de acesso rápido e avisos recentes
+ */
+export default function AppDashboardPage() {
+    const [profile, setProfile] = useState<UserProfile | null>(null);
+    const [notices, setNotices] = useState<Notice[]>([]);
+    const [loading, setLoading] = useState(true);
+    const router = useRouter();
+    const supabase = createClient();
+
+    useEffect(() => {
+        checkAuth();
+    }, []);
+
+    const checkAuth = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            router.push('/app/login');
+            return;
+        }
+
+        // Buscar perfil
+        const { data: profileData } = await supabase
+            .from('users')
+            .select('*')
+            .eq('auth_id', user.id)
+            .single();
+
+        if (profileData) {
+            setProfile(profileData);
+
+            // Buscar avisos
+            const { data: noticesData } = await supabase
+                .from('notices')
+                .select('id, titulo, data_publicacao')
+                .eq('condo_id', profileData.condo_id)
+                .order('data_publicacao', { ascending: false })
+                .limit(3);
+
+            setNotices(noticesData || []);
+        }
+
+        setLoading(false);
+    };
+
+    if (loading) {
+        return (
+            <>
+                <MobileHeader title="Carregando..." />
+                <main className="app-content">
+                    <div className="app-loading">
+                        <div className="app-spinner" />
+                    </div>
+                </main>
+            </>
+        );
+    }
+
+    const role = (profile?.role as 'sindico' | 'morador' | 'porteiro') || 'morador';
+    const firstName = profile?.nome?.split(' ')[0] || 'Usuário';
+
+    return (
+        <>
+            <MobileHeader title="Meu Condomínio" showLogout />
+
+            <main className="app-content">
+                {/* Saudação */}
+                <div style={{ marginBottom: 24 }}>
+                    <h2 style={{ fontSize: 24, fontWeight: 700, color: '#111827' }}>
+                        Olá, {firstName}! 👋
+                    </h2>
+                    <p style={{ color: '#6b7280', marginTop: 4 }}>
+                        {role === 'sindico' && 'Gerencie seu condomínio'}
+                        {role === 'morador' && 'Veja as novidades do seu condomínio'}
+                        {role === 'porteiro' && 'Controle a portaria'}
+                    </p>
+                </div>
+
+                {/* Cards de acesso rápido */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>
+                    <Link href="/app/avisos" style={{ textDecoration: 'none' }}>
+                        <div className="app-card app-ripple" style={{ textAlign: 'center', cursor: 'pointer' }}>
+                            <Bell size={32} style={{ color: '#10b981', marginBottom: 8 }} />
+                            <p style={{ fontWeight: 600, color: '#111827', fontSize: 14 }}>Avisos</p>
+                        </div>
+                    </Link>
+
+                    <Link href="/app/ocorrencias" style={{ textDecoration: 'none' }}>
+                        <div className="app-card app-ripple" style={{ textAlign: 'center', cursor: 'pointer' }}>
+                            <AlertTriangle size={32} style={{ color: '#f59e0b', marginBottom: 8 }} />
+                            <p style={{ fontWeight: 600, color: '#111827', fontSize: 14 }}>Ocorrências</p>
+                        </div>
+                    </Link>
+
+                    {role === 'sindico' && (
+                        <Link href="/app/financeiro" style={{ textDecoration: 'none' }}>
+                            <div className="app-card app-ripple" style={{ textAlign: 'center', cursor: 'pointer' }}>
+                                <DollarSign size={32} style={{ color: '#3b82f6', marginBottom: 8 }} />
+                                <p style={{ fontWeight: 600, color: '#111827', fontSize: 14 }}>Financeiro</p>
+                            </div>
+                        </Link>
+                    )}
+                </div>
+
+                {/* Avisos Recentes */}
+                <div style={{ marginBottom: 24 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                        <h3 style={{ fontSize: 18, fontWeight: 600, color: '#111827' }}>Avisos Recentes</h3>
+                        <Link href="/app/avisos" style={{ color: '#10b981', fontSize: 14, fontWeight: 500 }}>
+                            Ver todos
+                        </Link>
+                    </div>
+
+                    {notices.length === 0 ? (
+                        <div className="app-card" style={{ textAlign: 'center', color: '#6b7280' }}>
+                            Nenhum aviso recente
+                        </div>
+                    ) : (
+                        <div style={{ borderRadius: 12, overflow: 'hidden' }}>
+                            {notices.map((notice) => (
+                                <Link
+                                    key={notice.id}
+                                    href={`/app/avisos/${notice.id}`}
+                                    style={{ textDecoration: 'none' }}
+                                >
+                                    <div className="app-list-item app-ripple">
+                                        <Bell size={20} style={{ color: '#10b981', marginRight: 12 }} />
+                                        <div style={{ flex: 1 }}>
+                                            <p style={{ fontWeight: 500, color: '#111827', fontSize: 14 }}>
+                                                {notice.titulo}
+                                            </p>
+                                            <p style={{ color: '#6b7280', fontSize: 12, marginTop: 2 }}>
+                                                {new Date(notice.data_publicacao).toLocaleDateString('pt-BR')}
+                                            </p>
+                                        </div>
+                                        <ChevronRight size={20} style={{ color: '#9ca3af' }} />
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </main>
+
+            <BottomNav role={role} />
+        </>
+    );
+}
