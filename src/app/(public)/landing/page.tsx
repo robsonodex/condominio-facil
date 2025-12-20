@@ -3,7 +3,7 @@ import Image from 'next/image';
 import {
     CheckCircle, Shield, CreditCard, Users, FileText, Bell, BarChart3, Building2,
     ArrowRight, Star, Clock, TrendingUp, Phone, Mail, Lock, Check, X,
-    Calendar, Package, Camera, Zap, MessageSquare, Smartphone, Vote, Wrench, Settings
+    Calendar, Package, Camera, Zap, MessageSquare, Smartphone, Vote, Wrench, Settings, Bot, Sparkles
 } from 'lucide-react';
 
 export const metadata = {
@@ -676,6 +676,141 @@ export default function LandingPage() {
                         <p className="text-slate-500 text-sm mt-4">
                             Teste o sistema primeiro. Contrate integrações depois.
                         </p>
+                    </div>
+                </div>
+            </section>
+
+            {/* Seção Assistente IA Premium */}
+            <section className="py-24 bg-gradient-to-br from-purple-900 via-indigo-900 to-purple-800 relative overflow-hidden">
+                {/* Background decoration */}
+                <div className="absolute inset-0 opacity-30">
+                    <div className="absolute top-20 right-10 w-96 h-96 bg-purple-500/30 rounded-full blur-3xl" />
+                    <div className="absolute bottom-10 left-10 w-72 h-72 bg-indigo-500/20 rounded-full blur-3xl" />
+                </div>
+
+                <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                    {/* Badge */}
+                    <div className="text-center mb-8">
+                        <span className="inline-flex items-center gap-2 bg-purple-500/20 text-purple-200 px-4 py-2 rounded-full text-sm font-medium">
+                            <Sparkles className="h-4 w-4" />
+                            ADD-ON PREMIUM
+                        </span>
+                    </div>
+
+                    {/* Header impactante */}
+                    <div className="text-center mb-16">
+                        <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
+                            🤖 Assistente Virtual IA
+                            <span className="text-purple-300 block mt-2">Exclusivo para seu condomínio</span>
+                        </h2>
+                        <p className="text-xl text-purple-200 max-w-3xl mx-auto leading-relaxed">
+                            Imagine um assistente <strong className="text-white">24 horas por dia</strong> respondendo as mesmas perguntas
+                            que seus moradores fazem repetidamente. Treinado com os documentos do <strong className="text-white">seu</strong> condomínio.
+                        </p>
+                    </div>
+
+                    {/* Card Principal */}
+                    <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
+                        <div className="grid md:grid-cols-2">
+                            {/* Lado Esquerdo - Benefícios */}
+                            <div className="p-8 md:p-12 bg-gradient-to-br from-purple-50 to-indigo-50">
+                                <div className="flex items-center gap-4 mb-8">
+                                    <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-200">
+                                        <Bot className="h-8 w-8 text-white" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-2xl font-bold text-gray-900">Assistente IA</h3>
+                                        <p className="text-purple-600 font-medium">Treinado para seu condomínio</p>
+                                    </div>
+                                </div>
+
+                                <ul className="space-y-4 mb-8">
+                                    <li className="flex items-start gap-3">
+                                        <CheckCircle className="h-6 w-6 text-purple-600 flex-shrink-0 mt-0.5" />
+                                        <div>
+                                            <p className="font-semibold text-gray-900">Responde 24 horas por dia</p>
+                                            <p className="text-gray-600 text-sm">Moradores tiram dúvidas a qualquer hora</p>
+                                        </div>
+                                    </li>
+                                    <li className="flex items-start gap-3">
+                                        <CheckCircle className="h-6 w-6 text-purple-600 flex-shrink-0 mt-0.5" />
+                                        <div>
+                                            <p className="font-semibold text-gray-900">Treinado com seus documentos</p>
+                                            <p className="text-gray-600 text-sm">Regimento, convenção, atas, regras</p>
+                                        </div>
+                                    </li>
+                                    <li className="flex items-start gap-3">
+                                        <CheckCircle className="h-6 w-6 text-purple-600 flex-shrink-0 mt-0.5" />
+                                        <div>
+                                            <p className="font-semibold text-gray-900">Reduz perguntas repetitivas</p>
+                                            <p className="text-gray-600 text-sm">Até 70% menos mensagens para o síndico</p>
+                                        </div>
+                                    </li>
+                                    <li className="flex items-start gap-3">
+                                        <CheckCircle className="h-6 w-6 text-purple-600 flex-shrink-0 mt-0.5" />
+                                        <div>
+                                            <p className="font-semibold text-gray-900">Respostas personalizadas</p>
+                                            <p className="text-gray-600 text-sm">Define tom formal, amigável ou direto</p>
+                                        </div>
+                                    </li>
+                                </ul>
+
+                                {/* Perguntas frequentes que o bot responde */}
+                                <div className="bg-white rounded-xl p-4 border border-purple-100">
+                                    <p className="text-xs text-purple-600 uppercase font-bold mb-3">Exemplos de perguntas que responde:</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        <span className="bg-purple-50 text-purple-700 px-3 py-1 rounded-full text-xs">"Qual horário da piscina?"</span>
+                                        <span className="bg-purple-50 text-purple-700 px-3 py-1 rounded-full text-xs">"Posso ter pet?"</span>
+                                        <span className="bg-purple-50 text-purple-700 px-3 py-1 rounded-full text-xs">"Como reservar o salão?"</span>
+                                        <span className="bg-purple-50 text-purple-700 px-3 py-1 rounded-full text-xs">"Regras de mudança?"</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Lado Direito - Preços */}
+                            <div className="p-8 md:p-12 flex flex-col justify-center">
+                                <div className="text-center">
+                                    <p className="text-gray-500 mb-2">Implantação única</p>
+                                    <div className="flex items-baseline justify-center gap-1 mb-6">
+                                        <span className="text-5xl font-bold text-gray-900">R$ 997</span>
+                                    </div>
+
+                                    <div className="bg-purple-50 rounded-xl p-4 mb-6">
+                                        <p className="text-gray-500 text-sm">Depois, apenas</p>
+                                        <p className="text-2xl font-bold text-purple-600">R$ 149<span className="text-base font-normal text-gray-500">/mês</span></p>
+                                    </div>
+
+                                    <div className="space-y-2 text-left mb-8">
+                                        <p className="flex items-center gap-2 text-gray-700">
+                                            <Check className="h-5 w-5 text-purple-600" />
+                                            Configuração completa do agente
+                                        </p>
+                                        <p className="flex items-center gap-2 text-gray-700">
+                                            <Check className="h-5 w-5 text-purple-600" />
+                                            Treinamento com seus documentos
+                                        </p>
+                                        <p className="flex items-center gap-2 text-gray-700">
+                                            <Check className="h-5 w-5 text-purple-600" />
+                                            500 interações/mês incluídas
+                                        </p>
+                                        <p className="flex items-center gap-2 text-gray-700">
+                                            <Check className="h-5 w-5 text-purple-600" />
+                                            Suporte e manutenção
+                                        </p>
+                                    </div>
+
+                                    <Link
+                                        href="/register"
+                                        className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all hover:scale-105 shadow-lg shadow-purple-200"
+                                    >
+                                        Quero para meu Condomínio <ArrowRight className="h-5 w-5" />
+                                    </Link>
+                                    <p className="text-xs text-gray-500 mt-3">
+                                        Disponível para planos Premium
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>

@@ -149,7 +149,14 @@ export default function AdminCondominiosPage() {
             header: 'Condomínio',
             render: (c: Condo) => (
                 <div>
-                    <p className="font-medium text-gray-900">{c.nome}</p>
+                    <div className="flex items-center gap-2">
+                        <p className="font-medium text-gray-900">{c.nome}</p>
+                        {c.status === 'teste' && (
+                            <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded-full text-xs font-bold animate-pulse">
+                                🧪 TRIAL
+                            </span>
+                        )}
+                    </div>
                     <p className="text-sm text-gray-500">{c.cidade}, {c.estado}</p>
                 </div>
             )

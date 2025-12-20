@@ -10,13 +10,14 @@ export interface TrialStatus {
 
 export async function getTrialStatus(condoId: string): Promise<TrialStatus> {
     try {
-        const { data: subscription, error } = await supabaseAdmin
-            .from('subscriptions')
-            .select('status, trial_end')
-            .eq('condo_id', condoId)
+        // Buscar status do condomínio (não de subscriptions)
+        const { data: condo, error } = await supabaseAdmin
+            .from('condos')
+            .select('status, data_fim_teste')
+            .eq('id', condoId)
             .single();
 
-        if (error || !subscription) {
+        if (error || !condo) {
             return {
                 isTrial: false,
                 isExpired: false,
@@ -26,25 +27,39 @@ export async function getTrialStatus(condoId: string): Promise<TrialStatus> {
             };
         }
 
-        // Not a trial - it's a paid account
-        if (subscription.status !== 'teste') {
+        // Não é conta de teste - é conta paga ou suspensa
+        if (condo.status !== 'teste') {
             return {
                 isTrial: false,
                 isExpired: false,
                 daysLeft: 0,
                 trialEnd: null,
-                status: subscription.status === 'ativo' ? 'paid' : 'expired'
+                status: condo.status === 'ativo' ? 'paid' : 'expired'
             };
         }
 
-        // Calculate days left
-        const trialEnd = new Date(subscription.trial_end);
-        const now = new Date();
-        const diffTime = trialEnd.getTime() - now.getTime();
-        const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        const isExpired = daysLeft <= 0;
+        // Calcular dias restantes do trial
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
-        // Determine status for visual feedback
+        if (!condo.data_fim_teste) {
+            // Sem data de fim definida - assume 7 dias
+            return {
+                isTrial: true,
+                isExpired: false,
+                daysLeft: 7,
+                trialEnd: null,
+                status: 'active'
+            };
+        }
+
+        const trialEnd = new Date(condo.data_fim_teste);
+        trialEnd.setHours(0, 0, 0, 0);
+        const diffTime = trialEnd.getTime() - today.getTime();
+        const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const isExpired = daysLeft < 0;
+
+        // Determinar status visual
         let status: 'active' | 'warning' | 'expired' = 'active';
         if (isExpired) {
             status = 'expired';
@@ -56,11 +71,11 @@ export async function getTrialStatus(condoId: string): Promise<TrialStatus> {
             isTrial: true,
             isExpired,
             daysLeft: Math.max(0, daysLeft),
-            trialEnd: subscription.trial_end,
+            trialEnd: condo.data_fim_teste,
             status
         };
     } catch (error) {
-        console.error('[Trial] Error checking trial status:', error);
+        console.error('[Trial] Erro ao verificar status:', error);
         return {
             isTrial: false,
             isExpired: false,
@@ -70,3 +85,4 @@ export async function getTrialStatus(condoId: string): Promise<TrialStatus> {
         };
     }
 }
+
