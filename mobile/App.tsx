@@ -40,11 +40,14 @@ export default function App() {
     // Em dispositivos nativos (iOS/Android), usamos WebView
     return (
         <View style={{ flex: 1 }}>
-            <StatusBar style="auto" />
-            <WebView
-                source={{ uri: siteUrl }}
-                style={{ flex: 1 }}
-            />
+           <WebView
+    source={{ uri: siteUrl }}
+    style={{ flex: 1 }}
+    userAgent="MeuCondominioApp Android"
+    javaScriptEnabled
+    domStorageEnabled
+/>
+
         </View>
     );
 }
