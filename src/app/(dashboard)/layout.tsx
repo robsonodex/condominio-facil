@@ -8,7 +8,7 @@ import { Loader2 } from 'lucide-react';
 import { ImpersonationBanner } from '@/components/admin/ImpersonationBanner';
 import TrialBanner from '@/components/TrialBanner';
 import { DemoBanner } from '@/components/demo/DemoBanner';
-import { ChatWidget } from '@/components/shared/ChatWidget';
+import { LinkedInChat } from '@/components/shared/LinkedInChat';
 
 function LoadingScreen() {
     return (
@@ -70,7 +70,7 @@ export default function DashboardLayout({
                     </main>
                 </div>
             </div>
-            <ChatWidget />
+            <LinkedInChat />
         </div>
     );
 }

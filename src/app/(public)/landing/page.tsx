@@ -180,7 +180,7 @@ const plans = [
             'Cadastro de moradores',
             'Avisos e comunicados',
             'Cadastro de cobranças',
-            'Acesso pelo navegador (PWA)',
+            'App móvel (Android e iOS)',
         ],
         notIncluded: ['Portaria', 'Ocorrências', 'Reservas', 'Relatórios', 'Integrações'],
         popular: false,
@@ -191,7 +191,7 @@ const plans = [
         units: 'Até 50 unidades',
         tagline: 'Gestão profissional completa',
         badge: 'Mais Vendido',
-        savings: 'Economize 5 horas/mês',
+        savings: 'Portaria + Encomendas + Reservas',
         features: [
             'Tudo do Básico +',
             'Portaria virtual profissional',
@@ -200,7 +200,7 @@ const plans = [
             'Registro de ocorrências',
             'Relatórios PDF/Excel',
             'Suporte prioritário',
-            '⚙️ Pode contratar integrações',
+            '✓ Pode contratar integrações',
         ],
         notIncluded: ['Câmeras', 'Governança', 'Automações'],
         popular: true,
@@ -219,7 +219,7 @@ const plans = [
             'Automações de inadimplência',
             'Múltiplos condomínios',
             'Suporte via WhatsApp direto',
-            '⚙️ Pode contratar integrações',
+            '✓ Pode contratar integrações',
         ],
         notIncluded: [],
         popular: false,
@@ -230,15 +230,15 @@ const plans = [
 const faqs = [
     {
         question: 'Tem aplicativo para celular (Android/iOS)?',
-        answer: 'Não temos aplicativo nativo nas lojas (Play Store/App Store). O Condomínio Fácil é um sistema 100% WEB que funciona perfeitamente no navegador do celular. Você pode "instalar" como PWA - fica com ícone na tela inicial, funciona offline e parece um app. A vantagem é que não precisa baixar nada!'
+        answer: 'Sim! Temos aplicativo nativo para Android e iOS. Baixe na Play Store ou App Store e acesse todas as funcionalidades do seu perfil (Síndico, Morador ou Porteiro) direto do celular. O app sincroniza em tempo real com o sistema web.'
     },
     {
         question: 'O WhatsApp automático já vem incluso no plano?',
-        answer: 'Não. A integração com WhatsApp para envio automático de mensagens é um SERVIÇO DE IMPLANTAÇÃO contratado separadamente. Requer taxa de implantação (R$ 697) + mensalidade de infraestrutura (R$ 149/mês). Também exige um chip exclusivo do condomínio. Disponível para planos Profissional e Premium.'
+        answer: 'O WhatsApp automático é um serviço de configuração contratado à parte. Inclui: implantação completa (R$ 697), mensalidade do servidor dedicado (R$ 149/mês), e suporte técnico contínuo. Nós configuramos tudo - você só precisa de um chip exclusivo do condomínio. Disponível para planos Profissional e Premium.'
     },
     {
         question: 'O PIX dinâmico e boleto automático estão inclusos?',
-        answer: 'Não automaticamente. O sistema permite cadastrar cobranças manualmente. Para gerar PIX dinâmico com QR Code e boletos automáticos com conciliação, é necessário contratar o SERVIÇO DE INTEGRAÇÃO BANCÁRIA. Taxa de implantação: R$ 999 + mensalidade: R$ 199/mês. Requer conta ativa no banco/gateway.'
+        answer: 'São serviços de configuração contratados à parte. Inclui: implantação completa (R$ 999), mensalidade do serviço (R$ 199/mês), e suporte técnico. Trabalhamos com Mercado Pago, Asaas, Inter e outros bancos. Nós cuidamos de toda a parte técnica - você só precisa ter CNPJ ativo e conta no banco escolhido.'
     },
     {
         question: 'Como funciona o período de teste?',
@@ -250,11 +250,11 @@ const faqs = [
     },
     {
         question: 'O que preciso para ter a integração bancária?',
-        answer: 'Você precisa: 1) CNPJ ativo do condomínio, 2) Conta no banco ou gateway desejado (Mercado Pago, Asaas, etc.), 3) Credenciais de API fornecidas pelo banco, 4) Documento comprovando que você é o síndico. Nós fazemos toda a configuração técnica.'
+        answer: 'Você precisa de: 1) CNPJ ativo do condomínio, 2) Conta no banco ou gateway escolhido (Mercado Pago, Asaas, Inter, etc.), 3) Documento comprovando que você é o síndico. Nós cuidamos de toda a configuração técnica, testes e entrega funcionando. Prazo: 3 a 5 dias úteis.'
     },
     {
         question: 'O que preciso para ter o WhatsApp automático?',
-        answer: 'Você precisa: 1) Um chip de celular EXCLUSIVO para o condomínio, 2) Disponibilidade para escanear QR Code via videochamada, 3) Compreensão dos riscos de banimento pelo WhatsApp. Nós configuramos o servidor e fazemos a manutenção.'
+        answer: 'Apenas um chip de celular exclusivo para o condomínio (não pode ser o pessoal do síndico). Nós configuramos o servidor dedicado, fazemos a conexão via QR Code em videochamada, e cuidamos de toda a manutenção. Se der qualquer problema, resolvemos.'
     },
     {
         question: 'Meus dados estão seguros?',
@@ -386,7 +386,7 @@ export default function LandingPage() {
                         </div>
                         <div className="flex items-center gap-2">
                             <Smartphone className="h-5 w-5 text-gray-600" />
-                            <span className="text-gray-600 font-medium">Acesso PWA</span>
+                            <span className="text-gray-600 font-medium">App Android e iOS</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <BarChart3 className="h-5 w-5 text-gray-600" />
@@ -403,7 +403,7 @@ export default function LandingPage() {
                         <h2 className="text-3xl font-bold text-gray-900 mb-4">
                             Módulos do Sistema
                         </h2>
-                        <p className="text-gray-600">Tudo que seu condomínio precisa em uma única plataforma web</p>
+                        <p className="text-gray-600">Tudo que seu condomínio precisa em uma única plataforma</p>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                         {[
@@ -434,116 +434,249 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            {/* Implantações - NOVA SEÇÃO */}
-            <section id="implantacoes" className="py-16 bg-amber-50 border-y border-amber-200">
-                <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            {/* Integrações - Seção de Alta Conversão */}
+            <section id="implantacoes" className="py-24 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
+                {/* Background decoration */}
+                <div className="absolute inset-0 opacity-30">
+                    <div className="absolute top-20 left-10 w-72 h-72 bg-emerald-500/20 rounded-full blur-3xl" />
+                    <div className="absolute bottom-20 right-10 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl" />
+                </div>
+
+                <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                    {/* Header impactante */}
                     <div className="text-center mb-12">
-                        <div className="inline-flex items-center gap-2 bg-amber-100 text-amber-800 px-4 py-2 rounded-full text-sm font-medium mb-4">
-                            <Settings className="h-4 w-4" />
-                            <span>Serviços Opcionais</span>
-                        </div>
-                        <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                            Integrações via Implantação
+                        <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 leading-tight">
+                            Você contrata.
+                            <span className="text-emerald-400 block">Nós resolvemos.</span>
                         </h2>
-                        <p className="text-gray-600 max-w-2xl mx-auto">
-                            Os serviços abaixo <strong>NÃO estão inclusos</strong> nos planos padrão.
-                            São contratados separadamente e requerem configuração técnica pela nossa equipe.
+                        <p className="text-xl text-slate-300 max-w-2xl mx-auto">
+                            Integração configurada para a <strong className="text-white">sua</strong> realidade.
+                            Sem você precisar entender de tecnologia.
                         </p>
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-8">
-                        {/* Integração Bancária */}
-                        <div className="bg-white rounded-2xl p-8 shadow-lg border border-amber-200">
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                                    <CreditCard className="h-6 w-6 text-blue-600" />
+                    {/* Bloco de garantia - alto impacto */}
+                    <div className="bg-gradient-to-r from-emerald-600 to-emerald-500 rounded-2xl p-8 mb-16 shadow-2xl shadow-emerald-500/20">
+                        <div className="grid md:grid-cols-3 gap-6 text-center md:text-left">
+                            <div className="flex flex-col md:flex-row items-center gap-3">
+                                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                                    <Clock className="h-6 w-6 text-white" />
                                 </div>
                                 <div>
-                                    <h3 className="text-xl font-bold text-gray-900">Integração Bancária</h3>
-                                    <p className="text-sm text-gray-500">PIX dinâmico + Boleto automático</p>
+                                    <p className="text-white font-bold text-lg">3 a 5 dias úteis</p>
+                                    <p className="text-emerald-100 text-sm">Prazo de implantação</p>
                                 </div>
                             </div>
-                            <ul className="space-y-2 text-gray-700 mb-6">
-                                <li className="flex items-center gap-2">
-                                    <Check className="h-4 w-4 text-emerald-600" />
-                                    PIX com QR Code gerado automaticamente
-                                </li>
-                                <li className="flex items-center gap-2">
-                                    <Check className="h-4 w-4 text-emerald-600" />
-                                    Boleto registrado
-                                </li>
-                                <li className="flex items-center gap-2">
-                                    <Check className="h-4 w-4 text-emerald-600" />
-                                    Conciliação automática de pagamentos
-                                </li>
-                                <li className="flex items-center gap-2">
-                                    <Check className="h-4 w-4 text-emerald-600" />
-                                    Mercado Pago, Asaas, bancos tradicionais
-                                </li>
-                            </ul>
-                            <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                                <div className="flex justify-between items-center mb-2">
-                                    <span className="text-gray-600">Taxa de Implantação:</span>
-                                    <span className="font-bold text-gray-900">R$ 999,00</span>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-gray-600">Mensalidade:</span>
-                                    <span className="font-bold text-gray-900">+ R$ 199,00/mês</span>
-                                </div>
-                            </div>
-                            <p className="text-xs text-gray-500">
-                                Requer: CNPJ ativo, conta no banco/gateway, credenciais de API, documento do síndico.
-                            </p>
-                        </div>
-
-                        {/* Integração WhatsApp */}
-                        <div className="bg-white rounded-2xl p-8 shadow-lg border border-amber-200">
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                                    <MessageSquare className="h-6 w-6 text-green-600" />
+                            <div className="flex flex-col md:flex-row items-center gap-3">
+                                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                                    <Shield className="h-6 w-6 text-white" />
                                 </div>
                                 <div>
-                                    <h3 className="text-xl font-bold text-gray-900">Integração WhatsApp</h3>
-                                    <p className="text-sm text-gray-500">Mensagens automáticas</p>
+                                    <p className="text-white font-bold text-lg">Suporte incluso</p>
+                                    <p className="text-emerald-100 text-sm">Na mensalidade</p>
                                 </div>
                             </div>
-                            <ul className="space-y-2 text-gray-700 mb-6">
-                                <li className="flex items-center gap-2">
-                                    <Check className="h-4 w-4 text-emerald-600" />
-                                    Notificação de cobranças geradas
-                                </li>
-                                <li className="flex items-center gap-2">
-                                    <Check className="h-4 w-4 text-emerald-600" />
-                                    Lembrete de vencimento
-                                </li>
-                                <li className="flex items-center gap-2">
-                                    <Check className="h-4 w-4 text-emerald-600" />
-                                    Aviso de encomendas
-                                </li>
-                                <li className="flex items-center gap-2">
-                                    <Check className="h-4 w-4 text-emerald-600" />
-                                    Servidor dedicado (VPS)
-                                </li>
-                            </ul>
-                            <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                                <div className="flex justify-between items-center mb-2">
-                                    <span className="text-gray-600">Taxa de Implantação:</span>
-                                    <span className="font-bold text-gray-900">R$ 697,00</span>
+                            <div className="flex flex-col md:flex-row items-center gap-3">
+                                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                                    <Wrench className="h-6 w-6 text-white" />
                                 </div>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-gray-600">Mensalidade:</span>
-                                    <span className="font-bold text-gray-900">+ R$ 149,00/mês</span>
+                                <div>
+                                    <p className="text-white font-bold text-lg">Deu problema?</p>
+                                    <p className="text-emerald-100 text-sm">A gente resolve</p>
                                 </div>
                             </div>
-                            <p className="text-xs text-gray-500">
-                                Requer: Chip exclusivo do condomínio, disponibilidade para escanear QR Code.
-                            </p>
                         </div>
                     </div>
 
-                    <p className="text-center text-sm text-amber-800 mt-8 bg-amber-100 py-3 px-6 rounded-lg inline-block mx-auto">
-                        ⚠️ Disponível apenas para planos <strong>Profissional</strong> e <strong>Premium</strong>
-                    </p>
+                    <div className="grid md:grid-cols-2 gap-8">
+                        {/* Card Integração Bancária */}
+                        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
+                            {/* Header do card */}
+                            <div className="bg-gradient-to-r from-blue-600 to-blue-500 p-6">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center">
+                                        <CreditCard className="h-7 w-7 text-white" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-bold text-white">PIX + Boleto Automático</h3>
+                                        <p className="text-blue-100">Integração bancária completa</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="p-6 space-y-6">
+                                {/* O que VOCÊ precisa */}
+                                <div className="bg-slate-50 rounded-xl p-4">
+                                    <p className="text-xs text-slate-500 uppercase font-bold mb-3 flex items-center gap-2">
+                                        <span className="w-5 h-5 bg-slate-200 rounded-full flex items-center justify-center text-slate-600">1</span>
+                                        Você precisa ter:
+                                    </p>
+                                    <ul className="space-y-2 text-slate-700 text-sm">
+                                        <li className="flex items-center gap-2">
+                                            <Check className="h-4 w-4 text-slate-400" />
+                                            CNPJ ativo do condomínio
+                                        </li>
+                                        <li className="flex items-center gap-2">
+                                            <Check className="h-4 w-4 text-slate-400" />
+                                            Conta no banco/gateway escolhido
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                {/* O que NÓS fazemos */}
+                                <div className="bg-blue-50 border-2 border-blue-100 rounded-xl p-4">
+                                    <p className="text-xs text-blue-600 uppercase font-bold mb-3 flex items-center gap-2">
+                                        <span className="w-5 h-5 bg-blue-500 text-white rounded-full flex items-center justify-center">2</span>
+                                        Nós cuidamos de:
+                                    </p>
+                                    <ul className="space-y-2 text-blue-900 text-sm">
+                                        <li className="flex items-center gap-2">
+                                            <Check className="h-4 w-4 text-blue-600" />
+                                            Configuração completa da API
+                                        </li>
+                                        <li className="flex items-center gap-2">
+                                            <Check className="h-4 w-4 text-blue-600" />
+                                            PIX dinâmico com QR Code
+                                        </li>
+                                        <li className="flex items-center gap-2">
+                                            <Check className="h-4 w-4 text-blue-600" />
+                                            Boleto registrado automático
+                                        </li>
+                                        <li className="flex items-center gap-2">
+                                            <Check className="h-4 w-4 text-blue-600" />
+                                            Baixa automática de pagamentos
+                                        </li>
+                                        <li className="flex items-center gap-2">
+                                            <Check className="h-4 w-4 text-blue-600" />
+                                            Testes e validação
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                {/* Bancos */}
+                                <div className="flex flex-wrap gap-2">
+                                    <span className="bg-slate-100 px-3 py-1 rounded-full text-xs text-slate-600">Mercado Pago</span>
+                                    <span className="bg-slate-100 px-3 py-1 rounded-full text-xs text-slate-600">Asaas</span>
+                                    <span className="bg-slate-100 px-3 py-1 rounded-full text-xs text-slate-600">Inter</span>
+                                    <span className="bg-slate-100 px-3 py-1 rounded-full text-xs text-slate-500">+ outros</span>
+                                </div>
+
+                                {/* Preço */}
+                                <div className="border-t pt-5">
+                                    <div className="flex items-end justify-between mb-1">
+                                        <span className="text-gray-500 text-sm">Implantação única</span>
+                                        <span className="text-2xl font-bold text-gray-900">R$ 999</span>
+                                    </div>
+                                    <div className="flex items-end justify-between">
+                                        <span className="text-gray-500 text-sm">Depois, apenas</span>
+                                        <span className="text-lg font-semibold text-emerald-600">R$ 199/mês</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Card Integração WhatsApp */}
+                        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
+                            {/* Header do card */}
+                            <div className="bg-gradient-to-r from-green-600 to-green-500 p-6">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center">
+                                        <MessageSquare className="h-7 w-7 text-white" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-bold text-white">WhatsApp Automático</h3>
+                                        <p className="text-green-100">Canal exclusivo do condomínio</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="p-6 space-y-6">
+                                {/* O que VOCÊ precisa */}
+                                <div className="bg-slate-50 rounded-xl p-4">
+                                    <p className="text-xs text-slate-500 uppercase font-bold mb-3 flex items-center gap-2">
+                                        <span className="w-5 h-5 bg-slate-200 rounded-full flex items-center justify-center text-slate-600">1</span>
+                                        Você precisa ter:
+                                    </p>
+                                    <ul className="space-y-2 text-slate-700 text-sm">
+                                        <li className="flex items-center gap-2">
+                                            <Check className="h-4 w-4 text-slate-400" />
+                                            Chip exclusivo do condomínio
+                                        </li>
+                                        <li className="flex items-center gap-2 text-slate-400 text-xs">
+                                            <span className="w-4" />
+                                            (não pode ser o pessoal do síndico)
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                {/* O que NÓS fazemos */}
+                                <div className="bg-green-50 border-2 border-green-100 rounded-xl p-4">
+                                    <p className="text-xs text-green-600 uppercase font-bold mb-3 flex items-center gap-2">
+                                        <span className="w-5 h-5 bg-green-500 text-white rounded-full flex items-center justify-center">2</span>
+                                        Nós cuidamos de:
+                                    </p>
+                                    <ul className="space-y-2 text-green-900 text-sm">
+                                        <li className="flex items-center gap-2">
+                                            <Check className="h-4 w-4 text-green-600" />
+                                            Servidor dedicado (VPS)
+                                        </li>
+                                        <li className="flex items-center gap-2">
+                                            <Check className="h-4 w-4 text-green-600" />
+                                            Conexão via QR Code (videochamada)
+                                        </li>
+                                        <li className="flex items-center gap-2">
+                                            <Check className="h-4 w-4 text-green-600" />
+                                            Notificações de cobrança
+                                        </li>
+                                        <li className="flex items-center gap-2">
+                                            <Check className="h-4 w-4 text-green-600" />
+                                            Lembretes de vencimento
+                                        </li>
+                                        <li className="flex items-center gap-2">
+                                            <Check className="h-4 w-4 text-green-600" />
+                                            Manutenção e suporte contínuo
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                {/* Mensagens automáticas */}
+                                <div className="flex flex-wrap gap-2">
+                                    <span className="bg-slate-100 px-3 py-1 rounded-full text-xs text-slate-600">Cobranças</span>
+                                    <span className="bg-slate-100 px-3 py-1 rounded-full text-xs text-slate-600">Vencimentos</span>
+                                    <span className="bg-slate-100 px-3 py-1 rounded-full text-xs text-slate-600">Encomendas</span>
+                                    <span className="bg-slate-100 px-3 py-1 rounded-full text-xs text-slate-600">Reservas</span>
+                                </div>
+
+                                {/* Preço */}
+                                <div className="border-t pt-5">
+                                    <div className="flex items-end justify-between mb-1">
+                                        <span className="text-gray-500 text-sm">Implantação única</span>
+                                        <span className="text-2xl font-bold text-gray-900">R$ 697</span>
+                                    </div>
+                                    <div className="flex items-end justify-between">
+                                        <span className="text-gray-500 text-sm">Depois, apenas</span>
+                                        <span className="text-lg font-semibold text-emerald-600">R$ 149/mês</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* CTA Final */}
+                    <div className="mt-16 text-center">
+                        <p className="text-slate-400 mb-4">
+                            Disponível para planos <span className="text-white font-semibold">Profissional</span> e <span className="text-white font-semibold">Premium</span>
+                        </p>
+                        <Link
+                            href="/register"
+                            className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all hover:scale-105 shadow-lg shadow-emerald-500/30"
+                        >
+                            Começar Teste Grátis <ArrowRight className="h-5 w-5" />
+                        </Link>
+                        <p className="text-slate-500 text-sm mt-4">
+                            Teste o sistema primeiro. Contrate integrações depois.
+                        </p>
+                    </div>
                 </div>
             </section>
 
@@ -712,7 +845,7 @@ export default function LandingPage() {
                                         { name: 'Cadastro de Unidades', basic: true, pro: true, adv: true },
                                         { name: 'Avisos e Comunicados', basic: true, pro: true, adv: true },
                                         { name: 'Cadastro de Cobranças', basic: true, pro: true, adv: true },
-                                        { name: 'Acesso PWA (navegador)', basic: true, pro: true, adv: true },
+                                        { name: 'App móvel (Android/iOS)', basic: true, pro: true, adv: true },
                                         { name: 'Portaria Virtual', basic: false, pro: true, adv: true },
                                         { name: 'Gestão de Encomendas', basic: false, pro: true, adv: true },
                                         { name: 'Reservas de Áreas Comuns', basic: false, pro: true, adv: true },

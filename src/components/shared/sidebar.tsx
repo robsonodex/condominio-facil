@@ -30,7 +30,8 @@ import {
     Vote,
     ChevronDown,
     ChevronRight,
-    Lightbulb
+    Lightbulb,
+    Bot
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -63,6 +64,8 @@ interface PlanFeatures {
     hasCameras: boolean;
     hasAutomations: boolean;
     maxUnits: number;
+    // IA
+    hasAI: boolean;
 }
 
 
@@ -103,11 +106,15 @@ const navItems: NavItem[] = [
     { href: '/configuracoes/integracao-whatsapp', label: 'WhatsApp Oficial', icon: <MessageCircle className="h-5 w-5 text-green-500" />, roles: ['sindico'] },
     { href: '/configuracoes/integracao-pagamentos', label: 'Integração Premium', icon: <Zap className="h-5 w-5 text-amber-400" />, roles: ['sindico'] },
     { href: '/configuracoes/pix', label: 'Configurar PIX', icon: <QrCode className="h-5 w-5" />, roles: ['sindico'] },
+    // Módulo de IA - sempre visível para síndico (deploy 20/12 12:42)
+    { href: '/configuracoes/assistente', label: '🤖 Assistente IA', icon: <Bot className="h-5 w-5 text-purple-500" />, roles: ['sindico'] },
     { href: '/assinatura', label: 'Assinatura', icon: <CreditCard className="h-5 w-5" />, roles: ['sindico'] },
     { href: '/sugestoes', label: 'Sugestões', icon: <Lightbulb className="h-5 w-5" />, roles: ['sindico', 'morador', 'inquilino', 'porteiro'] },
     { href: '/perfil', label: 'Meu Perfil', icon: <Settings className="h-5 w-5" /> },
     { href: '/portaria/deliveries/list', label: 'Encomendas (Porteiro)', icon: <Package className="h-5 w-5" />, roles: ['porteiro'], requiresFeature: 'hasOccurrences' },
     { href: '/app/deliveries', label: 'Minhas Encomendas (Morador)', icon: <Package className="h-5 w-5" />, roles: ['morador', 'inquilino'], requiresFeature: 'hasOccurrences' },
+    // Chat da IA para moradores
+    { href: '/assistente', label: 'Assistente', icon: <Bot className="h-5 w-5 text-purple-500" />, roles: ['morador', 'inquilino'], requiresFeature: 'hasAI' },
 ];
 
 
@@ -167,12 +174,14 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     console.log('[SIDEBAR] effectiveFilterRole:', effectiveFilterRole, 'viewAsRole:', viewAsRole, 'profile.role:', profile?.role);
 
     const filteredNavItems = navItems.filter(item => {
-        // SuperAdmin should NOT see operational items - they were removed from roles
         // Check role permissions using effective role
         if (item.roles && !item.roles.includes(effectiveFilterRole)) return false;
 
         // Check plan features
         if (item.requiresFeature && planFeatures) {
+            // Sindico should always see core management modules to avoid confusion
+            if (effectiveFilterRole === 'sindico') return true;
+
             return planFeatures[item.requiresFeature as keyof PlanFeatures] === true;
         }
 

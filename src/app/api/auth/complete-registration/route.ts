@@ -55,6 +55,13 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Failed to create user profile' }, { status: 500 });
         }
 
+        // Get the Basic plan ID
+        const { data: basicPlan } = await supabaseAdmin
+            .from('plans')
+            .select('id')
+            .ilike('nome_plano', 'Básico')
+            .single();
+
         // Create trial subscription
         const trialEnd = new Date();
         trialEnd.setDate(trialEnd.getDate() + 7);
@@ -63,9 +70,10 @@ export async function POST(request: NextRequest) {
             .from('subscriptions')
             .insert({
                 condo_id: condo.id,
-                plan_id: 1, // Assuming plan ID 1 is basic/trial
-                status: 'teste',
-                trial_end: trialEnd.toISOString()
+                plano_id: basicPlan?.id, // Use the actual plan ID
+                status: 'ativo', // Default status
+                data_inicio: new Date().toISOString().split('T')[0],
+                data_renovacao: trialEnd.toISOString().split('T')[0]
             });
 
         return NextResponse.json({ success: true, condo_id: condo.id });

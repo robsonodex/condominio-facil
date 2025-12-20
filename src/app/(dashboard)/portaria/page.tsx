@@ -9,7 +9,7 @@ import { createClient } from '@/lib/supabase/client';
 import { formatDate } from '@/lib/utils';
 import {
     Users, UserPlus, LogIn, LogOut, Search, Camera, Printer,
-    Clock, Car, CreditCard, Shield, Maximize, Minimize, RefreshCw
+    Clock, Car, CreditCard, Shield, Maximize, Minimize, RefreshCw, MessageSquare, AlertCircle
 } from 'lucide-react';
 
 interface Visitor {
@@ -54,6 +54,11 @@ export default function PortariaProfissionalPage() {
 
     const [units, setUnits] = useState<any[]>([]);
     const [currentTime, setCurrentTime] = useState(new Date());
+
+    // WhatsApp notification toggle
+    const [notificarWhatsApp, setNotificarWhatsApp] = useState(false);
+    const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
+    const whatsAppContratado = false; // TODO: Buscar do banco se WhatsApp está contratado
 
     useEffect(() => {
         const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -229,10 +234,58 @@ export default function PortariaProfissionalPage() {
         switch (tipo) {
             case 'visitante': return <Badge variant="primary">Visitante</Badge>;
             case 'prestador_servico': return <Badge variant="warning">Prestador</Badge>;
-            case 'entrega': return <Badge variant="success">Entrega</Badge>;
+            case 'entrega': return <Badge variant="success">Veículo</Badge>;
             default: return <Badge>{tipo}</Badge>;
         }
     };
+
+    // Configurações de estilo por tipo
+    const getTipoConfig = () => {
+        switch (tipo) {
+            case 'visitante':
+                return {
+                    title: 'Registrar Visitante',
+                    buttonText: 'Registrar Visitante',
+                    borderColor: 'border-blue-500',
+                    bgColor: 'bg-blue-500',
+                    bgLight: 'bg-blue-50',
+                    textColor: 'text-blue-700',
+                    tipoLabel: 'Visitante'
+                };
+            case 'prestador_servico':
+                return {
+                    title: 'Registrar Prestador',
+                    buttonText: 'Registrar Prestador',
+                    borderColor: 'border-orange-500',
+                    bgColor: 'bg-orange-500',
+                    bgLight: 'bg-orange-50',
+                    textColor: 'text-orange-700',
+                    tipoLabel: 'Prestador de Serviço'
+                };
+            case 'entrega':
+                return {
+                    title: 'Registrar Veículo',
+                    buttonText: 'Registrar Veículo',
+                    borderColor: 'border-green-500',
+                    bgColor: 'bg-green-500',
+                    bgLight: 'bg-green-50',
+                    textColor: 'text-green-700',
+                    tipoLabel: 'Entrega / Veículo'
+                };
+            default:
+                return {
+                    title: 'Registrar Entrada',
+                    buttonText: 'Registrar Entrada',
+                    borderColor: 'border-emerald-500',
+                    bgColor: 'bg-emerald-500',
+                    bgLight: 'bg-emerald-50',
+                    textColor: 'text-emerald-700',
+                    tipoLabel: 'Selecione o tipo'
+                };
+        }
+    };
+
+    const tipoConfig = getTipoConfig();
 
     return (
         <div className={`min-h-screen ${isFullscreen ? 'bg-gray-900 text-white p-4' : 'space-y-4'}`}>
@@ -290,7 +343,7 @@ export default function PortariaProfissionalPage() {
                 </button>
 
                 <button
-                    onClick={() => { setTipo(''); setTipoFixo(false); setShowModal(true); }}
+                    onClick={() => { setTipo('entrega'); setTipoFixo(true); setShowModal(true); }}
                     className="group relative overflow-hidden bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
                 >
                     <div className="flex flex-col items-center gap-4">
@@ -431,16 +484,21 @@ export default function PortariaProfissionalPage() {
                 </CardContent>
             </Card>
 
-            {/* Entry Modal */}
-            <Modal isOpen={showModal} onClose={() => { setShowModal(false); resetForm(); }} title="Registrar Entrada" size="md">
+            {/* Entry Modal - Personalizado por Tipo */}
+            <Modal isOpen={showModal} onClose={() => { setShowModal(false); resetForm(); }} title={tipoConfig.title} size="md">
                 <form onSubmit={handleEntry} className="space-y-4">
+                    {/* Barra de tipo colorida */}
+                    <div className={`${tipoConfig.bgLight} ${tipoConfig.borderColor} border-l-4 px-4 py-2 rounded-r-lg mb-4`}>
+                        <span className={`font-semibold ${tipoConfig.textColor}`}>{tipoConfig.tipoLabel}</span>
+                    </div>
+
                     <div className="flex gap-4 items-start">
                         <div className="flex-shrink-0">
                             {capturedPhoto ? (
                                 <img src={capturedPhoto} className="w-24 h-24 rounded-lg object-cover" />
                             ) : (
-                                <button type="button" onClick={startCamera} className="w-24 h-24 rounded-lg bg-gray-100 flex items-center justify-center hover:bg-gray-200">
-                                    <Camera className="h-8 w-8 text-gray-400" />
+                                <button type="button" onClick={startCamera} className={`w-24 h-24 rounded-lg ${tipoConfig.bgLight} flex items-center justify-center hover:opacity-80 border-2 ${tipoConfig.borderColor}`}>
+                                    <Camera className={`h-8 w-8 ${tipoConfig.textColor}`} />
                                 </button>
                             )}
                         </div>
@@ -454,26 +512,13 @@ export default function PortariaProfissionalPage() {
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                        {!tipoFixo ? (
-                            <Select
-                                label="Tipo"
-                                value={tipo}
-                                onChange={(e) => setTipo(e.target.value)}
-                                options={[
-                                    { value: '', label: 'Selecione...' },
-                                    { value: 'visitante', label: 'Visitante' },
-                                    { value: 'prestador_servico', label: 'Prestador de Serviço' },
-                                    { value: 'entrega', label: 'Entrega' },
-                                ]}
-                            />
-                        ) : (
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
-                                <div className="px-3 py-2 bg-gray-100 rounded-lg font-medium text-gray-700">
-                                    {tipo === 'visitante' ? 'Visitante' : tipo === 'prestador_servico' ? 'Prestador de Serviço' : 'Entrega'}
-                                </div>
+                        {/* Tipo fixo (não editável) */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                            <div className={`px-3 py-2 ${tipoConfig.bgLight} rounded-lg font-medium ${tipoConfig.textColor} border-2 ${tipoConfig.borderColor}`}>
+                                {tipoConfig.tipoLabel}
                             </div>
-                        )}
+                        </div>
                         <Select
                             label="Destino (Unidade)"
                             value={unidadeId}
@@ -487,11 +532,39 @@ export default function PortariaProfissionalPage() {
 
                     <Input label="Observações" value={observacoes} onChange={(e) => setObservacoes(e.target.value)} />
 
+                    {/* Toggle Notificar via WhatsApp */}
+                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <div className="flex items-center gap-3">
+                            <MessageSquare className="h-5 w-5 text-green-600" />
+                            <div>
+                                <p className="font-medium text-gray-700">Notificar via WhatsApp</p>
+                                <p className="text-xs text-gray-500">Enviar aviso ao morador</p>
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                if (!whatsAppContratado) {
+                                    setShowWhatsAppModal(true);
+                                } else {
+                                    setNotificarWhatsApp(!notificarWhatsApp);
+                                }
+                            }}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${notificarWhatsApp && whatsAppContratado ? 'bg-green-500' : 'bg-gray-300'
+                                }`}
+                        >
+                            <span
+                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${notificarWhatsApp && whatsAppContratado ? 'translate-x-6' : 'translate-x-1'
+                                    }`}
+                            />
+                        </button>
+                    </div>
+
                     <div className="flex gap-3 justify-end pt-4">
                         <Button type="button" variant="ghost" onClick={() => setShowModal(false)}>Cancelar</Button>
-                        <Button type="submit" loading={saving}>
+                        <Button type="submit" loading={saving} className={`${tipoConfig.bgColor} hover:opacity-90`}>
                             <LogIn className="h-4 w-4 mr-2" />
-                            Registrar Entrada
+                            {tipoConfig.buttonText}
                         </Button>
                     </div>
                 </form>
@@ -506,6 +579,43 @@ export default function PortariaProfissionalPage() {
                         <Button onClick={capturePhoto}>
                             <Camera className="h-4 w-4 mr-2" />
                             Capturar
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* WhatsApp Contratação Modal */}
+            <Modal isOpen={showWhatsAppModal} onClose={() => setShowWhatsAppModal(false)} title="WhatsApp não contratado" size="sm">
+                <div className="space-y-4">
+                    <div className="flex items-center gap-3 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                        <AlertCircle className="h-6 w-6 text-orange-500 flex-shrink-0" />
+                        <p className="text-orange-800 text-sm">
+                            A integração com WhatsApp ainda não foi contratada para este condomínio.
+                        </p>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                        <h4 className="font-semibold text-gray-800 mb-2">O que está incluso:</h4>
+                        <ul className="space-y-1 text-sm text-gray-600">
+                            <li>• Notificação automática de visitantes</li>
+                            <li>• Lembretes de cobrança</li>
+                            <li>• Avisos de encomendas</li>
+                            <li>• Servidor dedicado + suporte</li>
+                        </ul>
+                        <div className="mt-3 pt-3 border-t border-gray-200">
+                            <p className="text-sm text-gray-500">Implantação: <strong className="text-gray-800">R$ 697</strong></p>
+                            <p className="text-sm text-gray-500">Mensalidade: <strong className="text-gray-800">R$ 149/mês</strong></p>
+                        </div>
+                    </div>
+                    <div className="flex gap-3">
+                        <Button variant="ghost" className="flex-1" onClick={() => setShowWhatsAppModal(false)}>
+                            Fechar
+                        </Button>
+                        <Button className="flex-1 bg-green-500 hover:bg-green-600" onClick={() => {
+                            setShowWhatsAppModal(false);
+                            window.open('/contato?assunto=whatsapp', '_blank');
+                        }}>
+                            <MessageSquare className="h-4 w-4 mr-2" />
+                            Contratar
                         </Button>
                     </div>
                 </div>

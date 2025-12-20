@@ -1,48 +1,50 @@
-import React, { useEffect } from 'react';
-import { Platform } from 'react-native';
-import { WebView } from 'react-native-webview';
-import * as Linking from 'expo-linking';
-import * as Notifications from 'expo-notifications';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { View, Platform } from "react-native";
+import { WebView } from "react-native-webview";
+import { StatusBar } from "expo-status-bar";
 
-const PWA_URL = process.env.PWA_URL || 'https://seu-dominio.com';
+// URL de produção (para mobile)
+const PRODUCTION_URL = "https://www.meucondominiofacil.com";
+// URL local para desenvolvimento (para web - evita bloqueio de iframe)
+const DEV_URL = "http://localhost:3000";
+
+// Em mobile, sempre usa produção. Em web, usa localhost para evitar bloqueio de iframe
+const getSiteUrl = () => {
+    if (Platform.OS === "web") {
+        return DEV_URL;
+    }
+    return PRODUCTION_URL;
+};
 
 export default function App() {
-    useEffect(() => {
-        const subscription = Linking.addEventListener('url', ({ url }) => {
-            // handle deep link
-            // postMessage to WebView if needed
-        });
-        return () => subscription.remove();
-    }, []);
+    const siteUrl = getSiteUrl();
 
-    useEffect(() => {
-        async function register() {
-            try {
-                const token = (await Notifications.getExpoPushTokenAsync()).data;
-                await AsyncStorage.setItem('push_token', token);
-                await fetch(`${PWA_URL}/api/mobile/register-token`, {
-                    method: 'POST',
-                    headers: { 'content-type': 'application/json' },
-                    body: JSON.stringify({ token }),
-                });
-            } catch (e) {
-                console.error('push register', e);
-            }
-        }
-        register();
-    }, []);
+    // Na web, usamos iframe pois WebView não é suportado
+    if (Platform.OS === "web") {
+        return (
+            <View style={{ flex: 1 }}>
+                <StatusBar style="auto" />
+                <iframe
+                    src={siteUrl}
+                    style={{
+                        flex: 1,
+                        width: "100%",
+                        height: "100%",
+                        border: "none",
+                    }}
+                    title="Condomínio Fácil"
+                />
+            </View>
+        );
+    }
 
+    // Em dispositivos nativos (iOS/Android), usamos WebView
     return (
-        <WebView
-            source={{ uri: PWA_URL }}
-            originWhitelist={['*']}
-            javaScriptEnabled
-            domStorageEnabled
-            allowsInlineMediaPlayback
-            startInLoadingState
-            style={{ flex: 1 }}
-        // pass cookies/localstorage bridging if needed
-        />
+        <View style={{ flex: 1 }}>
+            <StatusBar style="auto" />
+            <WebView
+                source={{ uri: siteUrl }}
+                style={{ flex: 1 }}
+            />
+        </View>
     );
 }
