@@ -182,10 +182,12 @@ export default function AdminCondominiosPage() {
             render: (c: Condo) => (
                 <button
                     onClick={(e) => { e.stopPropagation(); handleToggleAI(c.id, !c.ai_ativo); }}
-                    className={`p-1.5 rounded-lg transition-colors ${c.ai_ativo ? 'bg-purple-100 text-purple-600 hover:bg-purple-200' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'}`}
+                    className={`relative w-11 h-6 rounded-full transition-colors ${c.ai_ativo ? 'bg-purple-600' : 'bg-gray-300'}`}
                     title={c.ai_ativo ? 'IA Ativa - Clique para desativar' : 'IA Inativa - Clique para ativar'}
                 >
-                    <Bot className="h-4 w-4" />
+                    <span
+                        className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${c.ai_ativo ? 'right-0.5' : 'left-0.5'}`}
+                    />
                 </button>
             )
         },
