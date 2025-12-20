@@ -10,6 +10,6 @@ export default async function Home() {
     redirect('/dashboard');
   }
 
-  // Se não logado, redireciona para landing page pública
-  redirect('/landing');
+  // Se não logado, redireciona para login (landing page mantida em /landing)
+  redirect('/login');
 }
