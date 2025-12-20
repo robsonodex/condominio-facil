@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, Button, Badge, Table } from '@/components/ui';
 import {
     AlertTriangle, AlertCircle, CheckCircle, Settings,
-    RefreshCw, Trash2, Edit, Eye, XCircle, Clock
+    RefreshCw, Trash2, Edit, Eye, XCircle, Clock, Square, CheckSquare
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { formatDate } from '@/lib/utils';
@@ -34,6 +34,7 @@ export default function AdminErrosPage() {
     const [integrityIssues, setIntegrityIssues] = useState<IntegrityIssue[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const { session } = useAuth();
     const supabase = createClient();
 
@@ -148,6 +149,63 @@ export default function AdminErrosPage() {
             .eq('id', id);
 
         fetchErrors();
+    };
+
+    // Toggle seleção individual
+    const toggleSelect = (id: string) => {
+        const newSelected = new Set(selectedIds);
+        if (newSelected.has(id)) {
+            newSelected.delete(id);
+        } else {
+            newSelected.add(id);
+        }
+        setSelectedIds(newSelected);
+    };
+
+    // Selecionar/deselecionar todos
+    const toggleSelectAll = () => {
+        if (selectedIds.size === errors.length) {
+            setSelectedIds(new Set());
+        } else {
+            setSelectedIds(new Set(errors.map(e => e.id)));
+        }
+    };
+
+    // Excluir selecionados
+    const handleDeleteSelected = async () => {
+        if (selectedIds.size === 0) return;
+        if (!confirm(`Tem certeza que deseja excluir ${selectedIds.size} erro(s)?`)) return;
+
+        const ids = Array.from(selectedIds);
+        const { error } = await supabase
+            .from('system_errors')
+            .delete()
+            .in('id', ids);
+
+        if (!error) {
+            setErrors(errors.filter(e => !selectedIds.has(e.id)));
+            setSelectedIds(new Set());
+        } else {
+            alert('Erro ao excluir erros');
+        }
+    };
+
+    // Excluir todos
+    const handleDeleteAll = async () => {
+        if (errors.length === 0) return;
+        if (!confirm(`Tem certeza que deseja excluir TODOS os ${errors.length} erros?`)) return;
+
+        const { error } = await supabase
+            .from('system_errors')
+            .delete()
+            .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+
+        if (!error) {
+            setErrors([]);
+            setSelectedIds(new Set());
+        } else {
+            alert('Erro ao excluir erros');
+        }
     };
 
     const getPrioridadeBadge = (prioridade: string) => {
@@ -277,10 +335,35 @@ export default function AdminErrosPage() {
             {/* Error Log */}
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <AlertTriangle className="h-5 w-5" />
-                        Log de Erros
-                    </CardTitle>
+                    <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-2">
+                            <AlertTriangle className="h-5 w-5" />
+                            Log de Erros
+                        </CardTitle>
+                        {errors.length > 0 && (
+                            <div className="flex items-center gap-2">
+                                {selectedIds.size > 0 && (
+                                    <Button
+                                        size="sm"
+                                        variant="danger"
+                                        onClick={handleDeleteSelected}
+                                    >
+                                        <Trash2 className="h-4 w-4 mr-1" />
+                                        Excluir {selectedIds.size}
+                                    </Button>
+                                )}
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={handleDeleteAll}
+                                    className="text-red-600 hover:bg-red-50"
+                                >
+                                    <Trash2 className="h-4 w-4 mr-1" />
+                                    Excluir Todos
+                                </Button>
+                            </div>
+                        )}
+                    </div>
                 </CardHeader>
                 <CardContent>
                     {loading ? (
@@ -295,7 +378,31 @@ export default function AdminErrosPage() {
                             data={errors}
                             columns={[
                                 {
-                                    key: 'tipo', header: 'Tipo', render: (e) => (
+                                    key: 'select',
+                                    header: (
+                                        <button onClick={toggleSelectAll} className="p-1 hover:bg-gray-100 rounded">
+                                            {selectedIds.size === errors.length ? (
+                                                <CheckSquare className="h-4 w-4 text-emerald-600" />
+                                            ) : (
+                                                <Square className="h-4 w-4 text-gray-400" />
+                                            )}
+                                        </button>
+                                    ) as any,
+                                    render: (e: SystemError) => (
+                                        <button
+                                            onClick={() => toggleSelect(e.id)}
+                                            className="p-1 hover:bg-gray-100 rounded"
+                                        >
+                                            {selectedIds.has(e.id) ? (
+                                                <CheckSquare className="h-4 w-4 text-emerald-600" />
+                                            ) : (
+                                                <Square className="h-4 w-4 text-gray-400" />
+                                            )}
+                                        </button>
+                                    )
+                                },
+                                {
+                                    key: 'tipo', header: 'Tipo', render: (e: SystemError) => (
                                         <div className="flex items-center gap-2">
                                             {getTipoIcon(e.tipo)}
                                             <span className="text-xs">{e.tipo}</span>
@@ -303,25 +410,29 @@ export default function AdminErrosPage() {
                                     )
                                 },
                                 {
-                                    key: 'mensagem', header: 'Mensagem', render: (e) => (
+                                    key: 'mensagem', header: 'Mensagem', render: (e: SystemError) => (
                                         <span className="max-w-xs truncate">{e.mensagem}</span>
                                     )
                                 },
-                                { key: 'condo_nome', header: 'Condomínio', render: (e) => e.condo_nome || '-' },
-                                { key: 'prioridade', header: 'Prioridade', render: (e) => getPrioridadeBadge(e.prioridade) },
+                                { key: 'condo_nome', header: 'Condomínio', render: (e: SystemError) => e.condo_nome || '-' },
+                                { key: 'prioridade', header: 'Prioridade', render: (e: SystemError) => getPrioridadeBadge(e.prioridade) },
                                 {
-                                    key: 'resolvido', header: 'Status', render: (e) => e.resolvido ? (
+                                    key: 'resolvido', header: 'Status', render: (e: SystemError) => e.resolvido ? (
                                         <Badge variant="outline" className="text-emerald-600">Resolvido</Badge>
                                     ) : (
                                         <Badge variant="destructive">Pendente</Badge>
                                     )
                                 },
-                                { key: 'created_at', header: 'Data', render: (e) => formatDate(e.created_at) },
+                                { key: 'created_at', header: 'Data', render: (e: SystemError) => formatDate(e.created_at) },
                                 {
-                                    key: 'acoes', header: 'Ações', render: (e) => !e.resolvido && (
-                                        <Button size="sm" variant="outline" onClick={() => handleResolve(e.id)}>
-                                            <CheckCircle className="h-4 w-4" />
-                                        </Button>
+                                    key: 'acoes', header: 'Ações', render: (e: SystemError) => (
+                                        <div className="flex items-center gap-1">
+                                            {!e.resolvido && (
+                                                <Button size="sm" variant="outline" onClick={() => handleResolve(e.id)} title="Marcar como resolvido">
+                                                    <CheckCircle className="h-4 w-4" />
+                                                </Button>
+                                            )}
+                                        </div>
                                     )
                                 },
                             ]}
