@@ -34,6 +34,20 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Usuário sem condomínio' }, { status: 400 });
         }
 
+        // ⚠️ VERIFICAÇÃO CRÍTICA: Módulo de IA ativado?
+        const { data: condo } = await supabase
+            .from('condos')
+            .select('ai_ativo')
+            .eq('id', profile.condo_id)
+            .single();
+
+        if (!condo?.ai_ativo) {
+            return NextResponse.json({
+                error: 'Módulo não contratado',
+                message: 'O módulo de IA não está ativo para este condomínio. Entre em contato com o suporte para contratar.'
+            }, { status: 403 });
+        }
+
         // Verificar se agente existe e está ativo
         const { data: agent } = await supabase
             .from('ai_agents')
