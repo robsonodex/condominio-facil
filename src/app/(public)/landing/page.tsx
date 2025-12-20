@@ -182,7 +182,7 @@ const plans = [
             'Cadastro de cobranças',
             'App móvel (Android e iOS)',
         ],
-        notIncluded: ['Portaria', 'Ocorrências', 'Reservas', 'Relatórios', 'Integrações'],
+        notIncluded: ['Portaria', 'Ocorrências', 'Reservas', 'Relatórios', 'Integrações', 'Assistente IA'],
         popular: false,
     },
     {
@@ -202,7 +202,7 @@ const plans = [
             'Suporte prioritário',
             '✓ Pode contratar integrações',
         ],
-        notIncluded: ['Câmeras', 'Governança', 'Automações'],
+        notIncluded: ['Câmeras', 'Governança', 'Automações', 'Assistente IA'],
         popular: true,
         highlight: 'Escolha de 80% dos síndicos profissionais'
     },
@@ -220,10 +220,11 @@ const plans = [
             'Múltiplos condomínios',
             'Suporte via WhatsApp direto',
             '✓ Pode contratar integrações',
+            '✓ Pode contratar Assistente IA',
         ],
         notIncluded: [],
         popular: false,
-        highlight: 'Veja seu condomínio de qualquer lugar'
+        highlight: 'Inclui acesso a todos os módulos premium'
     },
 ];
 
@@ -241,12 +242,16 @@ const faqs = [
         answer: 'São serviços de configuração contratados à parte. Inclui: implantação completa (R$ 999), mensalidade do serviço (R$ 199/mês), e suporte técnico. Trabalhamos com Mercado Pago, Asaas, Inter e outros bancos. Nós cuidamos de toda a parte técnica - você só precisa ter CNPJ ativo e conta no banco escolhido.'
     },
     {
+        question: 'O que é o Assistente IA e como funciona?',
+        answer: 'É um chatbot exclusivo do seu condomínio, treinado com seus documentos (regimento, convenção, atas). Ele responde perguntas dos moradores 24h/dia, reduzindo até 70% das mensagens repetitivas para o síndico. Implantação: R$ 997, mensalidade: R$ 149/mês. Disponível apenas para planos Premium.'
+    },
+    {
         question: 'Como funciona o período de teste?',
-        answer: 'Você tem 7 dias grátis para testar todas as funcionalidades do plano escolhido. Não pedimos cartão de crédito no cadastro. O sistema WEB (gestão financeira, moradores, portaria, reservas) está 100% pronto e funcionando.'
+        answer: 'Você tem 7 dias grátis para testar todas as funcionalidades do plano escolhido. Não pedimos cartão de crédito no cadastro. O sistema WEB (gestão financeira, moradores, portaria, reservas) está 100% pronto e funcionando. Após o período, você precisa contratar para continuar usando.'
     },
     {
         question: 'Posso cancelar a qualquer momento?',
-        answer: 'Sim! Não há fidelidade. Cancele quando quiser pelo próprio sistema. Os serviços de implantação (WhatsApp e Bancário) têm regras específicas detalhadas no contrato de cada serviço.'
+        answer: 'Sim! Não há fidelidade. Cancele quando quiser pelo próprio sistema. Os serviços de implantação (WhatsApp, Bancário e IA) têm regras específicas detalhadas no contrato de cada serviço.'
     },
     {
         question: 'O que preciso para ter a integração bancária?',
@@ -261,6 +266,7 @@ const faqs = [
         answer: 'Absolutamente. Usamos criptografia de ponta a ponta, RLS (Row Level Security) para isolamento de dados, e hospedagem em servidores seguros. Estamos em conformidade com a LGPD.'
     },
 ];
+
 
 export default function LandingPage() {
     return (
