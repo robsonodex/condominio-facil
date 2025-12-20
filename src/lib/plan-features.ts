@@ -16,19 +16,37 @@ export interface PlanFeatures {
     hasCameras: boolean;          // Câmeras de segurança
     hasAutomations: boolean;      // Automações de inadimplência
     maxUnits: number;
+    // Add-ons
+    hasAI: boolean;               // Assistente IA
 }
 
 export async function getPlanFeatures(condoId: string): Promise<PlanFeatures> {
     try {
         const { data: subscription } = await supabaseAdmin
             .from('subscriptions')
-            .select('plano_id, plans(nome)')
+            .select('plano_id, status, plans(nome), condos(status)')
             .eq('condo_id', condoId)
             .single();
 
         if (!subscription || !subscription.plano_id) {
-            // Default to basic features (most restrictive)
+            // Check if condo is in trial even without subscription
+            const { data: condo } = await supabaseAdmin
+                .from('condos')
+                .select('status')
+                .eq('id', condoId)
+                .single();
+
+            if (condo?.status === 'teste') {
+                return getPremiumFeatures();
+            }
             return getBasicFeatures();
+        }
+
+        const condoData = subscription.condos as any;
+
+        // If in test/trial status (either subscription or condo), return all features
+        if (subscription.status === 'teste' || subscription.status === 'trial' || condoData?.status === 'teste') {
+            return getPremiumFeatures();
         }
 
         const planData = subscription.plans as any;
@@ -75,7 +93,8 @@ function getBasicFeatures(): PlanFeatures {
         hasMultipleCondos: false,
         hasCameras: false,
         hasAutomations: false,
-        maxUnits: 20
+        maxUnits: 20,
+        hasAI: false
     };
 }
 
@@ -94,7 +113,8 @@ function getProfessionalFeatures(): PlanFeatures {
         hasMultipleCondos: false,
         hasCameras: false,
         hasAutomations: false,
-        maxUnits: 50
+        maxUnits: 50,
+        hasAI: false
     };
 }
 
@@ -113,7 +133,8 @@ function getPremiumFeatures(): PlanFeatures {
         hasMultipleCondos: true,
         hasCameras: true,
         hasAutomations: true,
-        maxUnits: 999999
+        maxUnits: 999999,
+        hasAI: true  // Premium inclui IA
     };
 }
 
