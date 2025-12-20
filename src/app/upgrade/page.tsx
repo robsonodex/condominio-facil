@@ -22,36 +22,35 @@ export default function UpgradePage() {
             tagline: 'Comece sua gestão digital',
             features: [
                 'Até 20 unidades',
-                'Gestão financeira completa',
-                'Controle de portaria',
+                'Gestão financeira (manual)',
                 'Cadastro de moradores',
                 'Avisos e comunicados',
-                'Relatórios básicos',
-                'Boletos e PIX',
-                'App mobile',
+                'Cadastro de cobranças',
+                'App móvel (Android e iOS)',
                 'Suporte por email'
-            ]
+            ],
+            notIncluded: ['Portaria', 'Ocorrências', 'Reservas', 'Relatórios', 'Integrações']
         },
         {
-            name: 'Avançado',
+            name: 'Profissional',
             price: 249.90,
-            units: 60,
+            units: 50,
             popular: true,
             tagline: 'Gestão profissional completa',
             badge: 'Mais Vendido',
-            savings: 'Economize 5 horas/mês',
+            savings: 'Portaria + Encomendas + Reservas',
             features: [
-                'Até 60 unidades',
+                'Até 50 unidades',
                 'Tudo do Básico +',
-                'Assembleias digitais com votação',
-                'Enquetes e pesquisas online',
-                'Gestão de documentos',
+                'Portaria virtual profissional',
+                'Gestão de encomendas',
                 'Reserva de áreas comuns',
                 'Registro de ocorrências',
-                'Notificações em tempo real',
-                'Dashboard executivo',
-                'Suporte prioritário (4h)'
+                'Relatórios PDF/Excel',
+                'Suporte prioritário',
+                '✓ Pode contratar integrações (WhatsApp, PIX)'
             ],
+            notIncluded: ['Câmeras', 'Governança', 'Automações', 'Assistente IA'],
             highlight: 'Escolha de 80% dos síndicos profissionais'
         },
         {
@@ -62,16 +61,18 @@ export default function UpgradePage() {
             badge: 'Completo',
             features: [
                 'Unidades ilimitadas',
-                'Tudo do Avançado +',
-                'Câmeras de segurança (RTSP)',
-                'Visualização ao vivo',
+                'Tudo do Profissional +',
+                'Câmeras de segurança ao vivo',
+                'Governança digital completa',
+                'Enquetes e assembleias online',
+                'Automações de inadimplência',
                 'Múltiplos condomínios',
-                'Gestão de manutenção',
-                'Controle de fornecedores',
-                'Relatórios personalizados',
-                'Suporte via WhatsApp direto'
+                'Suporte via WhatsApp direto',
+                '✓ Pode contratar Assistente IA',
+                '✓ Pode contratar integrações (WhatsApp, PIX)'
             ],
-            highlight: 'Veja seu condomínio de qualquer lugar'
+            notIncluded: [],
+            highlight: 'Inclui acesso a todos os módulos premium'
         }
     ];
 
