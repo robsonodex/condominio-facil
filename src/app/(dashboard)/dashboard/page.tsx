@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
 import { useUser } from '@/hooks/useUser';
 import { createClient } from '@/lib/supabase/client';
 import { formatCurrency, formatDate, getStatusColor, getStatusLabel } from '@/lib/utils';
-import { Home, AlertTriangle, DollarSign, TrendingUp, TrendingDown, Bell, Calendar } from 'lucide-react';
+import { Home, AlertTriangle, DollarSign, TrendingUp, TrendingDown, Bell, Calendar, Trash2 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import Link from 'next/link';
 import { FinancialEntry, Notice, DashboardStats, ChartData } from '@/types/database';
@@ -159,6 +159,35 @@ export default function DashboardPage() {
         }
     };
 
+    // Função para excluir aviso (apenas superadmin)
+    const handleDeleteNotice = async (id: string) => {
+        if (!isSuperAdmin) return;
+        if (!confirm('Tem certeza que deseja excluir este aviso?')) return;
+
+        const { error } = await supabase.from('notices').delete().eq('id', id);
+        if (!error) {
+            setNotices(notices.filter(n => n.id !== id));
+        } else {
+            alert('Erro ao excluir aviso');
+        }
+    };
+
+    // Função para excluir lançamento financeiro (apenas superadmin)
+    const handleDeleteFinancial = async (id: string) => {
+        if (!isSuperAdmin) return;
+        if (!confirm('Tem certeza que deseja excluir este lançamento?')) return;
+
+        const { error } = await supabase.from('financial_entries').delete().eq('id', id);
+        if (!error) {
+            setStats(prev => prev ? {
+                ...prev,
+                proximosVencimentos: prev.proximosVencimentos.filter(v => v.id !== id)
+            } : null);
+        } else {
+            alert('Erro ao excluir lançamento');
+        }
+    };
+
     // Show skeleton while loading (not blank page)
     if (loading || userLoading) {
         return (
@@ -306,16 +335,29 @@ export default function DashboardPage() {
                         ) : (
                             <div className="space-y-3">
                                 {notices.map((notice) => (
-                                    <Link
+                                    <div
                                         key={notice.id}
-                                        href={`/avisos/${notice.id}`}
-                                        className="block p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                                        className="flex items-center gap-2 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
                                     >
-                                        <p className="font-medium text-gray-900 text-sm truncate">{notice.titulo}</p>
-                                        <p className="text-xs text-gray-500 mt-1">
-                                            {formatDate(notice.data_publicacao)}
-                                        </p>
-                                    </Link>
+                                        <Link
+                                            href={`/avisos/${notice.id}`}
+                                            className="flex-1 min-w-0"
+                                        >
+                                            <p className="font-medium text-gray-900 text-sm truncate">{notice.titulo}</p>
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                {formatDate(notice.data_publicacao)}
+                                            </p>
+                                        </Link>
+                                        {isSuperAdmin && (
+                                            <button
+                                                onClick={() => handleDeleteNotice(notice.id)}
+                                                className="p-1.5 hover:bg-red-100 rounded-lg transition-colors"
+                                                title="Excluir aviso"
+                                            >
+                                                <Trash2 className="h-4 w-4 text-red-500" />
+                                            </button>
+                                        )}
+                                    </div>
                                 ))}
                             </div>
                         )}
@@ -344,6 +386,7 @@ export default function DashboardPage() {
                                         <th className="pb-3">Vencimento</th>
                                         <th className="pb-3 text-right">Valor</th>
                                         <th className="pb-3">Status</th>
+                                        {isSuperAdmin && <th className="pb-3"></th>}
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
@@ -358,6 +401,17 @@ export default function DashboardPage() {
                                                     {getStatusLabel(entry.status)}
                                                 </span>
                                             </td>
+                                            {isSuperAdmin && (
+                                                <td className="py-3">
+                                                    <button
+                                                        onClick={() => handleDeleteFinancial(entry.id)}
+                                                        className="p-1.5 hover:bg-red-100 rounded-lg transition-colors"
+                                                        title="Excluir lançamento"
+                                                    >
+                                                        <Trash2 className="h-4 w-4 text-red-500" />
+                                                    </button>
+                                                </td>
+                                            )}
                                         </tr>
                                     ))}
                                 </tbody>
