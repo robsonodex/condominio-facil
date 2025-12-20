@@ -7,8 +7,9 @@ import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/hooks/useUser';
 import { useAuth } from '@/hooks/useAuth';
 import { formatPhone } from '@/lib/utils';
-import { Plus, Search, Users, Edit, Trash2 } from 'lucide-react';
+import { Plus, Search, Users, Edit, Trash2, Upload } from 'lucide-react';
 import { Unit } from '@/types/database';
+import Link from 'next/link';
 
 // Skeleton for instant feedback
 function MoradoresSkeleton() {
@@ -180,10 +181,18 @@ export default function MoradoresPage() {
                     </p>
                 </div>
                 {(isSindico || (isSuperAdmin && condoId)) && (
-                    <Button onClick={() => { setEditingResident(null); setShowModal(true); }}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Novo Morador
-                    </Button>
+                    <div className="flex gap-2">
+                        <Link href="/moradores/importar">
+                            <Button variant="outline">
+                                <Upload className="h-4 w-4 mr-2" />
+                                Importar CSV
+                            </Button>
+                        </Link>
+                        <Button onClick={() => { setEditingResident(null); setShowModal(true); }}>
+                            <Plus className="h-4 w-4 mr-2" />
+                            Novo Morador
+                        </Button>
+                    </div>
                 )}
             </div>
 
