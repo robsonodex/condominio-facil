@@ -24,6 +24,10 @@ const roleConfig: Record<ViewRole, { label: string; icon: React.ReactNode; color
 };
 
 export function RoleViewSwitcher() {
+    // Funcionalidade desativada - causava problemas de deletar dados de outros usuários
+    return null;
+
+    /* CÓDIGO ORIGINAL COMENTADO
     const { isSuperAdminReal, isImpersonating } = useUser();
     const [viewAsRole, setViewAsRole] = useState<ViewRole>('superadmin');
     const [mounted, setMounted] = useState(false);
@@ -41,7 +45,10 @@ export function RoleViewSwitcher() {
     if (!isSuperAdminReal || isImpersonating || !mounted) {
         return null;
     }
+    */
+}
 
+/* CÓDIGO DO COMPONENTE DESATIVADO - Para reativar, descomentar e remover o return null acima
     const handleChange = (value: string) => {
         const role = value as ViewRole;
         setViewAsRole(role);
@@ -105,7 +112,7 @@ export function RoleViewSwitcher() {
             )}
         </div>
     );
-}
+*/
 
 // Hook to get current viewAs role
 export function useViewAsRole(): ViewRole {
