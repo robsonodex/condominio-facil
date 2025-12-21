@@ -87,7 +87,9 @@ export async function POST(request: NextRequest) {
         // Send credentials email to new user
         try {
             const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://meucondominiofacil.com';
-            await fetch(`${baseUrl}/api/email`, {
+            console.log('[CREATE_USER] Enviando email para:', email, 'baseUrl:', baseUrl);
+
+            const emailResponse = await fetch(`${baseUrl}/api/email`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -104,9 +106,16 @@ export async function POST(request: NextRequest) {
                     internalCall: true
                 })
             });
-            console.log('[CREATE_USER] Credentials email sent to:', email);
-        } catch (emailError) {
-            console.error('[CREATE_USER] Failed to send credentials email:', emailError);
+
+            const emailResult = await emailResponse.json();
+
+            if (emailResponse.ok && emailResult.success) {
+                console.log('[CREATE_USER] ✅ Email enviado com sucesso para:', email);
+            } else {
+                console.error('[CREATE_USER] ❌ Falha ao enviar email:', emailResult.error || 'Erro desconhecido');
+            }
+        } catch (emailError: any) {
+            console.error('[CREATE_USER] ❌ Exceção ao enviar email:', emailError?.message || emailError);
             // Don't fail the request, just log the error
         }
 
