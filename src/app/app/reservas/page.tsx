@@ -104,7 +104,7 @@ export default function AppReservasPage() {
                 <button
                     className="app-button app-button-primary app-w-full"
                     style={{ marginBottom: 20 }}
-                    onClick={() => alert('Funcionalidade disponível em breve!')}
+                    onClick={() => router.push('/app/reservas/nova')}
                 >
                     <Calendar size={20} style={{ marginRight: 8 }} />
                     Nova Reserva
