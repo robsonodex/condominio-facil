@@ -73,6 +73,27 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // 5. Se for morador, criar também registro na tabela residents
+        if (role === 'morador') {
+            const { error: residentError } = await supabaseAdmin
+                .from('residents')
+                .insert({
+                    condo_id,
+                    user_id: authData.user.id,
+                    nome,
+                    email,
+                    telefone: telefone || null,
+                    ativo: true,
+                });
+
+            if (residentError) {
+                console.warn('[CREATE_USER] Aviso: Não foi possível criar registro de morador:', residentError.message);
+                // Não falha a requisição, apenas loga o aviso
+            } else {
+                console.log('[CREATE_USER] ✅ Morador também cadastrado em residents');
+            }
+        }
+
         // Get condo name for email
         let condoNome = '';
         if (condo_id) {
