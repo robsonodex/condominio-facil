@@ -135,7 +135,7 @@ export default function AppLoginPage() {
 
                     {/* Link Esqueceu sua Senha */}
                     <a
-                        href="/forgot-password"
+                        href="/app/forgot-password"
                         style={{
                             display: 'block',
                             textAlign: 'right',
