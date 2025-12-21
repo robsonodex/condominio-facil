@@ -1,10 +1,16 @@
 {
     "expo": {
-        "name": "Condomínio Fácil Mobile",
+        "name": "Meu Condomínio Fácil",
         "slug": "condominio-facil-mobile",
         "version": "1.0.0",
         "sdkVersion": "54.0.0",
         "orientation": "portrait",
+        "icon": "./assets/icon.png",
+        "splash": {
+            "image": "./assets/splash.png",
+            "resizeMode": "contain",
+            "backgroundColor": "#10b981"
+        },
         "platforms": [
             "ios",
             "android",
@@ -18,10 +24,15 @@
             "favicon": "./assets/favicon.png"
         },
         "android": {
-            "package": "com.condominiofacil.app"
+            "package": "com.condominiofacil.app",
+            "adaptiveIcon": {
+                "foregroundImage": "./assets/adaptive-icon.png",
+                "backgroundColor": "#10b981"
+            }
         },
         "ios": {
-            "bundleIdentifier": "com.condominiofacil.app"
+            "bundleIdentifier": "com.condominiofacil.app",
+            "icon": "./assets/icon.png"
         }
     }
 }
