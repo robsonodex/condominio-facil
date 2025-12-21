@@ -17,7 +17,9 @@ export default function AdminDashboardPage() {
     }, []);
 
     const fetchStats = async () => {
-        // Execute all queries in parallel
+        // Execute all queries in parallel - Excluindo condomínio Demo
+        const DEMO_CONDO_NAME = 'Residencial Demo';
+
         const [
             { count: totalCondos },
             { count: activeCondos },
@@ -27,13 +29,13 @@ export default function AdminDashboardPage() {
             { data: subscriptions },
             { data: recentCondosData }
         ] = await Promise.all([
-            supabase.from('condos').select('id', { count: 'exact' }),
-            supabase.from('condos').select('id', { count: 'exact' }).eq('status', 'ativo'),
-            supabase.from('condos').select('id', { count: 'exact' }).eq('status', 'teste'),
-            supabase.from('condos').select('id', { count: 'exact' }).eq('status', 'suspenso'),
+            supabase.from('condos').select('id', { count: 'exact' }).neq('nome', DEMO_CONDO_NAME),
+            supabase.from('condos').select('id', { count: 'exact' }).eq('status', 'ativo').neq('nome', DEMO_CONDO_NAME),
+            supabase.from('condos').select('id', { count: 'exact' }).eq('status', 'teste').neq('nome', DEMO_CONDO_NAME),
+            supabase.from('condos').select('id', { count: 'exact' }).eq('status', 'suspenso').neq('nome', DEMO_CONDO_NAME),
             supabase.from('users').select('id', { count: 'exact' }),
             supabase.from('subscriptions').select('valor_mensal_cobrado').eq('status', 'ativo'),
-            supabase.from('condos').select('*, plan:plans(nome_plano)').order('created_at', { ascending: false }).limit(5)
+            supabase.from('condos').select('*, plan:plans(nome_plano)').neq('nome', DEMO_CONDO_NAME).order('created_at', { ascending: false }).limit(5)
         ]);
 
         const mrr = subscriptions?.reduce((sum, s) => sum + Number(s.valor_mensal_cobrado || 0), 0) || 0;

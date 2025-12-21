@@ -36,6 +36,7 @@ export default function AdminCondominiosPage() {
         const { data } = await supabase
             .from('condos')
             .select('*, plan:plans(*)')
+            .neq('nome', 'Residencial Demo')
             .order('created_at', { ascending: false });
         setCondos(data || []);
         setLoading(false);
