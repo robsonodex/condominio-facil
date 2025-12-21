@@ -8,6 +8,7 @@ import { Loader2 } from 'lucide-react';
 import { ImpersonationBanner } from '@/components/admin/ImpersonationBanner';
 import TrialBanner from '@/components/TrialBanner';
 import { DemoBanner } from '@/components/demo/DemoBanner';
+import { SuspendedBanner } from '@/components/SuspendedBanner';
 import { LinkedInChat } from '@/components/shared/LinkedInChat';
 
 function LoadingScreen() {
@@ -59,6 +60,7 @@ export default function DashboardLayout({
             <DemoBanner />
             <ImpersonationBanner />
             <TrialBanner />
+            <SuspendedBanner />
             <div className="flex">
                 <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
                 <div className="flex-1 lg:ml-0">

@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "e39fa8f6-9791-4929-a759-67e1c4ccd1d8"
+      }
+    },
+    "android": {
+      "package": "com.robsonodex.condominiofacil"
+    }
+  }
+}

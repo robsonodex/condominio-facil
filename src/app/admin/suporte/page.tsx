@@ -241,33 +241,33 @@ export default function AdminSuportePage() {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="grid grid-cols-4 gap-3">
                 <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0">
-                    <CardContent className="py-4 text-center">
-                        <Clock className="h-8 w-8 mx-auto mb-2 opacity-80" />
-                        <p className="text-2xl font-bold">{openChats}</p>
-                        <p className="text-sm text-blue-100">Aguardando</p>
+                    <CardContent className="py-3 px-4 text-center">
+                        <Clock className="h-5 w-5 mx-auto mb-1 opacity-80" />
+                        <p className="text-xl font-bold">{openChats}</p>
+                        <p className="text-xs text-blue-100">Aguardando</p>
                     </CardContent>
                 </Card>
                 <Card className="bg-gradient-to-br from-amber-500 to-amber-600 text-white border-0">
-                    <CardContent className="py-4 text-center">
-                        <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-80" />
-                        <p className="text-2xl font-bold">{inProgressChats}</p>
-                        <p className="text-sm text-amber-100">Em Atendimento</p>
+                    <CardContent className="py-3 px-4 text-center">
+                        <MessageCircle className="h-5 w-5 mx-auto mb-1 opacity-80" />
+                        <p className="text-xl font-bold">{inProgressChats}</p>
+                        <p className="text-xs text-amber-100">Em Atendimento</p>
                     </CardContent>
                 </Card>
                 <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0">
-                    <CardContent className="py-4 text-center">
-                        <CheckCircle className="h-8 w-8 mx-auto mb-2 opacity-80" />
-                        <p className="text-2xl font-bold">{chats.filter(c => c.status === 'resolvido').length}</p>
-                        <p className="text-sm text-emerald-100">Resolvidos</p>
+                    <CardContent className="py-3 px-4 text-center">
+                        <CheckCircle className="h-5 w-5 mx-auto mb-1 opacity-80" />
+                        <p className="text-xl font-bold">{chats.filter(c => c.status === 'resolvido').length}</p>
+                        <p className="text-xs text-emerald-100">Resolvidos</p>
                     </CardContent>
                 </Card>
                 <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0">
-                    <CardContent className="py-4 text-center">
-                        <Users className="h-8 w-8 mx-auto mb-2 opacity-80" />
-                        <p className="text-2xl font-bold">{chats.length}</p>
-                        <p className="text-sm text-purple-100">Total</p>
+                    <CardContent className="py-3 px-4 text-center">
+                        <Users className="h-5 w-5 mx-auto mb-1 opacity-80" />
+                        <p className="text-xl font-bold">{chats.length}</p>
+                        <p className="text-xs text-purple-100">Total</p>
                     </CardContent>
                 </Card>
             </div>
