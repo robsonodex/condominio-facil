@@ -59,7 +59,11 @@ export default function DashboardPage() {
             let occQuery = supabase.from('occurrences').select('id', { count: 'exact' }).in('status', ['aberta', 'em_andamento']);
             let inadQuery = supabase.from('financial_entries').select('valor').eq('tipo', 'receita').in('status', ['em_aberto', 'atrasado']);
             let vencQuery = supabase.from('financial_entries').select('*').eq('tipo', 'despesa').gte('data_vencimento', today).order('data_vencimento').limit(5);
-            let noticesQuery = supabase.from('notices').select('*').order('data_publicacao', { ascending: false }).limit(5);
+
+            // Avisos - só busca se tiver condoId (superadmin sem condo não vê avisos de outros)
+            let noticesQuery = condoId
+                ? supabase.from('notices').select('*').eq('condo_id', condoId).order('data_publicacao', { ascending: false }).limit(5)
+                : null;
 
             // Single query for ALL chart data (last 6 months)
             let chartQuery = supabase.from('financial_entries')
@@ -67,40 +71,32 @@ export default function DashboardPage() {
                 .gte('data_vencimento', sixMonthsAgo)
                 .lte('data_vencimento', lastDay);
 
-            // Apply condo filter if needed (SUPERADMIN without condo sees all)
-            if (condoId && !isSuperAdmin) {
+            // Apply condo filter if needed
+            if (condoId) {
                 unitsQuery = unitsQuery.eq('condo_id', condoId);
                 occQuery = occQuery.eq('condo_id', condoId);
                 inadQuery = inadQuery.eq('condo_id', condoId);
                 vencQuery = vencQuery.eq('condo_id', condoId);
-                noticesQuery = noticesQuery.eq('condo_id', condoId);
-                chartQuery = chartQuery.eq('condo_id', condoId);
-            } else if (condoId) {
-                // If SUPERADMIN has a condo, filter by it
-                unitsQuery = unitsQuery.eq('condo_id', condoId);
-                occQuery = occQuery.eq('condo_id', condoId);
-                inadQuery = inadQuery.eq('condo_id', condoId);
-                vencQuery = vencQuery.eq('condo_id', condoId);
-                noticesQuery = noticesQuery.eq('condo_id', condoId);
                 chartQuery = chartQuery.eq('condo_id', condoId);
             }
 
-            // Execute ALL queries in parallel - ONLY 6 queries instead of 18+
+            // Execute ALL queries in parallel - ONLY 5 queries instead of 18+
             const [
                 { count: totalUnidades },
                 { count: ocorrenciasAbertas },
                 { data: inadData },
                 { data: vencimentos },
-                { data: noticesData },
                 { data: chartRawData }
             ] = await Promise.all([
                 unitsQuery,
                 occQuery,
                 inadQuery,
                 vencQuery,
-                noticesQuery,
                 chartQuery
             ]);
+
+            // Buscar avisos separadamente (só se tiver condoId)
+            const noticesData = noticesQuery ? (await noticesQuery).data : [];
 
             // Process chart data locally (fast)
             const monthlyData: { [key: string]: { receitas: number; despesas: number } } = {};
