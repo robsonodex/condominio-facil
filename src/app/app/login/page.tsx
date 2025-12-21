@@ -132,6 +132,21 @@ export default function AppLoginPage() {
                             {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                         </button>
                     </div>
+
+                    {/* Link Esqueceu sua Senha */}
+                    <a
+                        href="/forgot-password"
+                        style={{
+                            display: 'block',
+                            textAlign: 'right',
+                            marginTop: 8,
+                            color: '#10b981',
+                            fontSize: 14,
+                            textDecoration: 'none'
+                        }}
+                    >
+                        Esqueceu sua senha?
+                    </a>
                 </div>
 
                 <button
