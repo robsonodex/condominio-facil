@@ -339,7 +339,16 @@ function CondoModal({ isOpen, onClose, onSuccess, condo, plans }: {
     const [planoId, setPlanoId] = useState('');
     const [status, setStatus] = useState('teste');
     const [dataFimTeste, setDataFimTeste] = useState('');
+
+    // Campos do Síndico (só para novo condo)
+    const [criarSindico, setCriarSindico] = useState(true);
+    const [sindicoNome, setSindicoNome] = useState('');
+    const [sindicoEmail, setSindicoEmail] = useState('');
+    const [sindicoTelefone, setSindicoTelefone] = useState('');
+    const [sindicoSenha, setSindicoSenha] = useState('');
+
     const supabase = createClient();
+    const { session } = useAuth();
 
     useEffect(() => {
         if (condo) {
@@ -370,6 +379,16 @@ function CondoModal({ isOpen, onClose, onSuccess, condo, plans }: {
             setPlanoId('');
             setStatus('teste');
             setDataFimTeste(trialEnd.toISOString().split('T')[0]);
+            // Reset síndico
+            setCriarSindico(true);
+            setSindicoNome('');
+            setSindicoEmail('');
+            setSindicoTelefone('');
+            // Gerar senha aleatória
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+            let senha = '';
+            for (let i = 0; i < 8; i++) { senha += chars.charAt(Math.floor(Math.random() * chars.length)); }
+            setSindicoSenha(senha);
         }
     }, [condo]);
 
@@ -454,6 +473,37 @@ function CondoModal({ isOpen, onClose, onSuccess, condo, plans }: {
             } catch (emailError) {
                 console.error('[CONDO] Erro ao enviar email:', emailError);
                 // Não bloquear a operação por falha de email
+            }
+        }
+
+        // Criar síndico se solicitado (só para novo condo)
+        if (!condo && criarSindico && sindicoEmail && sindicoNome && insertedCondoId) {
+            try {
+                const response = await fetch('/api/usuarios/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session?.access_token}`,
+                    },
+                    body: JSON.stringify({
+                        email: sindicoEmail,
+                        password: sindicoSenha,
+                        nome: sindicoNome,
+                        telefone: sindicoTelefone || null,
+                        role: 'sindico',
+                        condo_id: insertedCondoId,
+                    }),
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    console.log('[CONDO] Síndico criado com sucesso:', sindicoEmail);
+                } else {
+                    console.error('[CONDO] Erro ao criar síndico:', result.error);
+                    alert('Condomínio criado, mas houve erro ao criar síndico: ' + result.error);
+                }
+            } catch (err: any) {
+                console.error('[CONDO] Erro ao criar síndico:', err);
             }
         }
 
@@ -567,6 +617,62 @@ function CondoModal({ isOpen, onClose, onSuccess, condo, plans }: {
                         value={dataFimTeste}
                         onChange={(e) => setDataFimTeste(e.target.value)}
                     />
+                )}
+
+                {/* Seção Síndico - só para novo condo */}
+                {!condo && (
+                    <div className="border-t pt-4 mt-4">
+                        <div className="flex items-center gap-2 mb-4">
+                            <input
+                                type="checkbox"
+                                id="criarSindico"
+                                checked={criarSindico}
+                                onChange={(e) => setCriarSindico(e.target.checked)}
+                                className="w-4 h-4 text-emerald-600 rounded border-gray-300"
+                            />
+                            <label htmlFor="criarSindico" className="text-sm font-medium text-gray-700">
+                                Criar usuário Síndico para este condomínio
+                            </label>
+                        </div>
+
+                        {criarSindico && (
+                            <div className="space-y-3 bg-gray-50 p-4 rounded-lg">
+                                <Input
+                                    label="Nome do Síndico"
+                                    value={sindicoNome}
+                                    onChange={(e) => setSindicoNome(e.target.value)}
+                                    placeholder="Nome completo"
+                                    required={criarSindico}
+                                />
+                                <div className="grid grid-cols-2 gap-3">
+                                    <Input
+                                        label="Email do Síndico"
+                                        type="email"
+                                        value={sindicoEmail}
+                                        onChange={(e) => setSindicoEmail(e.target.value)}
+                                        placeholder="sindico@email.com"
+                                        required={criarSindico}
+                                    />
+                                    <Input
+                                        label="Telefone"
+                                        value={sindicoTelefone}
+                                        onChange={(e) => setSindicoTelefone(e.target.value)}
+                                        placeholder="(00) 00000-0000"
+                                    />
+                                </div>
+                                <Input
+                                    label="Senha Inicial"
+                                    value={sindicoSenha}
+                                    onChange={(e) => setSindicoSenha(e.target.value)}
+                                    placeholder="Mínimo 6 caracteres"
+                                    required={criarSindico}
+                                />
+                                <p className="text-xs text-gray-500">
+                                    O síndico receberá um email com as credenciais de acesso.
+                                </p>
+                            </div>
+                        )}
+                    </div>
                 )}
 
                 <div className="flex gap-3 justify-end pt-4">
