@@ -82,6 +82,12 @@ export default function UsuariosCondoPage() {
             } else {
                 // CRITICAL FIX: Use API endpoint with service role
                 // This prevents auto-login bug (síndico being logged out)
+
+                // Verificar se condoId está disponível
+                if (!condoId) {
+                    throw new Error('Condomínio não identificado. Recarregue a página e tente novamente.');
+                }
+
                 const response = await fetch('/api/usuarios/create', {
                     method: 'POST',
                     headers: {
@@ -102,6 +108,8 @@ export default function UsuariosCondoPage() {
                 const data = await response.json();
 
                 if (!response.ok) {
+                    // Mostrar erro mais detalhado
+                    console.error('[USUARIOS] Erro ao criar:', data);
                     throw new Error(data.error || 'Erro ao criar usuário');
                 }
 
