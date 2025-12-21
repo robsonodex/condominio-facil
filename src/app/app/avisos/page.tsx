@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { MobileHeader, BottomNav } from '@/components/mobile';
-import { Bell, ChevronRight } from 'lucide-react';
+import { Bell, ChevronRight, Plus } from 'lucide-react';
 import Link from 'next/link';
 
 interface Notice {
@@ -81,6 +81,18 @@ export default function AppAvisosPage() {
             <MobileHeader title="Avisos" showBack />
 
             <main className="app-content">
+                {/* Botão Novo Aviso - só síndico */}
+                {role === 'sindico' && (
+                    <button
+                        className="app-button app-button-primary app-w-full"
+                        style={{ marginBottom: 16 }}
+                        onClick={() => router.push('/app/avisos/novo')}
+                    >
+                        <Plus size={20} style={{ marginRight: 8 }} />
+                        Publicar Aviso
+                    </button>
+                )}
+
                 {loading ? (
                     <div className="app-loading">
                         <div className="app-spinner" />

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { MobileHeader, BottomNav } from '@/components/mobile';
-import { Users, ChevronRight, Phone, Mail } from 'lucide-react';
+import { Users, ChevronRight, Phone, Mail, Plus } from 'lucide-react';
 
 interface Morador {
     id: string;
@@ -56,7 +56,10 @@ export default function AppMoradoresPage() {
                     .order('nome')
                     .limit(50);
 
-                setMoradores(moradoresData || []);
+                setMoradores(moradoresData?.map((m: any) => ({
+                    ...m,
+                    unidade: Array.isArray(m.unidade) ? m.unidade[0] : m.unidade
+                })) || []);
             }
         } catch (err) {
             console.error('[APP] Erro:', err);
@@ -80,6 +83,16 @@ export default function AppMoradoresPage() {
             <MobileHeader title="Moradores" showBack />
 
             <main className="app-content">
+                {/* Botão Cadastrar */}
+                <button
+                    className="app-button app-button-primary app-w-full"
+                    style={{ marginBottom: 16 }}
+                    onClick={() => router.push('/app/moradores/novo')}
+                >
+                    <Plus size={20} style={{ marginRight: 8 }} />
+                    Cadastrar Morador
+                </button>
+
                 <p style={{ color: '#6b7280', fontSize: 14, marginBottom: 16 }}>
                     {moradores.length} morador(es) cadastrado(s)
                 </p>

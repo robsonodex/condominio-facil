@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { MobileHeader, BottomNav } from '@/components/mobile';
-import { Users, ChevronRight } from 'lucide-react';
+import { Users, ChevronRight, Plus } from 'lucide-react';
 
 interface Usuario {
     id: string;
@@ -98,6 +98,16 @@ export default function AppUsuariosPage() {
             <MobileHeader title="Usuários" showBack />
 
             <main className="app-content">
+                {/* Botão Cadastrar */}
+                <button
+                    className="app-button app-button-primary app-w-full"
+                    style={{ marginBottom: 16 }}
+                    onClick={() => router.push('/app/usuarios/novo')}
+                >
+                    <Plus size={20} style={{ marginRight: 8 }} />
+                    Cadastrar Usuário
+                </button>
+
                 <p style={{ color: '#6b7280', fontSize: 14, marginBottom: 16 }}>
                     {usuarios.length} usuário(s) com acesso ao sistema
                 </p>

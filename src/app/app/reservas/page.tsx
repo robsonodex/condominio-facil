@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { MobileHeader, BottomNav } from '@/components/mobile';
-import { Calendar, Clock, MapPin, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { Calendar, Clock, MapPin, CheckCircle, XCircle, Loader2, Plus, Settings } from 'lucide-react';
 
 interface Reservation {
     id: string;
@@ -100,6 +100,28 @@ export default function AppReservasPage() {
             <MobileHeader title="Minhas Reservas" showBack />
 
             <main className="app-content">
+                {/* Botões de ação para síndico */}
+                {role === 'sindico' && (
+                    <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+                        <button
+                            className="app-button"
+                            style={{ flex: 1, background: '#dcfce7', color: '#166534', border: 'none' }}
+                            onClick={() => router.push('/app/reservas/aprovar')}
+                        >
+                            <CheckCircle size={18} style={{ marginRight: 6 }} />
+                            Aprovar
+                        </button>
+                        <button
+                            className="app-button"
+                            style={{ flex: 1, background: '#dbeafe', color: '#1e40af', border: 'none' }}
+                            onClick={() => router.push('/app/espacos')}
+                        >
+                            <Settings size={18} style={{ marginRight: 6 }} />
+                            Espaços
+                        </button>
+                    </div>
+                )}
+
                 {/* Botão nova reserva */}
                 <button
                     className="app-button app-button-primary app-w-full"
