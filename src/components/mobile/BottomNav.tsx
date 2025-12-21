@@ -30,7 +30,8 @@ const navByRole: Record<string, NavItem[]> = {
     ],
     porteiro: [
         { href: '/app/dashboard', label: 'Home', icon: <Home /> },
-        { href: '/app/portaria', label: 'Portaria', icon: <DoorOpen /> },
+        { href: '/app/cameras', label: 'Câmeras', icon: <DoorOpen /> },
+        { href: '/app/ocorrencias', label: 'Ocorrências', icon: <AlertTriangle /> },
         { href: '/app/perfil', label: 'Perfil', icon: <User /> },
     ],
     superadmin: [
