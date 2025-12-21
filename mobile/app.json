@@ -28,11 +28,33 @@
             "adaptiveIcon": {
                 "foregroundImage": "./assets/adaptive-icon.png",
                 "backgroundColor": "#10b981"
-            }
+            },
+            "permissions": [
+                "android.permission.VIBRATE",
+                "android.permission.RECEIVE_BOOT_COMPLETED"
+            ],
+            "useNextNotificationsApi": true
         },
         "ios": {
             "bundleIdentifier": "com.condominiofacil.app",
             "icon": "./assets/icon.png"
+        },
+        "plugins": [
+            [
+                "expo-notifications",
+                {
+                    "icon": "./assets/icon.png",
+                    "color": "#10b981",
+                    "sounds": [],
+                    "mode": "production"
+                }
+            ]
+        ],
+        "notification": {
+            "icon": "./assets/icon.png",
+            "color": "#10b981",
+            "androidMode": "default",
+            "androidCollapsedTitle": "Meu Condomínio Fácil"
         }
     }
 }
