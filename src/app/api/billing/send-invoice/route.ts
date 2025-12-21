@@ -85,45 +85,52 @@ export async function POST(request: NextRequest) {
         const nomeCondo = condo.nome;
         const nomePlano = plan.nome_plano;
 
-        // Criar preferência de pagamento no Mercado Pago via API
-        const preferenceBody = {
-            items: [{
-                id: subscription_id,
-                title: `Mensalidade ${nomePlano} - ${nomeCondo}`,
-                description: `Assinatura mensal do Condomínio Fácil`,
-                unit_price: valor,
-                quantity: 1,
-                currency_id: 'BRL'
-            }],
-            external_reference: subscription_id,
-            back_urls: {
-                success: `${process.env.NEXT_PUBLIC_APP_URL}/assinatura?status=sucesso`,
-                failure: `${process.env.NEXT_PUBLIC_APP_URL}/assinatura?status=falha`,
-                pending: `${process.env.NEXT_PUBLIC_APP_URL}/assinatura?status=pendente`
-            },
-            auto_return: 'approved',
-            notification_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/mercadopago`,
-        };
+        // Criar link de pagamento (Mercado Pago é opcional)
+        let linkPagamento = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://meucondominiofacil.com'}/assinatura`;
 
-        const mpResponse = await fetch(`${MP_API_URL}/checkout/preferences`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${MP_ACCESS_TOKEN}`,
-            },
-            body: JSON.stringify(preferenceBody),
-        });
+        if (MP_ACCESS_TOKEN) {
+            try {
+                const preferenceBody = {
+                    items: [{
+                        id: subscription_id,
+                        title: `Mensalidade ${nomePlano} - ${nomeCondo}`,
+                        description: `Assinatura mensal do Condomínio Fácil`,
+                        unit_price: valor,
+                        quantity: 1,
+                        currency_id: 'BRL'
+                    }],
+                    external_reference: subscription_id,
+                    back_urls: {
+                        success: `${process.env.NEXT_PUBLIC_SITE_URL}/assinatura?status=sucesso`,
+                        failure: `${process.env.NEXT_PUBLIC_SITE_URL}/assinatura?status=falha`,
+                        pending: `${process.env.NEXT_PUBLIC_SITE_URL}/assinatura?status=pendente`
+                    },
+                    auto_return: 'approved',
+                    notification_url: `${process.env.NEXT_PUBLIC_SITE_URL}/api/webhooks/mercadopago`,
+                };
 
-        if (!mpResponse.ok) {
-            const errorText = await mpResponse.text();
-            console.error('Mercado Pago error:', errorText);
-            return NextResponse.json({
-                error: 'Erro ao criar link de pagamento no Mercado Pago'
-            }, { status: 500 });
+                const mpResponse = await fetch(`${MP_API_URL}/checkout/preferences`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${MP_ACCESS_TOKEN}`,
+                    },
+                    body: JSON.stringify(preferenceBody),
+                });
+
+                if (mpResponse.ok) {
+                    const preference = await mpResponse.json();
+                    linkPagamento = preference.init_point;
+                    console.log('[BILLING] Link MP criado:', linkPagamento);
+                } else {
+                    console.warn('[BILLING] Mercado Pago indisponível, usando link padrão');
+                }
+            } catch (mpError: any) {
+                console.warn('[BILLING] Erro MP:', mpError.message);
+            }
+        } else {
+            console.log('[BILLING] Mercado Pago não configurado, usando link padrão');
         }
-
-        const preference = await mpResponse.json();
-        const linkPagamento = preference.init_point;
 
         // Criar invoice no banco (ignora erro se tabela não existir)
         let invoice: any = null;

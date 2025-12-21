@@ -119,11 +119,13 @@ export default function AdminCobrancasPage() {
         setSendingCharge(true);
         let enviados = 0;
         let erros = 0;
+        let ultimoErro = '';
 
         for (const subId of selectedSubs) {
             const sub = subscriptions.find(s => s.id === subId);
             if (!sub?.condo?.email_contato) {
                 erros++;
+                ultimoErro = `${sub?.condo?.nome || 'Condomínio'}: sem email de contato`;
                 continue;
             }
 
@@ -143,9 +145,12 @@ export default function AdminCobrancasPage() {
                 if (res.ok) {
                     enviados++;
                 } else {
+                    const data = await res.json();
+                    ultimoErro = `${sub?.condo?.nome}: ${data.error || 'Erro desconhecido'}`;
                     erros++;
                 }
-            } catch {
+            } catch (e: any) {
+                ultimoErro = `${sub?.condo?.nome}: ${e.message}`;
                 erros++;
             }
         }
@@ -155,7 +160,11 @@ export default function AdminCobrancasPage() {
         setSelectedSubs([]);
         setChargeDesc('');
 
-        alert(`✅ ${enviados} cobrança(s) enviada(s)${erros > 0 ? `, ${erros} erro(s)` : ''}`);
+        if (erros > 0 && enviados === 0) {
+            alert(`❌ Erro ao enviar: ${ultimoErro}`);
+        } else {
+            alert(`✅ ${enviados} cobrança(s) enviada(s)${erros > 0 ? `\n⚠️ ${erros} erro(s): ${ultimoErro}` : ''}`);
+        }
         fetchInvoices();
     };
 
