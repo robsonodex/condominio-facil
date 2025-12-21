@@ -30,29 +30,40 @@ export default function AppAvisosPage() {
     }, []);
 
     const loadData = async () => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) {
             router.push('/app/login');
             return;
         }
 
-        const { data: profile } = await supabase
-            .from('users')
-            .select('role, condo_id')
-            .eq('auth_id', user.id)
-            .single();
+        // Buscar perfil via API
+        try {
+            const response = await fetch('/api/auth/profile', {
+                credentials: 'include',
+                cache: 'no-store',
+                headers: {
+                    'Authorization': `Bearer ${session.access_token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
 
-        if (profile) {
-            setRole(profile.role as any);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.profile) {
+                    setRole(data.profile.role as any);
 
-            const { data: noticesData } = await supabase
-                .from('notices')
-                .select('*')
-                .eq('condo_id', profile.condo_id)
-                .order('data_publicacao', { ascending: false })
-                .limit(20);
+                    const { data: noticesData } = await supabase
+                        .from('notices')
+                        .select('*')
+                        .eq('condo_id', data.profile.condo_id)
+                        .order('data_publicacao', { ascending: false })
+                        .limit(20);
 
-            setNotices(noticesData || []);
+                    setNotices(noticesData || []);
+                }
+            }
+        } catch (err) {
+            console.error('[APP] Erro ao buscar perfil:', err);
         }
         setLoading(false);
     };

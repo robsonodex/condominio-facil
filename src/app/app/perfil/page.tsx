@@ -36,28 +36,40 @@ export default function AppPerfilPage() {
     }, []);
 
     const loadData = async () => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) {
             router.push('/app/login');
             return;
         }
 
-        const { data: profileData } = await supabase
-            .from('users')
-            .select('*')
-            .eq('auth_id', user.id)
-            .single();
+        // Buscar perfil via API (mesmo método do site web)
+        try {
+            const response = await fetch('/api/auth/profile', {
+                credentials: 'include',
+                cache: 'no-store',
+                headers: {
+                    'Authorization': `Bearer ${session.access_token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
 
-        if (profileData) {
-            setProfile(profileData);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.profile) {
+                    setProfile(data.profile);
 
-            const { data: condoData } = await supabase
-                .from('condos')
-                .select('nome, cidade, estado')
-                .eq('id', profileData.condo_id)
-                .single();
+                    // Buscar dados do condomínio
+                    const { data: condoData } = await supabase
+                        .from('condos')
+                        .select('nome, cidade, estado')
+                        .eq('id', data.profile.condo_id)
+                        .single();
 
-            setCondo(condoData);
+                    setCondo(condoData);
+                }
+            }
+        } catch (err) {
+            console.error('[APP] Erro ao buscar perfil:', err);
         }
         setLoading(false);
     };

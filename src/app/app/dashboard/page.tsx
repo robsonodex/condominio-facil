@@ -37,32 +37,42 @@ export default function AppDashboardPage() {
     }, []);
 
     const checkAuth = async () => {
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { session } } = await supabase.auth.getSession();
 
-        if (!user) {
+        if (!session?.user) {
             router.push('/app/login');
             return;
         }
 
-        // Buscar perfil
-        const { data: profileData } = await supabase
-            .from('users')
-            .select('*')
-            .eq('auth_id', user.id)
-            .single();
+        // Buscar perfil via API (mesmo método do site web)
+        try {
+            const response = await fetch('/api/auth/profile', {
+                credentials: 'include',
+                cache: 'no-store',
+                headers: {
+                    'Authorization': `Bearer ${session.access_token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
 
-        if (profileData) {
-            setProfile(profileData);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.profile) {
+                    setProfile(data.profile);
 
-            // Buscar avisos
-            const { data: noticesData } = await supabase
-                .from('notices')
-                .select('id, titulo, data_publicacao')
-                .eq('condo_id', profileData.condo_id)
-                .order('data_publicacao', { ascending: false })
-                .limit(3);
+                    // Buscar avisos
+                    const { data: noticesData } = await supabase
+                        .from('notices')
+                        .select('id, titulo, data_publicacao')
+                        .eq('condo_id', data.profile.condo_id)
+                        .order('data_publicacao', { ascending: false })
+                        .limit(3);
 
-            setNotices(noticesData || []);
+                    setNotices(noticesData || []);
+                }
+            }
+        } catch (err) {
+            console.error('[APP] Erro ao buscar perfil:', err);
         }
 
         setLoading(false);
