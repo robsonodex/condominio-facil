@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { MobileHeader, BottomNav } from '@/components/mobile';
-import { Bell, AlertTriangle, DollarSign, ChevronRight } from 'lucide-react';
+import { Bell, AlertTriangle, DollarSign, ChevronRight, Calendar, CreditCard, DoorOpen } from 'lucide-react';
 import Link from 'next/link';
 
 interface UserProfile {
@@ -134,6 +134,32 @@ export default function AppDashboardPage() {
                                 <p style={{ fontWeight: 600, color: '#111827', fontSize: 14 }}>Financeiro</p>
                             </div>
                         </Link>
+                    )}
+
+                    {role === 'porteiro' && (
+                        <Link href="/app/portaria" style={{ textDecoration: 'none' }}>
+                            <div className="app-card app-ripple" style={{ textAlign: 'center', cursor: 'pointer' }}>
+                                <DoorOpen size={32} style={{ color: '#8b5cf6', marginBottom: 8 }} />
+                                <p style={{ fontWeight: 600, color: '#111827', fontSize: 14 }}>Portaria</p>
+                            </div>
+                        </Link>
+                    )}
+
+                    {role === 'morador' && (
+                        <>
+                            <Link href="/app/reservas" style={{ textDecoration: 'none' }}>
+                                <div className="app-card app-ripple" style={{ textAlign: 'center', cursor: 'pointer' }}>
+                                    <Calendar size={32} style={{ color: '#8b5cf6', marginBottom: 8 }} />
+                                    <p style={{ fontWeight: 600, color: '#111827', fontSize: 14 }}>Reservas</p>
+                                </div>
+                            </Link>
+                            <Link href="/app/minhas-cobrancas" style={{ textDecoration: 'none' }}>
+                                <div className="app-card app-ripple" style={{ textAlign: 'center', cursor: 'pointer' }}>
+                                    <CreditCard size={32} style={{ color: '#3b82f6', marginBottom: 8 }} />
+                                    <p style={{ fontWeight: 600, color: '#111827', fontSize: 14 }}>Cobranças</p>
+                                </div>
+                            </Link>
+                        </>
                     )}
                 </div>
 
