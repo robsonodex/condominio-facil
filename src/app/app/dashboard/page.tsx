@@ -111,57 +111,119 @@ export default function AppDashboardPage() {
                     </p>
                 </div>
 
-                {/* Cards de acesso rápido */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>
-                    <Link href="/app/avisos" style={{ textDecoration: 'none' }}>
-                        <div className="app-card app-ripple" style={{ textAlign: 'center', cursor: 'pointer' }}>
-                            <Bell size={32} style={{ color: '#10b981', marginBottom: 8 }} />
-                            <p style={{ fontWeight: 600, color: '#111827', fontSize: 14 }}>Avisos</p>
-                        </div>
-                    </Link>
-
-                    <Link href="/app/ocorrencias" style={{ textDecoration: 'none' }}>
-                        <div className="app-card app-ripple" style={{ textAlign: 'center', cursor: 'pointer' }}>
-                            <AlertTriangle size={32} style={{ color: '#f59e0b', marginBottom: 8 }} />
-                            <p style={{ fontWeight: 600, color: '#111827', fontSize: 14 }}>Ocorrências</p>
-                        </div>
-                    </Link>
-
-                    {role === 'sindico' && (
-                        <Link href="/app/financeiro" style={{ textDecoration: 'none' }}>
+                {/* Cards de acesso rápido - SÍNDICO */}
+                {role === 'sindico' && (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>
+                        <Link href="/app/moradores" style={{ textDecoration: 'none' }}>
                             <div className="app-card app-ripple" style={{ textAlign: 'center', cursor: 'pointer' }}>
-                                <DollarSign size={32} style={{ color: '#3b82f6', marginBottom: 8 }} />
-                                <p style={{ fontWeight: 600, color: '#111827', fontSize: 14 }}>Financeiro</p>
+                                <Bell size={32} style={{ color: '#10b981', marginBottom: 8 }} />
+                                <p style={{ fontWeight: 600, color: '#111827', fontSize: 14 }}>Moradores</p>
                             </div>
                         </Link>
-                    )}
-
-                    {role === 'porteiro' && (
-                        <Link href="/app/portaria" style={{ textDecoration: 'none' }}>
+                        <Link href="/app/unidades" style={{ textDecoration: 'none' }}>
                             <div className="app-card app-ripple" style={{ textAlign: 'center', cursor: 'pointer' }}>
-                                <DoorOpen size={32} style={{ color: '#8b5cf6', marginBottom: 8 }} />
-                                <p style={{ fontWeight: 600, color: '#111827', fontSize: 14 }}>Portaria</p>
+                                <DoorOpen size={32} style={{ color: '#3b82f6', marginBottom: 8 }} />
+                                <p style={{ fontWeight: 600, color: '#111827', fontSize: 14 }}>Unidades</p>
                             </div>
                         </Link>
-                    )}
+                        <Link href="/app/usuarios" style={{ textDecoration: 'none' }}>
+                            <div className="app-card app-ripple" style={{ textAlign: 'center', cursor: 'pointer' }}>
+                                <DollarSign size={32} style={{ color: '#8b5cf6', marginBottom: 8 }} />
+                                <p style={{ fontWeight: 600, color: '#111827', fontSize: 14 }}>Usuários</p>
+                            </div>
+                        </Link>
+                        <Link href="/app/avisos" style={{ textDecoration: 'none' }}>
+                            <div className="app-card app-ripple" style={{ textAlign: 'center', cursor: 'pointer' }}>
+                                <Bell size={32} style={{ color: '#f59e0b', marginBottom: 8 }} />
+                                <p style={{ fontWeight: 600, color: '#111827', fontSize: 14 }}>Avisos</p>
+                            </div>
+                        </Link>
+                        <Link href="/app/reservas" style={{ textDecoration: 'none' }}>
+                            <div className="app-card app-ripple" style={{ textAlign: 'center', cursor: 'pointer' }}>
+                                <Calendar size={32} style={{ color: '#ec4899', marginBottom: 8 }} />
+                                <p style={{ fontWeight: 600, color: '#111827', fontSize: 14 }}>Reservas</p>
+                            </div>
+                        </Link>
+                        <Link href="/app/manutencao" style={{ textDecoration: 'none' }}>
+                            <div className="app-card app-ripple" style={{ textAlign: 'center', cursor: 'pointer' }}>
+                                <AlertTriangle size={32} style={{ color: '#6366f1', marginBottom: 8 }} />
+                                <p style={{ fontWeight: 600, color: '#111827', fontSize: 14 }}>Manutenção</p>
+                            </div>
+                        </Link>
+                        <Link href="/app/assinatura" style={{ textDecoration: 'none' }}>
+                            <div className="app-card app-ripple" style={{ textAlign: 'center', cursor: 'pointer' }}>
+                                <CreditCard size={32} style={{ color: '#14b8a6', marginBottom: 8 }} />
+                                <p style={{ fontWeight: 600, color: '#111827', fontSize: 14 }}>Assinatura</p>
+                            </div>
+                        </Link>
+                    </div>
+                )}
 
-                    {role === 'morador' && (
-                        <>
-                            <Link href="/app/reservas" style={{ textDecoration: 'none' }}>
-                                <div className="app-card app-ripple" style={{ textAlign: 'center', cursor: 'pointer' }}>
-                                    <Calendar size={32} style={{ color: '#8b5cf6', marginBottom: 8 }} />
-                                    <p style={{ fontWeight: 600, color: '#111827', fontSize: 14 }}>Reservas</p>
-                                </div>
-                            </Link>
-                            <Link href="/app/minhas-cobrancas" style={{ textDecoration: 'none' }}>
-                                <div className="app-card app-ripple" style={{ textAlign: 'center', cursor: 'pointer' }}>
-                                    <CreditCard size={32} style={{ color: '#3b82f6', marginBottom: 8 }} />
-                                    <p style={{ fontWeight: 600, color: '#111827', fontSize: 14 }}>Cobranças</p>
-                                </div>
-                            </Link>
-                        </>
-                    )}
-                </div>
+                {/* Cards de acesso rápido - PORTEIRO */}
+                {role === 'porteiro' && (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>
+                        <Link href="/app/portaria/visitante" style={{ textDecoration: 'none' }}>
+                            <div className="app-card app-ripple" style={{ textAlign: 'center', cursor: 'pointer' }}>
+                                <Bell size={32} style={{ color: '#3b82f6', marginBottom: 8 }} />
+                                <p style={{ fontWeight: 600, color: '#111827', fontSize: 14 }}>Visitante</p>
+                            </div>
+                        </Link>
+                        <Link href="/app/portaria/prestador" style={{ textDecoration: 'none' }}>
+                            <div className="app-card app-ripple" style={{ textAlign: 'center', cursor: 'pointer' }}>
+                                <DoorOpen size={32} style={{ color: '#f59e0b', marginBottom: 8 }} />
+                                <p style={{ fontWeight: 600, color: '#111827', fontSize: 14 }}>Prestador</p>
+                            </div>
+                        </Link>
+                        <Link href="/app/portaria/veiculo" style={{ textDecoration: 'none' }}>
+                            <div className="app-card app-ripple" style={{ textAlign: 'center', cursor: 'pointer' }}>
+                                <DollarSign size={32} style={{ color: '#10b981', marginBottom: 8 }} />
+                                <p style={{ fontWeight: 600, color: '#111827', fontSize: 14 }}>Veículo</p>
+                            </div>
+                        </Link>
+                        <Link href="/app/ocorrencias/nova" style={{ textDecoration: 'none' }}>
+                            <div className="app-card app-ripple" style={{ textAlign: 'center', cursor: 'pointer' }}>
+                                <AlertTriangle size={32} style={{ color: '#ef4444', marginBottom: 8 }} />
+                                <p style={{ fontWeight: 600, color: '#111827', fontSize: 14 }}>Nova Ocorrência</p>
+                            </div>
+                        </Link>
+                    </div>
+                )}
+
+                {/* Cards de acesso rápido - MORADOR */}
+                {role === 'morador' && (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>
+                        <Link href="/app/reservas" style={{ textDecoration: 'none' }}>
+                            <div className="app-card app-ripple" style={{ textAlign: 'center', cursor: 'pointer' }}>
+                                <Calendar size={32} style={{ color: '#8b5cf6', marginBottom: 8 }} />
+                                <p style={{ fontWeight: 600, color: '#111827', fontSize: 14 }}>Reservas</p>
+                            </div>
+                        </Link>
+                        <Link href="/app/ocorrencias/nova" style={{ textDecoration: 'none' }}>
+                            <div className="app-card app-ripple" style={{ textAlign: 'center', cursor: 'pointer' }}>
+                                <AlertTriangle size={32} style={{ color: '#ef4444', marginBottom: 8 }} />
+                                <p style={{ fontWeight: 600, color: '#111827', fontSize: 14 }}>Abrir Ocorrência</p>
+                            </div>
+                        </Link>
+                        <Link href="/app/avisos" style={{ textDecoration: 'none' }}>
+                            <div className="app-card app-ripple" style={{ textAlign: 'center', cursor: 'pointer' }}>
+                                <Bell size={32} style={{ color: '#10b981', marginBottom: 8 }} />
+                                <p style={{ fontWeight: 600, color: '#111827', fontSize: 14 }}>Avisos</p>
+                            </div>
+                        </Link>
+                        <Link href="/app/minhas-cobrancas" style={{ textDecoration: 'none' }}>
+                            <div className="app-card app-ripple" style={{ textAlign: 'center', cursor: 'pointer' }}>
+                                <CreditCard size={32} style={{ color: '#3b82f6', marginBottom: 8 }} />
+                                <p style={{ fontWeight: 600, color: '#111827', fontSize: 14 }}>Boletos</p>
+                            </div>
+                        </Link>
+                        <Link href="/app/encomendas" style={{ textDecoration: 'none' }}>
+                            <div className="app-card app-ripple" style={{ textAlign: 'center', cursor: 'pointer', gridColumn: 'span 2' }}>
+                                <DoorOpen size={32} style={{ color: '#f59e0b', marginBottom: 8 }} />
+                                <p style={{ fontWeight: 600, color: '#111827', fontSize: 14 }}>Minhas Encomendas</p>
+                            </div>
+                        </Link>
+                    </div>
+                )}
 
                 {/* Avisos Recentes */}
                 <div style={{ marginBottom: 24 }}>
