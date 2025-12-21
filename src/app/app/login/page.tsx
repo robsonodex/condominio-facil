@@ -49,19 +49,17 @@ export default function AppLoginPage() {
         <div className="app-layout" style={{ justifyContent: 'center', padding: 24 }}>
             {/* Logo */}
             <div className="app-text-center app-mb-4" style={{ marginBottom: 48 }}>
-                <div style={{
-                    width: 80,
-                    height: 80,
-                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                    borderRadius: 20,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    margin: '0 auto 16px',
-                    boxShadow: '0 4px 16px rgba(16, 185, 129, 0.3)'
-                }}>
-                    <span style={{ fontSize: 36, color: 'white', fontWeight: 'bold' }}>CF</span>
-                </div>
+                <img
+                    src="/icon.png"
+                    alt="Meu Condomínio Fácil"
+                    style={{
+                        width: 80,
+                        height: 80,
+                        borderRadius: 20,
+                        margin: '0 auto 16px',
+                        boxShadow: '0 4px 16px rgba(16, 185, 129, 0.3)'
+                    }}
+                />
                 <h1 style={{ fontSize: 24, fontWeight: 700, color: '#111827', marginBottom: 4 }}>
                     Meu Condomínio Fácil
                 </h1>
