@@ -78,6 +78,9 @@ export default function AdminUsuariosPage() {
     };
 
     const filteredUsers = users.filter(u => {
+        // SuperAdmin só vê Síndicos e Admins
+        if (!['sindico', 'superadmin'].includes(u.role)) return false;
+
         const matchesSearch = u.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             (u.cliente_id && u.cliente_id.toString().includes(searchTerm));
@@ -253,12 +256,12 @@ export default function AdminUsuariosPage() {
                 </div>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+            {/* Stats - Apenas Síndicos e Admins */}
+            <div className="grid grid-cols-3 gap-4">
                 <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0">
                     <CardContent className="py-4 text-center">
                         <Users className="h-8 w-8 mx-auto opacity-80 mb-2" />
-                        <p className="text-2xl font-bold">{users.length}</p>
+                        <p className="text-2xl font-bold">{users.filter(u => ['sindico', 'superadmin'].includes(u.role)).length}</p>
                         <p className="text-sm text-emerald-100">Total</p>
                     </CardContent>
                 </Card>
@@ -266,18 +269,6 @@ export default function AdminUsuariosPage() {
                     <CardContent className="py-4 text-center">
                         <p className="text-2xl font-bold">{users.filter(u => u.role === 'sindico').length}</p>
                         <p className="text-sm text-blue-100">Síndicos</p>
-                    </CardContent>
-                </Card>
-                <Card className="bg-gradient-to-br from-yellow-500 to-yellow-600 text-white border-0">
-                    <CardContent className="py-4 text-center">
-                        <p className="text-2xl font-bold">{users.filter(u => u.role === 'porteiro').length}</p>
-                        <p className="text-sm text-yellow-100">Porteiros</p>
-                    </CardContent>
-                </Card>
-                <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0">
-                    <CardContent className="py-4 text-center">
-                        <p className="text-2xl font-bold">{users.filter(u => u.role === 'morador').length}</p>
-                        <p className="text-sm text-purple-100">Moradores</p>
                     </CardContent>
                 </Card>
                 <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white border-0">
@@ -306,8 +297,6 @@ export default function AdminUsuariosPage() {
                         { value: '', label: 'Todos os papéis' },
                         { value: 'superadmin', label: 'Super Admin' },
                         { value: 'sindico', label: 'Síndico' },
-                        { value: 'porteiro', label: 'Porteiro' },
-                        { value: 'morador', label: 'Morador' },
                     ]}
                     className="w-40"
                 />

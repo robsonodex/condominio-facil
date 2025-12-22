@@ -418,7 +418,7 @@ export default function CobrancasPage() {
                                             O envio de cobranças via WhatsApp está disponível apenas para planos <strong>Premium</strong>.
                                         </p>
                                         <a
-                                            href="/assinatura"
+                                            href="/upgrade"
                                             className="inline-flex items-center text-sm font-medium text-emerald-600 hover:text-emerald-700 mt-2"
                                         >
                                             Ver planos disponíveis →
