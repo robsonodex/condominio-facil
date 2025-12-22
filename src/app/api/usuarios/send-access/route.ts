@@ -46,13 +46,85 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        // Update password in Supabase Auth
-        const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(
+        // Try to update password in Supabase Auth
+        let { error: authError } = await supabaseAdmin.auth.admin.updateUserById(
             userId,
             { password }
         );
 
-        if (authError) {
+        // If user not found in Auth, create them
+        if (authError && authError.message.includes('not found')) {
+            console.log('[SEND-ACCESS] User not in Auth, creating...');
+
+            const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+                email,
+                password,
+                email_confirm: true, // Auto-confirm email
+                user_metadata: { nome }
+            });
+
+            if (createError) {
+                console.error('[SEND-ACCESS] Create user error:', createError);
+
+                // If user already exists with this email in Auth but different ID
+                if (createError.message.includes('already been registered')) {
+                    // Get the Auth user by email and update password
+                    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
+                    const authUser = existingUsers?.users?.find(u => u.email === email);
+
+                    if (authUser) {
+                        const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+                            authUser.id,
+                            { password }
+                        );
+
+                        if (updateError) {
+                            return NextResponse.json({ error: 'Erro ao definir senha: ' + updateError.message }, { status: 500 });
+                        }
+
+                        // Update the users table to use the correct Auth ID
+                        await supabaseAdmin
+                            .from('users')
+                            .update({ id: authUser.id })
+                            .eq('id', userId);
+
+                        console.log('[SEND-ACCESS] Updated existing Auth user password');
+                    } else {
+                        return NextResponse.json({ error: 'Erro: E-mail já cadastrado em outro usuário' }, { status: 400 });
+                    }
+                } else {
+                    return NextResponse.json({ error: 'Erro ao criar acesso: ' + createError.message }, { status: 500 });
+                }
+            } else {
+                console.log('[SEND-ACCESS] Auth user created successfully');
+
+                // If Auth created with different ID, we need to update users table
+                if (newUser?.user && newUser.user.id !== userId) {
+                    console.log('[SEND-ACCESS] Updating users table ID from', userId, 'to', newUser.user.id);
+
+                    // Update residents table first (foreign key)
+                    await supabaseAdmin
+                        .from('residents')
+                        .update({ user_id: newUser.user.id })
+                        .eq('user_id', userId);
+
+                    // Update users table - actually we need to delete old and insert with new ID
+                    const { data: oldUser } = await supabaseAdmin
+                        .from('users')
+                        .select('*')
+                        .eq('id', userId)
+                        .single();
+
+                    if (oldUser) {
+                        await supabaseAdmin.from('users').delete().eq('id', userId);
+                        await supabaseAdmin.from('users').insert({
+                            ...oldUser,
+                            id: newUser.user.id,
+                        });
+                    }
+                }
+            }
+        } else if (authError) {
             console.error('[SEND-ACCESS] Auth error:', authError);
             return NextResponse.json({ error: 'Erro ao definir senha: ' + authError.message }, { status: 500 });
         }
