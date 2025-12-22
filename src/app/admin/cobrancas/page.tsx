@@ -73,19 +73,40 @@ export default function AdminCobrancasPage() {
     };
 
     const fetchActiveSubscriptions = async () => {
+        // Buscar assinaturas ativas
         const { data } = await supabase
             .from('subscriptions')
             .select('id, status, valor_mensal_cobrado, condo:condos(id, nome, email_contato), plan:plans(nome_plano, valor_mensal)')
             .eq('status', 'ativo');
 
-        // Map to handle Supabase join returning arrays for single relations
-        const mapped = (data || []).map((item: any) => ({
-            id: item.id,
-            status: item.status,
-            valor_mensal_cobrado: item.valor_mensal_cobrado,
-            condo: Array.isArray(item.condo) ? item.condo[0] || null : item.condo,
-            plan: Array.isArray(item.plan) ? item.plan[0] || null : item.plan,
-        }));
+        // Buscar síndicos para cada condomínio
+        const condoIds = (data || []).map((item: any) => {
+            const condo = Array.isArray(item.condo) ? item.condo[0] : item.condo;
+            return condo?.id;
+        }).filter(Boolean);
+
+        const { data: sindicos } = await supabase
+            .from('users')
+            .select('email, condo_id')
+            .eq('role', 'sindico')
+            .in('condo_id', condoIds);
+
+        // Map subscriptions com e-mail do síndico como fallback
+        const mapped = (data || []).map((item: any) => {
+            const condo = Array.isArray(item.condo) ? item.condo[0] || null : item.condo;
+            const sindico = sindicos?.find(s => s.condo_id === condo?.id);
+            return {
+                id: item.id,
+                status: item.status,
+                valor_mensal_cobrado: item.valor_mensal_cobrado,
+                condo: condo ? {
+                    ...condo,
+                    // Usa email_contato do condo, ou e-mail do síndico como fallback
+                    email_contato: condo.email_contato || sindico?.email || null
+                } : null,
+                plan: Array.isArray(item.plan) ? item.plan[0] || null : item.plan,
+            };
+        });
         setSubscriptions(mapped);
     };
 
