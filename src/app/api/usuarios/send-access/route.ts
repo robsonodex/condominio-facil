@@ -143,7 +143,8 @@ export async function POST(request: NextRequest) {
                     dados: {
                         nome: nome || 'Morador',
                         email,
-                        senha: password,
+                        password: password,
+                        role: 'Morador',
                         loginUrl: `${appUrl}/login`,
                     }
                 })
