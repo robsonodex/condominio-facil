@@ -98,7 +98,7 @@ function getBasicFeatures(): PlanFeatures {
     };
 }
 
-// Plano Profissional: + Portaria, Ocorrências, Reservas, Relatórios, Encomendas
+// Plano Profissional: + Portaria, Ocorrências, Reservas, Relatórios, Encomendas, Câmeras
 function getProfessionalFeatures(): PlanFeatures {
     return {
         hasOccurrences: true,
@@ -111,7 +111,7 @@ function getProfessionalFeatures(): PlanFeatures {
         hasMaintenance: false,
         hasSuppliers: false,
         hasMultipleCondos: false,
-        hasCameras: false,
+        hasCameras: true,  // Câmeras são parte do módulo de portaria
         hasAutomations: false,
         maxUnits: 50,
         hasAI: false

@@ -37,7 +37,13 @@ export default function DashboardPage() {
         // Wait for user data before fetching
         if (userLoading) return;
 
-        if (condoId || isSuperAdmin) {
+        // SuperAdmin não deve ver dados de condomínio - use /admin
+        if (isSuperAdmin) {
+            setLoading(false);
+            return;
+        }
+
+        if (condoId) {
             fetchDashboardData();
         } else {
             setLoading(false);
@@ -202,12 +208,87 @@ export default function DashboardPage() {
         return <MoradorDashboard notices={notices} />;
     }
 
-    // Porteiro Dashboard (only for actual porteiros, NOT superadmin)
+    // Porteiro - Redireciona diretamente para a página de portaria
     if (shouldShowPorteiroUI) {
-        return <PorteiroDashboard stats={stats} notices={notices} />;
+        if (typeof window !== 'undefined') {
+            window.location.href = '/portaria';
+        }
+        return (
+            <div className="space-y-6">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900">Portaria</h1>
+                    <p className="text-gray-500">Redirecionando...</p>
+                </div>
+                <StatsSkeleton />
+            </div>
+        );
     }
 
-    // Síndico / SuperAdmin Dashboard
+    // SuperAdmin Dashboard - Sem dados de condomínio específico
+    if (isSuperAdmin) {
+        return (
+            <div className="space-y-6">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900">Dashboard SuperAdmin</h1>
+                    <p className="text-gray-500">Bem-vindo ao painel administrativo</p>
+                </div>
+
+                <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">
+                    <CardContent className="pt-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-lg font-medium text-purple-100">Painel Administrativo</p>
+                                <p className="text-sm text-purple-200 mt-1">
+                                    Acesse o painel administrativo para gerenciar todos os condomínios, assinaturas e configurações da plataforma.
+                                </p>
+                                <Link
+                                    href="/admin"
+                                    className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-white text-purple-600 rounded-lg font-medium hover:bg-purple-50 transition-colors"
+                                >
+                                    Acessar Painel Admin
+                                </Link>
+                            </div>
+                            <div className="p-3 bg-white/20 rounded-lg">
+                                <Home className="h-8 w-8" />
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <Link href="/admin/condominios" className="block">
+                        <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+                            <CardContent className="pt-6 text-center">
+                                <Home className="h-8 w-8 mx-auto text-emerald-600 mb-2" />
+                                <p className="font-medium text-gray-900">Condomínios</p>
+                                <p className="text-sm text-gray-500">Gerenciar condomínios</p>
+                            </CardContent>
+                        </Card>
+                    </Link>
+                    <Link href="/admin/subscriptions" className="block">
+                        <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+                            <CardContent className="pt-6 text-center">
+                                <DollarSign className="h-8 w-8 mx-auto text-blue-600 mb-2" />
+                                <p className="font-medium text-gray-900">Assinaturas</p>
+                                <p className="text-sm text-gray-500">Gerenciar assinaturas</p>
+                            </CardContent>
+                        </Card>
+                    </Link>
+                    <Link href="/admin/billing" className="block">
+                        <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+                            <CardContent className="pt-6 text-center">
+                                <TrendingUp className="h-8 w-8 mx-auto text-orange-600 mb-2" />
+                                <p className="font-medium text-gray-900">Faturamento</p>
+                                <p className="text-sm text-gray-500">Ver métricas financeiras</p>
+                            </CardContent>
+                        </Card>
+                    </Link>
+                </div>
+            </div>
+        );
+    }
+
+    // Síndico Dashboard
     return (
         <div className="space-y-6">
             <div>
@@ -220,23 +301,21 @@ export default function DashboardPage() {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {!isSuperAdmin && (
-                    <Link href="/unidades" className="block transition-transform hover:scale-105">
-                        <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0 h-full cursor-pointer">
-                            <CardContent className="pt-6">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm text-emerald-100">Unidades</p>
-                                        <p className="text-3xl font-bold">{stats?.totalUnidades}</p>
-                                    </div>
-                                    <div className="p-3 bg-white/20 rounded-lg">
-                                        <Home className="h-6 w-6" />
-                                    </div>
+                <Link href="/unidades" className="block transition-transform hover:scale-105">
+                    <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0 h-full cursor-pointer">
+                        <CardContent className="pt-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm text-emerald-100">Unidades</p>
+                                    <p className="text-3xl font-bold">{stats?.totalUnidades}</p>
                                 </div>
-                            </CardContent>
-                        </Card>
-                    </Link>
-                )}
+                                <div className="p-3 bg-white/20 rounded-lg">
+                                    <Home className="h-6 w-6" />
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </Link>
 
                 <Link href="/financeiro" className="block transition-transform hover:scale-105">
                     <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white border-0 h-full cursor-pointer">
