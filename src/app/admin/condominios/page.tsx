@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useMultiSelect } from '@/hooks/useMultiSelect';
 import { formatCurrency, formatDate, getStatusColor, getStatusLabel } from '@/lib/utils';
-import { Plus, Search, Building2, Edit, Trash2, Eye, Bot } from 'lucide-react';
+import { Plus, Search, Building2, Edit, Trash2, Eye, Bot, LogIn } from 'lucide-react';
 import { Condo, Plan } from '@/types/database';
 
 export default function AdminCondominiosPage() {
@@ -114,6 +114,52 @@ export default function AdminCondominiosPage() {
         }
     };
 
+    // Impersonar síndico do condomínio
+    const handleImpersonate = async (condoId: string, condoName: string) => {
+        try {
+            // 1. Buscar síndico vinculado ao condomínio
+            const { data: sindico, error } = await supabase
+                .from('users')
+                .select('id, nome, email')
+                .eq('condo_id', condoId)
+                .eq('role', 'sindico')
+                .eq('ativo', true)
+                .single();
+
+            if (error || !sindico) {
+                alert(`❌ Nenhum síndico ativo encontrado para o condomínio "${condoName}".\n\nCadastre um síndico primeiro.`);
+                return;
+            }
+
+            if (!confirm(`🔐 Acessar como:\n\nSíndico: ${sindico.nome}\nEmail: ${sindico.email}\nCondomínio: ${condoName}\n\nTodas as ações serão registradas para auditoria.`)) {
+                return;
+            }
+
+            // 2. Iniciar impersonificação
+            const res = await fetch('/api/impersonate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session?.access_token}`
+                },
+                credentials: 'include',
+                body: JSON.stringify({ target_user_id: sindico.id })
+            });
+
+            const result = await res.json();
+
+            if (!res.ok) {
+                alert(`❌ ${result.error || 'Erro ao iniciar impersonificação'}`);
+                return;
+            }
+
+            // 3. Redirecionar para o dashboard do síndico
+            window.location.href = '/dashboard';
+        } catch (err: any) {
+            alert(`❌ Erro: ${err.message}`);
+        }
+    };
+
     const columns = [
         {
             key: 'checkbox',
@@ -204,16 +250,25 @@ export default function AdminCondominiosPage() {
             header: '',
             className: 'text-right',
             render: (c: Condo) => (
-                <div className="flex gap-2 justify-end">
+                <div className="flex gap-1 justify-end">
+                    <button
+                        onClick={(e) => { e.stopPropagation(); handleImpersonate(c.id, c.nome); }}
+                        className="p-1.5 hover:bg-orange-50 rounded"
+                        title="Acessar como Síndico"
+                    >
+                        <LogIn className="h-4 w-4 text-orange-500" />
+                    </button>
                     <button
                         onClick={(e) => { e.stopPropagation(); setEditingCondo(c); setShowModal(true); }}
-                        className="p-1 hover:bg-gray-100 rounded"
+                        className="p-1.5 hover:bg-gray-100 rounded"
+                        title="Editar"
                     >
                         <Edit className="h-4 w-4 text-gray-500" />
                     </button>
                     <button
                         onClick={(e) => { e.stopPropagation(); handleDelete(c.id); }}
-                        className="p-1 hover:bg-gray-100 rounded"
+                        className="p-1.5 hover:bg-red-50 rounded"
+                        title="Excluir"
                     >
                         <Trash2 className="h-4 w-4 text-red-500" />
                     </button>

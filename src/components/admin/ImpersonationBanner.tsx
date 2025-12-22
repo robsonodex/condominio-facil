@@ -32,10 +32,10 @@ export function ImpersonationBanner() {
                     <AlertCircle className="h-5 w-5 animate-pulse text-orange-200" />
                     <div>
                         <p className="font-bold text-sm sm:text-base">
-                            MODO TMPERONAÇÃO ATIVO
+                            🔐 MODO IMPERSONAÇÃO ATIVO
                         </p>
                         <p className="text-xs sm:text-sm text-orange-100">
-                            Você está agindo como: <span className="font-bold underline">{profile?.nome || 'Usuário Desconhecido'}</span> ({profile?.role})
+                            Você está agindo como: <span className="font-bold underline">{profile?.nome || 'Usuário'}</span> ({profile?.role}) • Ações sendo registradas
                         </p>
                     </div>
                 </div>
