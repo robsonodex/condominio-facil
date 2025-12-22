@@ -46,6 +46,8 @@ export interface Condo {
     whatsapp_active?: boolean;
     // Módulo IA
     ai_ativo?: boolean;
+    // Logo/Branding
+    logo_url?: string | null;
     created_at: string;
     updated_at: string;
     // Relations

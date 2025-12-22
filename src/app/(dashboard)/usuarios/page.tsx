@@ -142,6 +142,10 @@ export default function UsuariosCondoPage() {
         try {
             const response = await fetch(`/api/user/delete?id=${user.id}`, {
                 method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session?.access_token}`,
+                },
                 credentials: 'include',
             });
             const data = await response.json();

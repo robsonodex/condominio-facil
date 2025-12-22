@@ -1,6 +1,6 @@
 'use client';
 
-import { Menu, Bell, LogOut, User } from 'lucide-react';
+import { Menu, Bell, LogOut, User, Building2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useUser, useCondo } from '@/hooks/useUser';
 import { useRouter } from 'next/navigation';
@@ -52,9 +52,27 @@ export function Header({ onMenuClick }: HeaderProps) {
                     </button>
 
                     {!isSuperAdmin && condo && (
-                        <div className="hidden sm:block">
-                            <p className="text-sm font-medium text-gray-900">{condo.nome}</p>
-                            <p className="text-xs text-gray-500">{condo.cidade}, {condo.estado}</p>
+                        <div className="hidden sm:flex items-center gap-3">
+                            {/* Logo or default icon */}
+                            {(condo as any).logo_url ? (
+                                <img
+                                    src={(condo as any).logo_url}
+                                    alt={condo.nome}
+                                    className="w-10 h-10 rounded-lg object-contain bg-gray-50"
+                                />
+                            ) : (
+                                <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                                    <Building2 className="h-5 w-5 text-emerald-600" />
+                                </div>
+                            )}
+                            <div>
+                                <p className="text-sm font-medium text-gray-900">{condo.nome}</p>
+                                {(condo.cidade || condo.estado) && (
+                                    <p className="text-xs text-gray-500">
+                                        {[condo.cidade, condo.estado].filter(Boolean).join(', ')}
+                                    </p>
+                                )}
+                            </div>
                         </div>
                     )}
                 </div>
