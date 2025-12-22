@@ -43,7 +43,8 @@ export async function POST(request: NextRequest) {
             condo_nome,
             plano_id,
             periodo_teste,
-            ativar_imediatamente
+            ativar_imediatamente,
+            enviar_email = true // Por padrão envia e-mail
         } = body;
 
         // 3. Validate
@@ -198,31 +199,33 @@ export async function POST(request: NextRequest) {
             }, { status: 500 });
         }
 
-        // 8. Send welcome emails
+        // 8. Send welcome emails (only if enviar_email is true)
         const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://meucondominiofacil.com';
 
         // 8.1 Send credentials email to new user
-        try {
-            await fetch(`${baseUrl}/api/email`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    tipo: 'user_credentials',
-                    destinatario: email,
-                    dados: {
-                        nome,
-                        email,
-                        password: senha,
-                        role: role === 'sindico' ? 'Síndico' : role === 'porteiro' ? 'Porteiro' : 'Morador',
-                        condoNome: condo_nome || '',
-                        loginUrl: `${baseUrl}/login`
-                    },
-                    internalCall: true
-                })
-            });
-            console.log('[ADMIN_CREATE_USER] Credentials email sent to:', email);
-        } catch (emailError) {
-            console.error('[ADMIN_CREATE_USER] Failed to send credentials email:', emailError);
+        if (enviar_email) {
+            try {
+                await fetch(`${baseUrl}/api/email`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tipo: 'user_credentials',
+                        destinatario: email,
+                        dados: {
+                            nome,
+                            email,
+                            password: senha,
+                            role: role === 'sindico' ? 'Síndico' : role === 'superadmin' ? 'Admin' : role === 'porteiro' ? 'Porteiro' : 'Morador',
+                            condoNome: condo_nome || '',
+                            loginUrl: `${baseUrl}/login`
+                        },
+                        internalCall: true
+                    })
+                });
+                console.log('[ADMIN_CREATE_USER] Credentials email sent to:', email);
+            } catch (emailError) {
+                console.error('[ADMIN_CREATE_USER] Failed to send credentials email:', emailError);
+            }
         }
 
         // 8.2 Send trial/active email for síndico with new condo

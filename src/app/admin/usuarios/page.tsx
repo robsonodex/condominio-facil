@@ -5,7 +5,7 @@ import { Card, CardContent, Button, Input, Select, Table, Badge } from '@/compon
 import { Modal } from '@/components/ui/modal';
 import { createClient } from '@/lib/supabase/client';
 import { formatDate, getRoleLabel } from '@/lib/utils';
-import { Plus, Search, Users, Edit, Trash2 } from 'lucide-react';
+import { Plus, Search, Users, Edit, Trash2, Key, Mail, RefreshCw, ToggleLeft, Eye, EyeOff, Copy } from 'lucide-react';
 import { User, Condo } from '@/types/database';
 import { useMultiSelect } from '@/hooks/useMultiSelect';
 
@@ -148,6 +148,106 @@ export default function AdminUsuariosPage() {
         }
     };
 
+    // Gerar senha aleatória
+    const generatePassword = () => {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+        let pass = '';
+        for (let i = 0; i < 8; i++) {
+            pass += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return pass;
+    };
+
+    // Enviar credenciais por e-mail
+    const handleSendAccess = async (user: any) => {
+        if (!user.email) {
+            alert('❌ Usuário não tem email cadastrado');
+            return;
+        }
+
+        const newPassword = generatePassword();
+
+        if (!confirm(`📧 Enviar credenciais para ${user.email}?\n\nUma nova senha será gerada: ${newPassword}`)) return;
+
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+
+            const response = await fetch('/api/usuarios/send-access', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session?.access_token}`
+                },
+                body: JSON.stringify({ userId: user.id }),
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                alert(`✅ Credenciais enviadas para ${user.email}\n\nSenha gerada: ${result.password || newPassword}`);
+            } else {
+                alert(`❌ ${result.error || 'Erro ao enviar credenciais'}`);
+            }
+        } catch (err: any) {
+            alert(`❌ Erro: ${err.message}`);
+        }
+    };
+
+    // Resetar senha
+    const handleResetPassword = async (user: any) => {
+        const newPassword = generatePassword();
+
+        if (!confirm(`🔑 Resetar senha de ${user.nome}?\n\nNova senha: ${newPassword}\n\nO usuário receberá um e-mail com as novas credenciais.`)) return;
+
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+
+            const response = await fetch('/api/usuarios/send-access', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session?.access_token}`
+                },
+                body: JSON.stringify({ userId: user.id }),
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                alert(`✅ Senha resetada!\n\nNova senha: ${result.password || newPassword}\nE-mail enviado para: ${user.email}`);
+            } else {
+                alert(`❌ ${result.error || 'Erro ao resetar senha'}`);
+            }
+        } catch (err: any) {
+            alert(`❌ Erro: ${err.message}`);
+        }
+    };
+
+    // Ativar/Desativar usuário
+    const handleToggleActive = async (user: any) => {
+        const novoStatus = !user.ativo;
+
+        if (!confirm(`${novoStatus ? '✅ Ativar' : '🚫 Desativar'} o usuário ${user.nome}?`)) return;
+
+        try {
+            const { error } = await supabase
+                .from('users')
+                .update({ ativo: novoStatus })
+                .eq('id', user.id);
+
+            if (error) throw error;
+
+            // Atualizar lista local
+            setUsers(prev => prev.map(u =>
+                u.id === user.id ? { ...u, ativo: novoStatus } : u
+            ));
+
+            alert(`✅ Usuário ${novoStatus ? 'ativado' : 'desativado'} com sucesso!`);
+        } catch (err: any) {
+            alert(`❌ Erro: ${err.message}`);
+        }
+    };
+
     const columns = [
         {
             key: 'checkbox',
@@ -215,7 +315,28 @@ export default function AdminUsuariosPage() {
             header: 'Ações',
             className: 'text-right',
             render: (u: any) => (
-                <div className="flex gap-2 justify-end">
+                <div className="flex gap-1 justify-end">
+                    <button
+                        onClick={(e) => { e.stopPropagation(); handleSendAccess(u); }}
+                        className="p-2 hover:bg-blue-50 rounded"
+                        title="Enviar credenciais por e-mail"
+                    >
+                        <Mail className="h-4 w-4 text-blue-500" />
+                    </button>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); handleResetPassword(u); }}
+                        className="p-2 hover:bg-amber-50 rounded"
+                        title="Resetar senha"
+                    >
+                        <Key className="h-4 w-4 text-amber-500" />
+                    </button>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); handleToggleActive(u); }}
+                        className="p-2 hover:bg-gray-100 rounded"
+                        title={u.ativo ? 'Desativar' : 'Ativar'}
+                    >
+                        <ToggleLeft className={`h-4 w-4 ${u.ativo ? 'text-green-500' : 'text-gray-400'}`} />
+                    </button>
                     <button
                         onClick={(e) => { e.stopPropagation(); setEditingUser(u); setShowModal(true); }}
                         className="p-2 hover:bg-gray-100 rounded"
@@ -341,6 +462,8 @@ function UserModal({ isOpen, onClose, onSuccess, user, condos, plans, subscripti
     const [nome, setNome] = useState('');
     const [email, setEmail] = useState('');
     const [senha, setSenha] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [enviarEmailBoasVindas, setEnviarEmailBoasVindas] = useState(true);
     const [telefone, setTelefone] = useState('');
     const [role, setRole] = useState('sindico');
     const [condoId, setCondoId] = useState('');
@@ -352,6 +475,16 @@ function UserModal({ isOpen, onClose, onSuccess, user, condos, plans, subscripti
     const [ativarImediatamente, setAtivarImediatamente] = useState(false);
     const [usarAssinaturaExistente, setUsarAssinaturaExistente] = useState(false);
     const [selectedSubscriptionId, setSelectedSubscriptionId] = useState('');
+
+    // Gerar senha aleatória
+    const generatePassword = () => {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+        let pass = '';
+        for (let i = 0; i < 8; i++) {
+            pass += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        setSenha(pass);
+    };
     const supabase = createClient();
 
     useEffect(() => {
@@ -410,8 +543,13 @@ function UserModal({ isOpen, onClose, onSuccess, user, condos, plans, subscripti
 
                 alert('✅ Usuário atualizado com sucesso!');
             } else {
-                // CRIAÇÃO - usa nova API com senha padrão 000000
-                const senhaFinal = '000000';
+                // CRIAÇÃO - usa senha do campo ou gera uma nova
+                const senhaFinal = senha || (() => {
+                    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+                    let pass = '';
+                    for (let i = 0; i < 8; i++) pass += chars.charAt(Math.floor(Math.random() * chars.length));
+                    return pass;
+                })();
 
                 // Obter token de sessão para enviar via Authorization header
                 const { data: { session: currentSession } } = await supabase.auth.getSession();
@@ -444,6 +582,7 @@ function UserModal({ isOpen, onClose, onSuccess, user, condos, plans, subscripti
                         plano_id: (role === 'sindico' && !usarAssinaturaExistente) ? planoId : null,
                         periodo_teste: (role === 'sindico' && !usarAssinaturaExistente) ? periodoTeste : false,
                         ativar_imediatamente: (role === 'sindico' && !usarAssinaturaExistente) ? ativarImediatamente : false,
+                        enviar_email: enviarEmailBoasVindas,
                     }),
                 });
 
@@ -455,12 +594,14 @@ function UserModal({ isOpen, onClose, onSuccess, user, condos, plans, subscripti
                     return;
                 }
 
-                alert(`✅ ${result.message}\n\nO usuário pode fazer login com:\nEmail: ${email}\nSenha: a senha informada`);
+                // Exibir senha claramente
+                const mensagem = `✅ ${result.message}\n\n📧 Email: ${email}\n🔑 Senha: ${senhaFinal}${enviarEmailBoasVindas ? '\n\n✉️ E-mail de boas-vindas enviado!' : '\n\n⚠️ Anote a senha! Não foi enviado e-mail.'}`;
+                alert(mensagem);
 
-                // Abrir login em nova aba
-                if (confirm('Deseja abrir a página de login em uma nova aba?')) {
-                    window.open('/login', '_blank');
-                }
+                // Copiar para área de transferência
+                try {
+                    await navigator.clipboard.writeText(`Email: ${email}\nSenha: ${senhaFinal}`);
+                } catch { }
             }
 
             onSuccess();
@@ -491,7 +632,50 @@ function UserModal({ isOpen, onClose, onSuccess, user, condos, plans, subscripti
                     disabled={!!user}
                 />
 
+                {/* Campo de senha apenas para novos usuários */}
+                {!user && (
+                    <>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Senha</label>
+                            <div className="flex gap-2">
+                                <div className="relative flex-1">
+                                    <input
+                                        type={showPassword ? 'text' : 'password'}
+                                        value={senha}
+                                        onChange={(e) => setSenha(e.target.value)}
+                                        placeholder="Deixe vazio para gerar automática"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 pr-10"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                    >
+                                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                    </button>
+                                </div>
+                                <Button type="button" variant="outline" onClick={generatePassword} className="shrink-0">
+                                    <RefreshCw className="h-4 w-4 mr-1" />
+                                    Gerar
+                                </Button>
+                            </div>
+                            <p className="text-xs text-gray-400 mt-1">Se deixar vazio, será gerada uma senha aleatória</p>
+                        </div>
 
+                        <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                            <input
+                                type="checkbox"
+                                id="enviarEmailBoasVindas"
+                                checked={enviarEmailBoasVindas}
+                                onChange={(e) => setEnviarEmailBoasVindas(e.target.checked)}
+                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
+                            <label htmlFor="enviarEmailBoasVindas" className="text-sm text-blue-800">
+                                ✉️ Enviar e-mail de boas-vindas com credenciais
+                            </label>
+                        </div>
+                    </>
+                )}
 
                 <Input
                     label="Telefone"
