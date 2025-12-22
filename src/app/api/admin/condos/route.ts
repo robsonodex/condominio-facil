@@ -134,9 +134,41 @@ export async function DELETE(request: NextRequest) {
         await supabaseAdmin.from('subscriptions').delete().eq('condo_id', condoId);
         console.log('[DELETE CONDO] Deleted subscriptions');
 
-        // 11. Update users to remove condo_id reference (don't delete users)
-        await supabaseAdmin.from('users').update({ condo_id: null }).eq('condo_id', condoId);
-        console.log('[DELETE CONDO] Updated users');
+        // 11. Get all users from this condo (before updating them)
+        const { data: condoUsers } = await supabaseAdmin
+            .from('users')
+            .select('id, email, role')
+            .eq('condo_id', condoId);
+
+        console.log('[DELETE CONDO] Found', condoUsers?.length || 0, 'users to deactivate');
+
+        // 11.1. Deactivate all users and remove condo reference
+        await supabaseAdmin
+            .from('users')
+            .update({
+                condo_id: null,
+                unidade_id: null,
+                ativo: false  // IMPORTANTE: Desativa os usuários!
+            })
+            .eq('condo_id', condoId);
+        console.log('[DELETE CONDO] Deactivated users');
+
+        // 11.2. Delete users from Supabase Auth (they won't be able to login anymore)
+        if (condoUsers && condoUsers.length > 0) {
+            for (const user of condoUsers) {
+                try {
+                    // Don't delete superadmins
+                    if (user.role === 'superadmin') continue;
+
+                    // Delete from Supabase Auth
+                    await supabaseAdmin.auth.admin.deleteUser(user.id);
+                    console.log('[DELETE CONDO] Deleted auth user:', user.email);
+                } catch (authDeleteError) {
+                    console.error('[DELETE CONDO] Error deleting auth user:', user.email, authDeleteError);
+                    // Continue with other users even if one fails
+                }
+            }
+        }
 
         // 12. Finally delete the condo
         const { error: deleteError } = await supabaseAdmin.from('condos').delete().eq('id', condoId);
