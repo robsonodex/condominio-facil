@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, Button, Table, Badge } from '@/components/ui';
 import { useUser } from '@/hooks/useUser';
+import { useAuth } from '@/hooks/useAuth';
 import { CreditCard, ExternalLink, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 
 interface Invoice {
@@ -18,17 +19,27 @@ interface Invoice {
 
 export default function MinhasCobrancasPage() {
     const { profile, loading: userLoading } = useUser();
+    const { session } = useAuth();
     const [invoices, setInvoices] = useState<Invoice[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (!userLoading) fetchInvoices();
-    }, [userLoading]);
+        if (!userLoading && session?.access_token) fetchInvoices();
+    }, [userLoading, session?.access_token]);
 
     const fetchInvoices = async () => {
         setLoading(true);
         try {
-            const res = await fetch('/api/resident-billing', { credentials: 'include' });
+            const headers: Record<string, string> = {
+                'Content-Type': 'application/json',
+            };
+            if (session?.access_token) {
+                headers['Authorization'] = `Bearer ${session.access_token}`;
+            }
+            const res = await fetch('/api/resident-billing', {
+                headers,
+                credentials: 'include'
+            });
             const data = await res.json();
             setInvoices(data.invoices || []);
         } catch (error) {
