@@ -149,7 +149,7 @@ export async function POST(request: NextRequest) {
                     }
                 })
             });
-            console.log(`[SEND-ACCESS] Credentials email sent to ${email}`);
+            console.log(`[SEND-ACCESS] Email request sent to ${email} with password: ${password?.substring(0, 2)}***`);
         } catch (emailError) {
             console.error('[SEND-ACCESS] Email error:', emailError);
             // Don't fail - password was already set
