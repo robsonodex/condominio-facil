@@ -114,65 +114,11 @@ export async function POST(request: NextRequest) {
         // Buscar nome do condomínio
         const { data: condo } = await supabaseAdmin
             .from('condos')
-            .select('nome')
+            .select('nome, pix_chave, pix_tipo, pix_nome_recebedor')
             .eq('id', condoId)
             .single();
 
-        // Criar preferência de pagamento no Mercado Pago
-        let linkPagamento = null;
-        let gatewayId = null;
-
-        if (MP_ACCESS_TOKEN) {
-            const preferenceBody = {
-                items: [{
-                    id: `resident_invoice_${Date.now()}`,
-                    title: `Cobrança - ${condo?.nome || 'Condomínio'}`,
-                    description: descricao,
-                    unit_price: parseFloat(valor),
-                    quantity: 1,
-                    currency_id: 'BRL'
-                }],
-                payer: {
-                    email: morador.email,
-                    name: morador.nome
-                },
-                external_reference: `resident_${morador_id}_${Date.now()}`,
-                back_urls: {
-                    success: `${process.env.NEXT_PUBLIC_APP_URL}/minhas-cobrancas?status=sucesso`,
-                    failure: `${process.env.NEXT_PUBLIC_APP_URL}/minhas-cobrancas?status=falha`,
-                    pending: `${process.env.NEXT_PUBLIC_APP_URL}/minhas-cobrancas?status=pendente`
-                },
-                auto_return: 'approved',
-                notification_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/mercadopago`,
-                payment_methods: {
-                    excluded_payment_types: [],
-                    installments: 1
-                }
-            };
-
-            try {
-                const mpResponse = await fetch(`${MP_API_URL}/checkout/preferences`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${MP_ACCESS_TOKEN}`,
-                    },
-                    body: JSON.stringify(preferenceBody),
-                });
-
-                if (mpResponse.ok) {
-                    const preference = await mpResponse.json();
-                    linkPagamento = preference.init_point;
-                    gatewayId = preference.id;
-                } else {
-                    console.error('Mercado Pago error:', await mpResponse.text());
-                }
-            } catch (mpError) {
-                console.error('Error creating MP preference:', mpError);
-            }
-        }
-
-        // Inserir cobrança no banco
+        // Inserir cobrança no banco (sem Mercado Pago - o dinheiro vai para o condo, não para o sistema)
         const { data: invoice, error: insertError } = await supabaseAdmin
             .from('resident_invoices')
             .insert({
@@ -182,8 +128,6 @@ export async function POST(request: NextRequest) {
                 descricao,
                 valor: parseFloat(valor),
                 data_vencimento,
-                gateway_id: gatewayId,
-                link_pagamento: linkPagamento,
                 created_by: profile.id
             })
             .select()
@@ -195,7 +139,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Enviar email se solicitado
-        if (enviar_email && morador.email && linkPagamento) {
+        if (enviar_email && morador.email) {
             try {
                 await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/email`, {
                     method: 'POST',
@@ -208,13 +152,17 @@ export async function POST(request: NextRequest) {
                             descricao,
                             valor: parseFloat(valor).toFixed(2),
                             dataVencimento: new Date(data_vencimento).toLocaleDateString('pt-BR'),
-                            linkPagamento,
-                            condoNome: condo?.nome || 'Condomínio'
+                            condoNome: condo?.nome || 'Condomínio',
+                            // Info PIX do condomínio se disponível
+                            pixChave: condo?.pix_chave || null,
+                            pixTipo: condo?.pix_tipo || null,
+                            pixNome: condo?.pix_nome_recebedor || null,
                         },
                         condoId,
                         internalCall: true
                     }),
                 });
+                console.log(`[BILLING] Email sent to ${morador.email}`);
             } catch (emailError) {
                 console.error('Error sending email:', emailError);
             }
@@ -222,8 +170,7 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({
             success: true,
-            invoice,
-            link_pagamento: linkPagamento
+            invoice
         });
 
     } catch (error: any) {
@@ -268,3 +215,93 @@ export async function DELETE(request: NextRequest) {
     }
 }
 
+// PATCH: Atualizar status (marcar como pago)
+export async function PATCH(request: NextRequest) {
+    try {
+        const profile = await getUserFromRequest(request);
+
+        if (!profile) {
+            return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+        }
+
+        if (profile.role !== 'sindico' && profile.role !== 'superadmin') {
+            return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
+        }
+
+        const { searchParams } = new URL(request.url);
+        const id = searchParams.get('id');
+
+        if (!id) {
+            return NextResponse.json({ error: 'ID é obrigatório' }, { status: 400 });
+        }
+
+        const body = await request.json();
+        const { status } = body;
+
+        if (!status || !['pago', 'pendente', 'cancelado'].includes(status)) {
+            return NextResponse.json({ error: 'Status inválido' }, { status: 400 });
+        }
+
+        // Buscar dados da cobrança antes de atualizar
+        const { data: invoice } = await supabaseAdmin
+            .from('resident_invoices')
+            .select(`
+                *,
+                morador:users!morador_id(id, nome, email),
+                condo:condos(nome)
+            `)
+            .eq('id', id)
+            .single();
+
+        if (!invoice) {
+            return NextResponse.json({ error: 'Cobrança não encontrada' }, { status: 404 });
+        }
+
+        // Verificar permissão
+        if (profile.role === 'sindico' && invoice.condo_id !== profile.condo_id) {
+            return NextResponse.json({ error: 'Cobrança não pertence ao seu condomínio' }, { status: 403 });
+        }
+
+        // Atualizar status
+        const { error: updateError } = await supabaseAdmin
+            .from('resident_invoices')
+            .update({
+                status,
+                data_pagamento: status === 'pago' ? new Date().toISOString() : null
+            })
+            .eq('id', id);
+
+        if (updateError) {
+            return NextResponse.json({ error: updateError.message }, { status: 500 });
+        }
+
+        // Enviar e-mail de agradecimento se marcado como pago
+        if (status === 'pago' && invoice.morador?.email) {
+            try {
+                await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/email`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tipo: 'payment_received',
+                        destinatario: invoice.morador.email,
+                        dados: {
+                            nome: invoice.morador.nome,
+                            descricao: invoice.descricao,
+                            valor: parseFloat(invoice.valor).toFixed(2),
+                            condoNome: invoice.condo?.nome || 'Condomínio',
+                        },
+                        internalCall: true
+                    }),
+                });
+                console.log(`[BILLING] Thank you email sent to ${invoice.morador.email}`);
+            } catch (emailError) {
+                console.error('Error sending thank you email:', emailError);
+            }
+        }
+
+        return NextResponse.json({ success: true });
+
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+}

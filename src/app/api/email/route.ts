@@ -614,6 +614,49 @@ const templates: Record<string, { subject: string; html: (data: any) => string }
             </html>
         `,
     },
+    // Resident Invoice Email - cobrança para morador
+    resident_invoice: {
+        subject: '💳 Nova Cobrança - ${data.condoNome}',
+        html: (data: any) => `
+            <!DOCTYPE html>
+            <html>
+            <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+            <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f3f4f6;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+                    <div style="background: linear-gradient(135deg, #f59e0b, #d97706); padding: 40px 20px; text-align: center;">
+                        <h1 style="color: #ffffff; margin: 0; font-size: 28px;">💳 Nova Cobrança</h1>
+                    </div>
+                    <div style="padding: 40px 30px;">
+                        <h2 style="color: #1f2937; margin-top: 0;">Olá, ${sanitizeHtml(data.nome || 'Morador')}!</h2>
+                        <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
+                            Uma nova cobrança foi gerada pelo condomínio <strong>${sanitizeHtml(data.condoNome)}</strong>.
+                        </p>
+                        <div style="background-color: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 20px; margin: 25px 0;">
+                            <p style="color: #92400e; margin: 0 0 15px 0; font-size: 14px;"><strong>Detalhes da Cobrança:</strong></p>
+                            <p style="color: #1f2937; margin: 5px 0;"><strong>Descrição:</strong> ${sanitizeHtml(data.descricao)}</p>
+                            <p style="color: #1f2937; margin: 5px 0; font-size: 24px;"><strong>Valor:</strong> R$ ${sanitizeHtml(data.valor)}</p>
+                            <p style="color: #1f2937; margin: 5px 0;"><strong>Vencimento:</strong> ${sanitizeHtml(data.dataVencimento)}</p>
+                        </div>
+                        ${data.pixChave ? `
+                        <div style="background-color: #ecfdf5; border-left: 4px solid #10b981; padding: 15px; margin: 25px 0;">
+                            <p style="color: #065f46; margin: 0 0 10px 0; font-weight: bold;">💲 Dados para Pagamento via PIX:</p>
+                            <p style="color: #1f2937; margin: 5px 0;"><strong>Chave PIX:</strong> ${sanitizeHtml(data.pixChave)}</p>
+                            <p style="color: #1f2937; margin: 5px 0;"><strong>Tipo:</strong> ${sanitizeHtml(data.pixTipo?.toUpperCase())}</p>
+                            ${data.pixNome ? `<p style="color: #1f2937; margin: 5px 0;"><strong>Nome:</strong> ${sanitizeHtml(data.pixNome)}</p>` : ''}
+                        </div>
+                        ` : ''}
+                        <p style="color: #6b7280; font-size: 14px; text-align: center;">
+                            Dúvidas? Entre em contato com a administração do seu condomínio.
+                        </p>
+                    </div>
+                    <div style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
+                        <p style="color: #9ca3af; font-size: 12px; margin: 0;">© ${new Date().getFullYear()} Condomínio Fácil</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+        `,
+    },
     // Payment Received Email
     payment_received: {
         subject: '✅ Pagamento Confirmado - Condomínio Fácil',

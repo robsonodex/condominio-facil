@@ -6,7 +6,7 @@ import { Modal } from '@/components/ui/modal';
 import { useUser } from '@/hooks/useUser';
 import { useAuth } from '@/hooks/useAuth';
 import { createClient } from '@/lib/supabase/client';
-import { Plus, Send, Trash2, CreditCard, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { Plus, Send, Trash2, CreditCard, AlertCircle, CheckCircle, Clock, Mail, MessageCircle, Lock, Check } from 'lucide-react';
 
 interface Invoice {
     id: string;
@@ -36,6 +36,8 @@ export default function CobrancasPage() {
     const [valor, setValor] = useState('');
     const [dataVencimento, setDataVencimento] = useState('');
     const [enviarEmail, setEnviarEmail] = useState(true);
+    const [enviarWhatsapp, setEnviarWhatsapp] = useState(false);
+    const [showWhatsappBanner, setShowWhatsappBanner] = useState(false);
     const [saving, setSaving] = useState(false);
 
     const getAuthHeaders = () => {
@@ -106,7 +108,7 @@ export default function CobrancasPage() {
             }
 
             const result = await res.json();
-            alert(`Cobrança criada com sucesso!${enviarEmail ? ' Email enviado ao morador.' : ''}`);
+            alert(`Cobrança criada com sucesso!${enviarEmail ? ' E-mail enviado ao morador.' : ''}`);
             fetchInvoices();
             closeModal();
         } catch (error: any) {
@@ -130,6 +132,29 @@ export default function CobrancasPage() {
                 throw new Error(data.error);
             }
 
+            fetchInvoices();
+        } catch (error: any) {
+            alert(`Erro: ${error.message}`);
+        }
+    };
+
+    const handleMarkAsPaid = async (inv: Invoice) => {
+        if (!confirm(`Marcar a cobrança de R$ ${inv.valor.toFixed(2)} como PAGA?\n\nUm e-mail de agradecimento será enviado ao morador.`)) return;
+
+        try {
+            const res = await fetch(`/api/resident-billing?id=${inv.id}`, {
+                method: 'PATCH',
+                headers: getAuthHeaders(),
+                credentials: 'include',
+                body: JSON.stringify({ status: 'pago' }),
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error);
+            }
+
+            alert('✅ Cobrança marcada como paga! E-mail de agradecimento enviado.');
             fetchInvoices();
         } catch (error: any) {
             alert(`Erro: ${error.message}`);
@@ -208,24 +233,27 @@ export default function CobrancasPage() {
             header: '',
             className: 'text-right',
             render: (inv: Invoice) => (
-                <div className="flex gap-2 justify-end">
-                    {inv.link_pagamento && inv.status === 'pendente' && (
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => window.open(inv.link_pagamento!, '_blank')}
-                        >
-                            <Send className="h-4 w-4" />
-                        </Button>
-                    )}
+                <div className="flex gap-1 justify-end">
                     {inv.status === 'pendente' && (
-                        <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleCancel(inv.id)}
-                        >
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                        </Button>
+                        <>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                onClick={() => handleMarkAsPaid(inv)}
+                                title="Marcar como Pago"
+                            >
+                                <Check className="h-4 w-4" />
+                            </Button>
+                            <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleCancel(inv.id)}
+                                title="Cancelar"
+                            >
+                                <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
+                        </>
                     )}
                 </div>
             )
@@ -334,17 +362,78 @@ export default function CobrancasPage() {
                         />
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        <input
-                            type="checkbox"
-                            id="enviarEmail"
-                            checked={enviarEmail}
-                            onChange={(e) => setEnviarEmail(e.target.checked)}
-                            className="rounded border-gray-300"
-                        />
-                        <label htmlFor="enviarEmail" className="text-sm text-gray-600">
-                            Enviar email com link de pagamento ao morador
-                        </label>
+                    {/* Opções de notificação */}
+                    <div className="space-y-3 pt-2">
+                        <p className="text-sm font-medium text-gray-700">Notificar morador:</p>
+
+                        {/* E-mail */}
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                id="enviarEmail"
+                                checked={enviarEmail}
+                                onChange={(e) => setEnviarEmail(e.target.checked)}
+                                className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                            />
+                            <label htmlFor="enviarEmail" className="text-sm text-gray-600 flex items-center gap-2">
+                                <Mail className="h-4 w-4 text-emerald-500" />
+                                Enviar e-mail com detalhes da cobrança
+                            </label>
+                        </div>
+
+                        {/* WhatsApp - Bloqueado */}
+                        <div className="relative">
+                            <div className="flex items-center gap-2 opacity-50">
+                                <input
+                                    type="checkbox"
+                                    id="enviarWhatsapp"
+                                    checked={false}
+                                    onChange={() => setShowWhatsappBanner(true)}
+                                    className="rounded border-gray-300"
+                                    disabled
+                                />
+                                <label htmlFor="enviarWhatsapp" className="text-sm text-gray-500 flex items-center gap-2">
+                                    <MessageCircle className="h-4 w-4 text-gray-400" />
+                                    Enviar via WhatsApp
+                                    <Lock className="h-3 w-3 text-gray-400" />
+                                </label>
+                            </div>
+                            <button
+                                type="button"
+                                className="absolute inset-0 w-full h-full cursor-pointer"
+                                onClick={() => setShowWhatsappBanner(true)}
+                            />
+                        </div>
+
+                        {/* Banner WhatsApp Premium */}
+                        {showWhatsappBanner && (
+                            <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-lg p-4 mt-2">
+                                <div className="flex items-start gap-3">
+                                    <div className="flex-shrink-0">
+                                        <MessageCircle className="h-6 w-6 text-amber-500" />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-semibold text-amber-800">WhatsApp Premium</h4>
+                                        <p className="text-sm text-amber-700 mt-1">
+                                            O envio de cobranças via WhatsApp está disponível apenas para planos <strong>Premium</strong>.
+                                        </p>
+                                        <a
+                                            href="/assinatura"
+                                            className="inline-flex items-center text-sm font-medium text-emerald-600 hover:text-emerald-700 mt-2"
+                                        >
+                                            Ver planos disponíveis →
+                                        </a>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowWhatsappBanner(false)}
+                                        className="text-gray-400 hover:text-gray-500"
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <div className="flex gap-3 justify-end pt-4">
