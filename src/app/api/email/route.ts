@@ -550,6 +550,70 @@ const templates: Record<string, { subject: string; html: (data: any) => string }
             </html>
         `,
     },
+    // Morador Welcome Email - when síndico registers a new resident
+    morador_welcome: {
+        subject: '🏠 Bem-vindo ao Condomínio ${data.condoNome}!',
+        html: (data: any) => `
+            <!DOCTYPE html>
+            <html>
+            <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+            <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f3f4f6;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+                    <div style="background: linear-gradient(135deg, #059669, #10b981); padding: 40px 20px; text-align: center;">
+                        <h1 style="color: #ffffff; margin: 0; font-size: 28px;">🏠 Bem-vindo ao seu Condomínio!</h1>
+                    </div>
+                    <div style="padding: 40px 30px;">
+                        <h2 style="color: #1f2937; margin-top: 0;">Olá, ${sanitizeHtml(data.nome)}!</h2>
+                        <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
+                            Você foi cadastrado como <strong>morador</strong> no condomínio <strong>${sanitizeHtml(data.condoNome)}</strong>.
+                        </p>
+                        ${data.unidade ? `
+                        <div style="background-color: #ecfdf5; border-left: 4px solid #10b981; padding: 15px; margin: 25px 0;">
+                            <p style="color: #065f46; margin: 0; font-weight: bold;">
+                                📍 Sua unidade: ${sanitizeHtml(data.unidade)}
+                            </p>
+                        </div>
+                        ` : ''}
+                        <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
+                            Agora você pode acessar o sistema <strong>Condomínio Fácil</strong> para:
+                        </p>
+                        <ul style="color: #4b5563; line-height: 1.8;">
+                            <li>📋 Ver avisos e comunicados do condomínio</li>
+                            <li>📅 Fazer reservas de áreas comuns</li>
+                            <li>💳 Visualizar e pagar suas cobranças</li>
+                            <li>📢 Registrar ocorrências</li>
+                            <li>📦 Acompanhar entregas</li>
+                        </ul>
+                        ${data.senha ? `
+                        <div style="background-color: #f0fdf4; border: 1px solid #10b981; border-radius: 8px; padding: 20px; margin: 25px 0;">
+                            <p style="color: #065f46; margin: 0 0 10px 0; font-size: 14px;"><strong>Seus dados de acesso:</strong></p>
+                            <p style="color: #1f2937; margin: 5px 0;"><strong>Email:</strong> ${sanitizeHtml(data.email)}</p>
+                            <p style="color: #1f2937; margin: 5px 0;"><strong>Senha:</strong> ${sanitizeHtml(data.senha)}</p>
+                        </div>
+                        <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 25px 0;">
+                            <p style="color: #92400e; margin: 0; font-weight: bold;">
+                                ⚠️ Por segurança, altere sua senha após o primeiro login.
+                            </p>
+                        </div>
+                        ` : ''}
+                        <div style="text-align: center; margin: 35px 0;">
+                            <a href="${sanitizeHtml(data.loginUrl || 'https://meucondominiofacil.com/login')}" 
+                               style="display: inline-block; background: #10b981; color: #ffffff; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
+                                Acessar o Sistema →
+                            </a>
+                        </div>
+                        <p style="color: #6b7280; font-size: 14px; text-align: center;">
+                            Também disponível no <strong>app mobile</strong>! Baixe em seu smartphone.
+                        </p>
+                    </div>
+                    <div style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
+                        <p style="color: #9ca3af; font-size: 12px; margin: 0;">© ${new Date().getFullYear()} Condomínio Fácil</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+        `,
+    },
     // Payment Received Email
     payment_received: {
         subject: '✅ Pagamento Confirmado - Condomínio Fácil',
@@ -655,7 +719,8 @@ export async function POST(request: NextRequest) {
             'condo_trial',
             'condo_active',
             'condo_suspended',
-            'resident_invoice'
+            'resident_invoice',
+            'morador_welcome'
         ];
         const requiresAuth = !publicTemplates.includes(tipo) || !internalCall;
 

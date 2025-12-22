@@ -88,8 +88,27 @@ export default function MoradoresPage() {
 
     const handleDelete = async (id: string) => {
         if (!confirm('Deseja realmente excluir este morador?')) return;
-        await supabase.from('residents').delete().eq('id', id);
-        condoId ? fetchResidents() : fetchAllResidents();
+
+        try {
+            const response = await fetch(`/api/residents?id=${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session?.access_token}`,
+                },
+                credentials: 'include',
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Erro ao excluir morador');
+            }
+
+            condoId ? fetchResidents() : fetchAllResidents();
+        } catch (error: any) {
+            console.error('Error deleting resident:', error);
+            alert(`Erro ao excluir: ${error.message}`);
+        }
     };
 
     const filteredResidents = residents.filter(r => {

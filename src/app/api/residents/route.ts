@@ -82,6 +82,59 @@ export async function POST(request: NextRequest) {
 
         await logEvent('RESIDENT_CREATED', 'info', { residentId: resident.id, userId, createdBy: session.userId });
 
+        // Send welcome email to new resident
+        try {
+            // Get condo name
+            const { data: condo } = await supabaseAdmin
+                .from('condos')
+                .select('nome')
+                .eq('id', condo_id)
+                .single();
+
+            // Get unit info
+            const { data: unit } = await supabaseAdmin
+                .from('units')
+                .select('bloco, numero_unidade')
+                .eq('id', unidade_id)
+                .single();
+
+            const unidadeLabel = unit
+                ? `${unit.bloco ? unit.bloco + ' - ' : ''}${unit.numero_unidade}`
+                : null;
+
+            // Send welcome email (non-blocking)
+            const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://meucondominiofacil.com';
+            fetch(`${appUrl}/api/email`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tipo: 'morador_welcome',
+                    destinatario: email,
+                    internalCall: true,
+                    condoId: condo_id,
+                    userId: userId,
+                    dados: {
+                        nome,
+                        email,
+                        condoNome: condo?.nome || 'seu condomínio',
+                        unidade: unidadeLabel,
+                        loginUrl: `${appUrl}/login`,
+                    }
+                })
+            }).then(res => {
+                if (res.ok) {
+                    console.log(`[RESIDENTS] Welcome email sent to ${email}`);
+                } else {
+                    console.warn(`[RESIDENTS] Failed to send welcome email to ${email}`);
+                }
+            }).catch(err => {
+                console.error('[RESIDENTS] Error sending welcome email:', err.message);
+            });
+        } catch (emailError: any) {
+            // Don't fail the resident creation if email fails
+            console.error('[RESIDENTS] Error preparing welcome email:', emailError.message);
+        }
+
         return NextResponse.json({ success: true, data: resident }, { status: 201 });
 
     } catch (error: any) {
