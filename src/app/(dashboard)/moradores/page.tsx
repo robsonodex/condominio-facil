@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/hooks/useUser';
 import { useAuth } from '@/hooks/useAuth';
 import { formatPhone } from '@/lib/utils';
-import { Plus, Search, Users, Edit, Trash2, Upload } from 'lucide-react';
+import { Plus, Search, Users, Edit, Trash2, Upload, Key, Mail } from 'lucide-react';
 import { Unit } from '@/types/database';
 import Link from 'next/link';
 
@@ -111,6 +111,58 @@ export default function MoradoresPage() {
         }
     };
 
+    // Generate random password
+    const generatePassword = () => {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+        let password = '';
+        for (let i = 0; i < 8; i++) {
+            password += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return password;
+    };
+
+    // Send access credentials to resident
+    const handleSendAccess = async (resident: any) => {
+        if (!resident.user?.email) {
+            alert('Erro: Morador sem e-mail cadastrado');
+            return;
+        }
+
+        const confirmMsg = `Enviar credenciais de acesso para ${resident.user.nome}?\n\nEmail: ${resident.user.email}\n\nUma senha será gerada e enviada por e-mail.`;
+        if (!confirm(confirmMsg)) return;
+
+        try {
+            const newPassword = generatePassword();
+
+            // Call API to set password and send email
+            const response = await fetch('/api/usuarios/send-access', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session?.access_token}`,
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    userId: resident.user_id,
+                    email: resident.user.email,
+                    nome: resident.user.nome,
+                    password: newPassword,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alert(`✅ Acesso enviado!\n\nO morador receberá um e-mail com:\n- Email: ${resident.user.email}\n- Senha: ${newPassword}`);
+            } else {
+                throw new Error(data.error || 'Erro ao enviar acesso');
+            }
+        } catch (error: any) {
+            console.error('Error sending access:', error);
+            alert(`❌ Erro: ${error.message}`);
+        }
+    };
+
     const filteredResidents = residents.filter(r => {
         const matchesSearch =
             r.user?.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -170,16 +222,25 @@ export default function MoradoresPage() {
             header: '',
             className: 'text-right',
             render: (r: any) => (
-                <div className="flex gap-2 justify-end">
+                <div className="flex gap-1 justify-end">
+                    <button
+                        onClick={(e) => { e.stopPropagation(); handleSendAccess(r); }}
+                        className="p-1.5 hover:bg-emerald-50 rounded text-emerald-600 hover:text-emerald-700"
+                        title="Enviar acesso por e-mail"
+                    >
+                        <Mail className="h-4 w-4" />
+                    </button>
                     <button
                         onClick={(e) => { e.stopPropagation(); setEditingResident(r); setShowModal(true); }}
-                        className="p-1 hover:bg-gray-100 rounded"
+                        className="p-1.5 hover:bg-gray-100 rounded"
+                        title="Editar"
                     >
                         <Edit className="h-4 w-4 text-gray-500" />
                     </button>
                     <button
                         onClick={(e) => { e.stopPropagation(); handleDelete(r.id); }}
-                        className="p-1 hover:bg-gray-100 rounded"
+                        className="p-1.5 hover:bg-red-50 rounded"
+                        title="Excluir"
                     >
                         <Trash2 className="h-4 w-4 text-red-500" />
                     </button>
