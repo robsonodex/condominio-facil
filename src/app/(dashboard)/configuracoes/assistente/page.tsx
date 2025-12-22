@@ -23,12 +23,13 @@ export default function ConfiguracaoAssistentePage() {
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [hasAgent, setHasAgent] = useState(false);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
     const [formData, setFormData] = useState<AgentData>({
         nome_agente: 'Assistente do Condomínio',
         tom_resposta: 'formal',
         instrucoes_personalizadas: '',
-        ativo: true
+        ativo: false // Inicia sempre desativado
     });
 
     const [settings, setSettings] = useState<SettingsData | null>(null);
@@ -206,8 +207,8 @@ export default function ConfiguracaoAssistentePage() {
                                 type="button"
                                 onClick={() => setFormData(prev => ({ ...prev, tom_resposta: tom.value as AgentData['tom_resposta'] }))}
                                 className={`p-4 border rounded-lg text-left transition-all ${formData.tom_resposta === tom.value
-                                        ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-500'
-                                        : 'border-gray-200 hover:border-gray-300'
+                                    ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-500'
+                                    : 'border-gray-200 hover:border-gray-300'
                                     }`}
                             >
                                 <p className="font-medium text-gray-900">{tom.label}</p>
@@ -236,18 +237,29 @@ export default function ConfiguracaoAssistentePage() {
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div>
                         <p className="font-medium text-gray-900">Status do Assistente</p>
-                        <p className="text-sm text-gray-500">Quando desativado, ninguém consegue usar o chat</p>
+                        <p className="text-sm text-gray-500">
+                            {hasAgent ? 'Quando desativado, ninguém consegue usar o chat' : 'Contrate o plano com IA para ativar'}
+                        </p>
                     </div>
                     <button
                         type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, ativo: !prev.ativo }))}
-                        className={`relative w-14 h-7 rounded-full transition-colors ${formData.ativo ? 'bg-emerald-600' : 'bg-gray-300'
-                            }`}
+                        onClick={() => {
+                            if (!hasAgent) {
+                                setShowUpgradeModal(true);
+                            } else {
+                                setFormData(prev => ({ ...prev, ativo: !prev.ativo }));
+                            }
+                        }}
+                        className={`relative w-14 h-7 rounded-full transition-colors ${hasAgent && formData.ativo ? 'bg-emerald-600' : 'bg-gray-300'
+                            } ${!hasAgent ? 'cursor-not-allowed opacity-60' : ''}`}
                     >
                         <span
-                            className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-transform ${formData.ativo ? 'right-1' : 'left-1'
+                            className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-transform ${hasAgent && formData.ativo ? 'right-1' : 'left-1'
                                 }`}
                         />
+                        {!hasAgent && (
+                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center text-[10px] text-white font-bold">🔒</span>
+                        )}
                     </button>
                 </div>
 
@@ -298,6 +310,48 @@ export default function ConfiguracaoAssistentePage() {
                     Quanto mais documentos você adicionar (regimento, convenção, atas), mais útil ele será.
                 </p>
             </div>
+
+            {/* Modal de Upgrade */}
+            {showUpgradeModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4">
+                        <div className="text-center">
+                            <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                <Bot className="h-8 w-8 text-white" />
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900">Assistente IA Premium</h3>
+                            <p className="text-gray-500 mt-2">
+                                O Assistente com IA é um recurso exclusivo do plano Premium
+                            </p>
+                        </div>
+
+                        <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+                            <p className="text-sm font-medium text-gray-700">Com o Assistente IA você tem:</p>
+                            <ul className="text-sm text-gray-600 space-y-1">
+                                <li>✅ Atendimento 24h aos moradores</li>
+                                <li>✅ Respostas baseadas no regimento</li>
+                                <li>✅ Redução de ligações na portaria</li>
+                                <li>✅ Personalização completa</li>
+                            </ul>
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowUpgradeModal(false)}
+                                className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50"
+                            >
+                                Agora não
+                            </button>
+                            <Link
+                                href="/upgrade"
+                                className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg text-center hover:bg-emerald-700"
+                            >
+                                Ver Planos
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
