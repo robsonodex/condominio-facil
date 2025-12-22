@@ -121,15 +121,77 @@ export default function NotificacoesPage() {
                 await supabase.from('notices').insert({
                     condo_id: condoId,
                     titulo,
-                    descricao: mensagem,
-                    prioridade: 'media',
-                    created_by: profile?.id
+                    mensagem: mensagem, // Campo correto
+                    publico_alvo: destinatarioTipo === 'todos' ? 'todos' :
+                        destinatarioTipo === 'porteiros' ? 'somente_sindico_porteiro' : 'somente_moradores',
+                    data_publicacao: new Date().toISOString()
                 });
             }
 
-            // TODO: Integrar envio real de push, WhatsApp e email
+            // Buscar moradores para enviar e-mail/notificação
+            let moradoresQuery = supabase
+                .from('users')
+                .select('email, nome')
+                .eq('condo_id', condoId)
+                .eq('ativo', true);
 
-            alert('Notificação enviada com sucesso!');
+            // Filtrar por tipo de destinatário
+            if (destinatarioTipo === 'porteiros') {
+                moradoresQuery = moradoresQuery.eq('role', 'porteiro');
+            } else {
+                moradoresQuery = moradoresQuery.eq('role', 'morador');
+            }
+
+            const { data: moradores } = await moradoresQuery;
+
+            // Buscar nome do condomínio
+            const { data: condoData } = await supabase
+                .from('condos')
+                .select('nome')
+                .eq('id', condoId)
+                .single();
+
+            const condoNome = condoData?.nome || 'Condomínio';
+            const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://meucondominiofacil.com';
+
+            // Enviar e-mails se o tipo for email ou aviso
+            if (tipo === 'email' || tipo === 'aviso') {
+                let enviados = 0;
+                for (const morador of moradores || []) {
+                    if (morador.email) {
+                        try {
+                            await fetch(`${appUrl}/api/email`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    tipo: 'notice_created',
+                                    destinatario: morador.email,
+                                    dados: {
+                                        nome: morador.nome || 'Morador',
+                                        titulo,
+                                        mensagem: mensagem.substring(0, 300) + (mensagem.length > 300 ? '...' : ''),
+                                        condoNome,
+                                        loginUrl: `${appUrl}/login`,
+                                    },
+                                    condoId,
+                                    internalCall: true
+                                }),
+                            });
+                            enviados++;
+                        } catch (emailErr) {
+                            console.error('Erro ao enviar e-mail para', morador.email, emailErr);
+                        }
+                    }
+                }
+                console.log(`[NOTIFICACOES] ${enviados} e-mails enviados`);
+            }
+
+            // Push notification - apenas salvar (implementação depende de FCM/OneSignal)
+            if (tipo === 'push') {
+                console.log('[NOTIFICACOES] Push notification: salvo no histórico (requer implementação de FCM/OneSignal)');
+            }
+
+            alert(`✅ Notificação enviada com sucesso!${(tipo === 'email' || tipo === 'aviso') ? ` E-mails sendo enviados para ${moradores?.length || 0} moradores.` : ''}`);
             setShowModal(false);
             resetForm();
             fetchNotifications();

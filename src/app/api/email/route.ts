@@ -657,6 +657,45 @@ const templates: Record<string, { subject: string; html: (data: any) => string }
             </html>
         `,
     },
+    // Notice Created Email - aviso para morador
+    notice_created: {
+        subject: '📢 Novo Aviso do Condomínio - ${data.condoNome}',
+        html: (data: any) => `
+            <!DOCTYPE html>
+            <html>
+            <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+            <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f3f4f6;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+                    <div style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); padding: 40px 20px; text-align: center;">
+                        <h1 style="color: #ffffff; margin: 0; font-size: 28px;">📢 Novo Aviso</h1>
+                    </div>
+                    <div style="padding: 40px 30px;">
+                        <h2 style="color: #1f2937; margin-top: 0;">Olá, ${sanitizeHtml(data.nome || 'Morador')}!</h2>
+                        <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
+                            O condomínio <strong>${sanitizeHtml(data.condoNome)}</strong> publicou um novo aviso:
+                        </p>
+                        <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 20px; margin: 25px 0;">
+                            <h3 style="color: #1e40af; margin: 0 0 10px 0;">${sanitizeHtml(data.titulo)}</h3>
+                            <p style="color: #1f2937; margin: 0; line-height: 1.6;">${sanitizeHtml(data.mensagem)}</p>
+                        </div>
+                        <div style="text-align: center; margin: 35px 0;">
+                            <a href="${sanitizeHtml(data.loginUrl)}" 
+                               style="display: inline-block; background: #3b82f6; color: #ffffff; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
+                                Ver no Sistema
+                            </a>
+                        </div>
+                        <p style="color: #6b7280; font-size: 14px; text-align: center;">
+                            Acesse o sistema para ver todos os avisos e comunicados.
+                        </p>
+                    </div>
+                    <div style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
+                        <p style="color: #9ca3af; font-size: 12px; margin: 0;">© ${new Date().getFullYear()} Condomínio Fácil</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+        `,
+    },
     // Payment Received Email
     payment_received: {
         subject: '✅ Pagamento Confirmado - Condomínio Fácil',
@@ -763,7 +802,8 @@ export async function POST(request: NextRequest) {
             'condo_active',
             'condo_suspended',
             'resident_invoice',
-            'morador_welcome'
+            'morador_welcome',
+            'notice_created'
         ];
         const requiresAuth = !publicTemplates.includes(tipo) || !internalCall;
 

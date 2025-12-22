@@ -221,6 +221,7 @@ function NoticeModal({ isOpen, onClose, onSuccess, condoId, notice }: {
     const [mensagem, setMensagem] = useState('');
     const [publicoAlvo, setPublicoAlvo] = useState('todos');
     const [dataExpiracao, setDataExpiracao] = useState('');
+    const [enviarEmail, setEnviarEmail] = useState(true);
     const supabase = createClient();
 
     useEffect(() => {
@@ -234,6 +235,7 @@ function NoticeModal({ isOpen, onClose, onSuccess, condoId, notice }: {
             setMensagem('');
             setPublicoAlvo('todos');
             setDataExpiracao('');
+            setEnviarEmail(true);
         }
     }, [notice]);
 
@@ -263,6 +265,61 @@ function NoticeModal({ isOpen, onClose, onSuccess, condoId, notice }: {
             } else {
                 const result = await supabase.from('notices').insert(data);
                 error = result.error;
+
+                // Enviar e-mail para moradores se for novo aviso e opção estiver marcada
+                if (!error && enviarEmail && (publicoAlvo === 'todos' || publicoAlvo === 'somente_moradores')) {
+                    try {
+                        // Buscar moradores do condomínio
+                        const { data: moradores } = await supabase
+                            .from('users')
+                            .select('email, nome')
+                            .eq('condo_id', condoId)
+                            .eq('role', 'morador')
+                            .eq('ativo', true);
+
+                        // Buscar nome do condomínio
+                        const { data: condoData } = await supabase
+                            .from('condos')
+                            .select('nome')
+                            .eq('id', condoId)
+                            .single();
+
+                        const condoNome = condoData?.nome || 'Condomínio';
+
+                        // Enviar e-mail para cada morador
+                        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://meucondominiofacil.com';
+                        let enviados = 0;
+                        for (const morador of moradores || []) {
+                            if (morador.email) {
+                                try {
+                                    await fetch(`${appUrl}/api/email`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                            tipo: 'notice_created',
+                                            destinatario: morador.email,
+                                            dados: {
+                                                nome: morador.nome || 'Morador',
+                                                titulo,
+                                                mensagem: mensagem.substring(0, 300) + (mensagem.length > 300 ? '...' : ''),
+                                                condoNome,
+                                                loginUrl: `${appUrl}/login`,
+                                            },
+                                            condoId,
+                                            internalCall: true
+                                        }),
+                                    });
+                                    enviados++;
+                                } catch (emailErr) {
+                                    console.error('Erro ao enviar e-mail para', morador.email, emailErr);
+                                }
+                            }
+                        }
+                        console.log(`[AVISOS] ${enviados} e-mails enviados para moradores`);
+                    } catch (emailError) {
+                        console.error('Erro ao enviar e-mails:', emailError);
+                    }
+                }
             }
 
             if (error) {
@@ -271,7 +328,7 @@ function NoticeModal({ isOpen, onClose, onSuccess, condoId, notice }: {
                 return;
             }
 
-            alert(`✅ Aviso ${notice ? 'atualizado' : 'publicado'} com sucesso!`);
+            alert(`✅ Aviso ${notice ? 'atualizado' : 'publicado'} com sucesso!${!notice && enviarEmail ? ' E-mails sendo enviados aos moradores.' : ''}`);
             onSuccess();
             onClose();
         } catch (err: any) {
@@ -320,6 +377,22 @@ function NoticeModal({ isOpen, onClose, onSuccess, condoId, notice }: {
                         onChange={(e) => setDataExpiracao(e.target.value)}
                     />
                 </div>
+
+                {/* Checkbox de enviar e-mail */}
+                {!notice && (publicoAlvo === 'todos' || publicoAlvo === 'somente_moradores') && (
+                    <div className="flex items-center gap-2 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+                        <input
+                            type="checkbox"
+                            id="enviarEmail"
+                            checked={enviarEmail}
+                            onChange={(e) => setEnviarEmail(e.target.checked)}
+                            className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                        />
+                        <label htmlFor="enviarEmail" className="text-sm text-emerald-800">
+                            📧 Enviar e-mail de notificação para todos os moradores
+                        </label>
+                    </div>
+                )}
 
                 <div className="flex gap-3 justify-end pt-4">
                     <Button type="button" variant="ghost" onClick={onClose}>
