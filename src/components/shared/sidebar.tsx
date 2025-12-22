@@ -179,8 +179,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         // Check plan features
         if (item.requiresFeature && planFeatures) {
-            // Sindico should always see core management modules to avoid confusion
-            if (effectiveFilterRole === 'sindico') return true;
+            // Sindico e Porteiro should always see their modules to avoid confusion
+            if (effectiveFilterRole === 'sindico' || effectiveFilterRole === 'porteiro') return true;
 
             return planFeatures[item.requiresFeature as keyof PlanFeatures] === true;
         }

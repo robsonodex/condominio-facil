@@ -208,20 +208,9 @@ export default function DashboardPage() {
         return <MoradorDashboard notices={notices} />;
     }
 
-    // Porteiro - Redireciona diretamente para a página de portaria
+    // Porteiro Dashboard (only for actual porteiros, NOT superadmin)
     if (shouldShowPorteiroUI) {
-        if (typeof window !== 'undefined') {
-            window.location.href = '/portaria';
-        }
-        return (
-            <div className="space-y-6">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Portaria</h1>
-                    <p className="text-gray-500">Redirecionando...</p>
-                </div>
-                <StatsSkeleton />
-            </div>
-        );
+        return <PorteiroDashboard stats={stats} notices={notices} />;
     }
 
     // SuperAdmin Dashboard - Sem dados de condomínio específico
