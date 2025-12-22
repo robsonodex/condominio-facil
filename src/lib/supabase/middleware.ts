@@ -72,7 +72,7 @@ export async function updateSession(request: NextRequest) {
         data: { user },
     } = await supabase.auth.getUser()
 
-    // If user is logged in, check if they are SuperAdmin accessing blocked routes
+    // If user is logged in, check role-based redirects
     if (user) {
         const pathname = request.nextUrl.pathname;
 
@@ -81,7 +81,7 @@ export async function updateSession(request: NextRequest) {
             pathname === route || pathname.startsWith(route + '/')
         );
 
-        if (isBlockedRoute) {
+        if (isBlockedRoute || pathname === '/dashboard') {
             // Get user profile to check role
             const { data: profile } = await supabase
                 .from('users')
@@ -89,9 +89,14 @@ export async function updateSession(request: NextRequest) {
                 .eq('id', user.id)
                 .single();
 
-            // If SuperAdmin, redirect to admin dashboard
-            if (profile?.role === 'superadmin') {
+            // If SuperAdmin accessing blocked route, redirect to admin dashboard
+            if (profile?.role === 'superadmin' && isBlockedRoute) {
                 return NextResponse.redirect(new URL('/admin', request.url));
+            }
+
+            // If Porteiro accessing /dashboard, redirect to /portaria
+            if (profile?.role === 'porteiro' && pathname === '/dashboard') {
+                return NextResponse.redirect(new URL('/portaria', request.url));
             }
         }
     }
