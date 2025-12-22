@@ -13,11 +13,30 @@ export async function DELETE(request: NextRequest) {
         const authHeader = request.headers.get('authorization');
         let accessToken = authHeader?.replace('Bearer ', '');
 
-        // Fallback to cookie if no auth header
+        // Fallback to cookies if no auth header
         if (!accessToken) {
             const cookieHeader = request.headers.get('cookie') || '';
-            const tokenMatch = cookieHeader.match(/sb-[^-]+-auth-token=([^;]+)/);
-            accessToken = tokenMatch ? decodeURIComponent(tokenMatch[1]) : null;
+
+            // Try multiple cookie formats
+            // Format 1: JSON encoded token
+            const jsonTokenMatch = cookieHeader.match(/sb-[^-]+-auth-token=([^;]+)/);
+            if (jsonTokenMatch) {
+                try {
+                    const decoded = decodeURIComponent(jsonTokenMatch[1]);
+                    const parsed = JSON.parse(decoded);
+                    accessToken = parsed[0] || parsed.access_token;
+                } catch {
+                    accessToken = decodeURIComponent(jsonTokenMatch[1]);
+                }
+            }
+
+            // Format 2: Direct access token cookie
+            if (!accessToken) {
+                const accessTokenMatch = cookieHeader.match(/sb-[^-]+-access-token=([^;]+)/);
+                if (accessTokenMatch) {
+                    accessToken = decodeURIComponent(accessTokenMatch[1]);
+                }
+            }
         }
 
         if (!accessToken) {
@@ -27,6 +46,8 @@ export async function DELETE(request: NextRequest) {
                 { status: 401 }
             );
         }
+
+        console.log('[DELETE USER] Token found, length:', accessToken.length);
 
         // Verify user with Supabase
         const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(accessToken);
