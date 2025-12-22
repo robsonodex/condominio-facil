@@ -4,7 +4,9 @@ import { Menu, Bell, LogOut, User, Building2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useUser, useCondo } from '@/hooks/useUser';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createClient } from '@/lib/supabase/client';
+import Link from 'next/link';
 
 interface HeaderProps {
     onMenuClick: () => void;
@@ -12,11 +14,48 @@ interface HeaderProps {
 
 export function Header({ onMenuClick }: HeaderProps) {
     const { signOut } = useAuth();
-    const { profile, isSuperAdmin, loading: userLoading } = useUser();
+    const { profile, isSuperAdmin, condoId, loading: userLoading } = useUser();
     const { condo } = useCondo();
     const router = useRouter();
     const [showUserMenu, setShowUserMenu] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(0);
+    const supabase = createClient();
+
+    // Buscar avisos não lidos
+    useEffect(() => {
+        if (condoId && profile?.id) {
+            fetchUnreadNotices();
+        }
+    }, [condoId, profile?.id]);
+
+    const fetchUnreadNotices = async () => {
+        try {
+            // Buscar avisos do condomínio nos últimos 30 dias
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+            const { data: notices } = await supabase
+                .from('notices')
+                .select('id')
+                .eq('condo_id', condoId)
+                .gte('data_publicacao', thirtyDaysAgo.toISOString())
+                .in('publico_alvo', ['todos', 'somente_moradores']);
+
+            // Buscar avisos já lidos pelo usuário
+            const { data: readNotices } = await supabase
+                .from('notice_reads')
+                .select('notice_id')
+                .eq('user_id', profile?.id);
+
+            const readIds = new Set(readNotices?.map(r => r.notice_id) || []);
+            const unread = notices?.filter(n => !readIds.has(n.id)) || [];
+
+            setUnreadCount(unread.length);
+        } catch (error) {
+            console.error('Error fetching unread notices:', error);
+        }
+    };
 
     const handleSignOut = async () => {
         if (isLoggingOut) return; // Prevent double-click
@@ -79,14 +118,19 @@ export function Header({ onMenuClick }: HeaderProps) {
 
                 {/* Right side */}
                 <div className="flex items-center gap-2">
-                    {/* Notifications - Em breve */}
-                    <button
-                        className="p-2 rounded-lg hover:bg-gray-100 relative opacity-50 cursor-not-allowed"
-                        title="Notificações em breve"
-                        disabled
+                    {/* Notifications */}
+                    <Link
+                        href="/avisos"
+                        className="p-2 rounded-lg hover:bg-gray-100 relative"
+                        title="Ver avisos"
                     >
-                        <Bell className="h-5 w-5 text-gray-400" />
-                    </button>
+                        <Bell className="h-5 w-5 text-gray-600" />
+                        {unreadCount > 0 && (
+                            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                                {unreadCount > 99 ? '99+' : unreadCount}
+                            </span>
+                        )}
+                    </Link>
 
                     {/* User menu */}
                     <div className="relative">
