@@ -2,9 +2,9 @@
 
 ## 📋 Visão Geral
 
-O **Condomínio Fácil** é uma plataforma SaaS (Software como Serviço) **100% WEB** para gestão de condomínios pequenos e médios no Brasil. O sistema permite que síndicos, porteiros e moradores gerenciem todas as operações do condomínio de forma simples e organizada através do navegador.
+O **Condomínio Fácil** é uma plataforma SaaS (Software como Serviço) **100% WEB + APP MÓVEL** para gestão de condomínios pequenos e médios no Brasil. O sistema permite que síndicos, porteiros e moradores gerenciem todas as operações do condomínio de forma simples e organizada.
 
-> ⚠️ **IMPORTANTE**: O Condomínio Fácil é um **sistema WEB** acessível via navegador. **NÃO existe aplicativo nativo para Android ou iOS**. O sistema pode ser instalado como PWA (Progressive Web App) na tela inicial do celular, funcionando como um app.
+> ✅ **NOVIDADE 2025**: Agora temos **App Móvel nativo** para Android e iOS! Disponível nas lojas Google Play e App Store.
 
 ---
 
@@ -96,9 +96,27 @@ O **Condomínio Fácil** é uma plataforma SaaS (Software como Serviço) **100% 
 - Gerencia o condomínio dele
 - Cadastra unidades e moradores
 - Lança receitas e despesas
-- Publica avisos
-- Gerencia ocorrências
-- Gera relatórios (Prestação de Contas)
+- Publica avisos (com prioridade Urgente/Oficial)
+- Gerencia ocorrências e **responde no Chat em tempo real**
+- **Governança Digital**: Assembleias e Enquetes online
+- **Manutenção**: Ordens de serviço em Kanban + Fornecedores
+- Gera relatórios (Prestação de Contas PDF/Excel)
+
+**Módulos disponíveis:**
+| Módulo | Descrição |
+|--------|-----------|
+| Dashboard | KPIs, gráficos, alertas |
+| Financeiro | Receitas, despesas, inadimplência |
+| Cobranças | Boletos para moradores |
+| Moradores | Cadastro e importação CSV |
+| Unidades | Blocos e apartamentos |
+| Avisos | Comunicados com prioridade |
+| Ocorrências | Chamados + **Chat Realtime** ✨ |
+| Reservas | Calendário de áreas comuns |
+| Portaria | Visitantes e encomendas |
+| Governança | Assembleias + Enquetes + Documentos |
+| Manutenção | Kanban + Fornecedores |
+| Relatórios | PDF/Excel profissional |
 
 **Onde acessa:** `/dashboard`
 
@@ -107,11 +125,22 @@ O **Condomínio Fácil** é uma plataforma SaaS (Software como Serviço) **100% 
 ### 3. Porteiro
 
 **O que faz:**
-- Registra entrada/saída de visitantes
-- Abre ocorrências
-- Visualiza avisos
+- Registra entrada/saída de visitantes (com foto)
+- Registra prestadores de serviço
+- Registra veículos
+- Recebe e registra encomendas
+- Visualiza avisos do condomínio
+- Portaria Turbo (modo tela cheia)
 
-**Onde acessa:** `/dashboard` (visão limitada)
+**Módulos disponíveis:**
+| Módulo | Descrição |
+|--------|-----------|
+| Portaria | Registro rápido com cores por tipo |
+| Encomendas | Recebimento com foto e notificação |
+| Visitantes | Histórico e busca por CPF/placa |
+| Avisos | Visualização de comunicados |
+
+**Onde acessa:** `/dashboard` ou App Móvel
 
 ---
 
@@ -119,11 +148,25 @@ O **Condomínio Fácil** é uma plataforma SaaS (Software como Serviço) **100% 
 
 **O que faz:**
 - Visualiza avisos do condomínio
-- Abre ocorrências
+- Abre ocorrências e **conversa com síndico via Chat** ✨
 - Faz reservas de áreas comuns
-- Visualiza suas cobranças
+- Visualiza e paga suas cobranças
+- Vota em enquetes
+- Participa de assembleias virtuais
+- Acompanha suas encomendas
 
-**Onde acessa:** `/dashboard` (visão limitada)
+**Módulos disponíveis:**
+| Módulo | Descrição |
+|--------|-----------|
+| Falar com Síndico | Chat realtime em ocorrências |
+| Minhas Encomendas | Notificações de pacotes |
+| Meus Boletos | Visualização e pagamento |
+| Minhas Reservas | Calendário e solicitações |
+| Avisos | Comunicados do condomínio |
+| Enquetes | Votação online |
+| Documentos | Regimento, convenção, atas |
+
+**Onde acessa:** `/dashboard` ou App Móvel
 
 ---
 
@@ -193,12 +236,14 @@ PWA (Progressive Web App) é uma tecnologia que permite **instalar o site como s
 - Definir prioridade
 - Histórico de avisos
 
-### 7. Ocorrências (`/ocorrencias`)
+### 7. Ocorrências + Chat (`/ocorrencias`) ✨ NOVO
 - Abrir reclamações
-- Classificar por tipo (barulho, manutenção, etc.)
-- Definir prioridade
-- Acompanhar status
-- Excluir ocorrências
+- Classificar por tipo (barulho, manutenção, segurança)
+- Definir prioridade (baixa, média, alta)
+- **Chat em tempo real** entre morador e síndico
+- Histórico de conversas por ocorrência
+- Status: aberta, em andamento, resolvida
+- Moradores veem cards, síndico vê tabela com botão Chat
 
 ### 8. Reservas de Áreas Comuns (`/reservas`)
 - Calendário interativo mensal
@@ -257,16 +302,46 @@ PWA (Progressive Web App) é uma tecnologia que permite **instalar o site como s
 
 ### 16. Encomendas e Mensageria (`/portaria/deliveries`)
 - Recebimento na Portaria com foto
-- Registro de código de rastreio
+- Registro de código de rastreio e transportadora
 - Retirada com histórico
+- Morador acompanha em `/portaria/minhas-encomendas`
 - **⚙️ Notificações WhatsApp** *(mediante implantação)*
 
-### 17. Modo Demo
-- Botão na tela de login
-- Cria ambiente de demonstração automaticamente
-- Ideal para demonstrações comerciais
+### 17. Governança Digital (`/governanca`) ✨ NOVO
+- **Assembleias** (`/governanca/assembleias`)
+  - Agendar assembleias ordinárias/extraordinárias
+  - Status: agendada, ao vivo, concluída
+  - Link para reunião virtual (Google Meet, Zoom)
+  - Pauta e ata digital
+- **Enquetes** (`/governanca/enquetes`)
+  - Criar votações online
+  - Múltiplas opções de resposta
+  - Prazo de votação
+  - Resultados em tempo real
+- **Documentos** (`/governanca/documents`)
+  - Repositório centralizado
+  - Regimento, convenção, atas
+  - Upload e categorização
 
-### 18. Assistente IA (`/configuracoes/assistente`) ✨ NOVO
+### 18. Manutenção (`/manutencao`) ✨ NOVO
+- **Kanban de Ordens de Serviço**
+  - Colunas: Agendado, Em Execução, Concluído
+  - Tipos: Preventiva, Corretiva
+  - Prioridade: Baixa, Média, Alta
+- **Cadastro de Fornecedores**
+  - Nome, especialidade, telefone
+  - Rating por estrelas
+  - Histórico de serviços
+- Valor estimado vs realizado
+- Data agendada e conclusão
+
+### 19. Modo Demo
+- Botão "Demonstração" na tela de login
+- Cria ambiente completo automaticamente
+- Dados fictícios para demonstração comercial
+- Login: `sindico.demo@condofacil.com` / `demo123456`
+
+### 20. Assistente IA (`/configuracoes/assistente`)
 - Chatbot treinado com documentos do condomínio
 - Responde perguntas dos moradores 24h
 - Configuração de persona e tom de resposta
@@ -447,8 +522,32 @@ Para dúvidas técnicas, consulte:
 
 ---
 
-**Versão do Manual:** 7.0  
-**Última atualização:** 20/12/2025  
+**Versão do Manual:** 8.1  
+**Última atualização:** 24/12/2024  
 **CNPJ:** 57.444.727/0001-85
 
-© 2025 Condomínio Fácil - Todos os direitos reservados
+### Novidades da Versão 8.1
+- ✅ **Chat Morador ↔ Síndico** (Add-on R$29,90/mês)
+  - Morador fala diretamente com síndico via barra de chat
+  - Categorias: Financeiro, Manutenção, Sugestão, Reclamação
+  - Sistema de avaliação do atendimento
+  - Toggle de ativação por condomínio (Admin)
+- ✅ **Dashboard do Morador redesenhado** com cores vibrantes
+- ✅ **Chat de Suporte estilo LinkedIn** (Admin ↔ Síndico)
+- ✅ **Módulo de Mensageria/Entregas** para portaria
+- ✅ **Painel Admin `/admin/chats`** para visualizar todos os chats
+- ✅ Chat em tempo real "Falar com o Síndico" nas ocorrências
+- ✅ Governança Digital (Assembleias + Enquetes + Documentos)
+- ✅ Manutenção com Kanban e Fornecedores
+- ✅ App Móvel nativo Android/iOS
+- ✅ Avisos com prioridade Urgente/Oficial
+- ✅ Impersonação de usuários para suporte
+
+### Add-ons Disponíveis (Ativação via Admin)
+
+| Add-on | Preço Mensal | Descrição |
+|--------|-------------|-----------|
+| **Mensageria/Entregas** | Incluso | Registro e notificação de entregas |
+| **Chat Morador ↔ Síndico** | R$ 29,90 | Canal direto de comunicação |
+
+© 2024 Condomínio Fácil - Todos os direitos reservados
