@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/hooks/useUser';
 import { useState, useEffect } from 'react';
 import {
@@ -64,8 +65,9 @@ interface PlanFeatures {
     hasCameras: boolean;
     hasAutomations: boolean;
     maxUnits: number;
-    // IA
+    // Add-ons/Toggles
     hasAI: boolean;
+    hasMensageria: boolean;
 }
 
 
@@ -84,8 +86,9 @@ const navItems: NavItem[] = [
     { href: '/ocorrencias', label: 'Ocorrências', icon: <AlertTriangle className="h-5 w-5" />, roles: ['sindico', 'morador', 'inquilino', 'porteiro'], requiresFeature: 'hasOccurrences' },
     { href: '/reservas', label: 'Reservas', icon: <Calendar className="h-5 w-5" />, roles: ['sindico', 'morador', 'inquilino'], requiresFeature: 'hasCommonAreas' },
     { href: '/portaria', label: 'Portaria', icon: <UserCheck className="h-5 w-5" />, roles: ['porteiro'], requiresFeature: 'hasOccurrences' },
+    { href: '/mensageria', label: 'Mensageria', icon: <Package className="h-5 w-5" />, roles: ['porteiro', 'sindico'], requiresFeature: 'hasMensageria' },
     { href: '/portaria/cameras', label: 'Câmeras', icon: <Settings className="h-5 w-5" />, roles: ['porteiro'], requiresFeature: 'hasCameras' },
-    { href: '/portaria/minhas-encomendas', label: 'Minhas Encomendas', icon: <Package className="h-5 w-5" />, roles: ['morador', 'inquilino'], requiresFeature: 'hasOccurrences' },
+    { href: '/portaria/minhas-encomendas', label: 'Minhas Entregas', icon: <Package className="h-5 w-5" />, roles: ['morador', 'inquilino'], requiresFeature: 'hasDeliveries' },
     { href: '/relatorios', label: 'Relatórios', icon: <FileText className="h-5 w-5" />, roles: ['sindico'], requiresFeature: 'hasOccurrences' },
     // Módulos restritos por plano - Premium
     { href: '/automacoes', label: 'Automações', icon: <Settings className="h-5 w-5" />, roles: ['sindico'], requiresFeature: 'hasMaintenance' },
@@ -103,6 +106,7 @@ const navItems: NavItem[] = [
     },
     { href: '/manutencao', label: 'Manutenção Preventiva', icon: <Settings className="h-5 w-5" />, roles: ['sindico'], requiresFeature: 'hasMaintenance' },
     // Configurações (sempre visíveis para síndico)
+    { href: '/configuracoes/condominio', label: 'Meu Condomínio', icon: <Building2 className="h-5 w-5 text-emerald-500" />, roles: ['sindico'] },
     { href: '/configuracoes/integracao-whatsapp', label: 'WhatsApp Oficial', icon: <MessageCircle className="h-5 w-5 text-green-500" />, roles: ['sindico'] },
     { href: '/configuracoes/integracao-pagamentos', label: 'Integração Premium', icon: <Zap className="h-5 w-5 text-amber-400" />, roles: ['sindico'] },
     { href: '/configuracoes/pix', label: 'Configurar PIX', icon: <QrCode className="h-5 w-5" />, roles: ['sindico'] },
@@ -137,17 +141,79 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     const { profile, isSuperAdmin, isSuperAdminReal, isImpersonating } = useUser();
     const viewAsRole = useViewAsRole();
     const [planFeatures, setPlanFeatures] = useState<PlanFeatures | null>(null);
+    const [mensageriaAtivo, setMensageriaAtivo] = useState<boolean>(false);
     const [expandedItems, setExpandedItems] = useState<string[]>(['/governanca']);
+    const [pendingChats, setPendingChats] = useState(0);
+    const supabase = createClient();
 
     useEffect(() => {
         // Fetch plan features for non-superadmins
         if (!isSuperAdmin) {
             fetch('/api/plan-features')
                 .then(res => res.json())
-                .then(data => setPlanFeatures(data))
+                .then(data => {
+                    setPlanFeatures(data);
+                    // Também pegar hasMensageria da resposta
+                    if (data?.hasMensageria !== undefined) {
+                        setMensageriaAtivo(data.hasMensageria);
+                    }
+                })
                 .catch(err => console.error('[Sidebar] Error fetching plan features:', err));
         }
+
+        // Fetch pending chats for superadmin
+        if (isSuperAdmin) {
+            fetchPendingChats();
+            // Atualizar a cada 30 segundos
+            const interval = setInterval(fetchPendingChats, 30000);
+            return () => clearInterval(interval);
+        }
     }, [isSuperAdmin]);
+
+    // Busca direta do mensageria_ativo do condomínio como fallback
+    useEffect(() => {
+        if (profile?.condo_id && !isSuperAdmin) {
+            supabase
+                .from('condos')
+                .select('mensageria_ativo')
+                .eq('id', profile.condo_id)
+                .single()
+                .then(({ data }) => {
+                    if (data?.mensageria_ativo !== undefined) {
+                        setMensageriaAtivo(data.mensageria_ativo);
+                    }
+                });
+        }
+    }, [profile?.condo_id, isSuperAdmin]);
+
+    const fetchPendingChats = async () => {
+        try {
+            const res = await fetch('/api/admin/pending-chats');
+            if (res.ok) {
+                const data = await res.json();
+                const newCount = data.count || 0;
+
+                // Tocar som se houver novas mensagens
+                if (newCount > pendingChats && pendingChats >= 0) {
+                    playNotificationSound();
+                }
+
+                setPendingChats(newCount);
+            }
+        } catch (err) {
+            console.error('[Sidebar] Error fetching pending chats:', err);
+        }
+    };
+
+    const playNotificationSound = () => {
+        try {
+            const audio = new Audio('/sounds/52pj7t0b7w3-notification-sfx-10.mp3');
+            audio.volume = 0.5;
+            audio.play().catch(e => console.log('[Sidebar] Could not play sound:', e));
+        } catch (e) {
+            console.log('[Sidebar] Audio not supported');
+        }
+    };
 
     // Auto-expand Governança if on a sub-route
     useEffect(() => {
@@ -171,18 +237,26 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         : profile?.role || '';
 
     // Debug log
-    console.log('[SIDEBAR] effectiveFilterRole:', effectiveFilterRole, 'viewAsRole:', viewAsRole, 'profile.role:', profile?.role);
+    console.log('[SIDEBAR] effectiveFilterRole:', effectiveFilterRole, 'mensageriaAtivo:', mensageriaAtivo, 'planFeatures:', planFeatures);
 
     const filteredNavItems = navItems.filter(item => {
         // Check role permissions using effective role
         if (item.roles && !item.roles.includes(effectiveFilterRole)) return false;
 
         // Check plan features
-        if (item.requiresFeature && planFeatures) {
-            // Sindico e Porteiro should always see their modules to avoid confusion
-            if (effectiveFilterRole === 'sindico' || effectiveFilterRole === 'porteiro') return true;
+        if (item.requiresFeature) {
+            // hasMensageria sempre verifica o estado local (busca direta do condo)
+            if (item.requiresFeature === 'hasMensageria') {
+                return mensageriaAtivo === true;
+            }
 
-            return planFeatures[item.requiresFeature as keyof PlanFeatures] === true;
+            // Se planFeatures está carregado, verificar
+            if (planFeatures) {
+                // Sindico e Porteiro should always see their other modules to avoid confusion
+                if (effectiveFilterRole === 'sindico' || effectiveFilterRole === 'porteiro') return true;
+
+                return planFeatures[item.requiresFeature as keyof PlanFeatures] === true;
+            }
         }
 
         return true;
@@ -250,6 +324,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                                     item={item}
                                     isActive={pathname.startsWith(item.href)}
                                     onClick={onClose}
+                                    badge={item.href === '/admin/suporte' ? pendingChats : undefined}
                                 />
                             ))}
                             <div className="my-4 border-t border-gray-200" />
@@ -313,21 +388,28 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     );
 }
 
-function NavLink({ item, isActive, onClick, isSubItem }: { item: NavItem; isActive: boolean; onClick: () => void; isSubItem?: boolean }) {
+function NavLink({ item, isActive, onClick, isSubItem, badge }: { item: NavItem; isActive: boolean; onClick: () => void; isSubItem?: boolean; badge?: number }) {
     return (
         <Link
             href={item.href}
             onClick={onClick}
             className={cn(
-                'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                'flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
                 isSubItem && 'text-xs pl-4',
                 isActive
                     ? 'bg-emerald-50 text-emerald-700'
                     : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
             )}
         >
-            {item.icon}
-            {item.label}
+            <div className="flex items-center gap-3">
+                {item.icon}
+                {item.label}
+            </div>
+            {badge != null && badge > 0 && (
+                <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white px-1.5">
+                    {badge > 99 ? '99+' : badge}
+                </span>
+            )}
         </Link>
     );
 }
