@@ -7,7 +7,8 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useUser } from '@/hooks/useUser';
 import { formatDate, formatDateTime } from '@/lib/utils';
-import { Package, Plus, Search, Check, AlertCircle, Clock, User, Home, Mail, Phone } from 'lucide-react';
+import { Package, Plus, Search, Check, AlertCircle, Clock, User, Home, Mail, Phone, Lock } from 'lucide-react';
+import Link from 'next/link';
 
 interface Entrega {
     id: string;
@@ -47,6 +48,7 @@ export default function MensageriaPage() {
     const [units, setUnits] = useState<Unit[]>([]);
     const [moradores, setMoradores] = useState<Morador[]>([]);
     const [loading, setLoading] = useState(true);
+    const [mensageriaAtivo, setMensageriaAtivo] = useState<boolean | null>(null);
     const [showModal, setShowModal] = useState(false);
     const [showRetiradaModal, setShowRetiradaModal] = useState(false);
     const [selectedEntrega, setSelectedEntrega] = useState<Entrega | null>(null);
@@ -72,12 +74,35 @@ export default function MensageriaPage() {
         'Authorization': `Bearer ${session?.access_token}`,
     });
 
+    // Verificar se mensageria está ativa para o condomínio
     useEffect(() => {
-        if (session?.access_token && condoId) {
+        if (condoId) {
+            checkMensageriaAtivo();
+        }
+    }, [condoId]);
+
+    const checkMensageriaAtivo = async () => {
+        try {
+            const { data } = await supabase
+                .from('condos')
+                .select('mensageria_ativo')
+                .eq('id', condoId)
+                .single();
+            setMensageriaAtivo(data?.mensageria_ativo || false);
+        } catch (e) {
+            console.error('[Mensageria] Error checking status:', e);
+            setMensageriaAtivo(false);
+        }
+    };
+
+    useEffect(() => {
+        if (session?.access_token && condoId && mensageriaAtivo === true) {
             fetchEntregas();
             fetchUnits();
+        } else {
+            setLoading(false);
         }
-    }, [session, condoId]);
+    }, [session, condoId, mensageriaAtivo]);
 
     useEffect(() => {
         if (unitId) {
@@ -234,6 +259,34 @@ export default function MensageriaPage() {
     });
 
     const canManage = isPorteiro || isSindico || isSuperAdmin;
+
+    // Módulo desativado pelo admin
+    if (mensageriaAtivo === false) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+                <Lock className="h-16 w-16 text-gray-300" />
+                <h2 className="text-xl font-bold text-gray-700">Módulo Desativado</h2>
+                <p className="text-gray-500 text-center max-w-md">
+                    O módulo de Mensageria não está ativado para este condomínio.
+                    <br />
+                    Entre em contato com o suporte para ativar.
+                </p>
+                <Link href="/dashboard">
+                    <Button variant="outline">Voltar ao Dashboard</Button>
+                </Link>
+            </div>
+        );
+    }
+
+    // Ainda carregando status
+    if (mensageriaAtivo === null) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+                <Package className="h-16 w-16 text-gray-300 animate-pulse" />
+                <p className="text-gray-500">Carregando...</p>
+            </div>
+        );
+    }
 
     if (!canManage) {
         return (
