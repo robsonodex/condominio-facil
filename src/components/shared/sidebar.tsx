@@ -265,6 +265,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
                 return planFeatures[item.requiresFeature as keyof PlanFeatures] === true;
             }
+
+            // Se planFeatures ainda não carregou, esconder para moradores (evita flicker)
+            if (effectiveFilterRole === 'morador' || effectiveFilterRole === 'inquilino') {
+                return false;
+            }
         }
 
         return true;
