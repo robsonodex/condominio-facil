@@ -175,9 +175,9 @@ async function criarNovaConversa(body: any, profile: any, condoId: string) {
         await supabaseAdmin.from('notifications').insert({
             condo_id: condoId,
             user_id: sindico.id,
-            titulo: '💬 Nova mensagem de morador',
-            mensagem: `${profile.nome}${unidade ? ` (${unidade})` : ''} iniciou uma conversa: "${assunto || 'Sem assunto'}"`,
-            tipo: 'sistema',
+            title: '💬 Nova mensagem de morador',
+            message: `${profile.nome}${unidade ? ` (${unidade})` : ''} iniciou uma conversa: "${assunto || 'Sem assunto'}"`,
+            type: 'sistema',
             link: '/chat-moradores'
         });
     }
@@ -237,9 +237,9 @@ async function enviarMensagem(body: any, profile: any, condoId: string) {
         await supabaseAdmin.from('notifications').insert({
             condo_id: condoId,
             user_id: conversa.morador_id,
-            titulo: '💬 Resposta do Síndico',
-            mensagem: `O síndico respondeu sua mensagem: "${mensagem.substring(0, 50)}${mensagem.length > 50 ? '...' : ''}"`,
-            tipo: 'sistema',
+            title: '💬 Resposta do Síndico',
+            message: `O síndico respondeu sua mensagem: "${mensagem.substring(0, 50)}${mensagem.length > 50 ? '...' : ''}"`,
+            type: 'sistema',
             link: '/chat-moradores'
         });
     } else if (isMorador && conversa.sindico_id) {
@@ -248,9 +248,9 @@ async function enviarMensagem(body: any, profile: any, condoId: string) {
         await supabaseAdmin.from('notifications').insert({
             condo_id: condoId,
             user_id: conversa.sindico_id,
-            titulo: '💬 Nova mensagem',
-            mensagem: `${profile.nome}${unidade ? ` (${unidade})` : ''}: "${mensagem.substring(0, 50)}${mensagem.length > 50 ? '...' : ''}"`,
-            tipo: 'sistema',
+            title: '💬 Nova mensagem',
+            message: `${profile.nome}${unidade ? ` (${unidade})` : ''}: "${mensagem.substring(0, 50)}${mensagem.length > 50 ? '...' : ''}"`,
+            type: 'sistema',
             link: '/chat-moradores'
         });
     }

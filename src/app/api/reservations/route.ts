@@ -204,11 +204,11 @@ export async function PUT(request: NextRequest) {
             await supabaseAdmin.from('notifications').insert({
                 condo_id: reservation.condo_id,
                 user_id: reservation.user_id,
-                titulo: isApproved ? '✅ Reserva Aprovada!' : '❌ Reserva Rejeitada',
-                mensagem: isApproved
+                title: isApproved ? '✅ Reserva Aprovada!' : '❌ Reserva Rejeitada',
+                message: isApproved
                     ? `Sua reserva para ${data.area?.nome} foi aprovada! Data: ${data.data_reserva}, horário: ${data.horario_inicio} às ${data.horario_fim}`
                     : `Sua reserva para ${data.area?.nome} foi rejeitada. Motivo: ${motivo_rejeicao || 'Não informado'}`,
-                tipo: 'sistema',
+                type: 'sistema',
                 link: '/reservas'
             });
         }

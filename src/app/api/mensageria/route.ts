@@ -122,9 +122,9 @@ export async function POST(request: NextRequest) {
             await supabaseAdmin.from('notifications').insert({
                 condo_id: profile.condo_id,
                 user_id: morador_id,
-                titulo: '📦 Nova entrega na mensageria!',
-                mensagem: `Você tem uma ${tipo || 'encomenda'} aguardando retirada${remetente ? ` de ${remetente}` : ''}. Retire na portaria/mensageria.`,
-                tipo: 'sistema',
+                title: '📦 Nova entrega na mensageria!',
+                message: `Você tem uma ${tipo || 'encomenda'} aguardando retirada${remetente ? ` de ${remetente}` : ''}. Retire na portaria/mensageria.`,
+                type: 'sistema',
                 link: '/minhas-notificacoes'
             });
 
@@ -253,9 +253,9 @@ export async function PUT(request: NextRequest) {
             await supabaseAdmin.from('notifications').insert({
                 condo_id: entrega.condo_id,
                 user_id: entrega.morador_id,
-                titulo: '✅ Entrega retirada!',
-                mensagem: `Sua ${entrega.tipo || 'encomenda'} foi retirada por ${retirado_por_nome}${retirado_por_documento ? ` (Doc: ${retirado_por_documento})` : ''}.`,
-                tipo: 'sistema',
+                title: '✅ Entrega retirada!',
+                message: `Sua ${entrega.tipo || 'encomenda'} foi retirada por ${retirado_por_nome}${retirado_por_documento ? ` (Doc: ${retirado_por_documento})` : ''}.`,
+                type: 'sistema',
                 link: '/minhas-notificacoes'
             });
         } else if (action === 'devolver') {

@@ -94,9 +94,9 @@ export default function UsuariosCondoPage() {
                     await supabase.from('notifications').insert({
                         condo_id: condoId,
                         user_id: editingUser.id,
-                        titulo: '👤 Seu perfil foi atualizado',
-                        mensagem: `Seu perfil foi alterado de ${roleLabels[editingUser.role] || editingUser.role} para ${roleLabels[formData.role] || formData.role}. Entre em contato com o síndico se houver dúvidas.`,
-                        tipo: 'sistema',
+                        title: '👤 Seu perfil foi atualizado',
+                        message: `Seu perfil foi alterado de ${roleLabels[editingUser.role] || editingUser.role} para ${roleLabels[formData.role] || formData.role}. Entre em contato com o síndico se houver dúvidas.`,
+                        type: 'sistema',
                         link: '/perfil'
                     });
                 }

@@ -348,9 +348,9 @@ function NoticeModal({ isOpen, onClose, onSuccess, condoId, notice }: {
                         const notifications = users.map(user => ({
                             condo_id: condoId,
                             user_id: user.id,
-                            titulo: `📢 ${titulo}`,
-                            mensagem: mensagem.substring(0, 200) + (mensagem.length > 200 ? '...' : ''),
-                            tipo: tipoAviso === 'urgente' ? 'aviso' : 'sistema',
+                            title: `📢 ${titulo}`,
+                            message: mensagem.substring(0, 200) + (mensagem.length > 200 ? '...' : ''),
+                            type: tipoAviso === 'urgente' ? 'aviso' : 'sistema',
                             link: '/avisos'
                         }));
 
