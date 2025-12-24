@@ -123,6 +123,15 @@ export default function AdminCondominiosPage() {
         }
     };
 
+    const handleToggleChatSindico = async (id: string, ativo: boolean) => {
+        try {
+            await supabase.from('condos').update({ chat_sindico_ativo: ativo }).eq('id', id);
+            setCondos(prev => prev.map(c => c.id === id ? { ...c, chat_sindico_ativo: ativo } : c));
+        } catch (error: any) {
+            alert(`Erro ao atualizar Chat Síndico: ${error.message}`);
+        }
+    };
+
     // Impersonar síndico do condomínio
     const handleImpersonate = async (condoId: string, condoName: string) => {
         try {
@@ -266,6 +275,22 @@ export default function AdminCondominiosPage() {
                 >
                     <span
                         className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${(c as any).mensageria_ativo ? 'right-0.5' : 'left-0.5'}`}
+                    />
+                </button>
+            )
+        },
+        {
+            key: 'chat_sindico_ativo',
+            header: '💬',
+            className: 'text-center',
+            render: (c: Condo) => (
+                <button
+                    onClick={(e) => { e.stopPropagation(); handleToggleChatSindico(c.id, !(c as any).chat_sindico_ativo); }}
+                    className={`relative w-11 h-6 rounded-full transition-colors ${(c as any).chat_sindico_ativo ? 'bg-blue-500' : 'bg-gray-300'}`}
+                    title={(c as any).chat_sindico_ativo ? 'Chat Síndico Ativo (R$29,90) - Clique para desativar' : 'Chat Síndico Inativo - Clique para ativar (R$29,90)'}
+                >
+                    <span
+                        className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${(c as any).chat_sindico_ativo ? 'right-0.5' : 'left-0.5'}`}
                     />
                 </button>
             )

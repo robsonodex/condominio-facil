@@ -19,13 +19,14 @@ export interface PlanFeatures {
     // Add-ons
     hasAI: boolean;               // Assistente IA
     hasMensageria: boolean;       // Módulo Mensageria (toggle do admin)
+    hasChatSindico: boolean;      // Chat Morador-Síndico (add-on R$29,90)
 }
 
 export async function getPlanFeatures(condoId: string): Promise<PlanFeatures> {
     try {
         const { data: subscription } = await supabaseAdmin
             .from('subscriptions')
-            .select('plano_id, status, plans(nome), condos(status, mensageria_ativo)')
+            .select('plano_id, status, plans(nome), condos(status, mensageria_ativo, chat_sindico_ativo)')
             .eq('condo_id', condoId)
             .single();
 
@@ -33,22 +34,23 @@ export async function getPlanFeatures(condoId: string): Promise<PlanFeatures> {
             // Check if condo is in trial even without subscription
             const { data: condo } = await supabaseAdmin
                 .from('condos')
-                .select('status, mensageria_ativo')
+                .select('status, mensageria_ativo, chat_sindico_ativo')
                 .eq('id', condoId)
                 .single();
 
             if (condo?.status === 'teste') {
-                return { ...getPremiumFeatures(), hasMensageria: condo?.mensageria_ativo || false };
+                return { ...getPremiumFeatures(), hasMensageria: condo?.mensageria_ativo || false, hasChatSindico: condo?.chat_sindico_ativo || false };
             }
-            return { ...getBasicFeatures(), hasMensageria: condo?.mensageria_ativo || false };
+            return { ...getBasicFeatures(), hasMensageria: condo?.mensageria_ativo || false, hasChatSindico: condo?.chat_sindico_ativo || false };
         }
 
         const condoData = subscription.condos as any;
         const hasMensageria = condoData?.mensageria_ativo || false;
+        const hasChatSindico = condoData?.chat_sindico_ativo || false;
 
         // If in test/trial status (either subscription or condo), return all features
         if (subscription.status === 'teste' || subscription.status === 'trial' || condoData?.status === 'teste') {
-            return { ...getPremiumFeatures(), hasMensageria };
+            return { ...getPremiumFeatures(), hasMensageria, hasChatSindico };
         }
 
         const planData = subscription.plans as any;
@@ -56,22 +58,22 @@ export async function getPlanFeatures(condoId: string): Promise<PlanFeatures> {
 
         // Premium / Avançado / Demo - ALL features
         if (planName.includes('premium') || planName.includes('avançado') || planName.includes('demo')) {
-            return { ...getPremiumFeatures(), hasMensageria };
+            return { ...getPremiumFeatures(), hasMensageria, hasChatSindico };
         }
 
         // Profissional / Intermediário - Middle tier
         if (planName.includes('profissional') || planName.includes('intermediário')) {
-            return { ...getProfessionalFeatures(), hasMensageria };
+            return { ...getProfessionalFeatures(), hasMensageria, hasChatSindico };
         }
 
         // Básico plan - Most restrictive
         if (planName.includes('básico') || planName.includes('basico')) {
-            return { ...getBasicFeatures(), hasMensageria };
+            return { ...getBasicFeatures(), hasMensageria, hasChatSindico };
         }
 
         // Unknown plan: default to basic for safety
         console.warn(`[Plan Features] Unknown plan: ${planName}, defaulting to basic`);
-        return { ...getBasicFeatures(), hasMensageria };
+        return { ...getBasicFeatures(), hasMensageria, hasChatSindico };
 
     } catch (error) {
         console.error('[Plan Features] Error:', error);
@@ -97,7 +99,8 @@ function getBasicFeatures(): PlanFeatures {
         hasAutomations: false,
         maxUnits: 20,
         hasAI: false,
-        hasMensageria: false
+        hasMensageria: false,
+        hasChatSindico: false
     };
 }
 
@@ -118,7 +121,8 @@ function getProfessionalFeatures(): PlanFeatures {
         hasAutomations: false,
         maxUnits: 50,
         hasAI: false,
-        hasMensageria: false
+        hasMensageria: false,
+        hasChatSindico: false
     };
 }
 
@@ -139,7 +143,8 @@ function getPremiumFeatures(): PlanFeatures {
         hasAutomations: true,
         maxUnits: 999999,
         hasAI: true,  // Premium inclui IA
-        hasMensageria: false  // Mensageria vem do toggle do admin, não do plano
+        hasMensageria: false,  // Mensageria vem do toggle do admin, não do plano
+        hasChatSindico: false  // Chat Síndico vem do toggle do admin (add-on R$29,90)
     };
 }
 

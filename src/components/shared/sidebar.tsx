@@ -68,6 +68,7 @@ interface PlanFeatures {
     // Add-ons/Toggles
     hasAI: boolean;
     hasMensageria: boolean;
+    hasChatSindico: boolean;
 }
 
 
@@ -89,6 +90,7 @@ const navItems: NavItem[] = [
     { href: '/mensageria', label: 'Mensageria', icon: <Package className="h-5 w-5" />, roles: ['porteiro', 'sindico'], requiresFeature: 'hasMensageria' },
     { href: '/portaria/cameras', label: 'Câmeras', icon: <Settings className="h-5 w-5" />, roles: ['porteiro'], requiresFeature: 'hasCameras' },
     { href: '/relatorios', label: 'Relatórios', icon: <FileText className="h-5 w-5" />, roles: ['sindico'], requiresFeature: 'hasOccurrences' },
+    { href: '/chat-moradores', label: 'Chat Moradores', icon: <MessageCircle className="h-5 w-5" />, roles: ['sindico'], requiresFeature: 'hasChatSindico' },
     // Módulos restritos por plano - Premium
     { href: '/automacoes', label: 'Automações', icon: <Settings className="h-5 w-5" />, roles: ['sindico'], requiresFeature: 'hasMaintenance' },
     {
@@ -141,6 +143,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     const viewAsRole = useViewAsRole();
     const [planFeatures, setPlanFeatures] = useState<PlanFeatures | null>(null);
     const [mensageriaAtivo, setMensageriaAtivo] = useState<boolean>(false);
+    const [chatSindicoAtivo, setChatSindicoAtivo] = useState<boolean>(false);
     const [expandedItems, setExpandedItems] = useState<string[]>(['/governanca']);
     const [pendingChats, setPendingChats] = useState(0);
     const supabase = createClient();
@@ -169,17 +172,20 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         }
     }, [isSuperAdmin]);
 
-    // Busca direta do mensageria_ativo do condomínio como fallback
+    // Busca direta do mensageria_ativo e chat_sindico_ativo do condomínio como fallback
     useEffect(() => {
         if (profile?.condo_id && !isSuperAdmin) {
             supabase
                 .from('condos')
-                .select('mensageria_ativo')
+                .select('mensageria_ativo, chat_sindico_ativo')
                 .eq('id', profile.condo_id)
                 .single()
                 .then(({ data }) => {
                     if (data?.mensageria_ativo !== undefined) {
                         setMensageriaAtivo(data.mensageria_ativo);
+                    }
+                    if (data?.chat_sindico_ativo !== undefined) {
+                        setChatSindicoAtivo(data.chat_sindico_ativo);
                     }
                 });
         }
@@ -244,9 +250,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         // Check plan features
         if (item.requiresFeature) {
-            // hasMensageria sempre verifica o estado local (busca direta do condo)
+            // hasMensageria e hasChatSindico sempre verificam o estado local (busca direta do condo)
             if (item.requiresFeature === 'hasMensageria') {
                 return mensageriaAtivo === true;
+            }
+            if (item.requiresFeature === 'hasChatSindico') {
+                return chatSindicoAtivo === true;
             }
 
             // Se planFeatures está carregado, verificar

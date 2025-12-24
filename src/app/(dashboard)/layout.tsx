@@ -10,6 +10,7 @@ import TrialBanner from '@/components/TrialBanner';
 import { DemoBanner } from '@/components/demo/DemoBanner';
 import { SuspendedBanner } from '@/components/SuspendedBanner';
 import { LinkedInChat } from '@/components/shared/LinkedInChat';
+import { ChatSindicoButton } from '@/components/chat/ChatSindicoButton';
 
 function LoadingScreen() {
     return (
@@ -73,6 +74,7 @@ export default function DashboardLayout({
                 </div>
             </div>
             <NotificationPopup />
+            <ChatSindicoButton />
             <LinkedInChat />
         </div>
     );
