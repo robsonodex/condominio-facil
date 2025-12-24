@@ -8,7 +8,7 @@ import { formatDateTime } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import {
     MessageCircle, Send, X, Check, CheckCheck, Star,
-    ChevronUp, ChevronDown, Plus
+    ChevronUp, ChevronDown, Plus, Edit, Search
 } from 'lucide-react';
 
 interface Conversa {
@@ -34,6 +34,7 @@ export function ChatSindicoButton() {
     const { profile, isMorador, condoId } = useUser();
 
     const [isExpanded, setIsExpanded] = useState(false);
+    const [isHidden, setIsHidden] = useState(false);
     const [conversas, setConversas] = useState<Conversa[]>([]);
     const [activeConversa, setActiveConversa] = useState<Conversa | null>(null);
     const [mensagens, setMensagens] = useState<Mensagem[]>([]);
@@ -252,97 +253,147 @@ export function ChatSindicoButton() {
 
     if (!canUseChat) return null;
 
+    // Quando oculto, mostra apenas ícone flutuante (igual LinkedInChat)
+    if (isHidden) {
+        return (
+            <div className="fixed bottom-4 right-8 z-[100] pointer-events-auto">
+                <button
+                    onClick={() => setIsHidden(false)}
+                    className="relative w-12 h-12 bg-blue-600 rounded-full shadow-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
+                    title="Falar com o Síndico"
+                >
+                    <MessageCircle className="h-5 w-5 text-white" />
+                    {totalNaoLidas > 0 && (
+                        <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-white">
+                            {totalNaoLidas > 9 ? '9+' : totalNaoLidas}
+                        </span>
+                    )}
+                </button>
+            </div>
+        );
+    }
+
     return (
         <div className="fixed bottom-0 right-8 z-[100] flex items-end gap-3 pointer-events-none">
             {/* Chat Window - Estilo LinkedIn */}
             <div className={cn(
-                "w-[320px] bg-white border border-gray-200 shadow-xl rounded-t-xl transition-all duration-300 pointer-events-auto",
-                isExpanded ? "h-[480px]" : "h-12"
+                "w-[280px] bg-white border border-gray-200 shadow-xl rounded-t-xl transition-all duration-300 pointer-events-auto",
+                isExpanded ? "h-[460px]" : "h-12"
             )}>
-                {/* Header Bar */}
+                {/* Bar Header - Igual LinkedInChat */}
                 <button
                     onClick={() => setIsExpanded(!isExpanded)}
-                    className="w-full flex items-center justify-between px-4 h-12 bg-blue-600 rounded-t-xl hover:bg-blue-700 transition-colors"
+                    className="w-full flex items-center justify-between px-4 h-12 bg-white rounded-t-xl border-b border-gray-100 hover:bg-gray-50 transition-colors"
                 >
                     <div className="flex items-center gap-2">
-                        <MessageCircle className="h-5 w-5 text-white" />
-                        <span className="font-medium text-white text-sm">Falar com o Síndico</span>
-                        {totalNaoLidas > 0 && (
-                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                                {totalNaoLidas > 9 ? '9+' : totalNaoLidas}
-                            </span>
-                        )}
+                        <div className="relative">
+                            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                <MessageCircle className="h-4 w-4 text-blue-600" />
+                            </div>
+                            {totalNaoLidas > 0 && (
+                                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                                    {totalNaoLidas}
+                                </span>
+                            )}
+                        </div>
+                        <span className="font-semibold text-gray-700 text-sm">Síndico</span>
                     </div>
-                    <div className="flex items-center gap-1">
-                        {isExpanded ? (
-                            <ChevronDown className="h-5 w-5 text-white" />
-                        ) : (
-                            <ChevronUp className="h-5 w-5 text-white" />
-                        )}
+                    <div className="flex items-center gap-2 text-gray-500">
+                        <Edit
+                            className="h-4 w-4 hover:text-blue-600 cursor-pointer"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setIsExpanded(true);
+                                setShowNovaConversa(true);
+                                setActiveConversa(null);
+                            }}
+                        />
+                        <span title="Ocultar chat">
+                            <X
+                                className="h-4 w-4 hover:text-red-500 cursor-pointer"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setIsHidden(true);
+                                    setActiveConversa(null);
+                                }}
+                            />
+                        </span>
+                        {isExpanded ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
                     </div>
                 </button>
 
                 {/* Content */}
                 {isExpanded && (
-                    <div className="h-[calc(100%-48px)] flex flex-col">
+                    <div className="flex flex-col h-[calc(460px-48px)]">
                         {showNovaConversa ? (
                             /* Formulário nova conversa */
-                            <form onSubmit={criarConversa} className="flex-1 flex flex-col p-4 space-y-3 overflow-y-auto">
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-600 mb-1">Categoria</label>
-                                    <div className="grid grid-cols-3 gap-1">
-                                        {[
-                                            { value: 'geral', label: '💬' },
-                                            { value: 'financeiro', label: '💰' },
-                                            { value: 'manutencao', label: '🔧' },
-                                            { value: 'sugestao', label: '💡' },
-                                            { value: 'reclamacao', label: '⚠️' },
-                                            { value: 'outro', label: '📋' },
-                                        ].map(cat => (
-                                            <button
-                                                key={cat.value}
-                                                type="button"
-                                                onClick={() => setNovaCategoria(cat.value)}
-                                                className={`p-2 text-lg rounded-lg border ${novaCategoria === cat.value
-                                                    ? 'border-blue-500 bg-blue-50'
-                                                    : 'border-gray-200 hover:border-gray-300'
-                                                    }`}
-                                                title={cat.value}
-                                            >
-                                                {cat.label}
-                                            </button>
-                                        ))}
+                            <div className="flex-1 flex flex-col p-3 overflow-y-auto">
+                                <form onSubmit={criarConversa} className="space-y-3">
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 mb-1">Categoria</label>
+                                        <div className="grid grid-cols-3 gap-1">
+                                            {[
+                                                { value: 'geral', label: '💬' },
+                                                { value: 'financeiro', label: '💰' },
+                                                { value: 'manutencao', label: '🔧' },
+                                                { value: 'sugestao', label: '💡' },
+                                                { value: 'reclamacao', label: '⚠️' },
+                                                { value: 'outro', label: '📋' },
+                                            ].map(cat => (
+                                                <button
+                                                    key={cat.value}
+                                                    type="button"
+                                                    onClick={() => setNovaCategoria(cat.value)}
+                                                    className={`p-2 text-lg rounded-lg border ${novaCategoria === cat.value
+                                                        ? 'border-blue-500 bg-blue-50'
+                                                        : 'border-gray-200 hover:border-gray-300'
+                                                        }`}
+                                                    title={cat.value}
+                                                >
+                                                    {cat.label}
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
-                                </div>
 
-                                <Input
-                                    value={novoAssunto}
-                                    onChange={(e) => setNovoAssunto(e.target.value)}
-                                    placeholder="Assunto (opcional)"
-                                    className="text-sm"
-                                />
+                                    <input
+                                        type="text"
+                                        value={novoAssunto}
+                                        onChange={(e) => setNovoAssunto(e.target.value)}
+                                        placeholder="Assunto (opcional)"
+                                        className="w-full px-3 py-2 text-sm border rounded-lg"
+                                    />
 
-                                <textarea
-                                    value={novaMensagemInicial}
-                                    onChange={(e) => setNovaMensagemInicial(e.target.value)}
-                                    placeholder="Descreva sua dúvida ou solicitação..."
-                                    className="flex-1 w-full p-3 border rounded-lg resize-none text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[100px]"
-                                    required
-                                />
+                                    <textarea
+                                        value={novaMensagemInicial}
+                                        onChange={(e) => setNovaMensagemInicial(e.target.value)}
+                                        placeholder="Escreva sua mensagem..."
+                                        className="w-full p-3 border rounded-lg resize-none text-sm h-24"
+                                        required
+                                    />
 
-                                <div className="flex gap-2">
-                                    <Button type="button" variant="ghost" size="sm" onClick={() => setShowNovaConversa(false)}>
-                                        Cancelar
-                                    </Button>
-                                    <Button type="submit" size="sm" disabled={!novaMensagemInicial.trim() || sending}>
-                                        {sending ? '...' : 'Enviar'}
-                                    </Button>
-                                </div>
-                            </form>
+                                    <div className="flex gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowNovaConversa(false)}
+                                            className="flex-1 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg"
+                                        >
+                                            Cancelar
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            disabled={!novaMensagemInicial.trim() || sending}
+                                            className="flex-1 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                                        >
+                                            {sending ? '...' : 'Enviar'}
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
                         ) : activeConversa ? (
-                            /* Tela de conversa ativa */
+                            /* Conversa ativa */
                             <>
-                                <div className="p-2 border-b flex items-center justify-between bg-gray-50">
+                                <div className="p-2 border-b bg-gray-50 flex items-center justify-between">
                                     <div className="flex items-center gap-2">
                                         <button onClick={() => setActiveConversa(null)} className="p-1 hover:bg-gray-200 rounded">
                                             <ChevronDown className="h-4 w-4 rotate-90" />
@@ -353,16 +404,16 @@ export function ChatSindicoButton() {
                                     </div>
                                     {activeConversa.status === 'em_atendimento' && (
                                         <button onClick={() => setShowAvaliacao(true)} className="text-xs text-blue-600 hover:underline">
-                                            ⭐ Avaliar
+                                            ⭐
                                         </button>
                                     )}
                                 </div>
 
                                 <div className="flex-1 overflow-y-auto p-3 space-y-2 bg-gray-100">
                                     {loading ? (
-                                        <div className="text-center text-gray-500 text-sm">Carregando...</div>
+                                        <div className="text-center text-gray-500 text-sm">...</div>
                                     ) : mensagens.length === 0 ? (
-                                        <div className="text-center text-gray-500 text-sm">Nenhuma mensagem</div>
+                                        <div className="text-center text-gray-500 text-sm">Sem mensagens</div>
                                     ) : (
                                         mensagens.map(msg => {
                                             const isMe = msg.sender_id === userId;
@@ -397,14 +448,14 @@ export function ChatSindicoButton() {
                                         type="text"
                                         value={novaMensagem}
                                         onChange={(e) => setNovaMensagem(e.target.value)}
-                                        placeholder="Digite sua mensagem..."
+                                        placeholder="Mensagem..."
                                         className="flex-1 px-3 py-2 text-sm border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         disabled={sending || activeConversa.status === 'resolvida'}
                                     />
                                     <button
                                         type="submit"
-                                        disabled={!novaMensagem.trim() || sending || activeConversa.status === 'resolvida'}
-                                        className="w-8 h-8 flex items-center justify-center bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        disabled={!novaMensagem.trim() || sending}
+                                        className="w-8 h-8 flex items-center justify-center bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50"
                                     >
                                         <Send className="h-4 w-4" />
                                     </button>
@@ -413,24 +464,25 @@ export function ChatSindicoButton() {
                         ) : (
                             /* Lista de conversas */
                             <>
-                                <div className="p-2 border-b flex items-center justify-between">
-                                    <span className="text-sm font-medium text-gray-700">Minhas conversas</span>
-                                    <button
-                                        onClick={() => setShowNovaConversa(true)}
-                                        className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
-                                    >
-                                        <Plus className="h-4 w-4" /> Nova
-                                    </button>
+                                <div className="p-3 border-b border-gray-100">
+                                    <div className="relative">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+                                        <input
+                                            type="text"
+                                            placeholder="Pesquisar..."
+                                            className="w-full pl-9 pr-3 py-1.5 bg-gray-100 border-none rounded-md text-xs focus:ring-1 focus:ring-blue-500"
+                                        />
+                                    </div>
                                 </div>
 
                                 <div className="flex-1 overflow-y-auto">
                                     {conversas.length === 0 ? (
                                         <div className="p-6 text-center">
-                                            <MessageCircle className="h-10 w-10 text-gray-300 mx-auto mb-2" />
-                                            <p className="text-gray-500 text-sm mb-3">Nenhuma conversa</p>
+                                            <MessageCircle className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                                            <p className="text-gray-500 text-xs mb-2">Nenhuma conversa</p>
                                             <button
                                                 onClick={() => setShowNovaConversa(true)}
-                                                className="text-sm text-blue-600 hover:underline"
+                                                className="text-xs text-blue-600 hover:underline"
                                             >
                                                 Iniciar conversa
                                             </button>
@@ -471,7 +523,7 @@ export function ChatSindicoButton() {
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[101] pointer-events-auto">
                     <div className="bg-white rounded-xl p-6 w-80 shadow-2xl">
                         <h3 className="text-lg font-bold mb-4">⭐ Avaliar Atendimento</h3>
-                        <p className="text-gray-600 text-sm mb-4">Como foi o atendimento do síndico?</p>
+                        <p className="text-gray-600 text-sm mb-4">Como foi o atendimento?</p>
 
                         <div className="flex justify-center gap-1 mb-4">
                             {[1, 2, 3, 4, 5].map(n => (
@@ -493,8 +545,8 @@ export function ChatSindicoButton() {
                         />
 
                         <div className="flex gap-2 justify-end">
-                            <Button variant="ghost" size="sm" onClick={() => setShowAvaliacao(false)}>Cancelar</Button>
-                            <Button size="sm" onClick={enviarAvaliacao} disabled={avaliacao === 0}>Enviar</Button>
+                            <button onClick={() => setShowAvaliacao(false)} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">Cancelar</button>
+                            <button onClick={enviarAvaliacao} disabled={avaliacao === 0} className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">Enviar</button>
                         </div>
                     </div>
                 </div>
