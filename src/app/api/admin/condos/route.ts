@@ -140,31 +140,36 @@ export async function DELETE(request: NextRequest) {
             .select('id, email, role')
             .eq('condo_id', condoId);
 
-        console.log('[DELETE CONDO] Found', condoUsers?.length || 0, 'users to deactivate');
+        console.log('[DELETE CONDO] Found', condoUsers?.length || 0, 'users to delete');
 
-        // 11.1. Deactivate all users and remove condo reference
-        await supabaseAdmin
-            .from('users')
-            .update({
-                condo_id: null,
-                unidade_id: null,
-                ativo: false  // IMPORTANTE: Desativa os usuários!
-            })
-            .eq('condo_id', condoId);
-        console.log('[DELETE CONDO] Deactivated users');
-
-        // 11.2. Delete users from Supabase Auth (they won't be able to login anymore)
+        // 11.1. Delete users completely (except superadmins)
+        // This prevents email conflicts when re-registering users
         if (condoUsers && condoUsers.length > 0) {
             for (const user of condoUsers) {
                 try {
-                    // Don't delete superadmins
-                    if (user.role === 'superadmin') continue;
+                    // Don't delete superadmins - just remove condo reference
+                    if (user.role === 'superadmin') {
+                        await supabaseAdmin
+                            .from('users')
+                            .update({ condo_id: null, unidade_id: null })
+                            .eq('id', user.id);
+                        console.log('[DELETE CONDO] Preserved superadmin, removed condo ref:', user.email);
+                        continue;
+                    }
 
-                    // Delete from Supabase Auth
+                    // Delete from Supabase Auth first
                     await supabaseAdmin.auth.admin.deleteUser(user.id);
                     console.log('[DELETE CONDO] Deleted auth user:', user.email);
-                } catch (authDeleteError) {
-                    console.error('[DELETE CONDO] Error deleting auth user:', user.email, authDeleteError);
+
+                    // Then delete from users table
+                    await supabaseAdmin
+                        .from('users')
+                        .delete()
+                        .eq('id', user.id);
+                    console.log('[DELETE CONDO] Deleted user record:', user.email);
+
+                } catch (userDeleteError) {
+                    console.error('[DELETE CONDO] Error deleting user:', user.email, userDeleteError);
                     // Continue with other users even if one fails
                 }
             }

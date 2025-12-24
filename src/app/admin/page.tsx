@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, Button, Select, Badge } from '@/components/ui';
 import { createClient } from '@/lib/supabase/client';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Building2, Users, DollarSign, TrendingUp, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 
 export default function AdminDashboardPage() {
+    const router = useRouter();
     const [stats, setStats] = useState<any>(null);
     const [recentCondos, setRecentCondos] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -74,7 +76,10 @@ export default function AdminDashboardPage() {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white">
+                <Card
+                    className={`bg-gradient-to-br from-emerald-500 to-emerald-600 text-white transition-transform ${stats.totalCondos > 0 ? 'cursor-pointer hover:scale-105' : ''}`}
+                    onClick={() => stats.totalCondos > 0 && router.push('/admin/condominios')}
+                >
                     <CardContent className="pt-6">
                         <div className="flex items-center justify-between">
                             <div>
@@ -86,7 +91,10 @@ export default function AdminDashboardPage() {
                     </CardContent>
                 </Card>
 
-                <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+                <Card
+                    className={`bg-gradient-to-br from-blue-500 to-blue-600 text-white transition-transform ${stats.mrr > 0 ? 'cursor-pointer hover:scale-105' : ''}`}
+                    onClick={() => stats.mrr > 0 && router.push('/admin/assinaturas')}
+                >
                     <CardContent className="pt-6">
                         <div className="flex items-center justify-between">
                             <div>
@@ -98,7 +106,10 @@ export default function AdminDashboardPage() {
                     </CardContent>
                 </Card>
 
-                <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">
+                <Card
+                    className={`bg-gradient-to-br from-purple-500 to-purple-600 text-white transition-transform ${stats.totalUsers > 0 ? 'cursor-pointer hover:scale-105' : ''}`}
+                    onClick={() => stats.totalUsers > 0 && router.push('/admin/usuarios')}
+                >
                     <CardContent className="pt-6">
                         <div className="flex items-center justify-between">
                             <div>
@@ -110,7 +121,10 @@ export default function AdminDashboardPage() {
                     </CardContent>
                 </Card>
 
-                <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white">
+                <Card
+                    className={`bg-gradient-to-br from-orange-500 to-orange-600 text-white transition-transform ${stats.trialCondos > 0 ? 'cursor-pointer hover:scale-105' : ''}`}
+                    onClick={() => stats.trialCondos > 0 && router.push('/admin/condominios?status=teste')}
+                >
                     <CardContent className="pt-6">
                         <div className="flex items-center justify-between">
                             <div>
@@ -125,21 +139,30 @@ export default function AdminDashboardPage() {
 
             {/* Status Overview */}
             <div className="grid grid-cols-3 gap-4">
-                <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0">
+                <Card
+                    className={`bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0 transition-transform ${stats.activeCondos > 0 ? 'cursor-pointer hover:scale-105' : ''}`}
+                    onClick={() => stats.activeCondos > 0 && router.push('/admin/condominios?status=ativo')}
+                >
                     <CardContent className="py-4 text-center">
                         <CheckCircle className="h-8 w-8 mx-auto mb-2 opacity-80" />
                         <p className="text-2xl font-bold">{stats.activeCondos}</p>
                         <p className="text-sm text-emerald-100">Ativos</p>
                     </CardContent>
                 </Card>
-                <Card className="bg-gradient-to-br from-amber-500 to-amber-600 text-white border-0">
+                <Card
+                    className={`bg-gradient-to-br from-amber-500 to-amber-600 text-white border-0 transition-transform ${stats.trialCondos > 0 ? 'cursor-pointer hover:scale-105' : ''}`}
+                    onClick={() => stats.trialCondos > 0 && router.push('/admin/condominios?status=teste')}
+                >
                     <CardContent className="py-4 text-center">
                         <AlertTriangle className="h-8 w-8 mx-auto mb-2 opacity-80" />
                         <p className="text-2xl font-bold">{stats.trialCondos}</p>
                         <p className="text-sm text-amber-100">Em Teste</p>
                     </CardContent>
                 </Card>
-                <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white border-0">
+                <Card
+                    className={`bg-gradient-to-br from-red-500 to-red-600 text-white border-0 transition-transform ${stats.suspendedCondos > 0 ? 'cursor-pointer hover:scale-105' : ''}`}
+                    onClick={() => stats.suspendedCondos > 0 && router.push('/admin/condominios?status=suspenso')}
+                >
                     <CardContent className="py-4 text-center">
                         <XCircle className="h-8 w-8 mx-auto mb-2 opacity-80" />
                         <p className="text-2xl font-bold">{stats.suspendedCondos}</p>
