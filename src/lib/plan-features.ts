@@ -18,13 +18,14 @@ export interface PlanFeatures {
     maxUnits: number;
     // Add-ons
     hasAI: boolean;               // Assistente IA
+    hasMensageria: boolean;       // Módulo Mensageria (toggle do admin)
 }
 
 export async function getPlanFeatures(condoId: string): Promise<PlanFeatures> {
     try {
         const { data: subscription } = await supabaseAdmin
             .from('subscriptions')
-            .select('plano_id, status, plans(nome), condos(status)')
+            .select('plano_id, status, plans(nome), condos(status, mensageria_ativo)')
             .eq('condo_id', condoId)
             .single();
 
@@ -32,21 +33,22 @@ export async function getPlanFeatures(condoId: string): Promise<PlanFeatures> {
             // Check if condo is in trial even without subscription
             const { data: condo } = await supabaseAdmin
                 .from('condos')
-                .select('status')
+                .select('status, mensageria_ativo')
                 .eq('id', condoId)
                 .single();
 
             if (condo?.status === 'teste') {
-                return getPremiumFeatures();
+                return { ...getPremiumFeatures(), hasMensageria: condo?.mensageria_ativo || false };
             }
-            return getBasicFeatures();
+            return { ...getBasicFeatures(), hasMensageria: condo?.mensageria_ativo || false };
         }
 
         const condoData = subscription.condos as any;
+        const hasMensageria = condoData?.mensageria_ativo || false;
 
         // If in test/trial status (either subscription or condo), return all features
         if (subscription.status === 'teste' || subscription.status === 'trial' || condoData?.status === 'teste') {
-            return getPremiumFeatures();
+            return { ...getPremiumFeatures(), hasMensageria };
         }
 
         const planData = subscription.plans as any;
@@ -54,22 +56,22 @@ export async function getPlanFeatures(condoId: string): Promise<PlanFeatures> {
 
         // Premium / Avançado / Demo - ALL features
         if (planName.includes('premium') || planName.includes('avançado') || planName.includes('demo')) {
-            return getPremiumFeatures();
+            return { ...getPremiumFeatures(), hasMensageria };
         }
 
         // Profissional / Intermediário - Middle tier
         if (planName.includes('profissional') || planName.includes('intermediário')) {
-            return getProfessionalFeatures();
+            return { ...getProfessionalFeatures(), hasMensageria };
         }
 
         // Básico plan - Most restrictive
         if (planName.includes('básico') || planName.includes('basico')) {
-            return getBasicFeatures();
+            return { ...getBasicFeatures(), hasMensageria };
         }
 
         // Unknown plan: default to basic for safety
         console.warn(`[Plan Features] Unknown plan: ${planName}, defaulting to basic`);
-        return getBasicFeatures();
+        return { ...getBasicFeatures(), hasMensageria };
 
     } catch (error) {
         console.error('[Plan Features] Error:', error);
@@ -94,7 +96,8 @@ function getBasicFeatures(): PlanFeatures {
         hasCameras: false,
         hasAutomations: false,
         maxUnits: 20,
-        hasAI: false
+        hasAI: false,
+        hasMensageria: false
     };
 }
 
@@ -114,7 +117,8 @@ function getProfessionalFeatures(): PlanFeatures {
         hasCameras: true,  // Câmeras são parte do módulo de portaria
         hasAutomations: false,
         maxUnits: 50,
-        hasAI: false
+        hasAI: false,
+        hasMensageria: false
     };
 }
 
@@ -134,7 +138,8 @@ function getPremiumFeatures(): PlanFeatures {
         hasCameras: true,
         hasAutomations: true,
         maxUnits: 999999,
-        hasAI: true  // Premium inclui IA
+        hasAI: true,  // Premium inclui IA
+        hasMensageria: false  // Mensageria vem do toggle do admin, não do plano
     };
 }
 
