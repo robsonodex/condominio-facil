@@ -173,7 +173,7 @@ export default function LandingPage() {
                             {[
                                 { icon: Camera, name: 'Câmeras', desc: 'Monitoramento ao vivo' },
                                 { icon: Vote, name: 'Governança', desc: 'Enquetes e assembleias online' },
-                                { icon: Wrench, name: 'Manutenção', desc: 'Ordens de serviço em Kanban' },
+                                { icon: Wrench, name: 'Manutenção', desc: 'Ordens de serviço' },
                                 { icon: Bot, name: 'Assistente IA', desc: 'Chatbot treinado (add-on)' },
                             ].map((f, i) => (
                                 <div key={i} className="p-4 border rounded-lg hover:border-purple-300 transition-colors bg-purple-50/30">
