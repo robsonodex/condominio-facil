@@ -7,10 +7,10 @@ import { useAuth } from '@/hooks/useAuth';
 
 interface Notification {
     id: string;
-    titulo: string;
-    mensagem: string;
-    tipo: 'aviso' | 'vencimento' | 'atraso' | 'sistema';
-    lida: boolean;
+    title: string;
+    message: string;
+    type: 'aviso' | 'vencimento' | 'atraso' | 'sistema' | 'billing';
+    is_read: boolean;
     created_at: string;
 }
 
@@ -31,7 +31,7 @@ export function NotificationPopup() {
             .from('notifications')
             .select('*')
             .eq('user_id', profile?.id)
-            .eq('lida', false)
+            .eq('is_read', false)
             .order('created_at', { ascending: false })
             .limit(5);
 
@@ -44,7 +44,7 @@ export function NotificationPopup() {
     const markAsRead = async (id: string) => {
         await supabase
             .from('notifications')
-            .update({ lida: true, data_leitura: new Date().toISOString() })
+            .update({ is_read: true, data_leitura: new Date().toISOString() })
             .eq('id', id);
 
         setNotifications(prev => prev.filter(n => n.id !== id));
@@ -56,9 +56,9 @@ export function NotificationPopup() {
     const markAllAsRead = async () => {
         await supabase
             .from('notifications')
-            .update({ lida: true, data_leitura: new Date().toISOString() })
+            .update({ is_read: true, data_leitura: new Date().toISOString() })
             .eq('user_id', profile?.id)
-            .eq('lida', false);
+            .eq('is_read', false);
 
         setNotifications([]);
         setShowPopup(false);
@@ -95,18 +95,18 @@ export function NotificationPopup() {
             {notifications.map((notification) => (
                 <div
                     key={notification.id}
-                    className={`${getBgColor(notification.tipo)} border rounded-lg shadow-lg p-4 animate-slide-in`}
+                    className={`${getBgColor(notification.type)} border rounded-lg shadow-lg p-4 animate-slide-in`}
                 >
                     <div className="flex items-start gap-3">
                         <div className="flex-shrink-0 mt-0.5">
-                            {getIcon(notification.tipo)}
+                            {getIcon(notification.type)}
                         </div>
                         <div className="flex-1 min-w-0">
                             <h4 className="font-semibold text-gray-900 text-sm">
-                                {notification.titulo}
+                                {notification.title}
                             </h4>
                             <p className="text-gray-600 text-sm mt-1">
-                                {notification.mensagem}
+                                {notification.message}
                             </p>
                         </div>
                         <button

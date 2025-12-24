@@ -9,10 +9,10 @@ import { Bell, Check, CheckCheck, Trash2, CreditCard, AlertTriangle, Info, Megap
 
 interface Notification {
     id: string;
-    titulo: string;
-    mensagem: string;
-    tipo: 'aviso' | 'vencimento' | 'atraso' | 'sistema';
-    lida: boolean;
+    title: string;
+    message: string;
+    type: 'aviso' | 'vencimento' | 'atraso' | 'sistema' | 'billing';
+    is_read: boolean;
     link?: string;
     created_at: string;
 }
@@ -51,22 +51,22 @@ export default function MinhasNotificacoesPage() {
     const markAsRead = async (id: string) => {
         await supabase
             .from('notifications')
-            .update({ lida: true, data_leitura: new Date().toISOString() })
+            .update({ is_read: true, data_leitura: new Date().toISOString() })
             .eq('id', id);
 
         setNotifications(prev =>
-            prev.map(n => n.id === id ? { ...n, lida: true } : n)
+            prev.map(n => n.id === id ? { ...n, is_read: true } : n)
         );
     };
 
     const markAllAsRead = async () => {
         await supabase
             .from('notifications')
-            .update({ lida: true, data_leitura: new Date().toISOString() })
+            .update({ is_read: true, data_leitura: new Date().toISOString() })
             .eq('user_id', profile?.id)
-            .eq('lida', false);
+            .eq('is_read', false);
 
-        setNotifications(prev => prev.map(n => ({ ...n, lida: true })));
+        setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
     };
 
     const deleteNotification = async (id: string) => {
@@ -79,7 +79,7 @@ export default function MinhasNotificacoesPage() {
     };
 
     const handleNotificationClick = (notification: Notification) => {
-        if (!notification.lida) {
+        if (!notification.is_read) {
             markAsRead(notification.id);
         }
         if (notification.link) {
@@ -117,7 +117,7 @@ export default function MinhasNotificacoesPage() {
         return date.toLocaleDateString('pt-BR');
     };
 
-    const unreadCount = notifications.filter(n => !n.lida).length;
+    const unreadCount = notifications.filter(n => !n.is_read).length;
 
     if (loading) {
         return (
@@ -159,31 +159,31 @@ export default function MinhasNotificacoesPage() {
                             {notifications.map((notification) => (
                                 <div
                                     key={notification.id}
-                                    className={`p-4 flex items-start gap-4 hover:bg-gray-50 transition-colors ${!notification.lida ? 'bg-emerald-50/50' : ''
+                                    className={`p-4 flex items-start gap-4 hover:bg-gray-50 transition-colors ${!notification.is_read ? 'bg-emerald-50/50' : ''
                                         } ${notification.link ? 'cursor-pointer' : ''}`}
                                     onClick={() => notification.link && handleNotificationClick(notification)}
                                 >
                                     <div className="flex-shrink-0 mt-1">
-                                        {getIcon(notification.tipo)}
+                                        {getIcon(notification.type)}
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
-                                            <h4 className={`font-medium ${!notification.lida ? 'text-gray-900' : 'text-gray-600'}`}>
-                                                {notification.titulo}
+                                            <h4 className={`font-medium ${!notification.is_read ? 'text-gray-900' : 'text-gray-600'}`}>
+                                                {notification.title}
                                             </h4>
-                                            {!notification.lida && (
+                                            {!notification.is_read && (
                                                 <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
                                             )}
                                         </div>
                                         <p className="text-sm text-gray-600 mt-1">
-                                            {notification.mensagem}
+                                            {notification.message}
                                         </p>
                                         <p className="text-xs text-gray-400 mt-2">
                                             {formatDate(notification.created_at)}
                                         </p>
                                     </div>
                                     <div className="flex items-center gap-1">
-                                        {!notification.lida && (
+                                        {!notification.is_read && (
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
