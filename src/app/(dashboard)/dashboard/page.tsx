@@ -491,50 +491,74 @@ export default function DashboardPage() {
 function MoradorDashboard({ notices }: { notices: Notice[] }) {
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-2xl font-bold text-gray-900">Olá, bem-vindo!</h1>
-                <p className="text-gray-500">Veja as novidades do seu condomínio</p>
+            {/* Welcome Header com gradiente */}
+            <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-500 rounded-2xl p-6 text-white shadow-lg">
+                <h1 className="text-2xl font-bold">Olá, bem-vindo! 👋</h1>
+                <p className="text-blue-100 mt-1">Veja as novidades do seu condomínio</p>
             </div>
 
-            {/* Quick Actions */}
+            {/* Quick Actions - Cards coloridos */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <Link href="/avisos" className="p-4 bg-white rounded-xl border border-gray-200 hover:border-emerald-300 hover:shadow-md transition-all text-center">
-                    <Bell className="h-8 w-8 mx-auto text-emerald-600 mb-2" />
-                    <p className="text-sm font-medium text-gray-900">Avisos</p>
+                <Link href="/avisos" className="group relative overflow-hidden p-5 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-center">
+                    <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <Bell className="h-10 w-10 mx-auto text-white mb-3 drop-shadow-md" />
+                    <p className="font-semibold text-white text-sm">Avisos</p>
                 </Link>
-                <Link href="/ocorrencias/nova" className="p-4 bg-white rounded-xl border border-gray-200 hover:border-emerald-300 hover:shadow-md transition-all text-center">
-                    <AlertTriangle className="h-8 w-8 mx-auto text-orange-600 mb-2" />
-                    <p className="text-sm font-medium text-gray-900">Abrir Ocorrência</p>
+
+                <Link href="/ocorrencias/nova" className="group relative overflow-hidden p-5 bg-gradient-to-br from-orange-400 to-red-500 rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-center">
+                    <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <AlertTriangle className="h-10 w-10 mx-auto text-white mb-3 drop-shadow-md" />
+                    <p className="font-semibold text-white text-sm">Abrir Ocorrência</p>
                 </Link>
-                <Link href="/financeiro" className="p-4 bg-white rounded-xl border border-gray-200 hover:border-emerald-300 hover:shadow-md transition-all text-center">
-                    <DollarSign className="h-8 w-8 mx-auto text-blue-600 mb-2" />
-                    <p className="text-sm font-medium text-gray-900">Meus Boletos</p>
+
+                <Link href="/financeiro" className="group relative overflow-hidden p-5 bg-gradient-to-br from-blue-400 to-indigo-600 rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-center">
+                    <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <DollarSign className="h-10 w-10 mx-auto text-white mb-3 drop-shadow-md" />
+                    <p className="font-semibold text-white text-sm">Meus Boletos</p>
                 </Link>
-                <Link href="/ocorrencias" className="p-4 bg-white rounded-xl border border-gray-200 hover:border-emerald-300 hover:shadow-md transition-all text-center">
-                    <Calendar className="h-8 w-8 mx-auto text-purple-600 mb-2" />
-                    <p className="text-sm font-medium text-gray-900">Minhas Ocorrências</p>
+
+                <Link href="/ocorrencias" className="group relative overflow-hidden p-5 bg-gradient-to-br from-purple-400 to-pink-500 rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-center">
+                    <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <Calendar className="h-10 w-10 mx-auto text-white mb-3 drop-shadow-md" />
+                    <p className="font-semibold text-white text-sm">Minhas Ocorrências</p>
                 </Link>
             </div>
 
-            {/* Notices */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Avisos Recentes</CardTitle>
+            {/* Notices - Card com borda colorida */}
+            <Card className="border-0 shadow-lg overflow-hidden">
+                <div className="h-1 bg-gradient-to-r from-emerald-400 via-blue-500 to-purple-500"></div>
+                <CardHeader className="bg-gradient-to-r from-gray-50 to-white">
+                    <CardTitle className="flex items-center gap-2 text-gray-800">
+                        <span className="text-2xl">📢</span> Avisos Recentes
+                    </CardTitle>
                 </CardHeader>
                 <CardContent>
                     {notices.length === 0 ? (
-                        <p className="text-gray-500">Nenhum aviso publicado</p>
+                        <div className="text-center py-8">
+                            <Bell className="h-12 w-12 mx-auto text-gray-300 mb-3" />
+                            <p className="text-gray-500">Nenhum aviso publicado</p>
+                        </div>
                     ) : (
                         <div className="space-y-3">
-                            {notices.map((notice) => (
+                            {notices.map((notice, index) => (
                                 <Link
                                     key={notice.id}
                                     href={`/avisos/${notice.id}`}
-                                    className="block p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                                    className="block p-4 rounded-xl bg-gradient-to-r from-gray-50 to-white border border-gray-100 hover:border-emerald-300 hover:shadow-md transition-all duration-200"
                                 >
-                                    <p className="font-medium text-gray-900">{notice.titulo}</p>
-                                    <p className="text-sm text-gray-600 mt-1 line-clamp-2">{notice.mensagem}</p>
-                                    <p className="text-xs text-gray-400 mt-2">{formatDate(notice.data_publicacao)}</p>
+                                    <div className="flex items-start gap-3">
+                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-lg font-bold ${index === 0 ? 'bg-gradient-to-br from-emerald-400 to-emerald-600' :
+                                                index === 1 ? 'bg-gradient-to-br from-blue-400 to-blue-600' :
+                                                    'bg-gradient-to-br from-purple-400 to-purple-600'
+                                            }`}>
+                                            {notice.titulo.charAt(0).toUpperCase()}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-semibold text-gray-900">{notice.titulo}</p>
+                                            <p className="text-sm text-gray-600 mt-1 line-clamp-2">{notice.mensagem}</p>
+                                            <p className="text-xs text-gray-400 mt-2">📅 {formatDate(notice.data_publicacao)}</p>
+                                        </div>
+                                    </div>
                                 </Link>
                             ))}
                         </div>
