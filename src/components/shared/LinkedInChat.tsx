@@ -116,32 +116,28 @@ export function LinkedInChat() {
 
     return (
         <div className="fixed bottom-0 right-8 z-[100] flex items-end gap-3 pointer-events-none">
-            {/* Chat List Window (The "LinkedIn Bar") */}
+            {/* Chat List Window */}
             <div className={cn(
                 "w-[280px] bg-white border border-gray-200 shadow-xl rounded-t-xl transition-all duration-300 pointer-events-auto",
                 isListExpanded ? "h-[460px]" : "h-12"
             )}>
-                {/* Bar Header */}
+                {/* Bar Header - Barra Verde */}
                 <button
                     onClick={() => setIsListExpanded(!isListExpanded)}
-                    className="w-full flex items-center justify-between px-4 h-12 bg-white rounded-t-xl border-b border-gray-100 hover:bg-gray-50 transition-colors"
+                    className="w-full flex items-center justify-between px-4 h-12 bg-emerald-600 rounded-t-xl hover:bg-emerald-700 transition-colors"
                 >
                     <div className="flex items-center gap-2">
-                        <div className="relative">
-                            <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
-                                <MessageSquare className="h-4 w-4 text-emerald-600" />
-                            </div>
-                            {totalUnread > 0 && (
-                                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                                    {totalUnread}
-                                </span>
-                            )}
-                        </div>
-                        <span className="font-semibold text-gray-700 text-sm">Mensagens</span>
+                        <MessageSquare className="h-5 w-5 text-white" />
+                        <span className="font-medium text-white text-sm">Suporte</span>
+                        {totalUnread > 0 && (
+                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                                {totalUnread > 9 ? '9+' : totalUnread}
+                            </span>
+                        )}
                     </div>
-                    <div className="flex items-center gap-2 text-gray-500">
+                    <div className="flex items-center gap-2 text-white">
                         <Edit
-                            className="h-4 w-4 hover:text-emerald-600 cursor-pointer"
+                            className="h-4 w-4 hover:text-emerald-200 cursor-pointer"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 setIsListExpanded(true);
@@ -151,7 +147,7 @@ export function LinkedInChat() {
                         />
                         <span title="Ocultar chat">
                             <X
-                                className="h-4 w-4 hover:text-red-500 cursor-pointer"
+                                className="h-4 w-4 hover:text-red-300 cursor-pointer"
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     setIsHidden(true);
