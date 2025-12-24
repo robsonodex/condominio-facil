@@ -333,9 +333,8 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            {/* Footer */}
             <footer className="py-8 bg-gray-900 text-gray-400 text-center text-sm">
-                <p>© 2024 Meu Condomínio Fácil · CNPJ: 57.444.727/0001-85</p>
+                <p>© 2025 Meu Condomínio Fácil</p>
             </footer>
         </div>
     );
