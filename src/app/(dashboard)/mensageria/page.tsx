@@ -7,8 +7,9 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useUser } from '@/hooks/useUser';
 import { formatDate, formatDateTime } from '@/lib/utils';
-import { Package, Plus, Search, Check, AlertCircle, Clock, User, Home, Mail, Phone, Lock } from 'lucide-react';
+import { Package, Plus, Search, Check, AlertCircle, Clock, User, Home, Mail, Phone, Lock, PenTool } from 'lucide-react';
 import Link from 'next/link';
+import { SignaturePad } from '@/components/ui/SignaturePad';
 
 interface Entrega {
     id: string;
@@ -68,6 +69,7 @@ export default function MensageriaPage() {
     // Retirada states
     const [retiradoNome, setRetiradoNome] = useState('');
     const [retiradoDocumento, setRetiradoDocumento] = useState('');
+    const [signatureBase64, setSignatureBase64] = useState('');
 
     const getAuthHeaders = () => ({
         'Content-Type': 'application/json',
@@ -187,7 +189,7 @@ export default function MensageriaPage() {
         }
     };
 
-    const handleRetirada = async () => {
+    const handleRetirada = async (signature?: string) => {
         if (!selectedEntrega || !retiradoNome.trim()) {
             alert('❌ Informe o nome de quem está retirando');
             return;
@@ -202,7 +204,8 @@ export default function MensageriaPage() {
                     id: selectedEntrega.id,
                     action: 'retirar',
                     retirado_por_nome: retiradoNome,
-                    retirado_por_documento: retiradoDocumento
+                    retirado_por_documento: retiradoDocumento,
+                    signature_base64: signature || signatureBase64
                 }),
             });
 
@@ -214,6 +217,7 @@ export default function MensageriaPage() {
             setSelectedEntrega(null);
             setRetiradoNome('');
             setRetiradoDocumento('');
+            setSignatureBase64('');
             fetchEntregas();
         } catch (e: any) {
             alert(`❌ ${e.message}`);
@@ -236,6 +240,7 @@ export default function MensageriaPage() {
         setSelectedEntrega(entrega);
         setRetiradoNome('');
         setRetiradoDocumento('');
+        setSignatureBase64('');
         setShowRetiradaModal(true);
     };
 
@@ -524,9 +529,10 @@ export default function MensageriaPage() {
                 </form>
             </Modal>
 
-            {/* Modal Retirada */}
-            <Modal isOpen={showRetiradaModal} onClose={() => setShowRetiradaModal(false)} title="Registrar Retirada" size="md">
+            {/* Modal Retirada com Assinatura */}
+            <Modal isOpen={showRetiradaModal} onClose={() => setShowRetiradaModal(false)} title="Registrar Retirada" size="lg">
                 <div className="space-y-4">
+                    {/* Dados da Entrega */}
                     <div className="p-3 bg-gray-50 rounded-lg">
                         <p className="text-sm text-gray-600">
                             <strong>Entrega:</strong> {selectedEntrega?.tipo} de {selectedEntrega?.remetente || 'N/A'}
@@ -539,25 +545,44 @@ export default function MensageriaPage() {
                         </p>
                     </div>
 
-                    <Input
-                        label="Nome de quem está retirando *"
-                        value={retiradoNome}
-                        onChange={(e) => setRetiradoNome(e.target.value)}
-                        placeholder="Nome completo"
-                        required
-                    />
+                    {/* Dados de quem está retirando */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <Input
+                            label="Nome de quem está retirando *"
+                            value={retiradoNome}
+                            onChange={(e) => setRetiradoNome(e.target.value)}
+                            placeholder="Nome completo"
+                            required
+                        />
+                        <Input
+                            label="Documento (RG/CPF)"
+                            value={retiradoDocumento}
+                            onChange={(e) => setRetiradoDocumento(e.target.value)}
+                            placeholder="Opcional"
+                        />
+                    </div>
 
-                    <Input
-                        label="Documento (RG/CPF)"
-                        value={retiradoDocumento}
-                        onChange={(e) => setRetiradoDocumento(e.target.value)}
-                        placeholder="Opcional"
-                    />
+                    {/* Captura de Assinatura */}
+                    <div className="border rounded-lg p-4 bg-white">
+                        <div className="flex items-center gap-2 mb-3">
+                            <PenTool className="h-5 w-5 text-emerald-600" />
+                            <span className="font-medium text-gray-900">Assinatura do Recebedor</span>
+                        </div>
+                        <SignaturePad
+                            onSave={(sig) => handleRetirada(sig)}
+                            onClear={() => setSignatureBase64('')}
+                            disabled={saving || !retiradoNome.trim()}
+                        />
+                        {!retiradoNome.trim() && (
+                            <p className="text-xs text-amber-600 mt-2">
+                                ⚠️ Preencha o nome acima antes de assinar
+                            </p>
+                        )}
+                    </div>
 
-                    <div className="flex gap-3 justify-end pt-4">
-                        <Button type="button" variant="ghost" onClick={() => setShowRetiradaModal(false)}>Cancelar</Button>
-                        <Button onClick={handleRetirada} loading={saving}>
-                            <Check className="h-4 w-4 mr-1" /> Confirmar Retirada
+                    <div className="flex gap-3 justify-end pt-2">
+                        <Button type="button" variant="ghost" onClick={() => setShowRetiradaModal(false)}>
+                            Cancelar
                         </Button>
                     </div>
                 </div>

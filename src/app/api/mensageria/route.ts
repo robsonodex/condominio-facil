@@ -210,13 +210,43 @@ export async function PUT(request: NextRequest) {
                 return NextResponse.json({ error: 'Nome de quem retirou é obrigatório' }, { status: 400 });
             }
 
+            let signatureUrl = null;
+
+            // Se tiver assinatura em base64, fazer upload para storage
+            if (body.signature_base64) {
+                try {
+                    const base64Data = body.signature_base64.replace(/^data:image\/\w+;base64,/, '');
+                    const buffer = Buffer.from(base64Data, 'base64');
+                    const fileName = `${entrega.condo_id}/${id}-signature-${Date.now()}.png`;
+
+                    const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
+                        .from('signatures')
+                        .upload(fileName, buffer, {
+                            contentType: 'image/png',
+                            upsert: true
+                        });
+
+                    if (uploadError) {
+                        console.error('[MENSAGERIA] Signature upload error:', uploadError);
+                    } else {
+                        const { data: publicUrl } = supabaseAdmin.storage
+                            .from('signatures')
+                            .getPublicUrl(fileName);
+                        signatureUrl = publicUrl.publicUrl;
+                    }
+                } catch (e) {
+                    console.error('[MENSAGERIA] Signature processing error:', e);
+                }
+            }
+
             updateData = {
                 ...updateData,
                 status: 'retirado',
                 retirado_por_nome,
-                retirado_por_documento,
+                retirado_por_documento: body.retirado_por_documento,
                 data_retirada: new Date().toISOString(),
-                entregue_por: profile.id
+                entregue_por: profile.id,
+                signature_url: signatureUrl
             };
 
             // Notificar morador da retirada
