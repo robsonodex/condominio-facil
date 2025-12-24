@@ -150,41 +150,69 @@ export default function AdminAssinaturasPage() {
         setSending(true);
         try {
             const results = { email: false, notification: false };
+            const errors: string[] = [];
 
             // Enviar Email
             if (billingAction === 'email' || billingAction === 'both') {
-                const emailRes = await fetch('/api/billing/send-invoice', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                    body: JSON.stringify({
-                        subscription_id: selectedSub.id,
-                        custom_message: customMessage
-                    })
-                });
-                results.email = emailRes.ok;
+                try {
+                    const emailRes = await fetch('/api/billing/send-invoice', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({
+                            subscription_id: selectedSub.id,
+                            custom_message: customMessage
+                        })
+                    });
+                    const emailData = await emailRes.json();
+
+                    if (emailRes.ok) {
+                        results.email = true;
+                        console.log('[BILLING] Email enviado:', emailData);
+                    } else {
+                        errors.push(`Email: ${emailData.error || 'Erro desconhecido'}`);
+                        console.error('[BILLING] Erro email:', emailData);
+                    }
+                } catch (emailError: any) {
+                    errors.push(`Email: ${emailError.message}`);
+                    console.error('[BILLING] Exceção email:', emailError);
+                }
             }
 
             // Enviar Notificação In-App
             if (billingAction === 'notification' || billingAction === 'both') {
-                // Buscar síndico do condomínio
-                const { data: sindico } = await supabase
-                    .from('users')
-                    .select('id')
-                    .eq('condo_id', selectedSub.condo_id)
-                    .eq('role', 'sindico')
-                    .single();
+                try {
+                    // Buscar síndico do condomínio
+                    const { data: sindico, error: sindicoError } = await supabase
+                        .from('users')
+                        .select('id')
+                        .eq('condo_id', selectedSub.condo_id)
+                        .eq('role', 'sindico')
+                        .single();
 
-                if (sindico) {
-                    const { error } = await supabase.from('notifications').insert({
-                        condo_id: selectedSub.condo_id,
-                        user_id: sindico.id,
-                        title: '💳 Cobrança de Mensalidade',
-                        message: `Sua mensalidade do Condomínio Fácil está disponível. Valor: R$ ${(selectedSub.valor_mensal_cobrado || 0).toFixed(2)}. Acesse a página de Assinatura para efetuar o pagamento.`,
-                        type: 'billing',
-                        link: '/assinatura'
-                    });
-                    results.notification = !error;
+                    if (sindicoError || !sindico) {
+                        errors.push('Notificação: Síndico não encontrado');
+                        console.error('[BILLING] Síndico não encontrado:', sindicoError);
+                    } else {
+                        const { error: notifError } = await supabase.from('notifications').insert({
+                            condo_id: selectedSub.condo_id,
+                            user_id: sindico.id,
+                            title: '💳 Cobrança de Mensalidade',
+                            message: `Sua mensalidade do Condomínio Fácil está disponível. Valor: R$ ${(selectedSub.valor_mensal_cobrado || 0).toFixed(2)}. Acesse a página de Assinatura para efetuar o pagamento.`,
+                            type: 'billing',
+                            link: '/assinatura'
+                        });
+
+                        if (notifError) {
+                            errors.push(`Notificação: ${notifError.message}`);
+                            console.error('[BILLING] Erro notificação:', notifError);
+                        } else {
+                            results.notification = true;
+                        }
+                    }
+                } catch (notifError: any) {
+                    errors.push(`Notificação: ${notifError.message}`);
+                    console.error('[BILLING] Exceção notificação:', notifError);
                 }
             }
 
@@ -196,7 +224,8 @@ export default function AdminAssinaturasPage() {
             if (msgs.length > 0) {
                 alert(`✅ ${msgs.join(' e ')}!`);
             } else {
-                alert('❌ Nenhuma ação foi executada com sucesso');
+                const errorDetail = errors.length > 0 ? `\n\nDetalhes:\n${errors.join('\n')}` : '';
+                alert(`❌ Nenhuma ação foi executada com sucesso${errorDetail}`);
             }
 
             setShowBillingModal(false);
