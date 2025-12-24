@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { Sidebar, Header } from '@/components/shared';
+import { Sidebar, Header, NotificationPopup } from '@/components/shared';
 import { useAuth } from '@/hooks/useAuth';
 import { Loader2 } from 'lucide-react';
 import { ImpersonationBanner } from '@/components/admin/ImpersonationBanner';
@@ -72,6 +72,7 @@ export default function DashboardLayout({
                     </main>
                 </div>
             </div>
+            <NotificationPopup />
             <LinkedInChat />
         </div>
     );
