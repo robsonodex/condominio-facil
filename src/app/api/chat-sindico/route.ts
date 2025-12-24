@@ -5,7 +5,7 @@ import { supabaseAdmin, getSessionFromReq } from '@/lib/supabase/admin';
 export async function GET(request: NextRequest) {
     try {
         const session = await getSessionFromReq(request);
-        if (!session?.user || !session?.condoId) {
+        if (!session?.userId || !session?.condoId) {
             return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
         }
 
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
         const { data: profile } = await supabaseAdmin
             .from('users')
             .select('id, role, nome, unidade:units(bloco, numero_unidade)')
-            .eq('email', session.user.email)
+            .eq('id', session.userId)
             .single();
 
         if (!profile) {
@@ -79,27 +79,28 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
     try {
         const session = await getSessionFromReq(request);
-        if (!session?.user || !session?.condoId) {
+        console.log('[CHAT-SINDICO] POST session:', JSON.stringify(session));
+
+        if (!session?.userId || !session?.condoId) {
+            console.log('[CHAT-SINDICO] Missing userId or condoId');
             return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
         }
 
         const body = await request.json();
         const { action } = body;
+        console.log('[CHAT-SINDICO] Action:', action);
 
         // Buscar perfil
-        const { data: profile } = await supabaseAdmin
+        const { data: profile, error: profileError } = await supabaseAdmin
             .from('users')
             .select('id, role, nome, condo_id, unidade:units(bloco, numero_unidade)')
-            .eq('email', session.user.email)
+            .eq('id', session.userId)
             .single();
+
+        console.log('[CHAT-SINDICO] Profile:', JSON.stringify(profile), 'Error:', profileError?.message);
 
         if (!profile) {
             return NextResponse.json({ error: 'Perfil não encontrado' }, { status: 404 });
-        }
-
-        // Verificar se condo_id bate
-        if (profile.condo_id !== session.condoId) {
-            return NextResponse.json({ error: 'Acesso negado' }, { status: 403 });
         }
 
         if (action === 'nova_conversa') {
