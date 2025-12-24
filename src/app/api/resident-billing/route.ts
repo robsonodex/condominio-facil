@@ -201,7 +201,7 @@ export async function DELETE(request: NextRequest) {
 
         const { error } = await supabaseAdmin
             .from('resident_invoices')
-            .update({ status: 'cancelado' })
+            .delete()
             .eq('id', id);
 
         if (error) {
