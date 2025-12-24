@@ -88,7 +88,6 @@ const navItems: NavItem[] = [
     { href: '/portaria', label: 'Portaria', icon: <UserCheck className="h-5 w-5" />, roles: ['porteiro'], requiresFeature: 'hasOccurrences' },
     { href: '/mensageria', label: 'Mensageria', icon: <Package className="h-5 w-5" />, roles: ['porteiro', 'sindico'], requiresFeature: 'hasMensageria' },
     { href: '/portaria/cameras', label: 'Câmeras', icon: <Settings className="h-5 w-5" />, roles: ['porteiro'], requiresFeature: 'hasCameras' },
-    { href: '/portaria/minhas-encomendas', label: 'Minhas Entregas', icon: <Package className="h-5 w-5" />, roles: ['morador', 'inquilino'], requiresFeature: 'hasDeliveries' },
     { href: '/relatorios', label: 'Relatórios', icon: <FileText className="h-5 w-5" />, roles: ['sindico'], requiresFeature: 'hasOccurrences' },
     // Módulos restritos por plano - Premium
     { href: '/automacoes', label: 'Automações', icon: <Settings className="h-5 w-5" />, roles: ['sindico'], requiresFeature: 'hasMaintenance' },

@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
                 titulo: '📦 Nova entrega na mensageria!',
                 mensagem: `Você tem uma ${tipo || 'encomenda'} aguardando retirada${remetente ? ` de ${remetente}` : ''}. Retire na portaria/mensageria.`,
                 tipo: 'sistema',
-                link: '/minhas-encomendas'
+                link: '/minhas-notificacoes'
             });
 
             // Atualizar status para notificado
@@ -226,7 +226,7 @@ export async function PUT(request: NextRequest) {
                 titulo: '✅ Entrega retirada!',
                 mensagem: `Sua ${entrega.tipo || 'encomenda'} foi retirada por ${retirado_por_nome}${retirado_por_documento ? ` (Doc: ${retirado_por_documento})` : ''}.`,
                 tipo: 'sistema',
-                link: '/minhas-encomendas'
+                link: '/minhas-notificacoes'
             });
         } else if (action === 'devolver') {
             updateData.status = 'devolvido';
