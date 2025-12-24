@@ -67,6 +67,9 @@ export default function UsuariosCondoPage() {
 
         try {
             if (editingUser) {
+                // Verificar se o role mudou
+                const roleChanged = editingUser.role !== formData.role;
+
                 // Update existing user
                 const { error: updateError } = await supabase
                     .from('users')
@@ -78,6 +81,26 @@ export default function UsuariosCondoPage() {
                     .eq('id', editingUser.id);
 
                 if (updateError) throw updateError;
+
+                // Notificar usuário se o role mudou
+                if (roleChanged) {
+                    const roleLabels: Record<string, string> = {
+                        morador: 'Morador',
+                        inquilino: 'Inquilino',
+                        porteiro: 'Porteiro',
+                        sindico: 'Síndico'
+                    };
+
+                    await supabase.from('notifications').insert({
+                        condo_id: condoId,
+                        user_id: editingUser.id,
+                        titulo: '👤 Seu perfil foi atualizado',
+                        mensagem: `Seu perfil foi alterado de ${roleLabels[editingUser.role] || editingUser.role} para ${roleLabels[formData.role] || formData.role}. Entre em contato com o síndico se houver dúvidas.`,
+                        tipo: 'sistema',
+                        link: '/perfil'
+                    });
+                }
+
                 setSuccess('Usuário atualizado com sucesso!');
             } else {
                 // CRITICAL FIX: Use API endpoint with service role

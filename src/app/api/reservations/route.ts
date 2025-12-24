@@ -188,10 +188,31 @@ export async function PUT(request: NextRequest) {
             .from('reservations')
             .update(updateData)
             .eq('id', id)
-            .select()
+            .select(`
+                *,
+                area:common_areas(nome),
+                user:users!user_id(id, nome, email)
+            `)
             .single();
 
         if (error) throw error;
+
+        // Enviar notificação ao morador
+        if (action === 'aprovar' || action === 'rejeitar') {
+            const isApproved = action === 'aprovar';
+
+            await supabaseAdmin.from('notifications').insert({
+                condo_id: reservation.condo_id,
+                user_id: reservation.user_id,
+                titulo: isApproved ? '✅ Reserva Aprovada!' : '❌ Reserva Rejeitada',
+                mensagem: isApproved
+                    ? `Sua reserva para ${data.area?.nome} foi aprovada! Data: ${data.data_reserva}, horário: ${data.horario_inicio} às ${data.horario_fim}`
+                    : `Sua reserva para ${data.area?.nome} foi rejeitada. Motivo: ${motivo_rejeicao || 'Não informado'}`,
+                tipo: 'sistema',
+                link: '/reservas'
+            });
+        }
+
         return NextResponse.json({ reservation: data });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });

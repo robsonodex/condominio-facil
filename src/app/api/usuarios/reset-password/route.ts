@@ -66,13 +66,20 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Usuário não pertence ao seu condomínio' }, { status: 403 });
         }
 
-        // Não permitir reset de senha de superadmins ou outros síndicos
-        if (targetUser.role === 'superadmin' || targetUser.role === 'sindico') {
-            return NextResponse.json({ error: 'Não é possível resetar senha de administradores' }, { status: 403 });
+        // Não permitir síndico resetar senha de outros síndicos ou superadmins
+        if (requestingUser.role === 'sindico' && (targetUser.role === 'superadmin' || targetUser.role === 'sindico')) {
+            return NextResponse.json({ error: 'Síndicos não podem resetar senha de outros administradores' }, { status: 403 });
+        }
+
+        // Não permitir ninguém resetar senha de superadmins (exceto ele mesmo, se houver)
+        if (targetUser.role === 'superadmin' && requestingUser.role !== 'superadmin') {
+            return NextResponse.json({ error: 'Não é possível resetar senha de superadmin' }, { status: 403 });
         }
 
         // Gerar nova senha
         const newPassword = generatePassword();
+
+        console.log(`[PASSWORD_RESET] Tentando resetar senha do usuário ${targetUser.email} (${targetUser.id})`);
 
         // Atualizar senha no Supabase Auth
         const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
@@ -80,8 +87,8 @@ export async function POST(req: NextRequest) {
         });
 
         if (updateError) {
-            console.error('Erro ao atualizar senha:', updateError);
-            return NextResponse.json({ error: 'Erro ao resetar senha' }, { status: 500 });
+            console.error('[PASSWORD_RESET] Erro ao atualizar senha:', updateError);
+            return NextResponse.json({ error: `Erro ao resetar senha: ${updateError.message}` }, { status: 500 });
         }
 
         // Log do envio de email (em produção, integrar com sistema de email real)

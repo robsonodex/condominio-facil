@@ -44,6 +44,9 @@ export default function ReservasPage() {
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [showAreaModal, setShowAreaModal] = useState(false);
+    const [showRejectModal, setShowRejectModal] = useState(false);
+    const [rejectingReservation, setRejectingReservation] = useState<Reservation | null>(null);
+    const [rejectReason, setRejectReason] = useState('');
     const [selectedDate, setSelectedDate] = useState('');
     const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
 
@@ -135,18 +138,40 @@ export default function ReservasPage() {
         }
     };
 
-    const handleAction = async (id: string, action: string) => {
+    const handleAction = async (id: string, action: string, motivo?: string) => {
         try {
             const res = await fetch('/api/reservations', {
                 method: 'PUT',
                 headers: getAuthHeaders(),
-                body: JSON.stringify({ id, action }),
+                body: JSON.stringify({ id, action, motivo_rejeicao: motivo }),
             });
             if (!res.ok) throw new Error('Erro na operação');
             fetchReservations();
+
+            // Fechar modal de rejeição se estiver aberto
+            if (action === 'rejeitar') {
+                setShowRejectModal(false);
+                setRejectingReservation(null);
+                setRejectReason('');
+            }
         } catch (e: any) {
             alert(`❌ ${e.message}`);
         }
+    };
+
+    const openRejectModal = (reservation: Reservation) => {
+        setRejectingReservation(reservation);
+        setRejectReason('');
+        setShowRejectModal(true);
+    };
+
+    const handleReject = () => {
+        if (!rejectingReservation) return;
+        if (!rejectReason.trim()) {
+            alert('❌ Por favor, informe o motivo da rejeição');
+            return;
+        }
+        handleAction(rejectingReservation.id, 'rejeitar', rejectReason);
     };
 
     const handleCreateArea = async (e: React.FormEvent) => {
@@ -429,7 +454,7 @@ export default function ReservasPage() {
                                             <Button size="sm" variant="outline" onClick={() => openEditModal(r)}>
                                                 <Edit2 className="h-4 w-4 mr-1" /> Editar
                                             </Button>
-                                            <Button size="sm" variant="ghost" onClick={() => handleAction(r.id, 'rejeitar')}>
+                                            <Button size="sm" variant="ghost" onClick={() => openRejectModal(r)}>
                                                 <XCircle className="h-4 w-4 mr-1" /> Rejeitar
                                             </Button>
                                             <Button size="sm" variant="danger" onClick={() => handleAction(r.id, 'cancelar')}>
@@ -531,6 +556,37 @@ export default function ReservasPage() {
                         <Button type="submit" loading={saving}>Criar Área</Button>
                     </div>
                 </form>
+            </Modal>
+
+            {/* Modal Rejeição com Justificativa */}
+            <Modal isOpen={showRejectModal} onClose={() => { setShowRejectModal(false); setRejectingReservation(null); }} title="Rejeitar Reserva" size="md">
+                <div className="space-y-4">
+                    <p className="text-gray-600">
+                        Você está rejeitando a reserva de <span className="font-bold">{rejectingReservation?.user?.nome}</span> para{' '}
+                        <span className="font-bold">{rejectingReservation?.area?.nome}</span> em{' '}
+                        <span className="font-bold">{rejectingReservation && formatDate(rejectingReservation.data_reserva)}</span>.
+                    </p>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Motivo da Rejeição <span className="text-red-500">*</span>
+                        </label>
+                        <textarea
+                            value={rejectReason}
+                            onChange={(e) => setRejectReason(e.target.value)}
+                            placeholder="Explique o motivo da rejeição. Esta mensagem será enviada ao morador."
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 min-h-[100px]"
+                            required
+                        />
+                    </div>
+
+                    <div className="flex gap-3 justify-end pt-4">
+                        <Button type="button" variant="ghost" onClick={() => { setShowRejectModal(false); setRejectingReservation(null); }}>Cancelar</Button>
+                        <Button type="button" variant="danger" onClick={handleReject}>
+                            <XCircle className="h-4 w-4 mr-1" /> Confirmar Rejeição
+                        </Button>
+                    </div>
+                </div>
             </Modal>
         </div>
     );
