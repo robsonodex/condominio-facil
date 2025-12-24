@@ -9,12 +9,10 @@
 
 ### O que o sistema É:
 - ✅ Sistema **100% WEB** acessível via navegador
-- ✅ Funciona no celular via navegador (PWA)
+- ✅ **App Móvel nativo** para Android e iOS (Google Play / App Store)
 - ✅ Gestão completa: financeiro, moradores, portaria, reservas, ocorrências
 
 ### O que o sistema NÃO É:
-- ❌ **NÃO tem aplicativo** nas lojas (Play Store / App Store)
-- ❌ **NÃO tem WhatsApp automático incluso** nos planos padrão
 - ❌ **NÃO tem PIX dinâmico/boleto automático incluso** nos planos padrão
 
 ### Integrações (Serviços Opcionais)
@@ -22,7 +20,6 @@
 | Serviço | O que faz | Taxa Implantação | Mensalidade | Disponível para |
 |---------|-----------|------------------|-------------|-----------------|
 | **Integração Bancária** | PIX dinâmico, boleto automático, conciliação | R$ 999 | +R$ 199/mês | Profissional + Premium |
-| **Integração WhatsApp** | Mensagens automáticas para moradores | R$ 697 | +R$ 149/mês | Profissional + Premium |
 
 > 💡 **Dica de venda**: Oferecer integrações como upsell após o cliente já estar usando o sistema básico.
 

@@ -2,7 +2,8 @@
 
 ## 📋 Visão Geral
 
-O **Condomínio Fácil** é uma plataforma SaaS (Software como Serviço) **100% WEB + APP MÓVEL** para gestão de condomínios pequenos e médios no Brasil. O sistema permite que síndicos, porteiros e moradores gerenciem todas as operações do condomínio de forma simples e organizada.
+O **Condomínio Fácil** é uma plataforma SaaS (Software como Serviço) **100% WEB + APP MÓVEL** para gestão de condomínios pequenos e médios no Brasil. O sistema permite que síndicos, porteiros e moradores gerenciem todas as operações do condomFunciona no celular (PWA)
+ínio de forma simples e organizada.
 
 > ✅ **NOVIDADE 2025**: Agora temos **App Móvel nativo** para Android e iOS! Disponível nas lojas Google Play e App Store.
 
@@ -170,31 +171,28 @@ O **Condomínio Fácil** é uma plataforma SaaS (Software como Serviço) **100% 
 
 ---
 
-## 📱 ACESSO MOBILE (PWA)
+## 📱 ACESSO MOBILE (App Nativo)
 
-> ⚠️ **ATENÇÃO**: O Condomínio Fácil **NÃO possui aplicativo nativo** para Android ou iOS. O acesso móvel é feito através do **navegador** ou **PWA** (Progressive Web App).
+> ✅ **NOVIDADE**: O Condomínio Fácil possui **aplicativo nativo** para Android e iOS. Disponível nas lojas Google Play e App Store.
 
-### O que é PWA?
+### Como Baixar
 
-PWA (Progressive Web App) é uma tecnologia que permite **instalar o site como se fosse um aplicativo** na tela inicial do celular. Funciona 100% online via navegador.
+**Android:**
+1. Acesse a Google Play Store
+2. Busque por "Meu Condomínio Fácil"
+3. Instale e faça login com suas credenciais
 
-### Como Instalar (Android)
-1. Acesse o sistema pelo Chrome
-2. Toque nos 3 pontos (menu)
-3. Selecione "Instalar app" ou "Adicionar à tela inicial"
-4. O ícone aparece na tela inicial
+**iPhone:**
+1. Acesse a App Store
+2. Busque por "Meu Condomínio Fácil"
+3. Instale e faça login com suas credenciais
 
-### Como Instalar (iPhone)
-1. Acesse o sistema pelo Safari
-2. Toque no botão Compartilhar
-3. Selecione "Adicionar à Tela de Início"
-
-### Recursos do PWA
-- ✅ Ícone na tela inicial
-- ✅ Abre em tela cheia (sem barra do navegador)
-- ✅ Funciona offline (páginas visitadas em cache)
-- ❌ NÃO é um app nativo
-- ❌ NÃO está nas lojas (Play Store / App Store)
+### Recursos do App
+- ✅ Aplicativo nativo real
+- ✅ Disponível nas lojas oficiais
+- ✅ Notificações push
+- ✅ Sincronização em tempo real com o sistema web
+- ✅ Interface otimizada para cada perfil (Síndico, Morador, Porteiro)
 
 ---
 
