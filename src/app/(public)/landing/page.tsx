@@ -64,20 +64,7 @@ const detailedFeatures = [
         hasImplantation: true,
         implantationNote: '* Requer contratação do serviço de Integração Bancária'
     },
-    {
-        icon: MessageSquare,
-        title: 'Notificações WhatsApp',
-        description: 'Envie notificações de cobrança e avisos direto no WhatsApp do morador.',
-        screenshot: '/screenshots/whatsapp.png',
-        benefits: [
-            '⚙️ Notificação de novas cobranças *',
-            '⚙️ Lembrete de vencimento *',
-            '⚙️ Confirmação de pagamento *',
-            '⚙️ Avisos do condomínio *'
-        ],
-        hasImplantation: true,
-        implantationNote: '* Requer contratação do serviço de Integração WhatsApp'
-    },
+
     {
         icon: Shield,
         title: 'Portaria Virtual Profissional',
@@ -99,10 +86,8 @@ const detailedFeatures = [
             'Foto da encomenda na chegada',
             'Registro de código e remetente',
             'Confirmação de retirada',
-            '⚙️ Notificação WhatsApp/Email *'
-        ],
-        hasImplantation: true,
-        implantationNote: '* Notificação automática requer Integração WhatsApp'
+            'Notificação por email'
+        ]
     },
     {
         icon: Calendar,
@@ -248,16 +233,13 @@ const faqs = [
     },
     {
         question: 'Posso cancelar a qualquer momento?',
-        answer: 'Sim! Não há fidelidade. Cancele quando quiser pelo próprio sistema. Os serviços de implantação (WhatsApp, Bancário e IA) têm regras específicas detalhadas no contrato de cada serviço.'
+        answer: 'Sim! Não há fidelidade. Cancele quando quiser pelo próprio sistema.'
     },
     {
         question: 'O que preciso para ter a integração bancária?',
         answer: 'Você precisa de: 1) CNPJ ativo do condomínio, 2) Conta no banco ou gateway escolhido (Mercado Pago, Asaas, Inter, etc.), 3) Documento comprovando que você é o síndico. Nós cuidamos de toda a configuração técnica, testes e entrega funcionando. Prazo: 3 a 5 dias úteis.'
     },
-    {
-        question: 'O que preciso para ter o WhatsApp automático?',
-        answer: 'Apenas um chip de celular exclusivo para o condomínio (não pode ser o pessoal do síndico). Nós configuramos o servidor dedicado, fazemos a conexão via QR Code em videochamada, e cuidamos de toda a manutenção. Se der qualquer problema, resolvemos.'
-    },
+
     {
         question: 'Meus dados estão seguros?',
         answer: 'Absolutamente. Usamos criptografia de ponta a ponta, RLS (Row Level Security) para isolamento de dados, e hospedagem em servidores seguros. Estamos em conformidade com a LGPD.'
