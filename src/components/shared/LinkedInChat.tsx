@@ -55,12 +55,16 @@ export function LinkedInChat() {
     const [loading, setLoading] = useState(false);
     const [totalUnread, setTotalUnread] = useState(0);
 
+    // Esconder chat de suporte para morador, inquilino e porteiro (só síndico e admin veem)
+    const userRole = profile?.role || '';
+    const shouldHideForRole = ['morador', 'inquilino', 'porteiro'].includes(userRole);
+
     // Initial load
     useEffect(() => {
-        if (session?.access_token) {
+        if (session?.access_token && !shouldHideForRole) {
             fetchChats();
         }
-    }, [session]);
+    }, [session, shouldHideForRole]);
 
     const fetchChats = async () => {
         try {
@@ -84,6 +88,11 @@ export function LinkedInChat() {
         setIsListExpanded(true);
         setShowNewChat(false);
     };
+
+    // Esconder completamente para morador, inquilino e porteiro
+    if (shouldHideForRole) {
+        return null;
+    }
 
     // Quando oculto, mostra apenas ícone flutuante
     if (isHidden) {

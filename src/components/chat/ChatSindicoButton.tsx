@@ -1,14 +1,14 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { Button, Input, Badge } from '@/components/ui';
-import { Modal } from '@/components/ui/modal';
+import { Button, Input } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { useUser } from '@/hooks/useUser';
 import { formatDateTime } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import {
     MessageCircle, Send, X, Check, CheckCheck, Star,
-    ChevronDown, User
+    ChevronUp, ChevronDown, Plus
 } from 'lucide-react';
 
 interface Conversa {
@@ -33,9 +33,9 @@ export function ChatSindicoButton() {
     const { session } = useAuth();
     const { profile, isMorador, condoId } = useUser();
 
-    const [isOpen, setIsOpen] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(false);
     const [conversas, setConversas] = useState<Conversa[]>([]);
-    const [selectedConversa, setSelectedConversa] = useState<Conversa | null>(null);
+    const [activeConversa, setActiveConversa] = useState<Conversa | null>(null);
     const [mensagens, setMensagens] = useState<Mensagem[]>([]);
     const [loading, setLoading] = useState(false);
     const [totalNaoLidas, setTotalNaoLidas] = useState(0);
@@ -84,18 +84,17 @@ export function ChatSindicoButton() {
     useEffect(() => {
         if (canUseChat && session?.access_token) {
             fetchConversas();
-            // Polling a cada 30s
             const interval = setInterval(fetchConversas, 30000);
             return () => clearInterval(interval);
         }
     }, [canUseChat, session]);
 
     useEffect(() => {
-        if (selectedConversa) {
-            fetchMensagens(selectedConversa.id);
-            marcarComoLida(selectedConversa.id);
+        if (activeConversa) {
+            fetchMensagens(activeConversa.id);
+            marcarComoLida(activeConversa.id);
         }
-    }, [selectedConversa]);
+    }, [activeConversa]);
 
     useEffect(() => {
         scrollToBottom();
@@ -148,7 +147,7 @@ export function ChatSindicoButton() {
             setConversas(prev => prev.map(c =>
                 c.id === conversaId ? { ...c, mensagens_nao_lidas_morador: 0 } : c
             ));
-            setTotalNaoLidas(prev => Math.max(0, prev - (selectedConversa?.mensagens_nao_lidas_morador || 0)));
+            setTotalNaoLidas(prev => Math.max(0, prev - (activeConversa?.mensagens_nao_lidas_morador || 0)));
         } catch (e) {
             console.error(e);
         }
@@ -173,15 +172,13 @@ export function ChatSindicoButton() {
             });
 
             const data = await res.json();
-            if (res.ok) {
+            if (res.ok && data.conversa) {
                 setShowNovaConversa(false);
                 setNovaCategoria('geral');
                 setNovoAssunto('');
                 setNovaMensagemInicial('');
                 fetchConversas();
-                if (data.conversa) {
-                    setSelectedConversa(data.conversa);
-                }
+                setActiveConversa(data.conversa);
             }
         } catch (e) {
             console.error(e);
@@ -192,7 +189,7 @@ export function ChatSindicoButton() {
 
     const enviarMensagem = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!novaMensagem.trim() || !selectedConversa) return;
+        if (!novaMensagem.trim() || !activeConversa) return;
 
         setSending(true);
         try {
@@ -202,14 +199,14 @@ export function ChatSindicoButton() {
                 credentials: 'include',
                 body: JSON.stringify({
                     action: 'enviar_mensagem',
-                    conversa_id: selectedConversa.id,
+                    conversa_id: activeConversa.id,
                     mensagem: novaMensagem
                 })
             });
 
             if (res.ok) {
                 setNovaMensagem('');
-                fetchMensagens(selectedConversa.id);
+                fetchMensagens(activeConversa.id);
             }
         } catch (e) {
             console.error(e);
@@ -219,7 +216,7 @@ export function ChatSindicoButton() {
     };
 
     const enviarAvaliacao = async () => {
-        if (!selectedConversa || avaliacao === 0) return;
+        if (!activeConversa || avaliacao === 0) return;
 
         try {
             await fetch('/api/chat-sindico', {
@@ -228,7 +225,7 @@ export function ChatSindicoButton() {
                 credentials: 'include',
                 body: JSON.stringify({
                     action: 'avaliar',
-                    conversa_id: selectedConversa.id,
+                    conversa_id: activeConversa.id,
                     avaliacao,
                     comentario: avaliacaoComentario
                 })
@@ -237,7 +234,7 @@ export function ChatSindicoButton() {
             setAvaliacao(0);
             setAvaliacaoComentario('');
             fetchConversas();
-            setSelectedConversa(null);
+            setActiveConversa(null);
         } catch (e) {
             console.error(e);
         }
@@ -256,234 +253,252 @@ export function ChatSindicoButton() {
     if (!canUseChat) return null;
 
     return (
-        <>
-            {/* Botão flutuante */}
-            <button
-                onClick={() => setIsOpen(true)}
-                className="fixed bottom-24 right-6 z-40 w-14 h-14 bg-blue-500 hover:bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-105"
-                title="Falar com o Síndico"
-            >
-                <MessageCircle className="h-6 w-6" />
-                {totalNaoLidas > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
-                        {totalNaoLidas > 9 ? '9+' : totalNaoLidas}
-                    </span>
-                )}
-            </button>
+        <div className="fixed bottom-0 right-8 z-[100] flex items-end gap-3 pointer-events-none">
+            {/* Chat Window - Estilo LinkedIn */}
+            <div className={cn(
+                "w-[320px] bg-white border border-gray-200 shadow-xl rounded-t-xl transition-all duration-300 pointer-events-auto",
+                isExpanded ? "h-[480px]" : "h-12"
+            )}>
+                {/* Header Bar */}
+                <button
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    className="w-full flex items-center justify-between px-4 h-12 bg-blue-600 rounded-t-xl hover:bg-blue-700 transition-colors"
+                >
+                    <div className="flex items-center gap-2">
+                        <MessageCircle className="h-5 w-5 text-white" />
+                        <span className="font-medium text-white text-sm">Falar com o Síndico</span>
+                        {totalNaoLidas > 0 && (
+                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                                {totalNaoLidas > 9 ? '9+' : totalNaoLidas}
+                            </span>
+                        )}
+                    </div>
+                    <div className="flex items-center gap-1">
+                        {isExpanded ? (
+                            <ChevronDown className="h-5 w-5 text-white" />
+                        ) : (
+                            <ChevronUp className="h-5 w-5 text-white" />
+                        )}
+                    </div>
+                </button>
 
-            {/* Modal de chat */}
-            <Modal
-                isOpen={isOpen}
-                onClose={() => { setIsOpen(false); setSelectedConversa(null); setShowNovaConversa(false); }}
-                title="💬 Falar com o Síndico"
-                size="lg"
-            >
-                <div className="h-[500px] flex flex-col">
-                    {showNovaConversa ? (
-                        /* Formulário nova conversa */
-                        <form onSubmit={criarConversa} className="flex-1 flex flex-col p-4 space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
-                                <div className="grid grid-cols-3 gap-2">
-                                    {[
-                                        { value: 'geral', label: '💬 Geral' },
-                                        { value: 'financeiro', label: '💰 Financeiro' },
-                                        { value: 'manutencao', label: '🔧 Manutenção' },
-                                        { value: 'sugestao', label: '💡 Sugestão' },
-                                        { value: 'reclamacao', label: '⚠️ Reclamação' },
-                                        { value: 'outro', label: '📋 Outro' },
-                                    ].map(cat => (
-                                        <button
-                                            key={cat.value}
-                                            type="button"
-                                            onClick={() => setNovaCategoria(cat.value)}
-                                            className={`p-2 text-sm rounded-lg border ${novaCategoria === cat.value
-                                                ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                                : 'border-gray-200 hover:border-gray-300'
-                                                }`}
-                                        >
-                                            {cat.label}
-                                        </button>
-                                    ))}
+                {/* Content */}
+                {isExpanded && (
+                    <div className="h-[calc(100%-48px)] flex flex-col">
+                        {showNovaConversa ? (
+                            /* Formulário nova conversa */
+                            <form onSubmit={criarConversa} className="flex-1 flex flex-col p-4 space-y-3 overflow-y-auto">
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">Categoria</label>
+                                    <div className="grid grid-cols-3 gap-1">
+                                        {[
+                                            { value: 'geral', label: '💬' },
+                                            { value: 'financeiro', label: '💰' },
+                                            { value: 'manutencao', label: '🔧' },
+                                            { value: 'sugestao', label: '💡' },
+                                            { value: 'reclamacao', label: '⚠️' },
+                                            { value: 'outro', label: '📋' },
+                                        ].map(cat => (
+                                            <button
+                                                key={cat.value}
+                                                type="button"
+                                                onClick={() => setNovaCategoria(cat.value)}
+                                                className={`p-2 text-lg rounded-lg border ${novaCategoria === cat.value
+                                                    ? 'border-blue-500 bg-blue-50'
+                                                    : 'border-gray-200 hover:border-gray-300'
+                                                    }`}
+                                                title={cat.value}
+                                            >
+                                                {cat.label}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
 
-                            <Input
-                                label="Assunto (opcional)"
-                                value={novoAssunto}
-                                onChange={(e) => setNovoAssunto(e.target.value)}
-                                placeholder="Ex: Problema com vazamento"
-                            />
+                                <Input
+                                    value={novoAssunto}
+                                    onChange={(e) => setNovoAssunto(e.target.value)}
+                                    placeholder="Assunto (opcional)"
+                                    className="text-sm"
+                                />
 
-                            <div className="flex-1">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Mensagem *</label>
                                 <textarea
                                     value={novaMensagemInicial}
                                     onChange={(e) => setNovaMensagemInicial(e.target.value)}
                                     placeholder="Descreva sua dúvida ou solicitação..."
-                                    className="w-full h-32 p-3 border rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="flex-1 w-full p-3 border rounded-lg resize-none text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[100px]"
                                     required
                                 />
-                            </div>
 
-                            <div className="flex gap-2">
-                                <Button type="button" variant="ghost" onClick={() => setShowNovaConversa(false)}>
-                                    Cancelar
-                                </Button>
-                                <Button type="submit" loading={sending} disabled={!novaMensagemInicial.trim()}>
-                                    <Send className="h-4 w-4 mr-1" /> Enviar
-                                </Button>
-                            </div>
-                        </form>
-                    ) : selectedConversa ? (
-                        /* Tela de conversa */
-                        <>
-                            <div className="p-3 border-b flex items-center justify-between bg-gray-50">
-                                <div className="flex items-center gap-2">
-                                    <button onClick={() => setSelectedConversa(null)} className="p-1 hover:bg-gray-200 rounded">
-                                        <ChevronDown className="h-5 w-5 rotate-90" />
-                                    </button>
-                                    <div>
-                                        <p className="font-medium">
-                                            {getCategoriaEmoji(selectedConversa.categoria)} {selectedConversa.assunto || 'Conversa com Síndico'}
-                                        </p>
-                                        <p className="text-xs text-gray-500">
-                                            {selectedConversa.status === 'resolvida' ? '✅ Resolvida' : '🔵 Em andamento'}
-                                        </p>
-                                    </div>
-                                </div>
-                                {selectedConversa.status === 'em_atendimento' && (
-                                    <Button size="sm" variant="outline" onClick={() => setShowAvaliacao(true)}>
-                                        <Star className="h-4 w-4 mr-1" /> Avaliar
+                                <div className="flex gap-2">
+                                    <Button type="button" variant="ghost" size="sm" onClick={() => setShowNovaConversa(false)}>
+                                        Cancelar
                                     </Button>
-                                )}
-                            </div>
+                                    <Button type="submit" size="sm" disabled={!novaMensagemInicial.trim() || sending}>
+                                        {sending ? '...' : 'Enviar'}
+                                    </Button>
+                                </div>
+                            </form>
+                        ) : activeConversa ? (
+                            /* Tela de conversa ativa */
+                            <>
+                                <div className="p-2 border-b flex items-center justify-between bg-gray-50">
+                                    <div className="flex items-center gap-2">
+                                        <button onClick={() => setActiveConversa(null)} className="p-1 hover:bg-gray-200 rounded">
+                                            <ChevronDown className="h-4 w-4 rotate-90" />
+                                        </button>
+                                        <span className="text-sm font-medium truncate">
+                                            {getCategoriaEmoji(activeConversa.categoria)} {activeConversa.assunto || 'Conversa'}
+                                        </span>
+                                    </div>
+                                    {activeConversa.status === 'em_atendimento' && (
+                                        <button onClick={() => setShowAvaliacao(true)} className="text-xs text-blue-600 hover:underline">
+                                            ⭐ Avaliar
+                                        </button>
+                                    )}
+                                </div>
 
-                            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-100">
-                                {loading ? (
-                                    <div className="text-center text-gray-500">Carregando...</div>
-                                ) : mensagens.length === 0 ? (
-                                    <div className="text-center text-gray-500">Nenhuma mensagem</div>
-                                ) : (
-                                    mensagens.map(msg => {
-                                        const isMe = msg.sender_id === userId;
-                                        const isSindico = msg.sender_role === 'sindico';
-                                        return (
-                                            <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                                                <div className={`max-w-[80%] rounded-lg p-3 ${isMe
-                                                    ? 'bg-blue-500 text-white'
-                                                    : 'bg-white shadow'
-                                                    }`}>
-                                                    {!isMe && (
-                                                        <p className="text-xs text-gray-500 mb-1 font-medium flex items-center gap-1">
-                                                            {isSindico ? '👔 Síndico' : msg.sender?.nome}
-                                                        </p>
-                                                    )}
-                                                    <p className="whitespace-pre-wrap">{msg.mensagem}</p>
-                                                    <div className={`flex items-center justify-end gap-1 mt-1 text-xs ${isMe ? 'text-blue-100' : 'text-gray-400'
+                                <div className="flex-1 overflow-y-auto p-3 space-y-2 bg-gray-100">
+                                    {loading ? (
+                                        <div className="text-center text-gray-500 text-sm">Carregando...</div>
+                                    ) : mensagens.length === 0 ? (
+                                        <div className="text-center text-gray-500 text-sm">Nenhuma mensagem</div>
+                                    ) : (
+                                        mensagens.map(msg => {
+                                            const isMe = msg.sender_id === userId;
+                                            const isSindico = msg.sender_role === 'sindico';
+                                            return (
+                                                <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                                                    <div className={`max-w-[85%] rounded-lg p-2 text-sm ${isMe
+                                                        ? 'bg-blue-500 text-white'
+                                                        : 'bg-white shadow'
                                                         }`}>
-                                                        <span>{formatDateTime(msg.created_at).split(' ')[1]}</span>
-                                                        {isMe && (msg.lida ? <CheckCheck className="h-3 w-3" /> : <Check className="h-3 w-3" />)}
+                                                        {!isMe && (
+                                                            <p className="text-[10px] text-gray-500 mb-0.5 font-medium">
+                                                                {isSindico ? '👔 Síndico' : msg.sender?.nome}
+                                                            </p>
+                                                        )}
+                                                        <p className="whitespace-pre-wrap">{msg.mensagem}</p>
+                                                        <div className={`flex items-center justify-end gap-1 mt-0.5 text-[10px] ${isMe ? 'text-blue-100' : 'text-gray-400'
+                                                            }`}>
+                                                            <span>{formatDateTime(msg.created_at).split(' ')[1]}</span>
+                                                            {isMe && (msg.lida ? <CheckCheck className="h-3 w-3" /> : <Check className="h-3 w-3" />)}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        );
-                                    })
-                                )}
-                                <div ref={messagesEndRef} />
-                            </div>
+                                            );
+                                        })
+                                    )}
+                                    <div ref={messagesEndRef} />
+                                </div>
 
-                            <form onSubmit={enviarMensagem} className="p-3 border-t bg-white flex gap-2">
-                                <Input
-                                    value={novaMensagem}
-                                    onChange={(e) => setNovaMensagem(e.target.value)}
-                                    placeholder="Digite sua mensagem..."
-                                    className="flex-1"
-                                    disabled={sending || selectedConversa.status === 'resolvida'}
-                                />
-                                <Button type="submit" disabled={!novaMensagem.trim() || sending || selectedConversa.status === 'resolvida'}>
-                                    <Send className="h-4 w-4" />
-                                </Button>
-                            </form>
-                        </>
-                    ) : (
-                        /* Lista de conversas */
-                        <>
-                            <div className="p-3 border-b flex items-center justify-between">
-                                <p className="font-medium text-gray-700">Minhas conversas</p>
-                                <Button size="sm" onClick={() => setShowNovaConversa(true)}>
-                                    + Nova conversa
-                                </Button>
-                            </div>
+                                <form onSubmit={enviarMensagem} className="p-2 border-t bg-white flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={novaMensagem}
+                                        onChange={(e) => setNovaMensagem(e.target.value)}
+                                        placeholder="Digite sua mensagem..."
+                                        className="flex-1 px-3 py-2 text-sm border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        disabled={sending || activeConversa.status === 'resolvida'}
+                                    />
+                                    <button
+                                        type="submit"
+                                        disabled={!novaMensagem.trim() || sending || activeConversa.status === 'resolvida'}
+                                        className="w-8 h-8 flex items-center justify-center bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        <Send className="h-4 w-4" />
+                                    </button>
+                                </form>
+                            </>
+                        ) : (
+                            /* Lista de conversas */
+                            <>
+                                <div className="p-2 border-b flex items-center justify-between">
+                                    <span className="text-sm font-medium text-gray-700">Minhas conversas</span>
+                                    <button
+                                        onClick={() => setShowNovaConversa(true)}
+                                        className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
+                                    >
+                                        <Plus className="h-4 w-4" /> Nova
+                                    </button>
+                                </div>
 
-                            <div className="flex-1 overflow-y-auto">
-                                {conversas.length === 0 ? (
-                                    <div className="p-8 text-center">
-                                        <MessageCircle className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                                        <p className="text-gray-500 mb-4">Você ainda não tem conversas</p>
-                                        <Button onClick={() => setShowNovaConversa(true)}>
-                                            Iniciar conversa com o Síndico
-                                        </Button>
-                                    </div>
-                                ) : (
-                                    conversas.map(conv => (
-                                        <div
-                                            key={conv.id}
-                                            onClick={() => setSelectedConversa(conv)}
-                                            className="p-3 border-b cursor-pointer hover:bg-gray-50 transition-colors"
-                                        >
-                                            <div className="flex items-center justify-between">
-                                                <p className="font-medium">
-                                                    {getCategoriaEmoji(conv.categoria)} {conv.assunto || 'Conversa'}
-                                                </p>
-                                                {conv.mensagens_nao_lidas_morador > 0 && (
-                                                    <span className="bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">
-                                                        {conv.mensagens_nao_lidas_morador}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <p className="text-xs text-gray-500 mt-1">
-                                                {conv.status === 'resolvida' ? '✅ Resolvida' : conv.status === 'em_atendimento' ? '🔵 Em atendimento' : '🟡 Aguardando'}
-                                            </p>
+                                <div className="flex-1 overflow-y-auto">
+                                    {conversas.length === 0 ? (
+                                        <div className="p-6 text-center">
+                                            <MessageCircle className="h-10 w-10 text-gray-300 mx-auto mb-2" />
+                                            <p className="text-gray-500 text-sm mb-3">Nenhuma conversa</p>
+                                            <button
+                                                onClick={() => setShowNovaConversa(true)}
+                                                className="text-sm text-blue-600 hover:underline"
+                                            >
+                                                Iniciar conversa
+                                            </button>
                                         </div>
-                                    ))
-                                )}
-                            </div>
-                        </>
-                    )}
-                </div>
-            </Modal>
+                                    ) : (
+                                        conversas.map(conv => (
+                                            <div
+                                                key={conv.id}
+                                                onClick={() => setActiveConversa(conv)}
+                                                className="p-3 border-b cursor-pointer hover:bg-gray-50 transition-colors"
+                                            >
+                                                <div className="flex items-center justify-between">
+                                                    <p className="font-medium text-sm truncate">
+                                                        {getCategoriaEmoji(conv.categoria)} {conv.assunto || 'Conversa'}
+                                                    </p>
+                                                    {conv.mensagens_nao_lidas_morador > 0 && (
+                                                        <span className="bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">
+                                                            {conv.mensagens_nao_lidas_morador}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-[11px] text-gray-500 mt-0.5">
+                                                    {conv.status === 'resolvida' ? '✅' : conv.status === 'em_atendimento' ? '🔵' : '🟡'}
+                                                    {' '}{conv.status === 'resolvida' ? 'Resolvida' : conv.status === 'em_atendimento' ? 'Em atendimento' : 'Aguardando'}
+                                                </p>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </>
+                        )}
+                    </div>
+                )}
+            </div>
 
             {/* Modal de avaliação */}
-            <Modal isOpen={showAvaliacao} onClose={() => setShowAvaliacao(false)} title="⭐ Avaliar Atendimento" size="sm">
-                <div className="space-y-4">
-                    <p className="text-gray-600">Como foi o atendimento do síndico?</p>
+            {showAvaliacao && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[101] pointer-events-auto">
+                    <div className="bg-white rounded-xl p-6 w-80 shadow-2xl">
+                        <h3 className="text-lg font-bold mb-4">⭐ Avaliar Atendimento</h3>
+                        <p className="text-gray-600 text-sm mb-4">Como foi o atendimento do síndico?</p>
 
-                    <div className="flex justify-center gap-2">
-                        {[1, 2, 3, 4, 5].map(n => (
-                            <button
-                                key={n}
-                                onClick={() => setAvaliacao(n)}
-                                className={`p-2 transition-transform ${avaliacao >= n ? 'text-yellow-400 scale-110' : 'text-gray-300'}`}
-                            >
-                                <Star className="h-8 w-8 fill-current" />
-                            </button>
-                        ))}
-                    </div>
+                        <div className="flex justify-center gap-1 mb-4">
+                            {[1, 2, 3, 4, 5].map(n => (
+                                <button
+                                    key={n}
+                                    onClick={() => setAvaliacao(n)}
+                                    className={`p-1 transition-transform ${avaliacao >= n ? 'text-yellow-400 scale-110' : 'text-gray-300'}`}
+                                >
+                                    <Star className="h-7 w-7 fill-current" />
+                                </button>
+                            ))}
+                        </div>
 
-                    <textarea
-                        value={avaliacaoComentario}
-                        onChange={(e) => setAvaliacaoComentario(e.target.value)}
-                        placeholder="Comentário (opcional)"
-                        className="w-full p-3 border rounded-lg resize-none h-20"
-                    />
+                        <textarea
+                            value={avaliacaoComentario}
+                            onChange={(e) => setAvaliacaoComentario(e.target.value)}
+                            placeholder="Comentário (opcional)"
+                            className="w-full p-3 border rounded-lg resize-none h-16 text-sm mb-4"
+                        />
 
-                    <div className="flex gap-2 justify-end">
-                        <Button variant="ghost" onClick={() => setShowAvaliacao(false)}>Cancelar</Button>
-                        <Button onClick={enviarAvaliacao} disabled={avaliacao === 0}>Enviar Avaliação</Button>
+                        <div className="flex gap-2 justify-end">
+                            <Button variant="ghost" size="sm" onClick={() => setShowAvaliacao(false)}>Cancelar</Button>
+                            <Button size="sm" onClick={enviarAvaliacao} disabled={avaliacao === 0}>Enviar</Button>
+                        </div>
                     </div>
                 </div>
-            </Modal>
-        </>
+            )}
+        </div>
     );
 }
