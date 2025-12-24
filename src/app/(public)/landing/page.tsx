@@ -8,7 +8,7 @@ import {
 
 export const metadata = {
     title: 'Meu Condomínio Fácil - Gestão Completa de Condomínios | Sistema Online',
-    description: 'Sistema 100% web para gestão de condomínios. Financeiro, moradores, portaria, reservas e muito mais. Integrações bancárias e WhatsApp disponíveis mediante implantação. Teste grátis 7 dias.',
+    description: 'Sistema 100% web para gestão de condomínios. Financeiro, moradores, portaria, reservas e muito mais. Integrações bancárias disponíveis mediante implantação. Teste grátis 7 dias.',
     keywords: 'gestão de condomínio, software para condomínio, sistema para síndico, sistema web condomínio, portaria virtual',
     openGraph: {
         title: 'Meu Condomínio Fácil - Gestão Completa de Condomínios',
@@ -218,7 +218,7 @@ const plans = [
             'Enquetes e assembleias online',
             'Automações de inadimplência',
             'Múltiplos condomínios',
-            'Suporte via WhatsApp direto',
+            'Suporte prioritário via chat',
             '✓ Pode contratar integrações',
             '✓ Pode contratar Assistente IA',
         ],
@@ -233,10 +233,7 @@ const faqs = [
         question: 'Tem aplicativo para celular (Android/iOS)?',
         answer: 'Sim! Temos aplicativo nativo para Android e iOS. Baixe na Play Store ou App Store e acesse todas as funcionalidades do seu perfil (Síndico, Morador ou Porteiro) direto do celular. O app sincroniza em tempo real com o sistema web.'
     },
-    {
-        question: 'O WhatsApp automático já vem incluso no plano?',
-        answer: 'O WhatsApp automático é um serviço de configuração contratado à parte. Inclui: implantação completa (R$ 697), mensalidade do servidor dedicado (R$ 149/mês), e suporte técnico contínuo. Nós configuramos tudo - você só precisa de um chip exclusivo do condomínio. Disponível para planos Profissional e Premium.'
-    },
+
     {
         question: 'O PIX dinâmico e boleto automático estão inclusos?',
         answer: 'São serviços de configuração contratados à parte. Inclui: implantação completa (R$ 999), mensalidade do serviço (R$ 199/mês), e suporte técnico. Trabalhamos com Mercado Pago, Asaas, Inter e outros bancos. Nós cuidamos de toda a parte técnica - você só precisa ter CNPJ ativo e conta no banco escolhido.'
