@@ -48,6 +48,7 @@ export function LinkedInChat() {
     const { session, profile } = useAuth();
     const supabase = createClient();
     const [isListExpanded, setIsListExpanded] = useState(false);
+    const [isHidden, setIsHidden] = useState(false); // Estado para ocultar completamente
     const [chats, setChats] = useState<Chat[]>([]);
     const [activeChat, setActiveChat] = useState<Chat | null>(null);
     const [showNewChat, setShowNewChat] = useState(false);
@@ -84,6 +85,26 @@ export function LinkedInChat() {
         setShowNewChat(false);
     };
 
+    // Quando oculto, mostra apenas ícone flutuante
+    if (isHidden) {
+        return (
+            <div className="fixed bottom-4 right-8 z-[100] pointer-events-auto">
+                <button
+                    onClick={() => setIsHidden(false)}
+                    className="relative w-12 h-12 bg-emerald-600 rounded-full shadow-lg hover:bg-emerald-700 transition-colors flex items-center justify-center"
+                    title="Abrir mensagens"
+                >
+                    <MessageSquare className="h-5 w-5 text-white" />
+                    {totalUnread > 0 && (
+                        <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-white">
+                            {totalUnread > 9 ? '9+' : totalUnread}
+                        </span>
+                    )}
+                </button>
+            </div>
+        );
+    }
+
     return (
         <div className="fixed bottom-0 right-8 z-[100] flex items-end gap-3 pointer-events-none">
             {/* Chat List Window (The "LinkedIn Bar") */}
@@ -119,6 +140,16 @@ export function LinkedInChat() {
                                 setActiveChat(null);
                             }}
                         />
+                        <span title="Ocultar chat">
+                            <X
+                                className="h-4 w-4 hover:text-red-500 cursor-pointer"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setIsHidden(true);
+                                    setActiveChat(null);
+                                }}
+                            />
+                        </span>
                         {isListExpanded ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
                     </div>
                 </button>
