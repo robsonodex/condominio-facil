@@ -197,9 +197,9 @@ export default function AdminAssinaturasPage() {
                         const { error: notifError } = await supabase.from('notifications').insert({
                             condo_id: selectedSub.condo_id,
                             user_id: sindico.id,
-                            title: '💳 Cobrança de Mensalidade',
-                            message: `Sua mensalidade do Condomínio Fácil está disponível. Valor: R$ ${(selectedSub.valor_mensal_cobrado || 0).toFixed(2)}. Acesse a página de Assinatura para efetuar o pagamento.`,
-                            type: 'billing',
+                            titulo: '💳 Cobrança de Mensalidade',
+                            mensagem: `Sua mensalidade do Condomínio Fácil está disponível. Valor: R$ ${(selectedSub.valor_mensal_cobrado || 0).toFixed(2)}. Acesse a página de Assinatura para efetuar o pagamento.`,
+                            tipo: 'vencimento',
                             link: '/assinatura'
                         });
 

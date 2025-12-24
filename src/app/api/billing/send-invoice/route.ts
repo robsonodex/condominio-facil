@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
-import { createClient as createServiceRoleClient } from '@supabase/supabase-js';
+import { supabaseAdmin, getSessionFromReq } from '@/lib/supabase/admin';
 import nodemailer from 'nodemailer';
 
 // Mercado Pago Configuration
@@ -14,22 +13,15 @@ const MP_API_URL = 'https://api.mercadopago.com';
  */
 export async function POST(request: NextRequest) {
     try {
-        const supabase = await createClient();
+        // Verificar autenticação usando helper compartilhado
+        const session = await getSessionFromReq(request);
 
-        // Verificar autenticação
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
+        if (!session) {
             return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
         }
 
         // Verificar se é superadmin
-        const { data: profile } = await supabase
-            .from('users')
-            .select('role')
-            .eq('email', user.email)
-            .single();
-
-        if (!profile || profile.role !== 'superadmin') {
+        if (!session.isSuperadmin) {
             return NextResponse.json({ error: 'Apenas superadmin pode enviar cobranças' }, { status: 403 });
         }
 
@@ -38,12 +30,6 @@ export async function POST(request: NextRequest) {
         if (!subscription_id) {
             return NextResponse.json({ error: 'subscription_id é obrigatório' }, { status: 400 });
         }
-
-        // Usar service role para contornar RLS
-        const supabaseAdmin = createServiceRoleClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY!
-        );
 
         // Buscar dados da subscription com condo, plan e síndico (usando service role)
         const { data: subscriptionData, error: subError } = await supabaseAdmin
@@ -67,7 +53,7 @@ export async function POST(request: NextRequest) {
         const plan = subscription.plan;
 
         // Buscar síndico do condomínio
-        const { data: sindico } = await supabase
+        const { data: sindico } = await supabaseAdmin
             .from('users')
             .select('id, nome, email')
             .eq('condo_id', condo.id)
@@ -135,7 +121,7 @@ export async function POST(request: NextRequest) {
         // Criar invoice no banco (ignora erro se tabela não existir)
         let invoice: any = null;
         try {
-            const { data, error: invoiceError } = await supabase
+            const { data, error: invoiceError } = await supabaseAdmin
                 .from('invoices')
                 .insert({
                     condo_id: condo.id,
