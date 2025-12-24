@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useMultiSelect } from '@/hooks/useMultiSelect';
 import { formatCurrency, formatDate, getStatusColor, getStatusLabel } from '@/lib/utils';
-import { Plus, Search, Building2, Edit, Trash2, Eye, Bot, LogIn } from 'lucide-react';
+import { Plus, Search, Building2, Edit, Trash2, Eye, Bot, LogIn, Package } from 'lucide-react';
 import { Condo, Plan } from '@/types/database';
 
 export default function AdminCondominiosPage() {
@@ -111,6 +111,15 @@ export default function AdminCondominiosPage() {
             setCondos(prev => prev.map(c => c.id === id ? { ...c, ai_ativo: ativo } : c));
         } catch (error: any) {
             alert(`Erro ao atualizar IA: ${error.message}`);
+        }
+    };
+
+    const handleToggleMensageria = async (id: string, ativo: boolean) => {
+        try {
+            await supabase.from('condos').update({ mensageria_ativo: ativo }).eq('id', id);
+            setCondos(prev => prev.map(c => c.id === id ? { ...c, mensageria_ativo: ativo } : c));
+        } catch (error: any) {
+            alert(`Erro ao atualizar Mensageria: ${error.message}`);
         }
     };
 
@@ -241,6 +250,22 @@ export default function AdminCondominiosPage() {
                 >
                     <span
                         className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${c.ai_ativo ? 'right-0.5' : 'left-0.5'}`}
+                    />
+                </button>
+            )
+        },
+        {
+            key: 'mensageria_ativo',
+            header: '📦',
+            className: 'text-center',
+            render: (c: Condo) => (
+                <button
+                    onClick={(e) => { e.stopPropagation(); handleToggleMensageria(c.id, !(c as any).mensageria_ativo); }}
+                    className={`relative w-11 h-6 rounded-full transition-colors ${(c as any).mensageria_ativo ? 'bg-orange-500' : 'bg-gray-300'}`}
+                    title={(c as any).mensageria_ativo ? 'Mensageria Ativa - Clique para desativar' : 'Mensageria Inativa - Clique para ativar'}
+                >
+                    <span
+                        className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${(c as any).mensageria_ativo ? 'right-0.5' : 'left-0.5'}`}
                     />
                 </button>
             )
