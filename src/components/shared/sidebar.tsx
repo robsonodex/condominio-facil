@@ -200,8 +200,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         : (profile?.role || '');
 
     const filteredNavItems = navItems.filter(item => {
-        // Superadmin real sem impersonate vê ABSOLUTAMENTE TUDO
-        if (profile?.role === 'superadmin' && !isImpersonating && viewAsRole === 'superadmin') return true;
+        // Itens que NÃO devem aparecer para superadmin (são específicos por condomínio)
+        const superadminExcludedItems = ['/chat-moradores'];
+
+        // Superadmin real sem impersonate vê quase tudo (exceto os excluídos acima)
+        if (profile?.role === 'superadmin' && !isImpersonating && viewAsRole === 'superadmin') {
+            return !superadminExcludedItems.includes(item.href);
+        }
 
         // Check role permissions
         if (item.roles && !item.roles.includes(effectiveFilterRole)) return false;
