@@ -71,7 +71,20 @@ export default function EmailConfigPage() {
     const loadConfig = async () => {
         try {
             const res = await fetch('/api/configuracoes-smtp');
+
+            if (!res.ok) {
+                console.error('Erro HTTP ao carregar config:', res.status);
+                // Não mostrar erro, apenas assumir não configurado
+                setConfigured(false);
+                setLoading(false);
+                return;
+            }
+
             const data = await res.json();
+
+            if (data.tableNotFound) {
+                console.warn('Tabela SMTP não existe ainda. Execute o script SQL.');
+            }
 
             if (data.configured && data.config) {
                 setConfigured(true);
@@ -88,7 +101,7 @@ export default function EmailConfigPage() {
             }
         } catch (err) {
             console.error('Erro ao carregar config:', err);
-            showError('Erro', 'Erro ao carregar configurações');
+            // Não mostrar toast de erro para não atrapalhar
         } finally {
             setLoading(false);
         }
@@ -387,8 +400,8 @@ export default function EmailConfigPage() {
                     {/* Test Result */}
                     {testSuccess !== null && (
                         <div className={`p-4 rounded-lg border flex items-start gap-3 ${testSuccess
-                                ? 'border-emerald-200 bg-emerald-50'
-                                : 'border-red-200 bg-red-50'
+                            ? 'border-emerald-200 bg-emerald-50'
+                            : 'border-red-200 bg-red-50'
                             }`}>
                             {testSuccess ? (
                                 <CheckCircle2 className="h-5 w-5 text-emerald-600 flex-shrink-0 mt-0.5" />

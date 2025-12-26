@@ -30,7 +30,18 @@ export async function GET(request: NextRequest) {
             .eq('condominio_id', profile.condo_id)
             .single();
 
-        if (error && error.code !== 'PGRST116') {
+        // PGRST116 = nenhuma linha encontrada (ok, não configurado ainda)
+        // 42P01 = tabela não existe (precisa executar SQL)
+        if (error) {
+            if (error.code === 'PGRST116') {
+                // Não encontrou configuração - normal
+                return NextResponse.json({ configured: false, config: null });
+            }
+            if (error.code === '42P01') {
+                // Tabela não existe - retornar como não configurado
+                console.warn('Tabela configuracoes_smtp não existe. Execute o script SQL.');
+                return NextResponse.json({ configured: false, config: null, tableNotFound: true });
+            }
             console.error('Erro ao buscar config SMTP:', error);
             return NextResponse.json({ error: 'Erro ao buscar configuração' }, { status: 500 });
         }
@@ -42,7 +53,8 @@ export async function GET(request: NextRequest) {
 
     } catch (error: any) {
         console.error('Erro na API configuracoes-smtp:', error);
-        return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+        // Retornar como não configurado em vez de erro para não quebrar a página
+        return NextResponse.json({ configured: false, config: null, error: error.message });
     }
 }
 
