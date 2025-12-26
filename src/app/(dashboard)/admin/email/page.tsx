@@ -128,7 +128,7 @@ export default function AdminEmailConfigPage() {
             const data = await res.json();
             if (data.success) {
                 setConfigured(true);
-                setFormData(prev => ({ ...prev, smtp_password: '' }));
+                // NÃO limpar a senha do campo - manter para próximos testes
                 alert('Configurações salvas com sucesso!');
             } else {
                 alert('Erro: ' + (data.error || 'Erro ao salvar'));

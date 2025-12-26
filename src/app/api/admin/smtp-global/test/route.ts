@@ -73,12 +73,32 @@ export async function POST(request: NextRequest) {
 
         // Obter dados do body
         const body = await request.json();
-        const { smtp_host, smtp_port, smtp_user, smtp_password, smtp_secure, smtp_from_email } = body;
+        let { smtp_host, smtp_port, smtp_user, smtp_password, smtp_secure, smtp_from_email } = body;
 
-        if (!smtp_host || !smtp_port || !smtp_user || !smtp_password) {
+        if (!smtp_host || !smtp_port || !smtp_user) {
             return NextResponse.json({
-                error: 'Campos obrigatórios: smtp_host, smtp_port, smtp_user, smtp_password'
+                error: 'Campos obrigatórios: smtp_host, smtp_port, smtp_user'
             }, { status: 400 });
+        }
+
+        // Se senha vazia, buscar senha salva no banco
+        if (!smtp_password) {
+            const { data: savedConfig } = await supabaseAdmin
+                .from('configuracoes_smtp')
+                .select('smtp_password')
+                .is('condominio_id', null)
+                .single();
+
+            if (savedConfig?.smtp_password) {
+                // Descriptografar a senha salva
+                const { decryptPassword } = await import('@/lib/smtp-crypto');
+                smtp_password = decryptPassword(savedConfig.smtp_password);
+                console.log('[SMTP Test] Usando senha salva do banco');
+            } else {
+                return NextResponse.json({
+                    error: 'Senha SMTP não fornecida e não há configuração salva'
+                }, { status: 400 });
+            }
         }
 
         // Criar transporter para teste
