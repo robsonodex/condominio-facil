@@ -178,7 +178,12 @@ export default function AdminUsuariosPage() {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${session?.access_token}`
                 },
-                body: JSON.stringify({ userId: user.id }),
+                body: JSON.stringify({
+                    userId: user.id,
+                    email: user.email,
+                    nome: user.nome,
+                    password: newPassword
+                }),
             });
 
             const result = await response.json();
@@ -208,7 +213,12 @@ export default function AdminUsuariosPage() {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${session?.access_token}`
                 },
-                body: JSON.stringify({ userId: user.id }),
+                body: JSON.stringify({
+                    userId: user.id,
+                    email: user.email,
+                    nome: user.nome,
+                    password: newPassword
+                }),
             });
 
             const result = await response.json();
