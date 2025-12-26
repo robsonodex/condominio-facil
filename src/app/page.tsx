@@ -224,7 +224,7 @@ export default async function Home() {
               <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-gray-700">
                 <span className="flex items-center gap-1"><CheckCircle className="h-4 w-4 text-emerald-500" /> Configuração completa</span>
                 <span className="flex items-center gap-1"><CheckCircle className="h-4 w-4 text-emerald-500" /> Cadastro inicial</span>
-                <span className="flex items-center gap-1"><CheckCircle className="h-4 w-4 text-emerald-500" /> Integração PIX e e-mail</span>
+                <span className="flex items-center gap-1"><CheckCircle className="h-4 w-4 text-emerald-500" /> Configuração de e-mail</span>
                 <span className="flex items-center gap-1"><CheckCircle className="h-4 w-4 text-emerald-500" /> Treinamento do síndico</span>
                 <span className="flex items-center gap-1"><CheckCircle className="h-4 w-4 text-emerald-500" /> Sistema rodando em 48h</span>
               </div>
