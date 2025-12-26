@@ -36,7 +36,8 @@ import {
     Mail,
     Hammer,
     Flame,
-    Search
+    Search,
+    Store
 } from 'lucide-react';
 import { ImpersonateModal } from '@/components/admin/ImpersonateModal';
 import { RoleViewSwitcher, useViewAsRole } from '@/components/admin/RoleViewSwitcher';
@@ -119,6 +120,7 @@ const navItems: NavItem[] = [
     { href: '/configuracoes/assistente', label: '🤖 Assistente IA', icon: <Bot className="h-5 w-5 text-purple-500" />, roles: ['sindico'] },
     { href: '/assinatura', label: 'Assinatura', icon: <CreditCard className="h-5 w-5" />, roles: ['sindico'] },
     { href: '/sugestoes', label: 'Sugestões', icon: <Lightbulb className="h-5 w-5" />, roles: ['sindico', 'morador', 'inquilino', 'porteiro'] },
+    { href: '/marketplace', label: 'Marketplace', icon: <Store className="h-5 w-5 text-emerald-500" />, roles: ['sindico', 'morador', 'inquilino'] },
     { href: '/perfil', label: 'Meu Perfil', icon: <Settings className="h-5 w-5" /> },
     { href: '/minhas-encomendas', label: 'Minhas Encomendas', icon: <Package className="h-5 w-5" />, roles: ['morador', 'inquilino', 'porteiro', 'sindico'], requiresFeature: 'hasMensageria' },
     { href: '/meus-convites', label: 'Meus Convites', icon: <QrCode className="h-5 w-5" />, roles: ['morador', 'inquilino', 'porteiro', 'sindico'] },
