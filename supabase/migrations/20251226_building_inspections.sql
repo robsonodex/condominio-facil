@@ -24,6 +24,10 @@ CREATE INDEX IF NOT EXISTS idx_building_inspections_data_limite ON building_insp
 -- RLS
 ALTER TABLE building_inspections ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist (para permitir re-execução)
+DROP POLICY IF EXISTS "Síndicos podem ver vistorias do seu condomínio" ON building_inspections;
+DROP POLICY IF EXISTS "Síndicos podem gerenciar vistorias do seu condomínio" ON building_inspections;
+
 CREATE POLICY "Síndicos podem ver vistorias do seu condomínio"
 ON building_inspections FOR SELECT
 USING (
