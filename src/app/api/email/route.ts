@@ -738,7 +738,7 @@ async function getSmtpConfig(supabase: any, condoId: string): Promise<SmtpConfig
     }
 }
 
-// Create transporter - agora busca config do condomínio primeiro
+// Create transporter - agora busca config do condomínio primeiro, depois global
 async function createTransporter(supabase: any, condoId?: string): Promise<{ transporter: nodemailer.Transporter | null; from: string; smtpConfigured: boolean }> {
     // 1. Tentar buscar config do condomínio
     if (condoId) {
@@ -758,11 +758,40 @@ async function createTransporter(supabase: any, condoId?: string): Promise<{ tra
         }
     }
 
-    // 2. Se não há config do condomínio, retornar null (sem fallback)
-    // O usuário precisa configurar seu próprio SMTP
-    console.warn(`[Email] SMTP não configurado para condomínio ${condoId || 'desconhecido'}`);
+    // 2. FALLBACK: Tentar buscar SMTP global (condominio_id = NULL)
+    try {
+        const { data: globalConfig, error } = await supabase
+            .from('configuracoes_smtp')
+            .select('*')
+            .is('condominio_id', null)
+            .eq('is_active', true)
+            .single();
+
+        if (!error && globalConfig) {
+            console.log(`[Email] Usando SMTP GLOBAL como fallback (condomínio ${condoId || 'sem condo'} não tem SMTP)`);
+            const transporter = nodemailer.createTransport({
+                host: globalConfig.smtp_host,
+                port: globalConfig.smtp_port,
+                secure: globalConfig.smtp_secure !== false,
+                auth: {
+                    user: globalConfig.smtp_user,
+                    pass: decryptPassword(globalConfig.smtp_password),
+                },
+            });
+            const from = globalConfig.smtp_from_name
+                ? `"${globalConfig.smtp_from_name}" <${globalConfig.smtp_from_email}>`
+                : globalConfig.smtp_from_email;
+            return { transporter, from, smtpConfigured: true };
+        }
+    } catch (globalErr) {
+        console.error('[Email] Erro ao buscar SMTP global:', globalErr);
+    }
+
+    // 3. Se não há config do condomínio NEM global, retornar null
+    console.warn(`[Email] SMTP não configurado para condomínio ${condoId || 'desconhecido'} E não há SMTP global`);
     return { transporter: null, from: '', smtpConfigured: false };
 }
+
 
 export async function POST(request: NextRequest) {
     try {
