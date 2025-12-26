@@ -4,9 +4,6 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/Toast';
 import {
     Mail,
@@ -23,17 +20,6 @@ import {
     TestTube,
     Trash2
 } from 'lucide-react';
-
-interface SmtpConfig {
-    id?: string;
-    smtp_host: string;
-    smtp_port: number;
-    smtp_user: string;
-    smtp_from_email: string;
-    smtp_from_name: string;
-    smtp_secure: boolean;
-    is_active: boolean;
-}
 
 const SMTP_PRESETS = [
     { name: 'Gmail', host: 'smtp.gmail.com', port: 587, secure: true },
@@ -74,7 +60,6 @@ export default function EmailConfigPage() {
 
             if (!res.ok) {
                 console.error('Erro HTTP ao carregar config:', res.status);
-                // Não mostrar erro, apenas assumir não configurado
                 setConfigured(false);
                 setLoading(false);
                 return;
@@ -101,7 +86,6 @@ export default function EmailConfigPage() {
             }
         } catch (err) {
             console.error('Erro ao carregar config:', err);
-            // Não mostrar toast de erro para não atrapalhar
         } finally {
             setLoading(false);
         }
@@ -239,13 +223,13 @@ export default function EmailConfigPage() {
                     <p className="text-gray-500">Configure seu servidor SMTP para envio de e-mails</p>
                 </div>
                 {configured ? (
-                    <Badge className="ml-auto bg-emerald-100 text-emerald-700">
-                        <CheckCircle2 className="h-3 w-3 mr-1" /> Configurado
-                    </Badge>
+                    <span className="ml-auto px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium flex items-center gap-1">
+                        <CheckCircle2 className="h-3 w-3" /> Configurado
+                    </span>
                 ) : (
-                    <Badge variant="outline" className="ml-auto border-amber-500 text-amber-600">
-                        <AlertTriangle className="h-3 w-3 mr-1" /> Não Configurado
-                    </Badge>
+                    <span className="ml-auto px-3 py-1 border border-amber-500 text-amber-600 rounded-full text-sm font-medium flex items-center gap-1">
+                        <AlertTriangle className="h-3 w-3" /> Não Configurado
+                    </span>
                 )}
             </div>
 
@@ -296,7 +280,7 @@ export default function EmailConfigPage() {
                     {/* Host e Porta */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="md:col-span-2 space-y-2">
-                            <Label htmlFor="smtp_host">Host SMTP *</Label>
+                            <label htmlFor="smtp_host" className="block text-sm font-medium text-gray-700">Host SMTP *</label>
                             <Input
                                 id="smtp_host"
                                 placeholder="smtp.seudominio.com"
@@ -305,7 +289,7 @@ export default function EmailConfigPage() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="smtp_port">Porta *</Label>
+                            <label htmlFor="smtp_port" className="block text-sm font-medium text-gray-700">Porta *</label>
                             <Input
                                 id="smtp_port"
                                 type="number"
@@ -319,7 +303,7 @@ export default function EmailConfigPage() {
                     {/* Usuário e Senha */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="smtp_user">Usuário/E-mail *</Label>
+                            <label htmlFor="smtp_user" className="block text-sm font-medium text-gray-700">Usuário/E-mail *</label>
                             <Input
                                 id="smtp_user"
                                 type="email"
@@ -329,9 +313,9 @@ export default function EmailConfigPage() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="smtp_password">
+                            <label htmlFor="smtp_password" className="block text-sm font-medium text-gray-700">
                                 Senha {configured && '(deixe vazio para manter)'}
-                            </Label>
+                            </label>
                             <div className="relative">
                                 <Input
                                     id="smtp_password"
@@ -354,7 +338,7 @@ export default function EmailConfigPage() {
                     {/* From Email e Name */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="smtp_from_email">E-mail de Envio (From) *</Label>
+                            <label htmlFor="smtp_from_email" className="block text-sm font-medium text-gray-700">E-mail de Envio (From) *</label>
                             <Input
                                 id="smtp_from_email"
                                 type="email"
@@ -364,7 +348,7 @@ export default function EmailConfigPage() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="smtp_from_name">Nome de Envio (From Name)</Label>
+                            <label htmlFor="smtp_from_name" className="block text-sm font-medium text-gray-700">Nome de Envio (From Name)</label>
                             <Input
                                 id="smtp_from_name"
                                 placeholder="Meu Condomínio"
@@ -374,27 +358,27 @@ export default function EmailConfigPage() {
                         </div>
                     </div>
 
-                    {/* Switches */}
+                    {/* Checkboxes */}
                     <div className="flex flex-wrap gap-6 pt-4 border-t">
-                        <div className="flex items-center gap-3">
-                            <Switch
-                                id="smtp_secure"
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                                type="checkbox"
                                 checked={formData.smtp_secure}
-                                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, smtp_secure: checked }))}
+                                onChange={(e) => setFormData(prev => ({ ...prev, smtp_secure: e.target.checked }))}
+                                className="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500"
                             />
-                            <Label htmlFor="smtp_secure" className="flex items-center gap-2">
-                                <Lock className="h-4 w-4 text-gray-500" />
-                                TLS/SSL
-                            </Label>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <Switch
-                                id="is_active"
+                            <Lock className="h-4 w-4 text-gray-500" />
+                            <span className="text-sm font-medium text-gray-700">TLS/SSL</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                                type="checkbox"
                                 checked={formData.is_active}
-                                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_active: checked }))}
+                                onChange={(e) => setFormData(prev => ({ ...prev, is_active: e.target.checked }))}
+                                className="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500"
                             />
-                            <Label htmlFor="is_active">Envio de e-mails ativo</Label>
-                        </div>
+                            <span className="text-sm font-medium text-gray-700">Envio de e-mails ativo</span>
+                        </label>
                     </div>
 
                     {/* Test Result */}
