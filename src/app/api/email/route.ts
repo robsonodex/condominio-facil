@@ -694,6 +694,59 @@ const templates: Record<string, { subject: string; html: (data: any) => string }
             </html>
         `,
     },
+    // User Credentials Email - envio de credenciais de acesso
+    user_credentials: {
+        subject: '🔐 Suas Credenciais de Acesso - Condomínio Fácil',
+        html: (data: any) => `
+            <!DOCTYPE html>
+            <html>
+            <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+            <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f3f4f6;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+                    <div style="background: linear-gradient(135deg, #059669, #10b981); padding: 40px 20px; text-align: center;">
+                        <h1 style="color: #ffffff; margin: 0; font-size: 28px;">🔐 Suas Credenciais de Acesso</h1>
+                    </div>
+                    <div style="padding: 40px 30px;">
+                        <h2 style="color: #1f2937; margin-top: 0;">Olá, ${sanitizeHtml(data.nome)}!</h2>
+                        <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
+                            Sua conta no <strong>Condomínio Fácil</strong> foi criada com sucesso!
+                            ${data.role ? `Você foi cadastrado como <strong>${sanitizeHtml(data.role)}</strong>.` : ''}
+                        </p>
+                        ${data.condoNome ? `
+                        <div style="background-color: #ecfdf5; border-left: 4px solid #10b981; padding: 15px; margin: 25px 0;">
+                            <p style="color: #065f46; margin: 0; font-weight: bold;">
+                                🏠 Condomínio: ${sanitizeHtml(data.condoNome)}
+                            </p>
+                        </div>
+                        ` : ''}
+                        <div style="background-color: #f0fdf4; border: 1px solid #10b981; border-radius: 8px; padding: 20px; margin: 25px 0;">
+                            <p style="color: #065f46; margin: 0 0 15px 0; font-size: 14px;"><strong>📧 Seus dados de acesso:</strong></p>
+                            <p style="color: #1f2937; margin: 5px 0;"><strong>Email:</strong> ${sanitizeHtml(data.email)}</p>
+                            <p style="color: #1f2937; margin: 5px 0;"><strong>Senha:</strong> ${sanitizeHtml(data.password)}</p>
+                        </div>
+                        <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 25px 0;">
+                            <p style="color: #92400e; margin: 0; font-weight: bold;">
+                                ⚠️ Por segurança, altere sua senha após o primeiro login.
+                            </p>
+                        </div>
+                        <div style="text-align: center; margin: 35px 0;">
+                            <a href="${sanitizeHtml(data.loginUrl || 'https://meucondominiofacil.com/login')}" 
+                               style="display: inline-block; background: #10b981; color: #ffffff; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);">
+                                Acessar o Sistema →
+                            </a>
+                        </div>
+                        <p style="color: #6b7280; font-size: 14px; text-align: center;">
+                            Também disponível no <strong>app mobile</strong>! Baixe em seu smartphone.
+                        </p>
+                    </div>
+                    <div style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
+                        <p style="color: #9ca3af; font-size: 12px; margin: 0;">© ${new Date().getFullYear()} Condomínio Fácil</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+        `,
+    },
 };
 
 // Interface para configuração SMTP
