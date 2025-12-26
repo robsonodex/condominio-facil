@@ -10,15 +10,15 @@ import { getStoredUtmParams } from '@/hooks/useUtmTracking';
 export const dynamic = 'force-dynamic';
 
 const plans = [
-    { id: 'basico', name: 'Básico', price: 99.90, units: 20 },
-    { id: 'profissional', name: 'Profissional', price: 179.90, units: 40 },
-    { id: 'avancado', name: 'Avançado', price: 249.90, units: 60 },
+    { id: 'essencial', name: 'Essencial', price: 99.90, units: 20 },
+    { id: 'plus', name: 'Plus', price: 179.90, units: 40 },
+    { id: 'pro', name: 'Pro', price: 249.90, units: 60 },
 ];
 
 function CheckoutForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const planParam = searchParams?.get('plan') || 'profissional';
+    const planParam = searchParams?.get('plan') || 'plus';
 
     const selectedPlan = plans.find(p => p.id === planParam) || plans[1];
 

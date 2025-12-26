@@ -16,7 +16,7 @@ export default function UpgradePage() {
 
     const plans = [
         {
-            name: 'Básico',
+            name: 'Essencial',
             price: 99.90,
             units: 20,
             tagline: 'Comece sua gestão digital',
@@ -32,7 +32,7 @@ export default function UpgradePage() {
             notIncluded: ['Portaria', 'Ocorrências', 'Reservas', 'Relatórios', 'Integrações']
         },
         {
-            name: 'Profissional',
+            name: 'Plus',
             price: 249.90,
             units: 50,
             popular: true,
@@ -41,7 +41,7 @@ export default function UpgradePage() {
             savings: 'Portaria + Encomendas + Reservas',
             features: [
                 'Até 50 unidades',
-                'Tudo do Básico +',
+                'Tudo do Essencial +',
                 'Portaria virtual profissional',
                 'Gestão de encomendas',
                 'Reserva de áreas comuns',
@@ -54,14 +54,14 @@ export default function UpgradePage() {
             highlight: 'Escolha de 80% dos síndicos profissionais'
         },
         {
-            name: 'Premium',
+            name: 'Pro',
             price: 399.90,
             units: 'Ilimitadas',
             tagline: 'Tecnologia e segurança avançada',
             badge: 'Completo',
             features: [
                 'Unidades ilimitadas',
-                'Tudo do Profissional +',
+                'Tudo do Plus +',
                 'Câmeras de segurança ao vivo',
                 'Governança digital completa',
                 'Enquetes e assembleias online',
@@ -72,7 +72,7 @@ export default function UpgradePage() {
                 '✓ Pode contratar integrações (WhatsApp, PIX)'
             ],
             notIncluded: [],
-            highlight: 'Inclui acesso a todos os módulos premium'
+            highlight: 'Inclui acesso a todos os módulos do Pro'
         }
     ];
 

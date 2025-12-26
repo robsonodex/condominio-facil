@@ -168,7 +168,7 @@ export default function LandingPage() {
 
                     {/* Categoria 3: Avançada */}
                     <div>
-                        <h3 className="text-sm font-semibold text-purple-600 uppercase tracking-wide mb-4">Avançada (plano Premium)</h3>
+                        <h3 className="text-sm font-semibold text-purple-600 uppercase tracking-wide mb-4">Avançada (plano Pro)</h3>
                         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
                             {[
                                 { icon: Camera, name: 'Câmeras', desc: 'Monitoramento ao vivo' },
@@ -196,14 +196,14 @@ export default function LandingPage() {
                     {/* Orientação de escolha */}
                     <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-8 max-w-2xl mx-auto">
                         <p className="text-sm text-blue-800 text-center">
-                            <strong>Como escolher:</strong> Até 20 unidades → Básico · Até 50 unidades → Profissional · Mais de 50 → Premium
+                            <strong>Como escolher:</strong> Até 20 unidades → Essencial · Até 50 unidades → Plus · Mais de 50 → Pro
                         </p>
                     </div>
 
                     <div className="grid md:grid-cols-3 gap-6">
-                        {/* Básico */}
+                        {/* Essencial */}
                         <div className="p-6 bg-white rounded-xl border">
-                            <h3 className="text-lg font-bold text-gray-900">Básico</h3>
+                            <h3 className="text-lg font-bold text-gray-900">Essencial</h3>
                             <p className="text-sm text-gray-500 mb-4">Até 20 unidades</p>
                             <div className="mb-4">
                                 <span className="text-3xl font-bold text-gray-900">R$ 99,90</span>
@@ -226,14 +226,14 @@ export default function LandingPage() {
                             <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-xs px-3 py-1 rounded-full font-medium">
                                 Recomendado
                             </span>
-                            <h3 className="text-lg font-bold text-gray-900">Profissional</h3>
+                            <h3 className="text-lg font-bold text-gray-900">Plus</h3>
                             <p className="text-sm text-gray-500 mb-4">Até 50 unidades</p>
                             <div className="mb-4">
                                 <span className="text-3xl font-bold text-gray-900">R$ 249,90</span>
                                 <span className="text-gray-500">/mês</span>
                             </div>
                             <ul className="space-y-2 mb-6 text-sm">
-                                {['Tudo do Básico +', 'Portaria', 'Reservas', 'Ocorrências', 'Encomendas', 'Relatórios'].map((f, i) => (
+                                {['Tudo do Essencial +', 'Portaria', 'Reservas', 'Ocorrências', 'Encomendas', 'Relatórios'].map((f, i) => (
                                     <li key={i} className="flex items-center gap-2 text-gray-700">
                                         <CheckCircle className="h-4 w-4 text-emerald-500" /> {f}
                                     </li>
@@ -244,16 +244,16 @@ export default function LandingPage() {
                             </Link>
                         </div>
 
-                        {/* Premium */}
+                        {/* Pro */}
                         <div className="p-6 bg-white rounded-xl border">
-                            <h3 className="text-lg font-bold text-gray-900">Premium</h3>
+                            <h3 className="text-lg font-bold text-gray-900">Pro</h3>
                             <p className="text-sm text-gray-500 mb-4">Sem limite de unidades</p>
                             <div className="mb-4">
                                 <span className="text-3xl font-bold text-gray-900">R$ 399,90</span>
                                 <span className="text-gray-500">/mês</span>
                             </div>
                             <ul className="space-y-2 mb-6 text-sm">
-                                {['Tudo do Profissional +', 'Câmeras ao vivo', 'Governança digital', 'Multi-condomínios', 'Automações'].map((f, i) => (
+                                {['Tudo do Plus +', 'Câmeras ao vivo', 'Governança digital', 'Multi-condomínios', 'Automações'].map((f, i) => (
                                     <li key={i} className="flex items-center gap-2 text-gray-700">
                                         <CheckCircle className="h-4 w-4 text-emerald-500" /> {f}
                                     </li>
@@ -298,7 +298,7 @@ export default function LandingPage() {
                             },
                             {
                                 q: 'E o Assistente IA?',
-                                a: 'Recurso adicional disponível para o plano Premium. Chatbot treinado com os documentos do seu condomínio. Implantação: R$ 997 + R$ 149/mês.'
+                                a: 'Recurso adicional disponível para o plano Pro. Chatbot treinado com os documentos do seu condomínio. Implantação: R$ 997 + R$ 149/mês.'
                             },
                             {
                                 q: 'Os dados estão seguros?',
