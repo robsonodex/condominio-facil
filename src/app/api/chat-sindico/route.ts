@@ -5,7 +5,21 @@ import { supabaseAdmin, getSessionFromReq } from '@/lib/supabase/admin';
 export async function GET(request: NextRequest) {
     try {
         const session = await getSessionFromReq(request);
-        if (!session?.userId || !session?.condoId) {
+
+        // Superadmin sem condoId - retornar lista vazia (não pode ver chats sem condo)
+        if (!session?.condoId) {
+            if (session?.isSuperadmin) {
+                return NextResponse.json({
+                    conversas: [],
+                    totalNaoLidas: 0,
+                    userRole: 'superadmin',
+                    message: 'Selecione um condomínio para ver as conversas'
+                });
+            }
+            return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+        }
+
+        if (!session?.userId) {
             return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
         }
 

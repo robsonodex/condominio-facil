@@ -8,22 +8,11 @@ export async function GET(
 ) {
     try {
         const session = await getSessionFromReq(request);
-        if (!session?.user || !session?.condoId) {
+        if (!session) {
             return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
         }
 
         const conversaId = params.id;
-
-        // Buscar perfil
-        const { data: profile } = await supabaseAdmin
-            .from('users')
-            .select('id, role, condo_id')
-            .eq('email', session.user.email)
-            .single();
-
-        if (!profile || profile.condo_id !== session.condoId) {
-            return NextResponse.json({ error: 'Acesso negado' }, { status: 403 });
-        }
 
         // Verificar se a conversa pertence ao condomínio e usuário tem acesso
         const { data: conversa } = await supabaseAdmin
@@ -42,8 +31,8 @@ export async function GET(
         }
 
         // Verificar permissão
-        const isMorador = conversa.morador_id === profile.id;
-        const isSindico = profile.role === 'sindico' || profile.role === 'superadmin';
+        const isMorador = conversa.morador_id === session.userId;
+        const isSindico = session.role === 'sindico' || session.role === 'superadmin';
 
         if (!isMorador && !isSindico) {
             return NextResponse.json({ error: 'Sem permissão para ver esta conversa' }, { status: 403 });
@@ -75,8 +64,8 @@ export async function GET(
         return NextResponse.json({
             conversa,
             mensagens: mensagens || [],
-            userRole: profile.role,
-            userId: profile.id
+            userRole: session.role,
+            userId: session.userId
         });
     } catch (error: any) {
         console.error('[CHAT-SINDICO] GET /[id] Error:', error);
