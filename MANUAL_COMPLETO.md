@@ -474,11 +474,54 @@ O síndico pode pagar diretamente pela página `/assinatura`:
 
 ## 📧 Sistema de E-mails
 
+### Arquitetura de E-mails (v8.2)
+
+O sistema utiliza **envio direto via nodemailer** para garantir entrega confiável:
+
+```
+┌─────────────────────────────────────────┐
+│      API de Criação de Usuário          │
+│   (ex: cadastro de síndico)             │
+└─────────────────┬───────────────────────┘
+                  │ usa diretamente
+                  ▼
+┌─────────────────────────────────────────┐
+│      /lib/email-helper.ts               │
+│   - sendCredentialsEmail()              │
+│   - sendEmailDirect()                   │
+└─────────────────┬───────────────────────┘
+                  │ busca config
+                  ▼
+┌─────────────────────────────────────────┐
+│      configuracoes_smtp (banco)         │
+│   - SMTP Global ou por Condomínio       │
+│   - Senha criptografada (AES-256-GCM)   │
+└─────────────────┬───────────────────────┘
+                  │ conecta via
+                  ▼
+┌─────────────────────────────────────────┐
+│      Nodemailer → Servidor SMTP         │
+│   - Porta 465: SSL implícito            │
+│   - Porta 587: STARTTLS automático      │
+└─────────────────────────────────────────┘
+```
+
+### Configuração SMTP Global
+
+1. Acessar **Admin > Configurações de E-mail**
+2. Preencher dados do servidor SMTP
+3. Salvar e **Testar Conexão** (envia e-mail real)
+
 ### E-mails Automáticos
-- **Credenciais de Acesso**: Enviado ao cadastrar novo síndico
+- **Credenciais de Acesso**: Enviado ao cadastrar novo síndico/morador
 - **Ativação de Plano**: Confirmação com nome do plano
 - **Trial 7 Dias**: Notificação de início do período de teste
 - **Condomínio Ativo**: Confirmação de ativação
+- **Cobranças**: Notificação de boletos/PIX
+
+### Configuração por Condomínio
+
+Cada condomínio pode ter seu próprio SMTP em **Configurações > E-mail**. Se não configurado, usa o SMTP Global.
 
 ---
 
@@ -520,9 +563,23 @@ Para dúvidas técnicas, consulte:
 
 ---
 
-**Versão do Manual:** 8.1  
-**Última atualização:** 24/12/2024  
+**Versão do Manual:** 8.2  
+**Última atualização:** 26/12/2024  
 **CNPJ:** 57.444.727/0001-85
+
+### Novidades da Versão 8.2
+- ✅ **Sistema de E-mail Reformulado**
+  - Envio direto via nodemailer (sem HTTP interno)
+  - Detecção automática SSL/TLS por porta
+  - Criptografia de senha SMTP (AES-256-GCM)
+  - Teste de conexão envia e-mail real
+- ✅ **Páginas de Emergência**
+  - `/reset-emergencia` - Reset de senha sem login
+  - `/emergency-repair` - Ferramentas admin (superadmin only)
+- ✅ **Correções Críticas**
+  - Loop infinito no logout corrigido
+  - APIs de superadmin sem condoId corrigidas
+  - Criptografia SMTP funcionando corretamente
 
 ### Novidades da Versão 8.1
 - ✅ **Chat Morador ↔ Síndico** (Add-on R$29,90/mês)
@@ -548,4 +605,5 @@ Para dúvidas técnicas, consulte:
 | **Mensageria/Entregas** | Incluso | Registro e notificação de entregas |
 | **Chat Morador ↔ Síndico** | R$ 29,90 | Canal direto de comunicação |
 
-© 2024 Condomínio Fácil - Todos os direitos reservados
+© 2025 Condomínio Fácil - Todos os direitos reservados
+

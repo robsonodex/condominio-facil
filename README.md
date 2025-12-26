@@ -198,4 +198,5 @@ Projeto privado - Todos os direitos reservados.
 
 ---
 
-**Última atualização:** 17/12/2025
+**Última atualização:** 26/12/2024 (v8.2)
+

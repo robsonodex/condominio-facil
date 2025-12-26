@@ -27,7 +27,7 @@
                   │
 ┌─────────────────▼───────────────────────┐
 │       API Routes (Serverless)           │
-│   - 43 módulos de API                   │
+│   - 45 módulos de API                   │
 │   - Autenticação via Supabase           │
 │   - Rate limiting                       │
 └─────────────────┬───────────────────────┘
@@ -48,7 +48,7 @@ condominio-facil/
 │   ├── app/
 │   │   ├── (dashboard)/        # Páginas autenticadas
 │   │   ├── (public)/           # Páginas públicas
-│   │   └── api/                # API Routes (43 módulos)
+│   │   └── api/                # API Routes (45 módulos)
 │   ├── components/
 │   │   ├── ui/                 # Componentes base (shadcn)
 │   │   ├── shared/             # Componentes compartilhados
@@ -112,9 +112,12 @@ condominio-facil/
 | Governança | Assembleias, enquetes, documentos | ✅ Implementado |
 | Assinaturas | Planos e pagamentos recorrentes | ✅ Implementado |
 | Integrações | WhatsApp, pagamentos, PIX | ✅ Implementado |
-| E-mail | SMTP por condomínio + global | ✅ Implementado |
+| E-mail | SMTP por condomínio + global (envio direto) | ✅ Implementado |
 | Assistente IA | Chat GPT integrado | ✅ Implementado |
 | Mobile App | App nativo iOS/Android | ✅ Implementado |
+| QR Code Pass | Convites digitais para visitantes | ✅ Implementado |
+| Auditor IA | Auditoria de orçamentos via GPT-4o | ✅ Implementado |
+| Emergency Tools | Reset de senha e ferramentas admin | ✅ Implementado |
 
 ## Links da Documentação
 
