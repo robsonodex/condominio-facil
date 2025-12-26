@@ -55,6 +55,7 @@ export default function ReservasPage() {
     const [horarioFim, setHorarioFim] = useState('10:00');
     const [numConvidados, setNumConvidados] = useState('0');
     const [observacoes, setObservacoes] = useState('');
+    const [termoAceito, setTermoAceito] = useState(false);
     const [saving, setSaving] = useState(false);
 
     // Area form
@@ -202,6 +203,7 @@ export default function ReservasPage() {
         setObservacoes('');
         setSelectedDate('');
         setEditingReservation(null);
+        setTermoAceito(false);
     };
 
     const openEditModal = (reservation: Reservation) => {
@@ -529,9 +531,29 @@ export default function ReservasPage() {
                         </div>
                     )}
 
+                    {/* Termo de Aceite - Lei do Silêncio (Lei 3.268/01 RJ) */}
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                        <label className="flex items-start gap-3 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={termoAceito}
+                                onChange={(e) => setTermoAceito(e.target.checked)}
+                                className="mt-1 h-4 w-4 text-amber-600 rounded border-gray-300 focus:ring-amber-500"
+                                required
+                            />
+                            <div className="text-sm">
+                                <p className="font-medium text-amber-800">Termo de Compromisso - Lei do Silêncio</p>
+                                <p className="text-amber-700 mt-1">
+                                    Estou ciente de que após as 22h o limite de ruído é de 50dB conforme Lei Municipal 3.268/01.
+                                    O descumprimento pode acarretar multa prevista na Convenção do Condomínio.
+                                </p>
+                            </div>
+                        </label>
+                    </div>
+
                     <div className="flex gap-3 justify-end pt-4">
                         <Button type="button" variant="ghost" onClick={() => setShowModal(false)}>Cancelar</Button>
-                        <Button type="submit" loading={saving}>Confirmar Reserva</Button>
+                        <Button type="submit" loading={saving} disabled={!termoAceito}>Confirmar Reserva</Button>
                     </div>
                 </form>
             </Modal>
