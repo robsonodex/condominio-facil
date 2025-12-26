@@ -78,7 +78,7 @@ export default function AdminEmailConfigPage() {
         setTesting(true);
         setTestSuccess(null);
         try {
-            const res = await fetch('/api/configuracoes-smtp/test', {
+            const res = await fetch('/api/admin/smtp-global/test', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
