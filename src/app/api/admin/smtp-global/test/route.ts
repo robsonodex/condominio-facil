@@ -5,6 +5,7 @@ import nodemailer from 'nodemailer';
 /**
  * POST /api/admin/smtp-global/test
  * Testa conexão SMTP para configuração global (superadmin only)
+ * AGORA ENVIA UM EMAIL DE TESTE REAL
  */
 export async function POST(request: NextRequest) {
     try {
@@ -72,7 +73,7 @@ export async function POST(request: NextRequest) {
 
         // Obter dados do body
         const body = await request.json();
-        const { smtp_host, smtp_port, smtp_user, smtp_password, smtp_secure } = body;
+        const { smtp_host, smtp_port, smtp_user, smtp_password, smtp_secure, smtp_from_email } = body;
 
         if (!smtp_host || !smtp_port || !smtp_user || !smtp_password) {
             return NextResponse.json({
@@ -80,7 +81,7 @@ export async function POST(request: NextRequest) {
             }, { status: 400 });
         }
 
-        // Testar conexão SMTP
+        // Criar transporter para teste
         const transporter = nodemailer.createTransport({
             host: smtp_host,
             port: parseInt(smtp_port),
@@ -89,41 +90,90 @@ export async function POST(request: NextRequest) {
                 user: smtp_user,
                 pass: smtp_password
             },
-            connectionTimeout: 10000,
-            greetingTimeout: 5000,
-            socketTimeout: 10000
+            connectionTimeout: 15000,
+            greetingTimeout: 10000,
+            socketTimeout: 15000
         });
 
         try {
+            // 1. Primeiro verificar conexão
             await transporter.verify();
+            console.log('[SMTP Test] Conexão verificada com sucesso');
+
+            // 2. ENVIAR EMAIL DE TESTE REAL
+            const testEmailTo = user.email || smtp_from_email || smtp_user;
+
+            const info = await transporter.sendMail({
+                from: smtp_from_email || smtp_user,
+                to: testEmailTo,
+                subject: '✅ Teste SMTP - Condomínio Fácil',
+                html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                        <div style="background: linear-gradient(135deg, #10b981, #059669); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+                            <h1 style="color: white; margin: 0;">✅ SMTP Funcionando!</h1>
+                        </div>
+                        <div style="background: #f3f4f6; padding: 30px; border-radius: 0 0 10px 10px;">
+                            <p style="color: #1f2937; font-size: 16px;">
+                                Este é um email de teste do <strong>Condomínio Fácil</strong>.
+                            </p>
+                            <p style="color: #4b5563;">
+                                Se você está vendo esta mensagem, sua configuração SMTP está funcionando corretamente!
+                            </p>
+                            <div style="background: white; padding: 15px; border-radius: 8px; margin-top: 20px;">
+                                <p style="margin: 5px 0;"><strong>Host:</strong> ${smtp_host}</p>
+                                <p style="margin: 5px 0;"><strong>Porta:</strong> ${smtp_port}</p>
+                                <p style="margin: 5px 0;"><strong>Usuário:</strong> ${smtp_user}</p>
+                                <p style="margin: 5px 0;"><strong>Seguro (TLS/SSL):</strong> ${smtp_secure !== false ? 'Sim' : 'Não'}</p>
+                            </div>
+                            <p style="color: #6b7280; font-size: 12px; margin-top: 20px;">
+                                Enviado em: ${new Date().toLocaleString('pt-BR')}
+                            </p>
+                        </div>
+                    </div>
+                `
+            });
+
+            console.log('[SMTP Test] Email de teste enviado para:', testEmailTo, 'MessageId:', info.messageId);
+
             return NextResponse.json({
                 success: true,
-                message: 'Conexão SMTP testada com sucesso!'
+                message: `Teste completo! Email enviado para ${testEmailTo}`,
+                details: {
+                    connection: 'ok',
+                    emailSent: true,
+                    sentTo: testEmailTo,
+                    messageId: info.messageId
+                }
             });
+
         } catch (smtpError: any) {
             console.error('[SMTP Global Test] SMTP error:', smtpError);
 
             let errorMessage = 'Falha na conexão SMTP';
+            let errorCode = smtpError.code || smtpError.responseCode || 'UNKNOWN';
+
             if (smtpError.code === 'ECONNREFUSED') {
                 errorMessage = 'Conexão recusada. Verifique o host e a porta.';
             } else if (smtpError.code === 'ETIMEDOUT') {
                 errorMessage = 'Tempo limite excedido. Verifique sua conexão.';
-            } else if (smtpError.code === 'EAUTH') {
+            } else if (smtpError.code === 'EAUTH' || smtpError.responseCode === 535) {
                 errorMessage = 'Falha na autenticação. Verifique usuário e senha.';
-            } else if (smtpError.responseCode === 535) {
-                errorMessage = 'Credenciais inválidas. Verifique usuário e senha.';
+            } else if (smtpError.code === 'ESOCKET') {
+                errorMessage = 'Erro de socket. Verifique se a porta e TLS/SSL estão corretos.';
             } else if (smtpError.message) {
                 errorMessage = smtpError.message;
             }
 
             return NextResponse.json({
                 success: false,
-                error: errorMessage
+                error: errorMessage,
+                errorCode: errorCode,
+                details: smtpError.message
             }, { status: 400 });
         }
 
     } catch (error: any) {
         console.error('[SMTP Global Test] Exception:', error);
-        return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+        return NextResponse.json({ error: 'Erro interno', details: error.message }, { status: 500 });
     }
 }

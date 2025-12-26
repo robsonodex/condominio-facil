@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { supabaseAdmin, getSessionFromReq } from '@/lib/supabase/admin';
+import { encryptPassword } from '@/lib/smtp-crypto';
 
 /**
  * API para gerenciar configuração SMTP global (superadmin only)
@@ -8,74 +9,10 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
  * DELETE: Remover configuração global
  */
 
-async function getSuperadminFromRequest(request: NextRequest) {
-    // Try Authorization header first
-    const authHeader = request.headers.get('authorization');
-    let accessToken = authHeader?.replace('Bearer ', '') || '';
-
-    // If no auth header, try cookies
-    if (!accessToken) {
-        const cookieHeader = request.headers.get('cookie') || '';
-        const cookies = cookieHeader.split(';').map(c => c.trim());
-
-        for (const cookie of cookies) {
-            if (cookie.includes('-auth-token')) {
-                try {
-                    const value = cookie.split('=')[1];
-                    const decoded = decodeURIComponent(value);
-                    const parsed = JSON.parse(decoded);
-                    if (parsed.access_token) {
-                        accessToken = parsed.access_token;
-                        break;
-                    }
-                } catch {
-                    // Try base64 decode
-                    try {
-                        const value = cookie.split('=')[1];
-                        const base64 = value.replace('base64-', '');
-                        const decoded = Buffer.from(base64, 'base64').toString('utf-8');
-                        const parsed = JSON.parse(decoded);
-                        if (parsed.access_token) {
-                            accessToken = parsed.access_token;
-                            break;
-                        }
-                    } catch {
-                        continue;
-                    }
-                }
-            }
-        }
-    }
-
-    if (!accessToken) {
-        console.log('[SMTP Global] No access token found');
-        return null;
-    }
-
-    const { data: { user }, error } = await supabaseAdmin.auth.getUser(accessToken);
-    if (error || !user) {
-        console.log('[SMTP Global] Auth error:', error?.message);
-        return null;
-    }
-
-    const { data: profile } = await supabaseAdmin
-        .from('users')
-        .select('id, role')
-        .eq('email', user.email)
-        .single();
-
-    if (!profile || profile.role !== 'superadmin') {
-        console.log('[SMTP Global] Not superadmin:', profile?.role);
-        return null;
-    }
-
-    return profile;
-}
-
 export async function GET(request: NextRequest) {
     try {
-        const profile = await getSuperadminFromRequest(request);
-        if (!profile) {
+        const session = await getSessionFromReq(request);
+        if (!session || !session.isSuperadmin) {
             return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
         }
 
@@ -107,8 +44,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
     try {
-        const profile = await getSuperadminFromRequest(request);
-        if (!profile) {
+        const session = await getSessionFromReq(request);
+        if (!session || !session.isSuperadmin) {
             return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
         }
 
@@ -143,9 +80,9 @@ export async function POST(request: NextRequest) {
             updated_at: new Date().toISOString()
         };
 
-        // Só atualiza senha se foi fornecida
+        // Só atualiza senha se foi fornecida - CRIPTOGRAFAR ANTES DE SALVAR
         if (smtp_password) {
-            configData.smtp_password = smtp_password;
+            configData.smtp_password = encryptPassword(smtp_password);
         }
 
         let result;
@@ -159,11 +96,11 @@ export async function POST(request: NextRequest) {
                 .update(configData)
                 .eq('id', existing.id);
         } else {
-            // Criar
+            // Criar - criptografar senha
             if (!smtp_password) {
                 return NextResponse.json({ error: 'Senha SMTP é obrigatória' }, { status: 400 });
             }
-            configData.smtp_password = smtp_password;
+            configData.smtp_password = encryptPassword(smtp_password);
             result = await supabaseAdmin
                 .from('configuracoes_smtp')
                 .insert(configData);
@@ -184,8 +121,8 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
     try {
-        const profile = await getSuperadminFromRequest(request);
-        if (!profile) {
+        const session = await getSessionFromReq(request);
+        if (!session || !session.isSuperadmin) {
             return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
         }
 
