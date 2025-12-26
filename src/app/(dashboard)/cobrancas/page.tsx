@@ -5,8 +5,10 @@ import { Card, CardContent, Button, Input, Select, Table, Badge } from '@/compon
 import { Modal } from '@/components/ui/modal';
 import { useUser } from '@/hooks/useUser';
 import { useAuth } from '@/hooks/useAuth';
+import { useSmtpStatus } from '@/hooks/useSmtpStatus';
 import { createClient } from '@/lib/supabase/client';
-import { Plus, Send, Trash2, CreditCard, AlertCircle, CheckCircle, Clock, Mail, MessageCircle, Lock, Check } from 'lucide-react';
+import { Plus, Send, Trash2, CreditCard, AlertCircle, CheckCircle, Clock, Mail, MessageCircle, Lock, Check, Settings } from 'lucide-react';
+import Link from 'next/link';
 
 interface Invoice {
     id: string;
@@ -39,6 +41,9 @@ export default function CobrancasPage() {
     const [enviarWhatsapp, setEnviarWhatsapp] = useState(false);
     const [showWhatsappBanner, setShowWhatsappBanner] = useState(false);
     const [saving, setSaving] = useState(false);
+
+    // SMTP Status - verifica se e-mail está configurado
+    const { smtpConfigured, configUrl, loading: smtpLoading } = useSmtpStatus();
 
     const getAuthHeaders = () => {
         const headers: Record<string, string> = {
@@ -371,14 +376,23 @@ export default function CobrancasPage() {
                             <input
                                 type="checkbox"
                                 id="enviarEmail"
-                                checked={enviarEmail}
+                                checked={smtpConfigured ? enviarEmail : false}
                                 onChange={(e) => setEnviarEmail(e.target.checked)}
-                                className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                                disabled={!smtpConfigured}
+                                className={`rounded border-gray-300 focus:ring-emerald-500 ${smtpConfigured ? 'text-emerald-600' : 'text-gray-300 cursor-not-allowed'}`}
                             />
-                            <label htmlFor="enviarEmail" className="text-sm text-gray-600 flex items-center gap-2">
-                                <Mail className="h-4 w-4 text-emerald-500" />
+                            <label htmlFor="enviarEmail" className={`text-sm flex items-center gap-2 ${smtpConfigured ? 'text-gray-600' : 'text-gray-400'}`}>
+                                <Mail className={`h-4 w-4 ${smtpConfigured ? 'text-emerald-500' : 'text-gray-400'}`} />
                                 Enviar e-mail com detalhes da cobrança
                             </label>
+                            {!smtpConfigured && (
+                                <Link
+                                    href={configUrl}
+                                    className="text-xs text-amber-600 hover:text-amber-700 underline flex items-center gap-1"
+                                >
+                                    <Settings className="h-3 w-3" /> Configurar
+                                </Link>
+                            )}
                         </div>
 
                         {/* WhatsApp - Bloqueado */}

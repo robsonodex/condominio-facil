@@ -6,9 +6,11 @@ import { Modal } from '@/components/ui/modal';
 import { Textarea } from '@/components/ui/textarea';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/hooks/useUser';
+import { useSmtpStatus } from '@/hooks/useSmtpStatus';
 import { formatDate, formatDateTime } from '@/lib/utils';
-import { Plus, Bell, Eye, Edit, Trash2, Pin, Info, AlertTriangle, Megaphone, CheckCircle2, Clock } from 'lucide-react';
+import { Plus, Bell, Eye, Edit, Trash2, Pin, Info, AlertTriangle, Megaphone, CheckCircle2, Clock, Settings } from 'lucide-react';
 import { Notice } from '@/types/database';
+import Link from 'next/link';
 
 interface NoticeWithRead extends Notice {
     notice_reads?: { user_id: string }[];
@@ -27,6 +29,7 @@ export default function AvisosPage() {
     const [selectedNotice, setSelectedNotice] = useState<NoticeWithRead | null>(null);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const supabase = useMemo(() => createClient(), []);
+    const { smtpConfigured, configUrl } = useSmtpStatus();
 
     useEffect(() => {
         if (!userLoading && condoId) fetchNotices();
@@ -255,17 +258,21 @@ export default function AvisosPage() {
                 onSuccess={fetchNotices}
                 condoId={condoId}
                 notice={editingNotice}
+                smtpConfigured={smtpConfigured}
+                configUrl={configUrl}
             />
         </div>
     );
 }
 
-function NoticeModal({ isOpen, onClose, onSuccess, condoId, notice }: {
+function NoticeModal({ isOpen, onClose, onSuccess, condoId, notice, smtpConfigured, configUrl }: {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
     condoId: string | null | undefined;
     notice: NoticeWithRead | null;
+    smtpConfigured: boolean;
+    configUrl: string;
 }) {
     const [loading, setLoading] = useState(false);
     const [titulo, setTitulo] = useState('');
@@ -444,8 +451,20 @@ function NoticeModal({ isOpen, onClose, onSuccess, condoId, notice }: {
                     </div>
                     {!notice && (
                         <div className="flex items-center gap-2">
-                            <input type="checkbox" id="email" checked={enviarEmail} onChange={(e) => setEnviarEmail(e.target.checked)} className="rounded text-emerald-600 h-5 w-5" />
-                            <label htmlFor="email" className="text-sm font-bold text-gray-700">Enviar E-mail</label>
+                            <input
+                                type="checkbox"
+                                id="email"
+                                checked={smtpConfigured ? enviarEmail : false}
+                                onChange={(e) => setEnviarEmail(e.target.checked)}
+                                disabled={!smtpConfigured}
+                                className={`rounded h-5 w-5 ${smtpConfigured ? 'text-emerald-600' : 'text-gray-300 cursor-not-allowed'}`}
+                            />
+                            <label htmlFor="email" className={`text-sm font-bold ${smtpConfigured ? 'text-gray-700' : 'text-gray-400'}`}>Enviar E-mail</label>
+                            {!smtpConfigured && (
+                                <Link href={configUrl} className="text-xs text-amber-600 hover:text-amber-700 underline flex items-center gap-1">
+                                    <Settings className="h-3 w-3" /> Configurar
+                                </Link>
+                            )}
                         </div>
                     )}
                 </div>

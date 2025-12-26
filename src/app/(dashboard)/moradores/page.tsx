@@ -6,8 +6,9 @@ import { Modal } from '@/components/ui/modal';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/hooks/useUser';
 import { useAuth } from '@/hooks/useAuth';
+import { useSmtpStatus } from '@/hooks/useSmtpStatus';
 import { formatPhone } from '@/lib/utils';
-import { Plus, Search, Users, Edit, Trash2, Upload, Key, Mail } from 'lucide-react';
+import { Plus, Search, Users, Edit, Trash2, Upload, Key, Mail, Settings, AlertTriangle } from 'lucide-react';
 import { Unit } from '@/types/database';
 import Link from 'next/link';
 
@@ -38,6 +39,7 @@ export default function MoradoresPage() {
     const [filterUnit, setFilterUnit] = useState('');
     const [units, setUnits] = useState<Unit[]>([]);
     const supabase = useMemo(() => createClient(), []);
+    const { smtpConfigured, configUrl } = useSmtpStatus();
 
     useEffect(() => {
         if (!userLoading) {
@@ -123,6 +125,12 @@ export default function MoradoresPage() {
 
     // Send access credentials to resident
     const handleSendAccess = async (resident: any) => {
+        // Verificar SMTP antes de permitir envio
+        if (!smtpConfigured) {
+            alert('⚠️ E-mail não configurado!\n\nPara enviar credenciais por e-mail, você precisa configurar o servidor SMTP do condomínio.\n\nAcesse: Configurações > E-mail');
+            return;
+        }
+
         if (!resident.user?.email) {
             alert('Erro: Morador sem e-mail cadastrado');
             return;
@@ -225,8 +233,9 @@ export default function MoradoresPage() {
                 <div className="flex gap-1 justify-end">
                     <button
                         onClick={(e) => { e.stopPropagation(); handleSendAccess(r); }}
-                        className="p-1.5 hover:bg-emerald-50 rounded text-emerald-600 hover:text-emerald-700"
-                        title="Enviar acesso por e-mail"
+                        className={`p-1.5 rounded ${smtpConfigured ? 'hover:bg-emerald-50 text-emerald-600 hover:text-emerald-700' : 'text-gray-300 cursor-not-allowed'}`}
+                        title={smtpConfigured ? 'Enviar acesso por e-mail' : 'Configure o e-mail primeiro'}
+                        disabled={!smtpConfigured}
                     >
                         <Mail className="h-4 w-4" />
                     </button>
