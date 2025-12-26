@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, Button, Input } from '@/components/ui';
-import { Mail, Server, Lock, CheckCircle2, AlertTriangle, Loader2, Eye, EyeOff, Save, TestTube, Trash2, Info } from 'lucide-react';
+import { Mail, Server, Lock, CheckCircle2, AlertTriangle, Loader2, Eye, EyeOff, Save, TestTube, Trash2, Info, Shield } from 'lucide-react';
 
 const SMTP_PRESETS = [
     { name: 'Gmail', host: 'smtp.gmail.com', port: 587, secure: true },
@@ -12,7 +12,7 @@ const SMTP_PRESETS = [
     { name: 'Zoho', host: 'smtp.zoho.com', port: 587, secure: true },
 ];
 
-export default function EmailConfigPage() {
+export default function AdminEmailConfigPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [testing, setTesting] = useState(false);
@@ -26,7 +26,7 @@ export default function EmailConfigPage() {
         smtp_user: '',
         smtp_password: '',
         smtp_from_email: '',
-        smtp_from_name: '',
+        smtp_from_name: 'Meu Condomínio Fácil',
         smtp_secure: true,
         is_active: true
     });
@@ -37,7 +37,7 @@ export default function EmailConfigPage() {
 
     const loadConfig = async () => {
         try {
-            const res = await fetch('/api/configuracoes-smtp');
+            const res = await fetch('/api/admin/smtp-global');
             if (res.ok) {
                 const data = await res.json();
                 if (data.configured && data.config) {
@@ -48,7 +48,7 @@ export default function EmailConfigPage() {
                         smtp_user: data.config.smtp_user || '',
                         smtp_password: '',
                         smtp_from_email: data.config.smtp_from_email || '',
-                        smtp_from_name: data.config.smtp_from_name || '',
+                        smtp_from_name: data.config.smtp_from_name || 'Meu Condomínio Fácil',
                         smtp_secure: data.config.smtp_secure !== false,
                         is_active: data.config.is_active !== false
                     });
@@ -81,7 +81,7 @@ export default function EmailConfigPage() {
             const res = await fetch('/api/configuracoes-smtp/test', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                credentials: 'include', // Garantir envio de cookies
+                credentials: 'include',
                 body: JSON.stringify({
                     smtp_host: formData.smtp_host,
                     smtp_port: formData.smtp_port,
@@ -120,7 +120,7 @@ export default function EmailConfigPage() {
         }
         setSaving(true);
         try {
-            const res = await fetch('/api/configuracoes-smtp', {
+            const res = await fetch('/api/admin/smtp-global', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
@@ -141,15 +141,15 @@ export default function EmailConfigPage() {
     };
 
     const handleDelete = async () => {
-        if (!confirm('Tem certeza que deseja remover a configuração SMTP?')) return;
+        if (!confirm('Tem certeza que deseja remover a configuração SMTP global?')) return;
         try {
-            const res = await fetch('/api/configuracoes-smtp', { method: 'DELETE' });
+            const res = await fetch('/api/admin/smtp-global', { method: 'DELETE' });
             const data = await res.json();
             if (data.success) {
                 setConfigured(false);
                 setFormData({
                     smtp_host: '', smtp_port: '587', smtp_user: '', smtp_password: '',
-                    smtp_from_email: '', smtp_from_name: '', smtp_secure: true, is_active: true
+                    smtp_from_email: '', smtp_from_name: 'Meu Condomínio Fácil', smtp_secure: true, is_active: true
                 });
                 alert('Configuração removida com sucesso!');
             } else {
@@ -163,7 +163,7 @@ export default function EmailConfigPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
-                <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+                <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
             </div>
         );
     }
@@ -171,15 +171,15 @@ export default function EmailConfigPage() {
     return (
         <div className="container mx-auto py-6 px-4 max-w-4xl">
             <div className="flex items-center gap-3 mb-6">
-                <div className="p-3 bg-emerald-100 rounded-xl">
-                    <Mail className="h-6 w-6 text-emerald-600" />
+                <div className="p-3 bg-purple-100 rounded-xl">
+                    <Shield className="h-6 w-6 text-purple-600" />
                 </div>
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Configuração de E-mail</h1>
-                    <p className="text-gray-500">Configure seu servidor SMTP</p>
+                    <h1 className="text-2xl font-bold text-gray-900">Configuração de E-mail Global</h1>
+                    <p className="text-gray-500">SMTP para e-mails do sistema (onboarding, alertas administrativos)</p>
                 </div>
                 {configured ? (
-                    <span className="ml-auto px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium flex items-center gap-1">
+                    <span className="ml-auto px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium flex items-center gap-1">
                         <CheckCircle2 className="h-3 w-3" /> Configurado
                     </span>
                 ) : (
@@ -189,7 +189,7 @@ export default function EmailConfigPage() {
                 )}
             </div>
 
-            <Card className="mb-6">
+            <Card className="mb-6 border-purple-200">
                 <CardHeader className="pb-3">
                     <CardTitle className="text-sm font-medium text-gray-600">Configuração Rápida</CardTitle>
                 </CardHeader>
@@ -204,11 +204,11 @@ export default function EmailConfigPage() {
                 </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-purple-200">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
                         <Server className="h-5 w-5 text-gray-500" />
-                        Servidor SMTP
+                        Servidor SMTP Global
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -242,22 +242,22 @@ export default function EmailConfigPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <label className="block text-sm font-medium text-gray-700">E-mail de Envio (From) *</label>
-                            <Input type="email" placeholder="noreply@seudominio.com" value={formData.smtp_from_email} onChange={(e) => setFormData(prev => ({ ...prev, smtp_from_email: e.target.value }))} />
+                            <Input type="email" placeholder="noreply@meucondominiofacil.com" value={formData.smtp_from_email} onChange={(e) => setFormData(prev => ({ ...prev, smtp_from_email: e.target.value }))} />
                         </div>
                         <div className="space-y-2">
                             <label className="block text-sm font-medium text-gray-700">Nome de Envio</label>
-                            <Input placeholder="Meu Condomínio" value={formData.smtp_from_name} onChange={(e) => setFormData(prev => ({ ...prev, smtp_from_name: e.target.value }))} />
+                            <Input placeholder="Meu Condomínio Fácil" value={formData.smtp_from_name} onChange={(e) => setFormData(prev => ({ ...prev, smtp_from_name: e.target.value }))} />
                         </div>
                     </div>
 
                     <div className="flex flex-wrap gap-6 pt-4 border-t">
                         <label className="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" checked={formData.smtp_secure} onChange={(e) => setFormData(prev => ({ ...prev, smtp_secure: e.target.checked }))} className="w-4 h-4 text-emerald-600 rounded border-gray-300" />
+                            <input type="checkbox" checked={formData.smtp_secure} onChange={(e) => setFormData(prev => ({ ...prev, smtp_secure: e.target.checked }))} className="w-4 h-4 text-purple-600 rounded border-gray-300" />
                             <Lock className="h-4 w-4 text-gray-500" />
                             <span className="text-sm font-medium text-gray-700">TLS/SSL</span>
                         </label>
                         <label className="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" checked={formData.is_active} onChange={(e) => setFormData(prev => ({ ...prev, is_active: e.target.checked }))} className="w-4 h-4 text-emerald-600 rounded border-gray-300" />
+                            <input type="checkbox" checked={formData.is_active} onChange={(e) => setFormData(prev => ({ ...prev, is_active: e.target.checked }))} className="w-4 h-4 text-purple-600 rounded border-gray-300" />
                             <span className="text-sm font-medium text-gray-700">Envio ativo</span>
                         </label>
                     </div>
@@ -267,7 +267,7 @@ export default function EmailConfigPage() {
                             {testing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <TestTube className="h-4 w-4 mr-2" />}
                             Testar Conexão
                         </Button>
-                        <Button onClick={handleSave} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                        <Button onClick={handleSave} disabled={saving} className="bg-purple-600 hover:bg-purple-700 text-white">
                             {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
                             Salvar
                         </Button>
@@ -281,16 +281,22 @@ export default function EmailConfigPage() {
                 </CardContent>
             </Card>
 
-            <Card className="mt-6">
+            <Card className="mt-6 border-purple-200">
                 <CardHeader className="pb-3">
                     <CardTitle className="text-sm font-medium flex items-center gap-2">
                         <Info className="h-4 w-4 text-blue-500" />
-                        Dicas
+                        Sobre o SMTP Global
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="text-sm text-gray-600 space-y-2">
-                    <p><strong>Gmail:</strong> Use "Senha de App" (Segurança → Senhas de app)</p>
-                    <p><strong>Hostinger:</strong> Porta 465 com SSL</p>
+                    <p>Este SMTP será usado para e-mails do <strong>sistema</strong>:</p>
+                    <ul className="list-disc list-inside space-y-1 ml-2">
+                        <li>E-mails de onboarding (novos cadastros)</li>
+                        <li>Alertas administrativos</li>
+                        <li>Recuperação de senha (quando condomínio não tem SMTP próprio)</li>
+                        <li>Notificações de assinatura</li>
+                    </ul>
+                    <p className="text-amber-600 mt-3">⚠️ Cada condomínio pode configurar seu próprio SMTP em Configurações → E-mail.</p>
                 </CardContent>
             </Card>
         </div>

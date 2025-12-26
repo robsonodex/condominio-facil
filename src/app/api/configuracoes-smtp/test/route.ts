@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { cookies } from 'next/headers';
 import nodemailer from 'nodemailer';
 
 export async function POST(request: NextRequest) {
@@ -7,19 +8,47 @@ export async function POST(request: NextRequest) {
         const supabase = await createClient();
 
         // Verificar autenticação
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-            return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+        if (authError || !user) {
+            console.error('[TEST_SMTP] Auth error details:', authError);
+
+            const cookieStore = await cookies();
+            const allCookies = cookieStore.getAll();
+            const cookieNames = allCookies.map(c => c.name);
+
+            // Tentar getSession como fallback para diagnóstico
+            const { data: sessionData } = await supabase.auth.getSession();
+
+            return NextResponse.json({
+                error: 'Não autorizado',
+                details: 'Sessão não encontrada ou expirada. Por favor, faça login novamente.',
+                auth_error: authError,
+                has_session: !!sessionData.session,
+                cookies_found: cookieNames,
+                code: authError?.code || 'AUTH_NOT_FOUND'
+            }, { status: 401 });
         }
 
+        console.log('[TEST_SMTP] User authenticated:', user.id);
+
         // Buscar perfil do usuário
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
             .from('users')
             .select('id, role, condo_id')
             .eq('id', user.id)
             .single();
 
-        if (!profile || !['sindico', 'superadmin'].includes(profile.role)) {
+        if (profileError || !profile) {
+            console.error('[TEST_SMTP] Profile error:', profileError);
+            return NextResponse.json({
+                error: 'Perfil não encontrado',
+                details: profileError?.message
+            }, { status: 404 });
+        }
+
+        if (!['sindico', 'superadmin'].includes(profile.role)) {
+            console.warn('[TEST_SMTP] Access denied for role:', profile.role);
             return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
         }
 

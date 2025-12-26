@@ -10,13 +10,6 @@ import {
 import { legalAcceptanceConfirmedEmail } from '@/lib/emails/legal-templates';
 import { decryptPassword } from '@/lib/smtp-crypto';
 
-// Fallback SMTP Configuration (usado apenas se condomínio não configurar)
-const FALLBACK_SMTP_HOST = process.env.SMTP_HOST || 'smtp.hostinger.com';
-const FALLBACK_SMTP_PORT = parseInt(process.env.SMTP_PORT || '465');
-const FALLBACK_SMTP_USER = process.env.SMTP_USER;
-const FALLBACK_SMTP_PASS = process.env.SMTP_PASS;
-const FALLBACK_SMTP_FROM = process.env.SMTP_FROM || 'noreply@condominiofacil.com.br';
-
 // ========================================
 // SEGURANÇA: Rate Limiting em memória
 // ========================================
@@ -124,11 +117,11 @@ const templates: Record<string, { subject: string; html: (data: any) => string }
                             </ul>
                         </div>
                         
-                        <!-- Support -->
+                         <!-- Support -->
                         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
                             <p style="color: #6b7280; font-size: 14px; margin: 0;">
                                 💬 <strong>Precisa de ajuda?</strong><br>
-                                Entre em contato: <a href="mailto:contato@meucondominiofacil.com" style="color: #10b981;">contato@meucondominiofacil.com</a>
+                                Entre em contato com a administração do seu condomínio.
                             </p>
                         </div>
                     </div>
@@ -507,10 +500,7 @@ const templates: Record<string, { subject: string; html: (data: any) => string }
                             </p>
                         </div>
                         <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
-                            Para regularizar sua situação, entre em contato conosco:
-                        </p>
-                        <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
-                            📧 <a href="mailto:contato@meucondominiofacil.com" style="color: #10b981;">contato@meucondominiofacil.com</a>
+                            Para regularização, entre em contato com a administração do sistema.
                         </p>
                     </div>
                     <div style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
@@ -693,10 +683,7 @@ const templates: Record<string, { subject: string; html: (data: any) => string }
                         </div>
                         ` : ''}
                         <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
-                            Caso tenha alguma dúvida, entre em contato conosco:
-                        </p>
-                        <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
-                            📧 <a href="mailto:contato@meucondominiofacil.com" style="color: #10b981;">contato@meucondominiofacil.com</a>
+                            Caso tenha alguma dúvida, entre em contato com a administração do seu condomínio.
                         </p>
                     </div>
                     <div style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">

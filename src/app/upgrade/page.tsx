@@ -197,10 +197,10 @@ export default function UpgradePage() {
                             Falar no WhatsApp
                         </a>
                         <a
-                            href="mailto:contato@meucondominiofacil.com"
+                            href="https://wa.me/5521965532247"
                             className="bg-emerald-700 text-white px-6 py-3 rounded-lg font-semibold hover:bg-emerald-800 transition-colors"
                         >
-                            Enviar Email
+                            Suporte via WhatsApp
                         </a>
                     </div>
                 </div>

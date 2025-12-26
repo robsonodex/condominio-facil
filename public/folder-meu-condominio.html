@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meu Condomínio Fácil - Folder de Divulgação</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #111827 0%, #1f2937 50%, #111827 100%);
+      min-height: 100vh;
+      color: #fff;
+    }
+    
+    .folder {
+      max-width: 794px; /* A4 width */
+      margin: 0 auto;
+      padding: 40px;
+      background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+    }
+    
+    @media print {
+      body { background: white; }
+      .folder { 
+        padding: 20px; 
+        max-width: 100%;
+        background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .no-print { display: none !important; }
+      @page { size: A4; margin: 0; }
+    }
+    
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    .logo-container {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    
+    .logo-icon {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      padding: 16px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .logo-icon svg {
+      width: 40px;
+      height: 40px;
+      color: white;
+    }
+    
+    .logo-text {
+      text-align: left;
+    }
+    
+    .logo-text .meu {
+      color: #22c55e;
+      font-size: 14px;
+      font-style: italic;
+      font-weight: 500;
+      margin-bottom: -4px;
+    }
+    
+    .logo-text h1 {
+      font-size: 28px;
+      font-weight: 800;
+      color: white;
+    }
+    
+    .tagline {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    
+    .tagline span {
+      color: #22c55e;
+    }
+    
+    .subtitle {
+      color: #9ca3af;
+      font-size: 16px;
+    }
+    
+    /* Benefits Bar */
+    .benefits-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 30px;
+    }
+    
+    .benefit-item {
+      background: rgba(55, 65, 81, 0.5);
+      border: 1px solid #374151;
+      border-radius: 12px;
+      padding: 16px 12px;
+      text-align: center;
+    }
+    
+    .benefit-item svg {
+      width: 24px;
+      height: 24px;
+      color: #22c55e;
+      margin-bottom: 8px;
+    }
+    
+    .benefit-item p {
+      font-size: 12px;
+      font-weight: 600;
+      color: white;
+    }
+    
+    /* Features Grid */
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 20px;
+      color: white;
+    }
+    
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 30px;
+    }
+    
+    .feature-card {
+      background: linear-gradient(135deg, #1f2937, rgba(31, 41, 55, 0.5));
+      border: 1px solid #374151;
+      border-radius: 12px;
+      padding: 16px;
+    }
+    
+    .feature-card svg {
+      width: 28px;
+      height: 28px;
+      color: #22c55e;
+      margin-bottom: 10px;
+    }
+    
+    .feature-card h4 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: white;
+    }
+    
+    .feature-card p {
+      font-size: 11px;
+      color: #9ca3af;
+    }
+    
+    /* Pricing */
+    .pricing-subtitle {
+      color: #22c55e;
+      text-align: center;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+    
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 30px;
+    }
+    
+    .plan-card {
+      background: rgba(31, 41, 55, 0.5);
+      border: 2px solid #374151;
+      border-radius: 16px;
+      padding: 20px 16px;
+      position: relative;
+    }
+    
+    .plan-card.popular {
+      background: linear-gradient(135deg, rgba(20, 83, 45, 0.5), rgba(22, 101, 52, 0.3));
+      border-color: #22c55e;
+    }
+    
+    .popular-badge {
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #22c55e;
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 20px;
+    }
+    
+    .plan-card h4 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    
+    .plan-card .units {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-bottom: 12px;
+    }
+    
+    .plan-card .price {
+      font-size: 24px;
+      font-weight: 800;
+      margin-bottom: 2px;
+    }
+    
+    .plan-card .period {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-bottom: 12px;
+    }
+    
+    .plan-card ul {
+      list-style: none;
+    }
+    
+    .plan-card li {
+      font-size: 11px;
+      color: #d1d5db;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+    
+    .plan-card li svg {
+      width: 14px;
+      height: 14px;
+      color: #22c55e;
+      flex-shrink: 0;
+    }
+    
+    /* CTA */
+    .cta-section {
+      background: linear-gradient(135deg, #16a34a, #22c55e);
+      border-radius: 16px;
+      padding: 30px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    .cta-section h3 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    
+    .cta-section p {
+      color: rgba(255,255,255,0.9);
+      margin-bottom: 20px;
+    }
+    
+    .cta-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 14px;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    
+    .btn-white {
+      background: white;
+      color: #16a34a;
+    }
+    
+    .btn-dark {
+      background: rgba(0,0,0,0.2);
+      color: white;
+    }
+    
+    .btn svg {
+      width: 18px;
+      height: 18px;
+    }
+    
+    /* Footer */
+    .footer {
+      text-align: center;
+      color: #9ca3af;
+    }
+    
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    
+    .footer-links a {
+      color: #9ca3af;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+    }
+    
+    .footer-links a:hover {
+      color: #22c55e;
+    }
+    
+    .footer-links svg {
+      width: 16px;
+      height: 16px;
+    }
+    
+    .footer-note {
+      font-size: 12px;
+    }
+    
+    /* Print button */
+    .print-bar {
+      background: rgba(0,0,0,0.5);
+      padding: 16px;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .print-btn {
+      background: #22c55e;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .print-btn:hover {
+      background: #16a34a;
+    }
+    
+    @media (max-width: 600px) {
+      .benefits-bar, .features-grid, .pricing-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="print-bar no-print">
+    <button class="print-btn" onclick="window.print()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+      Imprimir / Salvar como PDF
+    </button>
+    <p style="color: #9ca3af; font-size: 12px; margin-top: 8px;">Dica: Para salvar como PDF, escolha "Salvar como PDF" na impressora</p>
+  </div>
+
+  <div class="folder">
+    <!-- Header -->
+    <div class="header">
+      <div class="logo-container">
+        <div class="logo-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"></path><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"></path><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"></path><path d="M10 6h4"></path><path d="M10 10h4"></path><path d="M10 14h4"></path><path d="M10 18h4"></path></svg>
+        </div>
+        <div class="logo-text">
+          <p class="meu">Meu</p>
+          <h1>Condomínio Fácil</h1>
+        </div>
+      </div>
+      <h2 class="tagline">Gestão de Condomínio <span>Simples e Eficiente</span></h2>
+      <p class="subtitle">Sistema 100% web para síndicos que querem mais organização e menos trabalho</p>
+    </div>
+
+    <!-- Benefits Bar -->
+    <div class="benefits-bar">
+      <div class="benefit-item">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+        <p>Dados 100% Seguros</p>
+      </div>
+      <div class="benefit-item">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+        <p>Economize 10h/semana</p>
+      </div>
+      <div class="benefit-item">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+        <p>Implantação em 24h</p>
+      </div>
+      <div class="benefit-item">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+        <p>Satisfação Garantida</p>
+      </div>
+    </div>
+
+    <!-- Features Grid -->
+    <h3 class="section-title">Tudo que você precisa em um só lugar</h3>
+    <div class="features-grid">
+      <div class="feature-card">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+        <h4>Controle Financeiro</h4>
+        <p>Gerencie receitas, despesas e inadimplência</p>
+      </div>
+      <div class="feature-card">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        <h4>Gestão de Moradores</h4>
+        <p>Cadastro completo de unidades e residentes</p>
+      </div>
+      <div class="feature-card">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+        <h4>Portaria Digital</h4>
+        <p>Controle de visitantes e entregas</p>
+      </div>
+      <div class="feature-card">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+        <h4>Reservas de Áreas</h4>
+        <p>Salão de festas, churrasqueira e mais</p>
+      </div>
+      <div class="feature-card">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+        <h4>Ocorrências</h4>
+        <p>Registro e acompanhamento de problemas</p>
+      </div>
+      <div class="feature-card">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+        <h4>Relatórios</h4>
+        <p>Prestação de contas automatizada</p>
+      </div>
+    </div>
+
+    <!-- Pricing -->
+    <h3 class="section-title">Planos que cabem no seu bolso</h3>
+    <p class="pricing-subtitle">🎁 Teste grátis por 7 dias - Sem cartão de crédito!</p>
+    <div class="pricing-grid">
+      <div class="plan-card">
+        <h4>Básico</h4>
+        <p class="units">Até 20 unidades</p>
+        <p class="price">R$ 99,90</p>
+        <p class="period">/mês</p>
+        <ul>
+          <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>Gestão Financeira</li>
+          <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>Cadastro de Moradores</li>
+          <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>Avisos e Comunicados</li>
+          <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>Suporte por Email</li>
+        </ul>
+      </div>
+      <div class="plan-card popular">
+        <span class="popular-badge">MAIS POPULAR</span>
+        <h4>Profissional</h4>
+        <p class="units">Até 50 unidades</p>
+        <p class="price">R$ 249,90</p>
+        <p class="period">/mês</p>
+        <ul>
+          <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>Tudo do Básico</li>
+          <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>Portaria Digital</li>
+          <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>Reservas de Áreas</li>
+          <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>Ocorrências</li>
+          <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>Encomendas</li>
+          <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>Relatórios Avançados</li>
+        </ul>
+      </div>
+      <div class="plan-card">
+        <h4>Premium</h4>
+        <p class="units">Ilimitado</p>
+        <p class="price">R$ 399,90</p>
+        <p class="period">/mês</p>
+        <ul>
+          <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>Tudo do Profissional</li>
+          <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>Multi-Condomínio</li>
+          <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>Governança Digital</li>
+          <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>Automações</li>
+          <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>Suporte Prioritário</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta-section">
+      <h3>Transforme a gestão do seu condomínio hoje!</h3>
+      <p>Junte-se a centenas de síndicos que já simplificaram seu trabalho</p>
+      <div class="cta-buttons">
+        <a href="https://meucondominiofacil.com/register" class="btn btn-white">
+          Começar Teste Grátis
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+        </a>
+        <a href="https://wa.me/5521965532247?text=Olá! Gostaria de saber mais sobre o Meu Condomínio Fácil" class="btn btn-dark">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+          Falar no WhatsApp
+        </a>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <div class="footer-links">
+        <a href="https://meucondominiofacil.com">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+          meucondominiofacil.com
+        </a>
+        <a href="tel:+5521965532247">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+          (21) 96553-2247
+        </a>
+      </div>
+      <p class="footer-note">✓ Sem fidelidade &nbsp;•&nbsp; ✓ Cancele quando quiser &nbsp;•&nbsp; ✓ Suporte humanizado</p>
+    </div>
+  </div>
+</body>
+</html>

@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import {
     CreditCard, CheckCircle, AlertTriangle, FileText,
     Building2, Send, Shield, DollarSign, Zap, Clock,
-    Upload, Info, ExternalLink, ChevronDown, ChevronUp
+    Upload, Info, ExternalLink, ChevronDown, ChevronUp, MessageCircle
 } from 'lucide-react';
 
 const BANCOS_GATEWAYS = [
@@ -134,8 +134,7 @@ ${observacoes || 'Nenhuma'}
 ✅ Confirmou assumir responsabilidade financeira
 
 ⚠️ **AÇÃO NECESSÁRIA:**
-O cliente deve enviar as credenciais e documentos para:
-📧 implantacao@meucondominiofacil.com
+O cliente deve enviar as credenciais e documentos via WhatsApp oficial (21) 96553-2247.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📅 Data da solicitação: ${new Date().toLocaleString('pt-BR')}
@@ -188,13 +187,14 @@ O cliente deve enviar as credenciais e documentos para:
                         </h3>
                         <div className="space-y-4 text-blue-800">
                             <div className="bg-white p-4 rounded-lg border border-blue-200">
-                                <p className="font-semibold mb-2">1️⃣ Envie os documentos e credenciais para:</p>
+                                <p className="font-semibold mb-2">1️⃣ Envie os documentos e credenciais para o nosso WhatsApp:</p>
                                 <a
-                                    href="mailto:implantacao@meucondominiofacil.com?subject=Documentos%20Integração%20-%20CNPJ%20{cnpj}"
+                                    href="https://wa.me/5521965532247?text=Olá! Estou enviando os documentos para integração de pagamentos do CNPJ ${cnpj}"
                                     className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-mono bg-blue-100 p-3 rounded"
+                                    target="_blank"
                                 >
-                                    <Send className="h-4 w-4" />
-                                    implantacao@meucondominiofacil.com
+                                    <MessageCircle className="h-4 w-4" />
+                                    (21) 96553-2247
                                     <ExternalLink className="h-4 w-4 ml-auto" />
                                 </a>
                             </div>
@@ -403,8 +403,8 @@ O cliente deve enviar as credenciais e documentos para:
                                                     type="button"
                                                     onClick={() => setPossuiContrato(opt.value as typeof possuiContrato)}
                                                     className={`px-4 py-2 rounded-lg border-2 transition-all ${possuiContrato === opt.value
-                                                            ? `border-${opt.color}-500 bg-${opt.color}-50 text-${opt.color}-700`
-                                                            : 'border-gray-200 hover:border-gray-300'
+                                                        ? `border-${opt.color}-500 bg-${opt.color}-50 text-${opt.color}-700`
+                                                        : 'border-gray-200 hover:border-gray-300'
                                                         }`}
                                                 >
                                                     {opt.label}
@@ -454,8 +454,8 @@ O cliente deve enviar as credenciais e documentos para:
                                                     <label
                                                         key={cred}
                                                         className={`flex items-center gap-2 p-2 rounded border cursor-pointer transition-all ${tipoCredencial.includes(cred)
-                                                                ? 'border-emerald-500 bg-emerald-50'
-                                                                : 'border-gray-200 hover:border-gray-300'
+                                                            ? 'border-emerald-500 bg-emerald-50'
+                                                            : 'border-gray-200 hover:border-gray-300'
                                                             }`}
                                                     >
                                                         <input

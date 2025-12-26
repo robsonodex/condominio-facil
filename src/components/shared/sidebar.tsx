@@ -124,6 +124,7 @@ const adminItems: NavItem[] = [
     { href: '/admin/usuarios', label: 'Usuários', icon: <Users className="h-5 w-5" /> },
     { href: '/admin/assinaturas', label: 'Assinaturas', icon: <Settings className="h-5 w-5" /> },
     { href: '/admin/cobrancas', label: 'Cobranças', icon: <DollarSign className="h-5 w-5" /> },
+    { href: '/admin/email', label: 'Config. E-mail', icon: <Mail className="h-5 w-5 text-purple-500" /> },
     { href: '/admin/suporte', label: 'Central de Suporte', icon: <MessageCircle className="h-5 w-5" /> },
     { href: '/admin/erros', label: 'Erros', icon: <AlertTriangle className="h-5 w-5" /> },
 ];

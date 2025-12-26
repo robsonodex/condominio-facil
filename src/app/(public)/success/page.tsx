@@ -99,9 +99,9 @@ function SuccessContent() {
 
                     <p className="mt-8 text-sm text-gray-500">
                         Precisa de ajuda?{' '}
-                        <a href="mailto:contato@meucondominiofacil.com" className="text-emerald-600 hover:underline font-medium">
-                            Entre em contato
-                        </a>
+                        <span className="text-gray-500">
+                            Consulte a administração do seu condomínio.
+                        </span>
                     </p>
 
                     {paymentId && (

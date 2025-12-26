@@ -196,26 +196,8 @@ export async function POST(req: NextRequest) {
                         console.log('[Webhook] Payment confirmation email sent to customer');
                     }
 
-                    // Send notification to admin
-                    await fetch(`${baseUrl}/api/email`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            tipo: 'admin_billing_notification',
-                            destinatario: 'contato@meucondominiofacil.com',
-                            dados: {
-                                condoNome: Array.isArray(paymentDetails?.condos)
-                                    ? paymentDetails.condos[0]?.nome
-                                    : paymentDetails?.condos?.nome,
-                                valor: (paymentData.transaction_amount || paymentDetails?.amount || 0).toFixed(2),
-                                destinatario: Array.isArray(paymentDetails?.condos)
-                                    ? paymentDetails.condos[0]?.email_contato
-                                    : paymentDetails?.condos?.email_contato,
-                            },
-                            internalCall: true
-                        })
-                    });
-                    console.log('[Webhook] Admin notification email sent');
+                    // Notificação administrativa central removida conforme solicitação.
+                    // O controle deve ser feito via dashboard ou log.
 
                 } catch (emailError) {
                     console.error('[Webhook] Failed to send emails:', emailError);

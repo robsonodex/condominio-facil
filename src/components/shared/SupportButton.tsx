@@ -15,19 +15,19 @@ export function SupportButton({ planType = 'basico', userName }: SupportButtonPr
 
     const supportOptions = {
         basico: [
-            { icon: <Mail className="h-5 w-5" />, label: 'Email', desc: 'Resposta em até 48h', action: 'mailto:suporte@meucondominiofacil.com' },
+            { icon: <MessageCircle className="h-5 w-5" />, label: 'WhatsApp', desc: 'Atendimento via WhatsApp', action: 'https://wa.me/5521965532247' },
             { icon: <Lightbulb className="h-5 w-5" />, label: 'Sugerir Melhoria', desc: 'Envie sua ideia', action: '/sugestoes' },
         ],
         profissional: [
             { icon: <MessageCircle className="h-5 w-5" />, label: 'Chat ao Vivo', desc: 'Horário comercial', action: 'chat' },
-            { icon: <Mail className="h-5 w-5" />, label: 'Email Prioritário', desc: 'Resposta em até 24h', action: 'mailto:prioridade@meucondominiofacil.com' },
+            { icon: <MessageCircle className="h-5 w-5" />, label: 'WhatsApp Prioritário', desc: 'Resposta em até 24h', action: 'https://wa.me/5521965532247' },
             { icon: <Lightbulb className="h-5 w-5" />, label: 'Sugerir Melhoria', desc: 'Envie sua ideia', action: '/sugestoes' },
         ],
         enterprise: [
-            { icon: <Phone className="h-5 w-5" />, label: 'Telefone VIP', desc: '(21) 99999-9999', action: 'tel:+5521999999999' },
-            { icon: <MessageCircle className="h-5 w-5" />, label: 'WhatsApp Direto', desc: 'Atendimento imediato', action: 'https://wa.me/5521999999999' },
+            { icon: <Phone className="h-5 w-5" />, label: 'Telefone VIP', desc: '(21) 96553-2247', action: 'tel:+5521965532247' },
+            { icon: <MessageCircle className="h-5 w-5" />, label: 'WhatsApp Direto', desc: 'Atendimento imediato', action: 'https://wa.me/5521965532247' },
             { icon: <MessageCircle className="h-5 w-5" />, label: 'Chat ao Vivo', desc: '24/7 disponível', action: 'chat' },
-            { icon: <Mail className="h-5 w-5" />, label: 'Email VIP', desc: 'Resposta em até 4h', action: 'mailto:enterprise@meucondominiofacil.com' },
+            { icon: <MessageCircle className="h-5 w-5" />, label: 'Suporte VIP', desc: 'Resposta em até 4h', action: 'https://wa.me/5521965532247' },
             { icon: <Lightbulb className="h-5 w-5" />, label: 'Sugerir Melhoria', desc: 'Prioridade na análise', action: '/sugestoes' },
         ],
     };
@@ -37,7 +37,7 @@ export function SupportButton({ planType = 'basico', userName }: SupportButtonPr
     const handleAction = (action: string) => {
         if (action === 'chat') {
             // Aqui poderia abrir um widget de chat (Intercom, Crisp, etc)
-            alert('Chat será aberto em breve! Por enquanto, use o email.');
+            alert('Chat será aberto em breve! Por enquanto, use o WhatsApp.');
         } else if (action.startsWith('/')) {
             window.location.href = action;
         } else {

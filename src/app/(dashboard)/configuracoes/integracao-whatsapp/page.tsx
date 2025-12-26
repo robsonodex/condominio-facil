@@ -271,11 +271,12 @@ ${statusChip === 'em_uso' ? '⚠️ ATENÇÃO: Chip em uso. Orientar cliente a d
                             <strong>Opcional:</strong> Envie a logo do condomínio para usarmos como foto de perfil:
                         </p>
                         <a
-                            href={`mailto:implantacao@meucondominiofacil.com?subject=Logo%20WhatsApp%20-%20${encodeURIComponent(condo?.nome || 'Condomínio')}`}
+                            href="https://wa.me/5521965532247?text=Olá! Segue a logo do condomínio ${encodeURIComponent(condo?.nome || 'Condomínio')} para o perfil do WhatsApp."
+                            target="_blank"
                             className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-mono bg-blue-50 p-3 rounded text-sm"
                         >
-                            <Send className="h-4 w-4" />
-                            implantacao@meucondominiofacil.com
+                            <MessageCircle className="h-4 w-4" />
+                            Enviar via WhatsApp
                             <ExternalLink className="h-4 w-4 ml-auto" />
                         </a>
                     </CardContent>
@@ -531,8 +532,8 @@ ${statusChip === 'em_uso' ? '⚠️ ATENÇÃO: Chip em uso. Orientar cliente a d
                                             type="button"
                                             onClick={() => toggleDia(dia)}
                                             className={`px-3 py-1 rounded-full text-sm border transition-all ${diasPreferidos.includes(dia)
-                                                    ? 'bg-emerald-500 text-white border-emerald-500'
-                                                    : 'bg-white text-gray-600 border-gray-300 hover:border-emerald-300'
+                                                ? 'bg-emerald-500 text-white border-emerald-500'
+                                                : 'bg-white text-gray-600 border-gray-300 hover:border-emerald-300'
                                                 }`}
                                         >
                                             {dia}

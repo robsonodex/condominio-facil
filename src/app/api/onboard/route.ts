@@ -255,7 +255,7 @@ async function sendWelcomeEmail(params: {
                 <li>Registrar ocorrências e portaria</li>
             </ul>
             
-            <p>Qualquer dúvida, entre em contato pelo email: <strong>contato@meucondominiofacil.com</strong></p>
+            <p>Seja bem-vindo e bons negócios!</p>
         </div>
         <div class="footer">
             <p>© ${new Date().getFullYear()} Condomínio Fácil. Todos os direitos reservados.</p>
@@ -270,7 +270,7 @@ async function sendWelcomeEmail(params: {
         attempts++;
         try {
             await transporter.sendMail({
-                from: process.env.SMTP_FROM || 'Condomínio Fácil <noreply@meucondominiofacil.com>',
+                from: process.env.SMTP_FROM || 'Condomínio Fácil <contato@sistema.com>',
                 to: params.to,
                 subject: '🏢 Bem-vindo ao Condomínio Fácil - Sua conta foi criada!',
                 html

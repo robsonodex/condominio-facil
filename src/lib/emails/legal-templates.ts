@@ -122,10 +122,7 @@ export function legalAcceptanceConfirmedEmail(data: {
                     <tr>
                         <td style="background-color: #f9fafb; padding: 20px 30px; text-align: center; border-top: 1px solid #e5e7eb;">
                             <p style="margin: 0 0 10px; color: #6b7280; font-size: 12px;">
-                                Se você tiver dúvidas, entre em contato conosco:
-                            </p>
-                            <p style="margin: 0; color: #6b7280; font-size: 12px;">
-                                <a href="mailto:contato@meucondominiofacil.com" style="color: #10b981; text-decoration: none;">contato@meucondominiofacil.com</a>
+                                Se você tiver dúvidas, entre em contato com a administração do seu condomínio.
                             </p>
                             <p style="margin: 15px 0 0; color: #9ca3af; font-size: 11px;">
                                 © ${new Date().getFullYear()} Condomínio Fácil. Todos os direitos reservados.

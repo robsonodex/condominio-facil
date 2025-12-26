@@ -107,11 +107,7 @@ export default function LGPDPage() {
 
                         <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
                             <p className="text-blue-800">
-                                <strong>Como exercer seus direitos:</strong> Envie solicitação para{' '}
-                                <a href="mailto:privacidade@meucondominiofacil.com" className="underline">
-                                    privacidade@meucondominiofacil.com
-                                </a>
-                                . Prazo de resposta: até 15 dias úteis.
+                                <strong>Como exercer seus direitos:</strong> Entre em contato com a administração do seu condomínio ou através do nosso WhatsApp oficial (21) 96553-2247. Prazo de resposta: até 15 dias úteis.
                             </p>
                         </div>
                     </section>
@@ -211,19 +207,13 @@ export default function LGPDPage() {
                             <div>
                                 <h3 className="font-bold text-gray-900 mb-3">Encarregado de Dados (DPO)</h3>
                                 <div className="flex items-center gap-2 text-gray-700">
-                                    <Mail className="h-4 w-4" />
-                                    <a href="mailto:privacidade@meucondominiofacil.com" className="text-blue-600 hover:underline">
-                                        privacidade@meucondominiofacil.com
-                                    </a>
+                                    <Phone className="h-4 w-4" />
+                                    <span>(21) 96553-2247</span>
                                 </div>
                             </div>
                             <div>
                                 <h3 className="font-bold text-gray-900 mb-3">Contato Geral</h3>
                                 <div className="space-y-2 text-gray-700">
-                                    <div className="flex items-center gap-2">
-                                        <Mail className="h-4 w-4" />
-                                        <span>contato@meucondominiofacil.com</span>
-                                    </div>
                                     <div className="flex items-center gap-2">
                                         <Phone className="h-4 w-4" />
                                         <span>(21) 96553-2247</span>
