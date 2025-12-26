@@ -8,3 +8,4 @@ export { Table } from './table';
 export { Badge } from './badge';
 export { CardSkeleton, TableSkeleton, PageSkeleton, FilterSkeleton } from './skeleton';
 export { ToastProvider, useToast, AlertModal, useAlert } from './Toast';
+export { Label } from './label';

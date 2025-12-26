@@ -2,9 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
 
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-});
 
 const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -34,6 +31,10 @@ export async function POST(req: NextRequest) {
         const mimeType = file.type || 'image/jpeg';
 
         // 2. OCR Inteligente com GPT-4o (Extrai dados do PDF/Imagem)
+        const openai = new OpenAI({
+            apiKey: process.env.OPENAI_API_KEY,
+        });
+
         const completion = await openai.chat.completions.create({
             model: "gpt-4o",
             messages: [
