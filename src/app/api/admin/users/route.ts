@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin, getSessionFromReq } from '@/lib/supabase/admin';
 import { createClient } from '@supabase/supabase-js';
+import { sendCredentialsEmail } from '@/lib/email-helper';
 
 // No GET allowed
 export async function GET(request: NextRequest) {
@@ -207,63 +208,31 @@ export async function POST(request: NextRequest) {
         }
 
         // 8. Send welcome emails (only if enviar_email is true)
-        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://meucondominiofacil.com';
-
-        // 8.1 Send credentials email to new user
+        // 8.1 Send credentials email to new user usando helper direto
         if (enviar_email) {
             try {
-                await fetch(`${baseUrl}/api/email`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        tipo: 'user_credentials',
-                        destinatario: email,
-                        dados: {
-                            nome,
-                            email,
-                            password: senha,
-                            role: role === 'sindico' ? 'Síndico' : role === 'superadmin' ? 'Admin' : role === 'porteiro' ? 'Porteiro' : 'Morador',
-                            condoNome: condo_nome || '',
-                            loginUrl: `${baseUrl}/login`
-                        },
-                        internalCall: true
-                    })
-                });
-                console.log('[ADMIN_CREATE_USER] Credentials email sent to:', email);
+                const emailResult = await sendCredentialsEmail(
+                    email,
+                    nome,
+                    senha,
+                    role === 'sindico' ? 'Síndico' : role === 'superadmin' ? 'Admin' : role === 'porteiro' ? 'Porteiro' : 'Morador',
+                    condo_nome || '',
+                    finalCondoId || undefined
+                );
+                if (emailResult.success) {
+                    console.log('[ADMIN_CREATE_USER] ✅ Credentials email sent to:', email);
+                } else {
+                    console.error('[ADMIN_CREATE_USER] ❌ Failed to send credentials email:', emailResult.error);
+                }
             } catch (emailError) {
-                console.error('[ADMIN_CREATE_USER] Failed to send credentials email:', emailError);
+                console.error('[ADMIN_CREATE_USER] ❌ Exception sending credentials email:', emailError);
             }
         }
 
-        // 8.2 Send trial/active email for síndico with new condo
+        // 8.2 TODO: Enviar email de trial/active para síndico
+        // Por enquanto o email de credenciais já contém as informações necessárias
         if (role === 'sindico' && condo_nome && finalCondoId) {
-            try {
-                const emailType = periodo_teste ? 'condo_trial' : 'condo_active';
-                const dataFim = new Date();
-                dataFim.setDate(dataFim.getDate() + 7);
-
-                await fetch(`${baseUrl}/api/email`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        tipo: emailType,
-                        destinatario: email,
-                        dados: {
-                            nome,
-                            condoNome: condo_nome,
-                            dataFim: dataFim.toLocaleDateString('pt-BR'),
-                            plano: planData?.nome_plano || 'Básico',
-                            proximoVencimento: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('pt-BR'),
-                            loginUrl: `${baseUrl}/login`
-                        },
-                        condoId: finalCondoId,
-                        internalCall: true
-                    })
-                });
-                console.log(`[ADMIN_CREATE_USER] ${emailType} email sent to:`, email);
-            } catch (emailError) {
-                console.error('[ADMIN_CREATE_USER] Failed to send trial/active email:', emailError);
-            }
+            console.log(`[ADMIN_CREATE_USER] Síndico criado para condo ${condo_nome} - email de credenciais já enviado`);
         }
 
         // Success Message Construction
