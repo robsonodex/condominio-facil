@@ -9,18 +9,54 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
  */
 
 async function getSuperadminFromRequest(request: NextRequest) {
+    // Try Authorization header first
     const authHeader = request.headers.get('authorization');
-    const token = authHeader?.replace('Bearer ', '');
+    let accessToken = authHeader?.replace('Bearer ', '') || '';
 
-    if (!token) {
-        // Try cookies
-        const cookieHeader = request.headers.get('cookie');
-        const accessToken = cookieHeader?.split(';').find(c => c.trim().startsWith('sb-'))?.split('=')[1];
-        if (!accessToken) return null;
+    // If no auth header, try cookies
+    if (!accessToken) {
+        const cookieHeader = request.headers.get('cookie') || '';
+        const cookies = cookieHeader.split(';').map(c => c.trim());
+
+        for (const cookie of cookies) {
+            if (cookie.includes('-auth-token')) {
+                try {
+                    const value = cookie.split('=')[1];
+                    const decoded = decodeURIComponent(value);
+                    const parsed = JSON.parse(decoded);
+                    if (parsed.access_token) {
+                        accessToken = parsed.access_token;
+                        break;
+                    }
+                } catch {
+                    // Try base64 decode
+                    try {
+                        const value = cookie.split('=')[1];
+                        const base64 = value.replace('base64-', '');
+                        const decoded = Buffer.from(base64, 'base64').toString('utf-8');
+                        const parsed = JSON.parse(decoded);
+                        if (parsed.access_token) {
+                            accessToken = parsed.access_token;
+                            break;
+                        }
+                    } catch {
+                        continue;
+                    }
+                }
+            }
+        }
     }
 
-    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token || '');
-    if (error || !user) return null;
+    if (!accessToken) {
+        console.log('[SMTP Global] No access token found');
+        return null;
+    }
+
+    const { data: { user }, error } = await supabaseAdmin.auth.getUser(accessToken);
+    if (error || !user) {
+        console.log('[SMTP Global] Auth error:', error?.message);
+        return null;
+    }
 
     const { data: profile } = await supabaseAdmin
         .from('users')
@@ -28,7 +64,11 @@ async function getSuperadminFromRequest(request: NextRequest) {
         .eq('email', user.email)
         .single();
 
-    if (!profile || profile.role !== 'superadmin') return null;
+    if (!profile || profile.role !== 'superadmin') {
+        console.log('[SMTP Global] Not superadmin:', profile?.role);
+        return null;
+    }
+
     return profile;
 }
 
