@@ -133,10 +133,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     const { profile, isSuperAdmin, isSuperAdminReal, isImpersonating } = useUser();
     const viewAsRole = useViewAsRole();
     const [planFeatures, setPlanFeatures] = useState<PlanFeatures | null>(null);
-    const [mensageriaAtivo, setMensageriaAtivo] = useState<boolean>(true); // Default true para teste, será atualizado
+    const [mensageriaAtivo, setMensageriaAtivo] = useState<boolean>(true);
     const [chatSindicoAtivo, setChatSindicoAtivo] = useState<boolean>(false);
     const [expandedItems, setExpandedItems] = useState<string[]>(['/governanca']);
     const [pendingChats, setPendingChats] = useState(0);
+    const [menuSectionExpanded, setMenuSectionExpanded] = useState(false); // Fechado por padrão para superadmin
     const supabase = createClient();
 
     useEffect(() => {
@@ -264,28 +265,74 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                         </>
                     )}
 
-                    {filteredNavItems.length > 0 && <p className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Menu</p>}
-                    {filteredNavItems.map((item) => (
-                        <div key={item.href}>
-                            {item.subItems ? (
+                    {/* Seção Menu - Colapsável para Superadmin */}
+                    {filteredNavItems.length > 0 && (
+                        <>
+                            {profile?.role === 'superadmin' && !isImpersonating && viewAsRole === 'superadmin' ? (
+                                // Para Superadmin: seção colapsável
                                 <>
-                                    <button onClick={() => toggleExpand(item.href)} className={cn('w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors', pathname.startsWith(item.href) ? 'bg-emerald-50 text-emerald-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900')}>
-                                        <div className="flex items-center gap-3">{item.icon}{item.label}</div>
-                                        {expandedItems.includes(item.href) ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                                    <button
+                                        onClick={() => setMenuSectionExpanded(!menuSectionExpanded)}
+                                        className="w-full px-3 py-2 flex items-center justify-between text-xs font-semibold text-gray-400 uppercase tracking-wider hover:text-gray-600 transition-colors"
+                                    >
+                                        <span>Menu (Outros Perfis)</span>
+                                        {menuSectionExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                                     </button>
-                                    {expandedItems.includes(item.href) && (
-                                        <div className="ml-4 mt-1 space-y-1">
-                                            {item.subItems.map((subItem) => (
-                                                <NavLink key={subItem.href} item={subItem} isActive={pathname === subItem.href} onClick={onClose} isSubItem />
+                                    {menuSectionExpanded && (
+                                        <div className="space-y-1">
+                                            {filteredNavItems.map((item) => (
+                                                <div key={item.href}>
+                                                    {item.subItems ? (
+                                                        <>
+                                                            <button onClick={() => toggleExpand(item.href)} className={cn('w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors', pathname.startsWith(item.href) ? 'bg-emerald-50 text-emerald-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900')}>
+                                                                <div className="flex items-center gap-3">{item.icon}{item.label}</div>
+                                                                {expandedItems.includes(item.href) ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                                                            </button>
+                                                            {expandedItems.includes(item.href) && (
+                                                                <div className="ml-4 mt-1 space-y-1">
+                                                                    {item.subItems.map((subItem) => (
+                                                                        <NavLink key={subItem.href} item={subItem} isActive={pathname === subItem.href} onClick={onClose} isSubItem />
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </>
+                                                    ) : (
+                                                        <NavLink item={item} isActive={pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))} onClick={onClose} />
+                                                    )}
+                                                </div>
                                             ))}
                                         </div>
                                     )}
                                 </>
                             ) : (
-                                <NavLink item={item} isActive={pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))} onClick={onClose} />
+                                // Para outros perfis: menu normal
+                                <>
+                                    <p className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Menu</p>
+                                    {filteredNavItems.map((item) => (
+                                        <div key={item.href}>
+                                            {item.subItems ? (
+                                                <>
+                                                    <button onClick={() => toggleExpand(item.href)} className={cn('w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors', pathname.startsWith(item.href) ? 'bg-emerald-50 text-emerald-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900')}>
+                                                        <div className="flex items-center gap-3">{item.icon}{item.label}</div>
+                                                        {expandedItems.includes(item.href) ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                                                    </button>
+                                                    {expandedItems.includes(item.href) && (
+                                                        <div className="ml-4 mt-1 space-y-1">
+                                                            {item.subItems.map((subItem) => (
+                                                                <NavLink key={subItem.href} item={subItem} isActive={pathname === subItem.href} onClick={onClose} isSubItem />
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </>
+                                            ) : (
+                                                <NavLink item={item} isActive={pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))} onClick={onClose} />
+                                            )}
+                                        </div>
+                                    ))}
+                                </>
                             )}
-                        </div>
-                    ))}
+                        </>
+                    )}
                 </nav>
             </aside>
         </>
