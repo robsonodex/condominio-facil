@@ -8,9 +8,10 @@ import { useUser } from '@/hooks/useUser';
 import { createClient } from '@/lib/supabase/client';
 import { formatDate } from '@/lib/utils';
 import {
-    Users, UserPlus, LogIn, LogOut, Search, Camera, Printer,
+    Users, UserPlus, LogIn, LogOut, Search, Camera, Printer, QrCode,
     Clock, Car, CreditCard, Shield, Maximize, Minimize, RefreshCw, MessageSquare, AlertCircle
 } from 'lucide-react';
+import { QRCodeScanner } from '@/components/invites';
 
 interface Visitor {
     id: string;
@@ -37,6 +38,7 @@ export default function PortariaProfissionalPage() {
     const [filterType, setFilterType] = useState('');
     const [showModal, setShowModal] = useState(false);
     const [showCameraModal, setShowCameraModal] = useState(false);
+    const [showQRScanner, setShowQRScanner] = useState(false);
     const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -311,48 +313,63 @@ export default function PortariaProfissionalPage() {
             </div>
 
             {/* Quick Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <button
                     onClick={() => { setTipo('visitante'); setTipoFixo(true); setShowModal(true); }}
-                    className="group relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
+                    className="group relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
                 >
                     <div className="flex flex-col items-center gap-4">
-                        <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center group-hover:bg-white/30 transition-colors">
-                            <Users className="h-10 w-10" />
+                        <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center group-hover:bg-white/30 transition-colors">
+                            <Users className="h-8 w-8" />
                         </div>
                         <div className="text-center">
-                            <h3 className="text-2xl font-bold mb-1">Registrar Visitante</h3>
-                            <p className="text-blue-100 text-sm">Visitantes e convidados</p>
+                            <h3 className="text-xl font-bold mb-1">Visitante</h3>
+                            <p className="text-blue-100 text-xs">Registrar morador</p>
                         </div>
                     </div>
                 </button>
 
                 <button
                     onClick={() => { setTipo('prestador_servico'); setTipoFixo(true); setShowModal(true); }}
-                    className="group relative overflow-hidden bg-gradient-to-br from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
+                    className="group relative overflow-hidden bg-gradient-to-br from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
                 >
                     <div className="flex flex-col items-center gap-4">
-                        <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center group-hover:bg-white/30 transition-colors">
-                            <Shield className="h-10 w-10" />
+                        <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center group-hover:bg-white/30 transition-colors">
+                            <Shield className="h-8 w-8" />
                         </div>
                         <div className="text-center">
-                            <h3 className="text-2xl font-bold mb-1">Registrar Prestador</h3>
-                            <p className="text-orange-100 text-sm">Serviços e manutenção</p>
+                            <h3 className="text-xl font-bold mb-1">Prestador</h3>
+                            <p className="text-orange-100 text-xs">Manutenção</p>
                         </div>
                     </div>
                 </button>
 
                 <button
                     onClick={() => { setTipo('entrega'); setTipoFixo(true); setShowModal(true); }}
-                    className="group relative overflow-hidden bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
+                    className="group relative overflow-hidden bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
                 >
                     <div className="flex flex-col items-center gap-4">
-                        <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center group-hover:bg-white/30 transition-colors">
-                            <Car className="h-10 w-10" />
+                        <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center group-hover:bg-white/30 transition-colors">
+                            <Car className="h-8 w-8" />
                         </div>
                         <div className="text-center">
-                            <h3 className="text-2xl font-bold mb-1">Registrar Veículo</h3>
-                            <p className="text-green-100 text-sm">Entregas e veículos</p>
+                            <h3 className="text-xl font-bold mb-1">Veículo</h3>
+                            <p className="text-emerald-100 text-xs">Entregas</p>
+                        </div>
+                    </div>
+                </button>
+
+                <button
+                    onClick={() => setShowQRScanner(true)}
+                    className="group relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
+                >
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center group-hover:bg-white/30 transition-colors">
+                            <QrCode className="h-8 w-8" />
+                        </div>
+                        <div className="text-center">
+                            <h3 className="text-xl font-bold mb-1">Ler QR Code</h3>
+                            <p className="text-purple-100 text-xs">Validar convite</p>
                         </div>
                     </div>
                 </button>
@@ -619,6 +636,10 @@ export default function PortariaProfissionalPage() {
                         </Button>
                     </div>
                 </div>
+            </Modal>
+            {/* QR Scanner Modal */}
+            <Modal isOpen={showQRScanner} onClose={() => setShowQRScanner(false)} title="" size="md">
+                <QRCodeScanner onClose={() => { setShowQRScanner(false); fetchVisitors(); }} />
             </Modal>
         </div>
     );

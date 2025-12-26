@@ -1,11 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase/client';
-import { PageHeader } from '@/components/shared/PageHeader';
-import { Card } from '@/components/shared/Card';
-import { Modal } from '@/components/shared/Modal';
-import { Input } from '@/components/shared/Input';
+import { createClient } from '@/lib/supabase/client';
+import { Card, CardContent, Button, Input } from '@/components/ui';
+import { Modal } from '@/components/ui/modal';
 import { Building2, Plus, FileText, AlertTriangle, CheckCircle, Clock, Upload } from 'lucide-react';
 import { format, addYears, differenceInMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -23,6 +21,7 @@ interface Inspection {
 }
 
 export default function AutovistoriaPage() {
+    const supabase = createClient();
     const [inspections, setInspections] = useState<Inspection[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -173,16 +172,21 @@ export default function AutovistoriaPage() {
 
     return (
         <div className="space-y-6">
-            <PageHeader
-                title="Autovistoria Predial"
-                subtitle="Controle de vistorias obrigatórias (Lei 6.400/RJ)"
-                icon={Building2}
-                action={{
-                    label: 'Nova Vistoria',
-                    icon: Plus,
-                    onClick: () => setShowModal(true),
-                }}
-            />
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <div className="flex items-center gap-2 mb-1">
+                        <Building2 className="h-6 w-6 text-emerald-600" />
+                        <h1 className="text-2xl font-bold text-gray-900">Autovistoria Predial</h1>
+                    </div>
+                    <p className="text-gray-500">
+                        Controle de vistorias obrigatórias (Lei 6.400/RJ)
+                    </p>
+                </div>
+                <Button onClick={() => setShowModal(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Nova Vistoria
+                </Button>
+            </div>
 
             {/* Alerta se houver vistoria vencida ou próxima */}
             {inspections.some(i => i.status === 'vencida') && (
@@ -209,57 +213,60 @@ export default function AutovistoriaPage() {
                 </div>
             )}
 
-            {/* Lista de vistorias */}
             {inspections.length === 0 ? (
                 <Card>
-                    <div className="text-center py-12">
-                        <Building2 className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                        <p className="text-gray-500 mb-4">Nenhuma vistoria cadastrada</p>
-                        <button
-                            onClick={() => setShowModal(true)}
-                            className="inline-flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700"
-                        >
-                            <Plus className="h-4 w-4" /> Cadastrar Primeira Vistoria
-                        </button>
-                    </div>
+                    <CardContent>
+                        <div className="text-center py-12">
+                            <Building2 className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                            <p className="text-gray-500 mb-4">Nenhuma vistoria cadastrada</p>
+                            <Button
+                                onClick={() => setShowModal(true)}
+                                className="bg-emerald-600 hover:bg-emerald-700"
+                            >
+                                <Plus className="h-4 w-4" /> Cadastrar Primeira Vistoria
+                            </Button>
+                        </div>
+                    </CardContent>
                 </Card>
             ) : (
                 <div className="grid gap-4">
                     {inspections.map((inspection) => (
                         <Card key={inspection.id}>
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                <div className="flex-1">
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <FileText className="h-5 w-5 text-emerald-600" />
-                                        <span className="font-medium text-gray-900">
-                                            Vistoria de {format(new Date(inspection.data_realizacao), "dd/MM/yyyy")}
-                                        </span>
-                                        {getStatusBadge(inspection.status)}
-                                    </div>
-                                    <div className="text-sm text-gray-600 space-y-1">
-                                        <p>
-                                            <strong>Válida até:</strong>{' '}
-                                            {format(new Date(inspection.data_limite_proxima), "dd/MM/yyyy")}
-                                        </p>
-                                        {inspection.engenheiro_responsavel && (
+                            <CardContent className="p-6">
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <FileText className="h-5 w-5 text-emerald-600" />
+                                            <span className="font-medium text-gray-900">
+                                                Vistoria de {format(new Date(inspection.data_realizacao), "dd/MM/yyyy")}
+                                            </span>
+                                            {getStatusBadge(inspection.status)}
+                                        </div>
+                                        <div className="text-sm text-gray-600 space-y-1">
                                             <p>
-                                                <strong>Engenheiro:</strong> {inspection.engenheiro_responsavel}
-                                                {inspection.crea_cau_numero && ` (${inspection.crea_cau_numero})`}
+                                                <strong>Válida até:</strong>{' '}
+                                                {format(new Date(inspection.data_limite_proxima), "dd/MM/yyyy")}
                                             </p>
-                                        )}
+                                            {inspection.engenheiro_responsavel && (
+                                                <p>
+                                                    <strong>Engenheiro:</strong> {inspection.engenheiro_responsavel}
+                                                    {inspection.crea_cau_numero && ` (${inspection.crea_cau_numero})`}
+                                                </p>
+                                            )}
+                                        </div>
                                     </div>
+                                    {inspection.laudo_url && (
+                                        <a
+                                            href={inspection.laudo_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-2 px-4 py-2 border border-emerald-200 text-emerald-600 rounded-lg hover:bg-emerald-50 text-sm"
+                                        >
+                                            <FileText className="h-4 w-4" /> Ver Laudo
+                                        </a>
+                                    )}
                                 </div>
-                                {inspection.laudo_url && (
-                                    <a
-                                        href={inspection.laudo_url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-2 px-4 py-2 border border-emerald-200 text-emerald-600 rounded-lg hover:bg-emerald-50 text-sm"
-                                    >
-                                        <FileText className="h-4 w-4" /> Ver Laudo
-                                    </a>
-                                )}
-                            </div>
+                            </CardContent>
                         </Card>
                     ))}
                 </div>
@@ -331,27 +338,21 @@ export default function AutovistoriaPage() {
                     </div>
 
                     <div className="flex justify-end gap-3 pt-4">
-                        <button
+                        <Button
                             type="button"
+                            variant="ghost"
                             onClick={() => setShowModal(false)}
-                            className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
                         >
                             Cancelar
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                             type="submit"
                             disabled={saving || !dataRealizacao}
-                            className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-2"
+                            className="bg-emerald-600 hover:bg-emerald-700"
+                            loading={saving}
                         >
-                            {saving ? (
-                                <>
-                                    <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
-                                    Salvando...
-                                </>
-                            ) : (
-                                'Salvar Vistoria'
-                            )}
-                        </button>
+                            Salvar Vistoria
+                        </Button>
                     </div>
                 </form>
             </Modal>
