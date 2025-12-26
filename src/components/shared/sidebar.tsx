@@ -108,7 +108,6 @@ const navItems: NavItem[] = [
     { href: '/configuracoes/integracao-whatsapp', label: 'WhatsApp Oficial', icon: <MessageCircle className="h-5 w-5 text-green-500" />, roles: ['sindico'] },
     { href: '/configuracoes/integracao-pagamentos', label: 'Integração Premium', icon: <Zap className="h-5 w-5 text-amber-400" />, roles: ['sindico'] },
     { href: '/configuracoes/pix', label: 'Configurar PIX', icon: <QrCode className="h-5 w-5" />, roles: ['sindico'] },
-    { href: '/configuracoes/email', label: 'Configuração de E-mail', icon: <Mail className="h-5 w-5 text-blue-500" />, roles: ['sindico', 'superadmin'] },
     { href: '/configuracoes/assistente', label: '🤖 Assistente IA', icon: <Bot className="h-5 w-5 text-purple-500" />, roles: ['sindico'] },
     { href: '/assinatura', label: 'Assinatura', icon: <CreditCard className="h-5 w-5" />, roles: ['sindico'] },
     { href: '/sugestoes', label: 'Sugestões', icon: <Lightbulb className="h-5 w-5" />, roles: ['sindico', 'morador', 'inquilino', 'porteiro'] },
@@ -137,7 +136,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     const [chatSindicoAtivo, setChatSindicoAtivo] = useState<boolean>(false);
     const [expandedItems, setExpandedItems] = useState<string[]>(['/governanca']);
     const [pendingChats, setPendingChats] = useState(0);
-    const [menuSectionExpanded, setMenuSectionExpanded] = useState(false); // Fechado por padrão para superadmin
     const supabase = createClient();
 
     useEffect(() => {
@@ -265,74 +263,28 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                         </>
                     )}
 
-                    {/* Seção Menu - Colapsável para Superadmin */}
-                    {filteredNavItems.length > 0 && (
-                        <>
-                            {profile?.role === 'superadmin' && !isImpersonating && viewAsRole === 'superadmin' ? (
-                                // Para Superadmin: seção colapsável
+                    {filteredNavItems.length > 0 && <p className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Menu</p>}
+                    {filteredNavItems.map((item) => (
+                        <div key={item.href}>
+                            {item.subItems ? (
                                 <>
-                                    <button
-                                        onClick={() => setMenuSectionExpanded(!menuSectionExpanded)}
-                                        className="w-full px-3 py-2 flex items-center justify-between text-xs font-semibold text-gray-400 uppercase tracking-wider hover:text-gray-600 transition-colors"
-                                    >
-                                        <span>Menu (Outros Perfis)</span>
-                                        {menuSectionExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                                    <button onClick={() => toggleExpand(item.href)} className={cn('w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors', pathname.startsWith(item.href) ? 'bg-emerald-50 text-emerald-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900')}>
+                                        <div className="flex items-center gap-3">{item.icon}{item.label}</div>
+                                        {expandedItems.includes(item.href) ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                                     </button>
-                                    {menuSectionExpanded && (
-                                        <div className="space-y-1">
-                                            {filteredNavItems.map((item) => (
-                                                <div key={item.href}>
-                                                    {item.subItems ? (
-                                                        <>
-                                                            <button onClick={() => toggleExpand(item.href)} className={cn('w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors', pathname.startsWith(item.href) ? 'bg-emerald-50 text-emerald-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900')}>
-                                                                <div className="flex items-center gap-3">{item.icon}{item.label}</div>
-                                                                {expandedItems.includes(item.href) ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                                                            </button>
-                                                            {expandedItems.includes(item.href) && (
-                                                                <div className="ml-4 mt-1 space-y-1">
-                                                                    {item.subItems.map((subItem) => (
-                                                                        <NavLink key={subItem.href} item={subItem} isActive={pathname === subItem.href} onClick={onClose} isSubItem />
-                                                                    ))}
-                                                                </div>
-                                                            )}
-                                                        </>
-                                                    ) : (
-                                                        <NavLink item={item} isActive={pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))} onClick={onClose} />
-                                                    )}
-                                                </div>
+                                    {expandedItems.includes(item.href) && (
+                                        <div className="ml-4 mt-1 space-y-1">
+                                            {item.subItems.map((subItem) => (
+                                                <NavLink key={subItem.href} item={subItem} isActive={pathname === subItem.href} onClick={onClose} isSubItem />
                                             ))}
                                         </div>
                                     )}
                                 </>
                             ) : (
-                                // Para outros perfis: menu normal
-                                <>
-                                    <p className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Menu</p>
-                                    {filteredNavItems.map((item) => (
-                                        <div key={item.href}>
-                                            {item.subItems ? (
-                                                <>
-                                                    <button onClick={() => toggleExpand(item.href)} className={cn('w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors', pathname.startsWith(item.href) ? 'bg-emerald-50 text-emerald-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900')}>
-                                                        <div className="flex items-center gap-3">{item.icon}{item.label}</div>
-                                                        {expandedItems.includes(item.href) ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                                                    </button>
-                                                    {expandedItems.includes(item.href) && (
-                                                        <div className="ml-4 mt-1 space-y-1">
-                                                            {item.subItems.map((subItem) => (
-                                                                <NavLink key={subItem.href} item={subItem} isActive={pathname === subItem.href} onClick={onClose} isSubItem />
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                </>
-                                            ) : (
-                                                <NavLink item={item} isActive={pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))} onClick={onClose} />
-                                            )}
-                                        </div>
-                                    ))}
-                                </>
+                                <NavLink item={item} isActive={pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))} onClick={onClose} />
                             )}
-                        </>
-                    )}
+                        </div>
+                    ))}
                 </nav>
             </aside>
         </>
