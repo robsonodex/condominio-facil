@@ -66,18 +66,20 @@ export default function LoginPage() {
         <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-emerald-50 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
             <div className="sm:mx-auto sm:w-full sm:max-w-md">
                 <div className="flex flex-col items-center">
-                    <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-200">
-                        <Building2 className="h-9 w-9 text-white" />
-                    </div>
-                    <h2 className="mt-4 text-center text-3xl font-bold tracking-tight text-gray-900">
-                        <span
-                            className="text-2xl text-emerald-500 font-bold block mb-1"
-                            style={{ fontFamily: "'Brush Script MT', 'Lucida Handwriting', cursive", fontStyle: 'italic' }}
-                        >
-                            Meu
-                        </span>
-                        Condomínio Fácil
-                    </h2>
+                    <Link href="/" className="group flex flex-col items-center">
+                        <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-200 group-hover:scale-105 transition-transform">
+                            <Building2 className="h-9 w-9 text-white" />
+                        </div>
+                        <h2 className="mt-4 text-center text-3xl font-bold tracking-tight text-gray-900">
+                            <span
+                                className="text-2xl text-emerald-500 font-bold block mb-1"
+                                style={{ fontFamily: "'Brush Script MT', 'Lucida Handwriting', cursive", fontStyle: 'italic' }}
+                            >
+                                Meu
+                            </span>
+                            Condomínio Fácil
+                        </h2>
+                    </Link>
                 </div>
                 <p className="mt-2 text-center text-sm text-gray-600">
                     Gestão simples para o seu condomínio

@@ -169,10 +169,10 @@ export default function SobrePage() {
             <section className="py-16 bg-gray-50">
                 <div className="container mx-auto px-4 text-center">
                     <h2 className="text-2xl font-bold text-gray-900 mb-4">Quer conhecer o sistema?</h2>
-                    <p className="text-gray-600 mb-6">Faça um teste gratuito de 14 dias, sem compromisso.</p>
+                    <p className="text-gray-600 mb-6">Faça um teste gratuito de 7 dias, sem compromisso.</p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <Link
-                            href="/onboarding"
+                            href="/register"
                             className="px-8 py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 transition-colors"
                         >
                             Começar Agora
