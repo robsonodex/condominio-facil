@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { QuoteAuditor } from '@/components/financeiro/QuoteAuditor';
 import { Search, FileText, TrendingDown, CheckCircle, AlertTriangle, Clock } from 'lucide-react';
 import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface AuditHistory {
     id: string;
@@ -22,6 +23,10 @@ export default function AuditorOrcamentosPage() {
     const [condoId, setCondoId] = useState<string | null>(null);
     const [userId, setUserId] = useState<string | null>(null);
 
+    const [isSuperadmin, setIsSuperadmin] = useState(false);
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [genStatus, setGenStatus] = useState<string | null>(null);
+
     const supabase = createClient();
 
     useEffect(() => {
@@ -36,26 +41,55 @@ export default function AuditorOrcamentosPage() {
 
             const { data: profile } = await supabase
                 .from('users')
-                .select('condo_id')
+                .select('condo_id, role')
                 .eq('id', user.id)
                 .single();
 
-            if (profile?.condo_id) {
-                setCondoId(profile.condo_id);
+            if (profile) {
+                setIsSuperadmin(profile.role === 'superadmin');
+                if (profile.condo_id) {
+                    setCondoId(profile.condo_id);
 
-                const { data: audits } = await supabase
-                    .from('quote_audits')
-                    .select('*')
-                    .eq('condo_id', profile.condo_id)
-                    .order('created_at', { ascending: false })
-                    .limit(10);
+                    const { data: audits } = await supabase
+                        .from('quote_audits')
+                        .select('*')
+                        .eq('condo_id', profile.condo_id)
+                        .order('created_at', { ascending: false })
+                        .limit(10);
 
-                setHistory(audits || []);
+                    setHistory(audits || []);
+                }
             }
         } catch (error) {
             console.error('Erro:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleGenerateEmbeddings = async () => {
+        if (!confirm('Deseja gerar os vetores (embeddings) para a base de preços? Isso ativará a inteligência do auditor.')) return;
+
+        setIsGenerating(true);
+        setGenStatus('Gerando vetores...');
+
+        try {
+            const response = await fetch('/api/admin/embeddings/generate', { method: 'POST' });
+            const data = await response.json();
+
+            if (response.ok) {
+                alert(data.message || 'Busca semântica ativada com sucesso!');
+                setGenStatus('Ativada!');
+            } else {
+                alert('Erro ao gerar embeddings: ' + (data.error || 'Erro desconhecido'));
+                setGenStatus('Erro');
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            alert('Erro de conexão ao gerar embeddings');
+            setGenStatus('Erro');
+        } finally {
+            setIsGenerating(false);
         }
     };
 
@@ -71,14 +105,32 @@ export default function AuditorOrcamentosPage() {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                    <Search className="h-6 w-6 text-purple-600" />
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-purple-100 rounded-lg">
+                        <Search className="h-6 w-6 text-purple-600" />
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900">Auditor de Orçamentos</h1>
+                        <p className="text-sm text-gray-500">Análise inteligente de preços baseada no mercado do RJ</p>
+                    </div>
                 </div>
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Auditor de Orçamentos</h1>
-                    <p className="text-sm text-gray-500">Análise inteligente de preços baseada no mercado do RJ</p>
-                </div>
+
+                {isSuperadmin && (
+                    <button
+                        onClick={handleGenerateEmbeddings}
+                        disabled={isGenerating}
+                        className={cn(
+                            "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
+                            isGenerating
+                                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                : "bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200"
+                        )}
+                    >
+                        <Search className={cn("h-4 w-4", isGenerating && "animate-pulse")} />
+                        {isGenerating ? genStatus : 'Ativar Busca Semântica IA'}
+                    </button>
+                )}
             </div>
 
             {/* Stats */}
