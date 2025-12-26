@@ -90,6 +90,13 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Falha ao gerar usuário' }, { status: 500 });
         }
 
+        // SAFETY: Force email confirmation explicitly to ensure login works immediately
+        if (!authData.user.email_confirmed_at) {
+            await supabaseAdmin.auth.admin.updateUserById(authData.user.id, {
+                email_confirm: true
+            });
+        }
+
         let finalCondoId = condo_id || null;
         let planData: { valor_mensal?: number; nome_plano?: string } | null = null;
 
