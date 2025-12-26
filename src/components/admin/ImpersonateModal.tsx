@@ -19,13 +19,18 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 
 export function ImpersonateModal() {
-    const { refetchUser } = useUser();
+    const { refetchUser, isSuperAdminReal } = useUser();
     const [open, setOpen] = useState(false);
     const [search, setSearch] = useState('');
     const [results, setResults] = useState<any[]>([]);
     const [searching, setSearching] = useState(false);
     const [impersonating, setImpersonating] = useState(false);
     const router = useRouter();
+
+    // Só superadmin pode ver este botão
+    if (!isSuperAdminReal) {
+        return null;
+    }
 
     const handleSearch = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
