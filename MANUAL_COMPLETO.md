@@ -333,13 +333,27 @@ O **Condomínio Fácil** é uma plataforma SaaS (Software como Serviço) **100% 
 - Valor estimado vs realizado
 - Data agendada e conclusão
 
-### 19. Modo Demo
+### 19. Marketplace & Indicações (`/marketplace`) ✨ NOVO v8.2
+- **Anúncios entre Vizinhos**
+  - Vendo, Doo, Alugo, Ofereço Serviço
+  - Upload de até 5 fotos
+  - Filtros por tipo
+  - Expiração automática em 30 dias
+  - Botão "Tenho Interesse" abre WhatsApp
+- **Indicação de Profissionais**
+  - Avaliação por estrelas (1-5)
+  - Categorias: Pintor, Eletricista, Encanador, etc
+  - Depoimento do morador que indica
+  - Contato direto via WhatsApp
+- Visível para: Síndico, Morador, Inquilino
+
+### 20. Modo Demo
 - Botão "Demonstração" na tela de login
 - Cria ambiente completo automaticamente
 - Dados fictícios para demonstração comercial
 - Login: `sindico.demo@condofacil.com` / `demo123456`
 
-### 20. Assistente IA (`/configuracoes/assistente`)
+### 21. Assistente IA (`/configuracoes/assistente`)
 - Chatbot treinado com documentos do condomínio
 - Responde perguntas dos moradores 24h
 - Configuração de persona e tom de resposta

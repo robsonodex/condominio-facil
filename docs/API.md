@@ -1,297 +1,535 @@
-# API Routes - Documentação
+# API Routes - Documentação Completa
 
-## Estrutura Geral
+**Versão:** 8.2  
+**Última Atualização:** 26/12/2024  
+**Total de Endpoints:** 110+
 
-Todas as rotas da API estão em `/src/app/api/` e seguem o padrão de API Routes do Next.js 15.
+---
 
-### Padrão de Autenticação
+## Índice
 
-```typescript
-import { createClient } from '@/lib/supabase/server';
+1. [Autenticação](#autenticação)
+2. [Administração](#administração-apiapiadmin)
+3. [Usuários e Perfil](#usuários-e-perfil)
+4. [Condomínios](#condomínios)
+5. [Financeiro](#financeiro)
+6. [Cobranças e Pagamentos](#cobranças-e-pagamentos)
+7. [E-mail](#e-mail)
+8. [Chat e Comunicação](#chat-e-comunicação)
+9. [Portaria](#portaria)
+10. [Ocorrências](#ocorrências)
+11. [Reservas](#reservas)
+12. [Governança](#governança)
+13. [Manutenção](#manutenção)
+14. [Marketplace](#marketplace)
+15. [Integrações](#integrações)
+16. [IA e Assistente](#ia-e-assistente)
+17. [Câmeras](#câmeras)
+18. [Cron Jobs](#cron-jobs)
+19. [Emergência](#emergência)
 
-export async function GET/POST/PUT/DELETE(request: NextRequest) {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-        return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
-    }
-    
-    // Lógica da rota
+---
+
+## Autenticação
+
+### POST `/api/auth/login`
+Login do usuário.
+
+**Body:**
+```json
+{
+  "email": "usuario@email.com",
+  "password": "senha123"
 }
 ```
 
-## Módulos de API
-
-### 1. Admin (`/api/admin/*`)
-
-**Autenticação**: Apenas superadmin
-
-| Endpoint | Método | Descrição |
-|----------|--------|-----------|
-| `/api/admin/condos` | GET | Lista todos os condomínios |
-| `/api/admin/condos` | POST | Cria novo cond
-
-omínio |
-| `/api/admin/condos` | DELETE | Exclui condomínio (com CASCADE) |
-| `/api/admin/usuarios` | GET | Lista todos os usuários do sistema |
-| `/api/admin/assinaturas` | GET | Lista todas as assinaturas ativas |
-| `/api/admin/cobrancas` | GET | Relatório de cobranças global |
-| `/api/admin/smtp-global` | GET/POST/DELETE | Config SMTP global |
-| `/api/admin/smtp-global/test` | POST | Testa conexão SMTP |
-| `/api/admin/pending-chats` | GET | Contador de chats pendentes |
-| `/api/admin/condos-chat` | GET | Lista conversas de todos condos |
-
-### 2. Autenticação (`/api/auth/*`)
-
-| Endpoint | Método | Descrição |
-|----------|--------|-----------|
-| `/api/auth/signin` | POST | Login de usuário |
-| `/api/auth/signup` | POST | Registro de novo usuário |
-| `/api/auth/signout` | POST | Logout |
-| `/api/auth/reset-password` | POST | Envio de e-mail de recuperação |
-
-### 3. Financeiro (`/api/financial/*`)
-
-**Autenticação**: Síndico
-
-| Endpoint | Método | Descrição |
-|----------|--------|-----------|
-| `/api/financial` | GET | Lista transações financeiras |
-| `/api/financial` | POST | Cria nova transação |
-| `/api/financial` | PUT | Atualiza transação |
-| `/api/financial` | DELETE | Remove transação |
-
-**Exemplo de Response**:
+**Response:**
 ```json
 {
-  "data": [
-    {
-      "id": "uuid",
-      "condo_id": "uuid",
-      "tipo": "receita|despesa",
-      "descricao": "string",
-      "valor": 1500.00,
-      "data": "2024-01-15",
-      "categoria": "string",
-      "created_at": "timestamp"
-    }
+  "success": true,
+  "user": { "id": "uuid", "email": "...", "role": "sindico" }
+}
+```
+
+---
+
+### GET `/api/auth/profile`
+Retorna perfil do usuário logado.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "id": "uuid",
+  "nome": "João Silva",
+  "email": "joao@email.com",
+  "role": "sindico",
+  "condo_id": "uuid"
+}
+```
+
+---
+
+### PATCH `/api/auth/profile`
+Atualiza perfil do usuário.
+
+**Body:**
+```json
+{
+  "nome": "Novo Nome",
+  "telefone": "11999999999"
+}
+```
+
+---
+
+## Administração (`/api/admin/*`)
+
+### GET `/api/admin/condos`
+Lista todos os condomínios (superadmin).
+
+**Response:**
+```json
+{
+  "condos": [
+    { "id": "uuid", "nome": "Residencial Sol", "status": "ativo" }
   ]
 }
 ```
 
-### 4. Cobranças (`/api/billing/*`)
+---
 
-**Autenticação**: Síndico
+### POST `/api/admin/users`
+Cria novo usuário (síndico/morador).
 
-| Endpoint | Método | Descrição |
-|----------|--------|-----------|
-| `/api/billing` | GET | Lista cobranças do condomínio |
-| `/api/billing` | POST | Cria cobrança para moradores |
-| `/api/billing/send-invoice` | POST | Envia e-mail com fatura |
-
-**Body para criação**:
+**Body:**
 ```json
 {
-  "unidade_id": "uuid",
+  "nome": "Maria Silva",
+  "email": "maria@email.com",
+  "senha": "123456",
+  "role": "sindico",
+  "condo_id": "uuid",
+  "enviar_email": true
+}
+```
+
+---
+
+### GET/POST `/api/admin/smtp-global`
+Configuração SMTP global.
+
+**GET Response:**
+```json
+{
+  "smtp_host": "smtp.hostinger.com",
+  "smtp_port": 465,
+  "smtp_user": "noreply@...",
+  "smtp_from_email": "noreply@..."
+}
+```
+
+**POST Body:**
+```json
+{
+  "smtp_host": "smtp.hostinger.com",
+  "smtp_port": 465,
+  "smtp_user": "noreply@...",
+  "smtp_password": "senha",
+  "smtp_from_email": "noreply@...",
+  "smtp_from_name": "Condomínio Fácil"
+}
+```
+
+---
+
+### POST `/api/admin/smtp-global/test`
+Testa conexão SMTP e envia e-mail real.
+
+**Body:**
+```json
+{
+  "smtp_host": "...",
+  "smtp_port": 465,
+  "smtp_user": "...",
+  "smtp_password": "..."
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Email de teste enviado com sucesso!"
+}
+```
+
+---
+
+### GET `/api/admin/pending-chats`
+Retorna quantidade de chats de suporte pendentes.
+
+---
+
+### GET `/api/admin/subscriptions`
+Lista todas as assinaturas.
+
+---
+
+### POST `/api/admin/billing`
+Processa cobrança de assinatura.
+
+---
+
+## Usuários e Perfil
+
+### GET `/api/users`
+Lista usuários do condomínio.
+
+### POST `/api/users`
+Cria novo usuário.
+
+### GET `/api/users/[id]`
+Detalhes do usuário.
+
+### PATCH `/api/users/[id]`
+Atualiza usuário.
+
+### DELETE `/api/users/[id]`
+Remove usuário.
+
+---
+
+## Condomínios
+
+### GET `/api/condos`
+Lista condomínios.
+
+### GET `/api/condos/[id]`
+Detalhes do condomínio.
+
+### PATCH `/api/condos/[id]`
+Atualiza condomínio.
+
+---
+
+## Financeiro
+
+### GET `/api/financial/entries`
+Lista lançamentos financeiros.
+
+**Query Params:**
+- `month`: Mês (1-12)
+- `year`: Ano
+- `type`: receita | despesa
+
+### POST `/api/financial/entries`
+Cria lançamento financeiro.
+
+**Body:**
+```json
+{
+  "tipo": "receita",
+  "categoria": "Taxa de condomínio",
   "valor": 500.00,
-  "descricao": "Condomínio Janeiro/2024",
-  "vencimento": "2024-01-10",
-  "tipo": "boleto|pix"
+  "descricao": "Taxa mensal",
+  "data": "2024-12-26"
 }
 ```
 
-### 5. Chat Síndico (`/api/chat-sindico/*`)
+### POST `/api/financeiro/audit`
+Audita orçamento usando IA.
 
-**Autenticação**: Síndico ou Morador
-
-| Endpoint | Método | Descrição |
-|----------|--------|-----------|
-| `/api/chat-sindico` | GET | Lista conversas do usuário |
-| `/api/chat-sindico/messages` | GET | Mensagens de uma conversa |
-| `/api/chat-sindico/messages` | POST | Envia nova mensagem |
-
-### 6. Configurações SMTP (`/api/configuracoes-smtp/*`)
-
-**Autenticação**: Síndico
-
-| Endpoint | Método | Descrição |
-|----------|--------|-----------|
-| `/api/configuracoes-smtp` | GET | Busca config SMTP do condo |
-| `/api/configuracoes-smtp` | POST | Salva config SMTP |
-| `/api/configuracoes-smtp` | DELETE | Remove config SMTP |
-| `/api/configuracoes-smtp/test` | POST | Testa conexão SMTP |
-
-### 7. E-mail (`/api/email/*`)
-
-| Endpoint | Método | Descrição |
-|----------|--------|-----------|
-| `/api/email` | POST | Envia e-mail genérico |
-| `/api/email/send-invoice` | POST | Envia e-mail com fatura |
-
-**Sistema de Prioridade de SMTP**:
-1. SMTP do condomínio (se configurado)
-2. SMTP global do superadmin (fallback)
-3. Log como pendente se nenhum configurado
-
-### 8. Notificações (`/api/notifications/*`)
-
-**Autenticação**: Qualquer usuário autenticado
-
-| Endpoint | Método | Descrição |
-|----------|--------|-----------|
-| `/api/notifications` | GET | Lista notificações do usuário |
-| `/api/notifications` | POST | Cria notificação |
-| `/api/notifications/mark-read` | PUT | Marca como lida |
-
-### 9. Ocorrências (`/api/portaria/*`)
-
-**Autenticação**: Síndico, Morador, Porteiro
-
-| Endpoint | Método | Descrição |
-|----------|--------|-----------|
-| `/api/portaria/occurrences` | GET | Lista ocorrências |
-| `/api/portaria/occurrences` | POST | Cria ocorrência |
-| `/api/portaria/occurrences` | PUT | Atualiza status |
-| `/api/portaria/visitors` | GET/POST | Visitantes |
-| `/api/portaria/packages` | GET/POST | Encomendas |
-
-### 10. Reservas (`/api/reservations/*`)
-
-**Autenticação**: Síndico ou Morador
-
-| Endpoint | Método | Descrição |
-|----------|--------|-----------|
-| `/api/reservations` | GET | Lista reservas |
-| `/api/reservations` | POST | Cria reserva |
-| `/api/reservations` | DELETE | Cancela reserva |
-| `/api/common-areas` | GET | Lista áreas comuns |
-
-**Validações**:
-- Verifica disponibilidade de horário
-- Impede reservas em horários conflitantes
-- Respeita regras de antecedência mínima
-
-### 11. Sugestões (`/api/suggestions/*`)
-
-**Autenticação**: Qualquer usuário do condo
-
-| Endpoint | Método | Descrição |
-|----------|--------|-----------|
-| `/api/suggestions` | GET | Lista sugestões |
-| `/api/suggestions` | POST | Cria sugestão |
-| `/api/suggestions/vote` | POST | Vota em sugestão |
-
-### 12. Governança (`/api/governanca/*`)
-
-**Autenticação**: Síndico
-
-| Endpoint | Método | Descrição |
-|----------|--------|-----------|
-| `/api/governanca/enquetes` | GET/POST | Enquetes |
-| `/api/governanca/enquetes/vote` | POST | Votar em enquete |
-| `/api/governanca/assembleias` | GET/POST | Assembleias |
-| `/api/governanca/documents` | GET/POST | Documentos |
-
-### 13. Assistente IA (`/api/ai/*`)
-
-**Autenticação**: Síndico ou Morador (conforme plano)
-
-| Endpoint | Método | Descrição |
-|----------|--------|-----------|
-| `/api/ai/chat` | POST | Chat com GPT |
-| `/api/ai/suggestions` | POST | Sugestões IA |
-| `/api/ai/documents` | POST | Análise de documentos |
-
-### 14. PIX (`/api/pix/*`)
-
-**Autenticação**: Síndico
-
-| Endpoint | Método | Descrição |
-|----------|--------|-----------|
-| `/api/pix` | GET | Busca config PIX |
-| `/api/pix` | POST | Salva config PIX |
-
-### 15. Planos (`/api/plan-features/*`)
-
-**Autenticação**: Qualquer usuário
-
-| Endpoint | Método | Descrição |
-|----------|--------|-----------|
-| `/api/plan-features` | GET | Retorna features do plano ativo |
-
-**Response**:
+**Body:**
 ```json
 {
-  "hasOccurrences": true,
-  "hasCommonAreas": true,
-  "hasReports": true,
-  "hasDeliveries": true,
-  "hasAssemblies": false,
-  "hasPolls": false,
-  "hasDocuments": false,
-  "hasMaintenance": false,
-  "maxUnits": 50,
-  "hasAI": false,
-  "hasMensageria": true,
-  "hasChatSindico": true
+  "file": "(base64 do arquivo)",
+  "filename": "orcamento.pdf"
 }
 ```
 
-### 16. Webhooks (`/api/webhooks/*`)
+---
 
-| Endpoint | Método | Descrição |
-|----------|--------|-----------|
-| `/api/webhooks/mercadopago` | POST | Webhook Mercado Pago |
+## Cobranças e Pagamentos
 
-**Tratamento de Eventos**:
-- `payment.created`
-- `payment.approved`
-- `payment.rejected`
-- Atualiza status da assinatura
+### GET `/api/billings`
+Lista cobranças.
 
-### 17. Cron Jobs (`/api/cron/*`)
+### POST `/api/billings`
+Cria cobrança.
 
-**Autenticação**: Vercel Cron (secret token)
+### POST `/api/billing/send-invoice`
+Envia fatura por e-mail.
 
-| Endpoint | Descrição | Frequência |
-|----------|-----------|-----------|
-| `/api/cron/check-trial` | Verifica trials expirados | Diário |
-| `/api/cron/send-reminders` | Envia lembretes de pagamento | Diário |
-| `/api/cron/cleanup` | Limpeza de dados antigos | Semanal |
+### POST `/api/checkout`
+Cria checkout Mercado Pago.
 
-## Tratamento de Erros
+### POST `/api/checkout/pix`
+Gera código PIX.
 
-Todos os endpoints retornam erros no formato padrão:
+### POST `/api/checkout/boleto`
+Gera boleto.
 
+---
+
+## E-mail
+
+### POST `/api/email`
+Envia e-mail.
+
+**Body:**
 ```json
 {
-  "error": "Mensagem de erro",
-  "details": "Detalhes adicionais (opcional)",
-  "code": "ERRO_CODIGO (opcional)"
+  "tipo": "user_credentials",
+  "destinatario": "usuario@email.com",
+  "dados": {
+    "nome": "João",
+    "email": "joao@email.com",
+    "password": "123456"
+  }
 }
 ```
 
-### Códigos HTTP
+**Tipos disponíveis:**
+- `welcome` - Boas-vindas
+- `user_credentials` - Credenciais
+- `billing_notification` - Cobrança
+- `payment_confirmed` - Pagamento confirmado
+- `condo_trial` - Período de teste
+- `condo_active` - Ativação
+- `occurrence_update` - Ocorrência
+- `reservation_confirmed` - Reserva
 
-- `200`: Sucesso
-- `201`: Criado com sucesso
-- `400`: Requisição inválida
-- `401`: Não autorizado
-- `403`: Sem permissão
-- `404`: Não encontrado
-- `500`: Erro interno
+### POST `/api/email/resend`
+Reenvia e-mail.
 
-## Rate Limiting
+### GET/POST `/api/configuracoes-smtp`
+SMTP por condomínio.
 
-Implementado via Vercel Edge Config (produção):
-- 100 requisições/minuto por IP em rotas públicas
-- 300 requisições/minuto para usuários autenticados
-- 1000 requisições/minuto para admin
+### POST `/api/configuracoes-smtp/test`
+Testa SMTP do condomínio.
 
-## CORS
+---
 
-Configurado para aceitar apenas domínios autorizados:
-- `meucondominiofacil.com`
-- `*.vercel.app` (staging)
-- `localhost:3000` (desenvolvimento)
+## Chat e Comunicação
+
+### GET `/api/chat-sindico`
+Lista conversas do chat morador↔síndico.
+
+### POST `/api/chat-sindico`
+Envia mensagem.
+
+**Body:**
+```json
+{
+  "message": "Olá, preciso de ajuda",
+  "category": "financeiro"
+}
+```
+
+### GET `/api/chat-sindico/[id]`
+Detalhes da conversa.
+
+---
+
+## Portaria
+
+### GET `/api/portaria/visitors`
+Lista visitantes.
+
+### POST `/api/portaria/visitors`
+Registra visitante.
+
+### GET/POST `/api/portaria/deliveries`
+Gestão de encomendas.
+
+### POST `/api/portaria/checkout`
+Checkout de visitante/encomenda.
+
+---
+
+## Ocorrências
+
+### GET `/api/ocorrencias`
+Lista ocorrências.
+
+### POST `/api/ocorrencias`
+Cria ocorrência.
+
+### PATCH `/api/ocorrencias/[id]`
+Atualiza ocorrência.
+
+---
+
+## Reservas
+
+### GET `/api/reservas`
+Lista reservas.
+
+### POST `/api/reservas`
+Cria reserva.
+
+### GET `/api/common-areas`
+Lista áreas comuns.
+
+---
+
+## Governança
+
+### GET/POST `/api/governanca/assemblies`
+Assembleias.
+
+### GET/POST `/api/governanca/polls`
+Enquetes.
+
+### GET/POST `/api/governanca/documents`
+Documentos.
+
+---
+
+## Manutenção
+
+### GET/POST `/api/manutencao`
+Ordens de manutenção.
+
+### GET/POST `/api/manutencao/suppliers`
+Fornecedores.
+
+---
+
+## Marketplace
+
+### GET `/api/marketplace/ads`
+Lista anúncios.
+
+### POST `/api/marketplace/ads`
+Cria anúncio.
+
+### GET/POST `/api/marketplace/recommendations`
+Indicações de profissionais.
+
+---
+
+## Integrações
+
+### POST `/api/mercadopago/webhook`
+Webhook Mercado Pago.
+
+### POST `/api/whatsapp/send`
+Envia WhatsApp.
+
+### GET `/api/whatsapp/status`
+Status da conexão.
+
+---
+
+## IA e Assistente
+
+### POST `/api/ai/chat`
+Chat com IA.
+
+**Body:**
+```json
+{
+  "message": "Qual o horário da piscina?",
+  "conversationId": "uuid"
+}
+```
+
+### POST `/api/ai/documents`
+Upload documentos para IA.
+
+### POST `/api/admin/embeddings/generate`
+Gera embeddings.
+
+---
+
+## Câmeras
+
+### GET `/api/cameras`
+Lista câmeras.
+
+### POST `/api/cameras`
+Adiciona câmera.
+
+### GET `/api/cameras/[id]/snapshot`
+Captura frame.
+
+### GET `/api/cameras/[id]/stream-token`
+Token para stream.
+
+---
+
+## Cron Jobs
+
+### GET `/api/cron/master`
+Cron mestre (executa todos).
+
+### GET `/api/cron/health-check`
+Verifica saúde do sistema.
+
+### GET `/api/cron/manutencao-check`
+Verifica manutenções pendentes.
+
+### GET `/api/cron/process-notifications`
+Processa notificações.
+
+### GET `/api/cron/reconcile-payments`
+Concilia pagamentos.
+
+---
+
+## Emergência
+
+### POST `/api/emergency-repair`
+Ferramentas de emergência (superadmin only).
+
+**Body:**
+```json
+{
+  "action": "check_user" | "reset_password" | "list_users",
+  "email": "usuario@email.com",
+  "newPassword": "nova_senha"
+}
+```
+
+### POST `/api/public-reset`
+Reset de senha público (com chave secreta).
+
+**Body:**
+```json
+{
+  "secretKey": "NODEX_EMERGENCY_2024",
+  "email": "usuario@email.com",
+  "newPassword": "nova_senha"
+}
+```
+
+---
+
+## Códigos de Resposta
+
+| Código | Significado |
+|--------|-------------|
+| 200 | Sucesso |
+| 201 | Criado com sucesso |
+| 400 | Requisição inválida |
+| 401 | Não autorizado |
+| 403 | Sem permissão |
+| 404 | Não encontrado |
+| 429 | Rate limit excedido |
+| 500 | Erro interno |
+
+---
+
+## Headers Necessários
+
+```
+Content-Type: application/json
+Authorization: Bearer <token> (quando autenticado)
+```
+
+---
+
+**Atualizado em:** 26/12/2024

@@ -1,553 +1,551 @@
-# Banco de Dados - Schema Completo
+# Banco de Dados - Documentação Completa
+
+**Versão:** 8.2  
+**Última Atualização:** 26/12/2024  
+**Total de Migrations:** 38+
+
+---
 
 ## Visão Geral
 
-- **SGBD**: PostgreSQL 15 (via Supabase)
-- **Segurança**: Row Level Security (RLS) ativo em todas as tabelas
-- **Migrations**: 31 arquivos SQL em `/supabase/migrations`
-- **Backup**: Automático diário (Supabase)
+O sistema utiliza **Supabase PostgreSQL** como banco de dados principal, com:
+- Row Level Security (RLS) em todas as tabelas
+- Multi-tenancy por condomínio
+- Triggers automáticos para updated_at
+- Funções SECURITY DEFINER para operações críticas
+
+---
 
 ## Tabelas Principais
 
-### Tabelas Core
-
-#### `condos`
-Condomínios cadastrados no sistema.
-
-```sql
-CREATE TABLE condos (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  nome VARCHAR(255) NOT NULL,
-  cnpj VARCHAR(18),
-  cep VARCHAR(9),
-  endereco TEXT,
-  cidade VARCHAR(100),
-  estado VARCHAR(2),
-  telefone VARCHAR(20),
-  email VARCHAR(255),
-  logo_url TEXT,
-  mensageria_ativo BOOLEAN DEFAULT false,
-  chat_sindico_ativo BOOLEAN DEFAULT false,
-  ai_ativo BOOLEAN DEFAULT false,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
-
-**Policies RLS**:
-- Superadmin: acesso total
-- Síndico: apenas próprio condomínio
-- Morador/Porteiro: leitura do próprio condomínio
+### Usuários e Autenticação
 
 #### `users`
-Usuários do sistema (moradores, síndicos, porteiros, superadmin).
+Perfis de usuários do sistema.
 
-```sql
-CREATE TABLE users (
-  id UUID PRIMARY KEY REFERENCES auth.users(id),
-  email VARCHAR(255) UNIQUE NOT NULL,
-  nome VARCHAR(255),
-  telefone VARCHAR(20),
-  cpf VARCHAR(14),
-  role VARCHAR(20) CHECK (role IN ('morad
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | UUID | PK (mesmo do auth.users) |
+| nome | VARCHAR(255) | Nome completo |
+| email | VARCHAR(255) | E-mail único |
+| telefone | VARCHAR(20) | Telefone |
+| role | VARCHAR(20) | superadmin, sindico, morador, inquilino, porteiro |
+| condo_id | UUID | FK condos |
+| unit_id | UUID | FK units |
+| ativo | BOOLEAN | Status ativo |
+| cliente_id | INTEGER | ID sequencial (síndicos) |
+| avatar_url | TEXT | URL do avatar |
+| created_at | TIMESTAMPTZ | Data criação |
+| updated_at | TIMESTAMPTZ | Data atualização |
 
-or', 'sindico', 'porteiro', 'superadmin', 'inquilino')),
-  condo_id UUID REFERENCES condos(id) ON DELETE CASCADE,
-  unidade_id UUID REFERENCES units(id) ON DELETE SET NULL,
-  avatar_url TEXT,
-  ativo BOOLEAN DEFAULT true,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
+---
 
-CREATE INDEX idx_users_condo ON users(condo_id);
-CREATE INDEX idx_users_role ON users(role);
-```
+### Condomínios e Planos
 
-**Policies RLS**:
-- Superadmin: acesso total
-- Síndico: usuários do próprio condo
-- Morador: leitura de usuários do condo
+#### `condos`
+Condomínios cadastrados.
 
-#### `units`
-Unidades (apartamentos/casas) do condomínio.
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | UUID | PK |
+| nome | VARCHAR(255) | Nome do condomínio |
+| endereco | TEXT | Endereço completo |
+| cidade | VARCHAR(100) | Cidade |
+| estado | VARCHAR(2) | UF |
+| cep | VARCHAR(10) | CEP |
+| cnpj | VARCHAR(20) | CNPJ |
+| plano_id | UUID | FK plans |
+| status | VARCHAR(20) | ativo, teste, suspenso, cancelado |
+| condo_numero | INTEGER | ID sequencial |
+| data_inicio | DATE | Data de início |
+| data_fim_teste | DATE | Fim do período de teste |
+| mensageria_ativo | BOOLEAN | Módulo entregas ativo |
+| chat_sindico_ativo | BOOLEAN | Chat morador↔síndico ativo |
+| ai_ativo | BOOLEAN | Assistente IA ativo |
 
-```sql
-CREATE TABLE units (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  condo_id UUID REFERENCES condos(id) ON DELETE CASCADE,
-  numero VARCHAR(20) NOT NULL,
-  bloco VARCHAR(20),
-  andar VARCHAR(10),
-  tipo VARCHAR(50),
-  metragem DECIMAL(10,2),
-  valor_iptu DECIMAL(10,2),
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(condo_id, numero, bloco)
-);
-```
+#### `plans`
+Planos de assinatura disponíveis.
+
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | UUID | PK |
+| nome_plano | VARCHAR(100) | Nome do plano |
+| valor_mensal | DECIMAL(10,2) | Valor mensal |
+| max_units | INTEGER | Máximo de unidades |
+| features | JSONB | Features habilitadas |
+| ativo | BOOLEAN | Plano disponível |
 
 #### `subscriptions`
 Assinaturas dos condomínios.
 
-```sql
-CREATE TABLE subscriptions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  condo_id UUID REFERENCES condos(id) ON DELETE CASCADE,
-  plano VARCHAR(50) CHECK (plano IN ('basico', 'standard', 'premium', 'enterprise')),
-  status VARCHAR(20) CHECK (status IN ('ativa', 'trial', 'cancelada', 'vencida')),
-  valor DECIMAL(10,2),
-  inicio DATE,
-  fim DATE,
-  trial_fim DATE,
-  mercadopago_subscription_id VARCHAR(255),
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | UUID | PK |
+| condo_id | UUID | FK condos |
+| plano_id | UUID | FK plans |
+| status | VARCHAR(20) | ativo, suspenso, cancelado |
+| data_inicio | DATE | Início |
+| data_renovacao | DATE | Próxima renovação |
+| valor_mensal_cobrado | DECIMAL(10,2) | Valor atual |
+| observacoes | TEXT | Notas |
 
-### Módulo Financeiro
+---
 
-#### `transacoes`
-Receitas e despesas do condomínio.
+### Unidades e Moradores
 
-```sql
-CREATE TABLE transacoes (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  condo_id UUID REFERENCES condos(id) ON DELETE CASCADE,
-  tipo VARCHAR(10) CHECK (tipo IN ('receita', 'despesa')),
-  descricao TEXT NOT NULL,
-  valor DECIMAL(10,2) NOT NULL,
-  data DATE NOT NULL,
-  categoria VARCHAR(100),
-  created_by UUID REFERENCES users(id),
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
+#### `units`
+Unidades (apartamentos, casas).
 
-#### `cobrancas`
-Cobranças enviadas aos moradores.
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | UUID | PK |
+| condo_id | UUID | FK condos |
+| identificador | VARCHAR(50) | Ex: "Ap 302", "Casa 5" |
+| bloco | VARCHAR(20) | Bloco/Torre |
+| andar | INTEGER | Andar |
+| area | DECIMAL(10,2) | Área em m² |
+| proprietario_id | UUID | FK users |
+| fracao_ideal | DECIMAL(5,4) | Fração ideal |
 
-```sql
-CREATE TABLE cobrancas (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  condo_id UUID REFERENCES condos(id) ON DELETE CASCADE,
-  unidade_id UUID REFERENCES units(id) ON DELETE SET NULL,
-  user_id UUID REFERENCES users(id) ON DELETE SET NULL,
-  valor DECIMAL(10,2) NOT NULL,
-  descricao TEXT,
-  vencimento DATE NOT NULL,
-  tipo VARCHAR(20) CHECK (tipo IN ('boleto', 'pix')),
-  status VARCHAR(20) CHECK (status IN ('pendente', 'paga', 'vencida', 'cancelada')),
-  pix_qrcode TEXT,
-  pix_copia_cola TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
+#### `residents`
+Moradores adicionais (inquilinos, dependentes).
 
-### Módulo Comunicação
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | UUID | PK |
+| unit_id | UUID | FK units |
+| nome | VARCHAR(255) | Nome |
+| email | VARCHAR(255) | E-mail |
+| telefone | VARCHAR(20) | Telefone |
+| cpf | VARCHAR(14) | CPF |
+| tipo | VARCHAR(20) | proprietario, inquilino, dependente |
+| ativo | BOOLEAN | Status |
 
-#### `chat_sindico_conversas`
-Conversas entre síndico e moradores.
+---
 
-```sql
-CREATE TABLE chat_sindico_conversas (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  condo_id UUID REFERENCES condos(id) ON DELETE CASCADE,
-  morador_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  sindico_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  assunto VARCHAR(255),
-  status VARCHAR(20) DEFAULT 'aberta' CHECK (status IN ('aberta', 'fechada', 'pendente')),
-  ultima_mensagem_em TIMESTAMPTZ,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
+### Financeiro
 
-#### `chat_sindico_mensagens`
-Mensagens das conversas.
+#### `financial_entries`
+Lançamentos financeiros.
 
-```sql
-CREATE TABLE chat_sindico_mensagens (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  conversa_id UUID REFERENCES chat_sindico_conversas(id) ON DELETE CASCADE,
-  sender_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  condo_id UUID REFERENCES condos(id) ON DELETE CASCADE,
-  conteudo TEXT NOT NULL,
-  lida BOOLEAN DEFAULT false,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | UUID | PK |
+| condo_id | UUID | FK condos |
+| tipo | VARCHAR(20) | receita, despesa |
+| categoria | VARCHAR(100) | Categoria |
+| subcategoria | VARCHAR(100) | Subcategoria |
+| valor | DECIMAL(10,2) | Valor |
+| descricao | TEXT | Descrição |
+| data | DATE | Data do lançamento |
+| comprovante_url | TEXT | URL comprovante |
+| created_by | UUID | FK users |
+
+#### `billings`
+Cobranças para moradores.
+
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | UUID | PK |
+| condo_id | UUID | FK condos |
+| unit_id | UUID | FK units |
+| user_id | UUID | FK users (morador) |
+| tipo | VARCHAR(50) | Taxa, multa, etc |
+| valor | DECIMAL(10,2) | Valor |
+| vencimento | DATE | Data vencimento |
+| status | VARCHAR(20) | pendente, pago, atrasado, cancelado |
+| payment_id | VARCHAR(100) | ID do pagamento externo |
+| pago_em | TIMESTAMPTZ | Data do pagamento |
+
+---
+
+### Comunicação
+
+#### `notices`
+Avisos e comunicados.
+
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | UUID | PK |
+| condo_id | UUID | FK condos |
+| titulo | VARCHAR(200) | Título |
+| conteudo | TEXT | Conteúdo |
+| prioridade | VARCHAR(20) | normal, urgente, oficial |
+| anexo_url | TEXT | URL do anexo |
+| created_by | UUID | FK users |
+| created_at | TIMESTAMPTZ | Data criação |
 
 #### `notifications`
-Notificações in-app.
+Notificações do sistema.
 
-```sql
-CREATE TABLE notifications (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  condo_id UUID REFERENCES condos(id) ON DELETE CASCADE,
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  title VARCHAR(255) NOT NULL,
-  message TEXT NOT NULL,
-  type VARCHAR(50) CHECK (type IN ('info', 'warning', 'error', 'success')),
-  read BOOLEAN DEFAULT false,
-  link TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | UUID | PK |
+| user_id | UUID | FK users |
+| condo_id | UUID | FK condos |
+| title | VARCHAR(200) | Título |
+| message | TEXT | Mensagem |
+| type | VARCHAR(50) | Tipo |
+| read | BOOLEAN | Lida |
+| created_at | TIMESTAMPTZ | Data |
 
-### Módulo Portaria
+#### `chat_conversations`
+Conversas do chat morador↔síndico.
+
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | UUID | PK |
+| condo_id | UUID | FK condos |
+| user_id | UUID | FK users (morador) |
+| category | VARCHAR(50) | financeiro, manutencao, etc |
+| status | VARCHAR(20) | aberta, encerrada |
+| rating | INTEGER | Avaliação (1-5) |
+
+#### `chat_messages`
+Mensagens das conversas.
+
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | UUID | PK |
+| conversation_id | UUID | FK chat_conversations |
+| sender_id | UUID | FK users |
+| content | TEXT | Mensagem |
+| attachment_url | TEXT | URL anexo |
+| created_at | TIMESTAMPTZ | Data |
+
+---
+
+### Ocorrências
+
+#### `occurrences`
+Ocorrências e chamados.
+
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | UUID | PK |
+| condo_id | UUID | FK condos |
+| user_id | UUID | FK users (autor) |
+| unit_id | UUID | FK units |
+| titulo | VARCHAR(200) | Título |
+| descricao | TEXT | Descrição |
+| tipo | VARCHAR(50) | barulho, manutencao, seguranca, etc |
+| prioridade | VARCHAR(20) | baixa, media, alta |
+| status | VARCHAR(20) | aberta, em_andamento, resolvida |
+| fotos | TEXT[] | URLs das fotos |
+| resposta | TEXT | Resposta do síndico |
+
+#### `occurrence_comments`
+Comentários nas ocorrências.
+
+---
+
+### Portaria
 
 #### `visitors`
 Registro de visitantes.
 
-```sql
-CREATE TABLE visitors (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  condo_id UUID REFERENCES condos(id) ON DELETE CASCADE,
-  nome VARCHAR(255) NOT NULL,
-  documento VARCHAR(50),
-  unidade_id UUID REFERENCES units(id) ON DELETE SET NULL,
-  tipo VARCHAR(50) CHECK (tipo IN ('visitante', 'prestador', 'veiculo')),
-  data_entrada TIMESTAMPTZ DEFAULT NOW(),
-  data_saida TIMESTAMPTZ,
-  observacoes TEXT,
-  registrado_por UUID REFERENCES users(id),
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | UUID | PK |
+| condo_id | UUID | FK condos |
+| unit_id | UUID | FK units (destino) |
+| nome | VARCHAR(200) | Nome do visitante |
+| documento | VARCHAR(20) | RG/CPF |
+| tipo | VARCHAR(20) | visitante, prestador, entregador |
+| placa | VARCHAR(10) | Placa do veículo |
+| foto_url | TEXT | Foto |
+| entrada | TIMESTAMPTZ | Entrada |
+| saida | TIMESTAMPTZ | Saída |
+| registrado_por | UUID | FK users (porteiro) |
 
-#### `mensageria`
-Sistema de encomendas (pacotes).
+#### `deliveries`
+Controle de encomendas.
 
-```sql
-CREATE TABLE mensageria (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  condo_id UUID REFERENCES condos(id) ON DELETE CASCADE,
-  unidade_id UUID REFERENCES units(id) ON DELETE SET NULL,
-  destinatario VARCHAR(255),
-  remetente VARCHAR(255),
-  tipo VARCHAR(50) CHECK (tipo IN ('encomenda', 'correspondencia', 'carga')),
-  descricao TEXT,
-  data_chegada TIMESTAMPTZ DEFAULT NOW(),
-  data_retirada TIMESTAMPTZ,
-  retirado_por VARCHAR(255),
-  status VARCHAR(20) DEFAULT 'aguardando' CHECK (status IN ('aguardando', 'retirado', 'devolvido')),
-  foto_url TEXT,
-  codigo_rastreio VARCHAR(100),
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | UUID | PK |
+| condo_id | UUID | FK condos |
+| unit_id | UUID | FK units |
+| descricao | VARCHAR(200) | Descrição |
+| remetente | VARCHAR(200) | De quem |
+| transportadora | VARCHAR(100) | Transportadora |
+| codigo_rastreio | VARCHAR(50) | Código rastreio |
+| foto_url | TEXT | Foto |
+| status | VARCHAR(20) | recebida, retirada |
+| recebido_por | UUID | FK users (porteiro) |
+| retirado_em | TIMESTAMPTZ | Data retirada |
 
-### Módulo Ocorrências
+#### `qr_passes`
+Convites QR Code.
 
-#### `occurrences`
-Ocorrências registradas.
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | UUID | PK |
+| condo_id | UUID | FK condos |
+| unit_id | UUID | FK units |
+| created_by | UUID | FK users |
+| guest_name | VARCHAR(200) | Nome do convidado |
+| valid_from | TIMESTAMPTZ | Válido de |
+| valid_until | TIMESTAMPTZ | Válido até |
+| used_at | TIMESTAMPTZ | Usado em |
+| qr_code | TEXT | Código único |
 
-```sql
-CREATE TABLE occurrences (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  condo_id UUID REFERENCES condos(id) ON DELETE CASCADE,
-  titulo VARCHAR(255) NOT NULL,
-  descricao TEXT,
-  tipo VARCHAR(100),
-  gravidade VARCHAR(20) CHECK (gravidade IN ('baixa', 'media', 'alta', 'urgente')),
-  status VARCHAR(20) DEFAULT 'aberta' CHECK (status IN ('aberta', 'em_andamento', 'resolvida', 'fechada')),
-  local VARCHAR(255),
-  data_ocorrencia TIMESTAMPTZ DEFAULT NOW(),
-  created_by UUID REFERENCES users(id),
-  assigned_to UUID REFERENCES users(id),
-  foto_url TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
+---
 
-#### `occurrence_comments`
-Comentários em ocorrências.
-
-```sql
-CREATE TABLE occurrence_comments (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  occurrence_id UUID REFERENCES occurrences(id) ON DELETE CASCADE,
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  comment TEXT NOT NULL,
-  is_internal BOOLEAN DEFAULT false,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
-
-### Módulo Reservas
+### Reservas
 
 #### `common_areas`
-Áreas comuns reserváveis.
+Áreas comuns disponíveis.
 
-```sql
-CREATE TABLE common_areas (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  condo_id UUID REFERENCES condos(id) ON DELETE CASCADE,
-  nome VARCHAR(255) NOT NULL,
-  descricao TEXT,
-  capacidade INT,
-  disponivel BOOLEAN DEFAULT true,
-  valor_hora DECIMAL(10,2),
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | UUID | PK |
+| condo_id | UUID | FK condos |
+| nome | VARCHAR(100) | Nome da área |
+| descricao | TEXT | Descrição |
+| capacidade | INTEGER | Capacidade |
+| taxa_reserva | DECIMAL(10,2) | Taxa por reserva |
+| horario_abertura | TIME | Abertura |
+| horario_fechamento | TIME | Fechamento |
+| ativo | BOOLEAN | Disponível |
 
 #### `reservations`
-Reservas de áreas comuns.
+Reservas de áreas.
 
-```sql
-CREATE TABLE reservations (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  condo_id UUID REFERENCES condos(id) ON DELETE CASCADE,
-  area_id UUID REFERENCES common_areas(id) ON DELETE SET NULL,
-  user_id UUID REFERENCES users(id) ON DELETE SET NULL,
-  data DATE NOT NULL,
-  hora_inicio TIME NOT NULL,
-  hora_fim TIME NOT NULL,
-  status VARCHAR(20) DEFAULT 'confirmada' CHECK (status IN ('confirmada', 'cancelada', 'finalizada')),
-  observacoes TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(area_id, data, hora_inicio)
-);
-```
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | UUID | PK |
+| condo_id | UUID | FK condos |
+| area_id | UUID | FK common_areas |
+| user_id | UUID | FK users |
+| data | DATE | Data da reserva |
+| hora_inicio | TIME | Início |
+| hora_fim | TIME | Fim |
+| status | VARCHAR(20) | pendente, aprovada, rejeitada, cancelada |
+| observacoes | TEXT | Notas |
 
-### Módulo Sugestões
+---
 
-#### `suggestions`
-Sugestões dos moradores.
+### Governança
 
-```sql
-CREATE TABLE suggestions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  condo_id UUID REFERENCES condos(id) ON DELETE CASCADE,
-  title VARCHAR(255) NOT NULL,
-  description TEXT,
-  category VARCHAR(100),
-  status VARCHAR(20) DEFAULT 'aberta' CHECK (status IN ('aberta', 'em_analise', 'aprovada', 'rejeitada', 'implementada')),
-  votes_count INT DEFAULT 0,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
+#### `assemblies`
+Assembleias.
 
-#### `suggestion_votes`
-Votos em sugestões.
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | UUID | PK |
+| condo_id | UUID | FK condos |
+| titulo | VARCHAR(200) | Título |
+| data | TIMESTAMPTZ | Data/hora |
+| tipo | VARCHAR(20) | ordinaria, extraordinaria |
+| pauta | TEXT | Pauta |
+| ata | TEXT | Ata |
+| link_reuniao | TEXT | Link Meet/Zoom |
+| status | VARCHAR(20) | agendada, ao_vivo, concluida |
 
-```sql
-CREATE TABLE suggestion_votes (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  suggestion_id UUID REFERENCES suggestions(id) ON DELETE CASCADE,
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  vote_type VARCHAR(10) CHECK (vote_type IN ('up', 'down')),
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(suggestion_id, user_id)
-);
-```
+#### `polls`
+Enquetes.
 
-### Módulo Governança
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | UUID | PK |
+| condo_id | UUID | FK condos |
+| titulo | VARCHAR(200) | Pergunta |
+| opcoes | JSONB | Opções de resposta |
+| votos | JSONB | Votos por opção |
+| data_fim | TIMESTAMPTZ | Prazo |
+| ativa | BOOLEAN | Ativa |
 
-#### `assembleias`
-Assembleias condominiais.
+#### `documents`
+Documentos oficiais.
 
-```sql
-CREATE TABLE assembleias (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  condo_id UUID REFERENCES condos(id) ON DELETE CASCADE,
-  titulo VARCHAR(255) NOT NULL,
-  descricao TEXT,
-  data TIMESTAMPTZ NOT NULL,
-  local VARCHAR(255),
-  tipo VARCHAR(50) CHECK (tipo IN ('ordinaria', 'extraordinaria')),
-  status VARCHAR(20) DEFAULT 'agendada' CHECK (status IN ('agendada', 'em_andamento', 'concluida', 'cancelada')),
-  pauta TEXT,
-  ata TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | UUID | PK |
+| condo_id | UUID | FK condos |
+| titulo | VARCHAR(200) | Título |
+| categoria | VARCHAR(50) | regimento, convenção, ata, etc |
+| arquivo_url | TEXT | URL do arquivo |
+| uploaded_by | UUID | FK users |
 
-#### `enquetes` (Polls)
-Enquetes/votações.
+---
 
-```sql
-CREATE TABLE enquetes (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  condo_id UUID REFERENCES condos(id) ON DELETE CASCADE,
-  titulo VARCHAR(255) NOT NULL,
-  descricao TEXT,
-  data_inicio TIMESTAMPTZ DEFAULT NOW(),
-  data_fim TIMESTAMPTZ,
-  status VARCHAR(20) DEFAULT 'ativa' CHECK (status IN ('ativa', 'encerrada', 'rascunho')),
-  votos_count INT DEFAULT 0,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
+### Manutenção
 
-### Módulo Configurações
+#### `maintenance_orders`
+Ordens de manutenção.
+
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | UUID | PK |
+| condo_id | UUID | FK condos |
+| titulo | VARCHAR(200) | Título |
+| descricao | TEXT | Descrição |
+| tipo | VARCHAR(20) | preventiva, corretiva |
+| prioridade | VARCHAR(20) | baixa, media, alta |
+| status | VARCHAR(20) | agendado, em_execucao, concluido |
+| fornecedor_id | UUID | FK suppliers |
+| valor_estimado | DECIMAL(10,2) | Estimativa |
+| valor_real | DECIMAL(10,2) | Valor real |
+| data_agendada | DATE | Data prevista |
+| data_conclusao | DATE | Data conclusão |
+
+#### `suppliers`
+Fornecedores.
+
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | UUID | PK |
+| condo_id | UUID | FK condos |
+| nome | VARCHAR(200) | Nome |
+| especialidade | VARCHAR(100) | Especialidade |
+| telefone | VARCHAR(20) | Telefone |
+| email | VARCHAR(255) | E-mail |
+| cnpj | VARCHAR(20) | CNPJ |
+| rating | INTEGER | Avaliação (1-5) |
+
+---
+
+### Marketplace
+
+#### `marketplace_ads`
+Anúncios do marketplace.
+
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | UUID | PK |
+| condo_id | UUID | FK condos |
+| user_id | UUID | FK users |
+| unit_id | UUID | FK units |
+| title | VARCHAR(200) | Título |
+| description | TEXT | Descrição |
+| price | DECIMAL(10,2) | Preço |
+| type | VARCHAR(20) | venda, doacao, aluguel, servico |
+| category | VARCHAR(50) | Categoria |
+| photos | TEXT[] | URLs das fotos |
+| contact_whatsapp | VARCHAR(20) | WhatsApp |
+| status | VARCHAR(20) | ativo, pausado, vendido, expirado |
+| expires_at | TIMESTAMPTZ | Expira em |
+
+#### `service_recommendations`
+Indicações de profissionais.
+
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | UUID | PK |
+| condo_id | UUID | FK condos |
+| user_id | UUID | FK users |
+| professional_name | VARCHAR(200) | Nome |
+| category | VARCHAR(50) | Categoria |
+| phone | VARCHAR(20) | Telefone |
+| rating | INTEGER | Avaliação (1-5) |
+| review_text | TEXT | Comentário |
+
+---
+
+### E-mail e SMTP
 
 #### `configuracoes_smtp`
-Configurações de servidor SMTP.
+Configurações SMTP.
 
-```sql
-CREATE TABLE configuracoes_smtp (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  condominio_id UUID REFERENCES condos(id) ON DELETE CASCADE, -- NULL = config global
-  smtp_host VARCHAR(255) NOT NULL,
-  smtp_port INTEGER NOT NULL DEFAULT 587,
-  smtp_user VARCHAR(255) NOT NULL,
-  smtp_password TEXT NOT NULL,
-  smtp_from_email VARCHAR(255) NOT NULL,
-  smtp_from_name VARCHAR(255),
-  smtp_secure BOOLEAN DEFAULT true,
-  is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
-  created_by UUID REFERENCES auth.users(id)
-);
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | UUID | PK |
+| condominio_id | UUID | FK condos (null = global) |
+| smtp_host | VARCHAR(255) | Host SMTP |
+| smtp_port | INTEGER | Porta |
+| smtp_user | VARCHAR(255) | Usuário |
+| smtp_password | TEXT | Senha criptografada |
+| smtp_from_email | VARCHAR(255) | E-mail remetente |
+| smtp_from_name | VARCHAR(255) | Nome remetente |
+| is_active | BOOLEAN | Ativa |
 
-CREATE UNIQUE INDEX configuracoes_smtp_global_unique 
-  ON configuracoes_smtp (condominio_id) 
-  WHERE condominio_id IS NOT NULL;
-```
+#### `email_logs`
+Logs de e-mail.
 
-**Nota**: `condominio_id = NULL` indica configuração SMTP global do superadmin.
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | UUID | PK |
+| condo_id | UUID | FK condos |
+| user_id | UUID | FK users |
+| tipo | VARCHAR(50) | Tipo do e-mail |
+| destinatario | VARCHAR(255) | Para quem |
+| assunto | VARCHAR(255) | Assunto |
+| status | VARCHAR(20) | enviado, falhou, pendente |
+| erro | TEXT | Erro se houver |
+| created_at | TIMESTAMPTZ | Data |
 
-#### `pix_config`
-Configurações de PIX do condomínio.
+---
 
-```sql
-CREATE TABLE pix_config (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  condo_id UUID REFERENCES condos(id) ON DELETE CASCADE UNIQUE,
-  chave_pix VARCHAR(255) NOT NULL,
-  tipo_chave VARCHAR(20) CHECK (tipo_chave IN ('cpf', 'cnpj', 'email', 'telefone', 'evp')),
-  nome_beneficiario VARCHAR(255),
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
+### Suporte
+
+#### `support_tickets`
+Tickets de suporte.
+
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | UUID | PK |
+| condo_id | UUID | FK condos |
+| user_id | UUID | FK users |
+| assunto | VARCHAR(200) | Assunto |
+| categoria | VARCHAR(50) | Categoria |
+| status | VARCHAR(20) | aberto, em_andamento, resolvido |
+| prioridade | VARCHAR(20) | baixa, media, alta |
+
+#### `support_messages`
+Mensagens do suporte.
+
+---
+
+### Integrações
 
 #### `condo_integrations`
-Integrações externas (WhatsApp, etc).
+Credenciais de integração por condomínio.
 
-```sql
-CREATE TABLE condo_integrations (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  condo_id UUID REFERENCES condos(id) ON DELETE CASCADE,
-  tipo VARCHAR(50) CHECK (tipo IN ('whatsapp', 'sms', 'outros')),
-  active BOOLEAN DEFAULT false,
-  config JSONB,
-  created_by UUID REFERENCES users(id) ON DELETE SET NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | UUID | PK |
+| condo_id | UUID | FK condos |
+| provider | VARCHAR(50) | mercadopago, whatsapp |
+| credentials | JSONB | Credenciais (criptografadas) |
+| is_active | BOOLEAN | Ativa |
 
-### Módulo Auditoria e Segurança
+---
 
-#### `impersonations`
-Log de impersonificações (superadmin visualizando como outro usuário).
+## Migrations Disponíveis
 
-```sql
-CREATE TABLE impersonations (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  impersonator_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  target_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  reason TEXT,
-  started_at TIMESTAMPTZ DEFAULT NOW(),
-  ended_at TIMESTAMPTZ,
-  expires_at TIMESTAMPTZ NOT NULL,
-  ip_address TEXT,
-  user_agent TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
+| Migration | Descrição |
+|-----------|-----------|
+| 20241216_admin_charges | Cobranças admin |
+| 20241216_chat_attachments | Anexos no chat |
+| 20241216_suggestions | Sistema de sugestões |
+| 20241216_whatsapp_active | Toggle WhatsApp |
+| 20241217_condo_integrations | Integrações multi-tenant |
+| 20251220_ai_module | Módulo IA |
+| 20251222_impersonation_and_audit | Impersonificação |
+| 20251223_occurrence_comments | Comentários ocorrências |
+| 20251224_chat_sindico | Chat morador↔síndico |
+| 20251224_mensageria | Módulo entregas |
+| 20251225_create_configuracoes_smtp | SMTP por condomínio |
+| 20251226_building_inspections | Autovistoria |
+| 20251226_fire_tax | Taxa de incêndio |
+| 20251226_guest_invites | Convites QR |
+| 20251226_marketplace | Marketplace interno |
+| 20251226_quote_auditor | Auditor de orçamentos |
+| 20251226_smtp_global | SMTP global |
+| 20251226_unit_reforms | Obras e reformas |
 
-#### `audit_logs`
-Log de ações críticas no sistema.
+---
 
-```sql
-CREATE TABLE audit_logs (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  condo_id UUID REFERENCES condos(id) ON DELETE CASCADE,
-  action VARCHAR(100) NOT NULL,
-  entity_type VARCHAR(100),
-  entity_id UUID,
-  old_value JSONB,
-  new_value JSONB,
-  ip_address TEXT,
-  user_agent TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
+## Políticas RLS
 
-#### `legal_acceptances`
-Aceite de termos legais (LGPD, Termos de Uso).
+Todas as tabelas possuem RLS habilitado com políticas que:
 
-```sql
-CREATE TABLE legal_acceptances (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  acceptance_type VARCHAR(50) CHECK (acceptance_type IN ('terms', 'privacy', 'lgpd')),
-  version VARCHAR(20),
-  accepted_at TIMESTAMPTZ DEFAULT NOW(),
-  ip_address VARCHAR(45)
-);
-```
+1. **Isolam por condomínio** - Usuários só veem dados do seu condomínio
+2. **Verificam role** - Operações restritas por perfil
+3. **Protegem dados pessoais** - Usuários só editam seus próprios dados
+4. **Permitem superadmin** - Superadmin tem acesso total
 
-## Diagrama ER (Simplificado)
+---
 
-```
-condos (1) ─────< (N) users
-  │                     │
-  │                     └─< cobrancas
-  ├─< units             │
-  ├─< subscriptions     └─< chat_sindico_conversas ─< chat_sindico_mensagens
-  ├─< transacoes
-  ├─< occurrences ─< occurrence_comments
-  ├─< reservations ─< common_areas
-  ├─< suggestions ─< suggestion_votes
-  ├─< notifications
-  ├─< visitors
-  ├─< mensageria
-  └─< configuracoes_smtp (1 ou 0)
-```
-
-## Migrations Aplicadas
-
-Total: 31 migrations (ver `/supabase/migrations/`)
-
-**Principais**:
-- Sistema de boletos
-- Notificações
-- Chat síndico-morador
-- Sistema de sugestões
-- Mensageria (encomendas)
-- Governança (assembleias, enquetes)
-- Impersonificação e auditoria
-- Comentários em ocorrências
-- SMTP configurável (por condo + global)
-- Correção de CASCADE para exclusão de condos
-
-## Índices Performance
-
-Todos os `foreign_key` possuem índices automáticos. Índices adicionais:
-
-```sql
-CREATE INDEX idx_users_condo ON users(condo_id);
-CREATE INDEX idx_users_role ON users(role);
-CREATE INDEX idx_cobrancas_status ON cobrancas(status);
-CREATE INDEX idx_cobrancas_vencimento ON cobrancas(vencimento);
-CREATE INDEX idx_notifications_read ON notifications(read);
-CREATE INDEX idx_occurrences_status ON occurrences(status);
-CREATE INDEX idx_reservations_data ON reservations(data);
-```
-
-## Backup e Restore
-
-**Backup automático**: Supabase faz backup diário automático (retenção de 7 dias no plano free, 30 dias nos pagos).
-
-**Backup manual**:
-```bash
-# Via Supabase CLI
-supabase db dump > backup.sql
-
-# Restore
-supabase db push backup.sql
-```
+**Atualizado em:** 26/12/2024
