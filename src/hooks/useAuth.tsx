@@ -298,9 +298,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setLoading(false);
 
             // Force redirect to login page
-            if (typeof window !== 'undefined') {
-                window.location.href = '/login';
-            }
+            // Force redirect is handled by the calling component or auth state listener
+            // if (typeof window !== 'undefined') {
+            //    window.location.href = '/login';
+            // }
         }
     }, [supabase]);
 

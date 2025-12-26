@@ -73,8 +73,12 @@ export function Header({ onMenuClick }: HeaderProps) {
         } catch (error) {
             console.error('[Header] Logout error:', error);
         } finally {
-            // Redireciona independente de sucesso ou erro
-            window.location.href = '/login';
+            // Clean client-side storage explicitly
+            localStorage.clear();
+            sessionStorage.clear();
+
+            // Redirect using replace to avoid history loops
+            window.location.replace('/login');
         }
     };
 
