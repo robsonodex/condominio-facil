@@ -331,7 +331,7 @@ export default async function Home() {
               <Link href="/privacidade" className="text-gray-400 hover:text-white text-sm">Privacidade</Link>
             </div>
             <p className="text-gray-500 text-sm">
-              © 2025 Meu Condomínio Fácil · CNPJ 57.444.727/0001-85
+              © 2025 Meu Condomínio Fácil · CNPJ 57.444.727/0001-85 · (21) 96553-2247
             </p>
           </div>
         </div>
