@@ -14,7 +14,7 @@ ALTER TABLE public.occurrence_comments ENABLE ROW LEVEL SECURITY;
 -- 2. Políticas para notifications (já existem, mas RLS estava desabilitado)
 -- As políticas existentes serão ativadas automaticamente quando RLS é habilitado
 
--- 3. Políticas para support_chats
+-- 3. Políticas para support_chats (coluna é atendente_id, não assigned_to)
 DROP POLICY IF EXISTS "support_chats_select" ON public.support_chats;
 DROP POLICY IF EXISTS "support_chats_insert" ON public.support_chats;
 DROP POLICY IF EXISTS "support_chats_update" ON public.support_chats;
@@ -22,7 +22,7 @@ DROP POLICY IF EXISTS "support_chats_update" ON public.support_chats;
 CREATE POLICY "support_chats_select" ON public.support_chats
     FOR SELECT USING (
         user_id = auth.uid()
-        OR assigned_to = auth.uid()
+        OR atendente_id = auth.uid()
         OR EXISTS (
             SELECT 1 FROM public.users 
             WHERE id = auth.uid() 
@@ -36,7 +36,7 @@ CREATE POLICY "support_chats_insert" ON public.support_chats
 CREATE POLICY "support_chats_update" ON public.support_chats
     FOR UPDATE USING (
         user_id = auth.uid()
-        OR assigned_to = auth.uid()
+        OR atendente_id = auth.uid()
         OR EXISTS (
             SELECT 1 FROM public.users 
             WHERE id = auth.uid() 
@@ -54,7 +54,7 @@ CREATE POLICY "chat_messages_select" ON public.chat_messages
         OR EXISTS (
             SELECT 1 FROM public.support_chats sc
             WHERE sc.id = chat_messages.chat_id
-            AND (sc.user_id = auth.uid() OR sc.assigned_to = auth.uid())
+            AND (sc.user_id = auth.uid() OR sc.atendente_id = auth.uid())
         )
         OR EXISTS (
             SELECT 1 FROM public.users 
@@ -197,15 +197,3 @@ CREATE POLICY "occurrence_comments_delete" ON public.occurrence_comments
             AND role IN ('sindico', 'superadmin')
         )
     );
-
--- 8. Corrigir views com SECURITY DEFINER (mudar para SECURITY INVOKER)
--- Isso requer recriar as views
-
--- Nota: As views legal_acceptances_summary, support_metrics, recent_errors, invoices_view
--- precisam ser recriadas com SECURITY INVOKER. 
--- Como não tenho a definição original, isso deve ser feito manualmente no Supabase.
-
--- Para referência, o comando seria:
--- CREATE OR REPLACE VIEW nome_da_view 
--- WITH (security_invoker = true) AS
--- <definição original da view>;
