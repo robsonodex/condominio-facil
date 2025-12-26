@@ -201,8 +201,8 @@ export default async function Home() {
       {/* Preços simples */}
       <section className="py-16 bg-white">
         <div className="max-w-3xl mx-auto px-4 text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Preço honesto, sem surpresas</h2>
-          <p className="text-gray-600 mb-8">Nem barato demais (desconfiança), nem caro demais</p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Preço transparente</h2>
+          <p className="text-gray-600 mb-8">Sem taxas escondidas, sem surpresas</p>
 
           <div className="bg-emerald-50 rounded-2xl p-8 border border-emerald-200">
             <div className="flex flex-col md:flex-row justify-center items-center gap-8">
