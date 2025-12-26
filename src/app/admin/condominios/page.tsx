@@ -222,7 +222,9 @@ export default function AdminCondominiosPage() {
                             </span>
                         )}
                     </div>
-                    <p className="text-sm text-gray-500">{c.cidade}, {c.estado}</p>
+                    <p className="text-sm text-gray-500">
+                        {[c.cidade, c.estado].filter(Boolean).join(', ') || '-'}
+                    </p>
                 </div>
             )
         },
