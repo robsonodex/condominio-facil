@@ -1,9 +1,9 @@
 -- ===========================================
 -- CORREÇÃO DE RLS - 26/12/2024
--- Habilitar RLS nas tabelas que estão sem
+-- Baseado na estrutura REAL das tabelas
 -- ===========================================
 
--- 1. Habilitar RLS nas tabelas identificadas pelo linter
+-- 1. Habilitar RLS nas tabelas
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.support_chats ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
@@ -11,10 +11,45 @@ ALTER TABLE public.turbo_entries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.governanca_enquetes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.occurrence_comments ENABLE ROW LEVEL SECURITY;
 
--- 2. Políticas para notifications (já existem, mas RLS estava desabilitado)
--- As políticas existentes serão ativadas automaticamente quando RLS é habilitado
+-- ===========================================
+-- 2. NOTIFICATIONS (user_id, condo_id)
+-- ===========================================
+DROP POLICY IF EXISTS "notifications_select" ON public.notifications;
+DROP POLICY IF EXISTS "notifications_insert" ON public.notifications;
+DROP POLICY IF EXISTS "notifications_update" ON public.notifications;
 
--- 3. Políticas para support_chats (coluna é atendente_id, não assigned_to)
+CREATE POLICY "notifications_select" ON public.notifications
+    FOR SELECT USING (
+        user_id = auth.uid()
+        OR EXISTS (
+            SELECT 1 FROM public.users 
+            WHERE id = auth.uid() 
+            AND (role = 'superadmin' OR (role = 'sindico' AND condo_id = notifications.condo_id))
+        )
+    );
+
+CREATE POLICY "notifications_insert" ON public.notifications
+    FOR INSERT WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM public.users 
+            WHERE id = auth.uid() 
+            AND role IN ('superadmin', 'sindico')
+        )
+    );
+
+CREATE POLICY "notifications_update" ON public.notifications
+    FOR UPDATE USING (
+        user_id = auth.uid()
+        OR EXISTS (
+            SELECT 1 FROM public.users 
+            WHERE id = auth.uid() 
+            AND role IN ('superadmin', 'sindico')
+        )
+    );
+
+-- ===========================================
+-- 3. SUPPORT_CHATS (user_id, condo_id, atendente_id)
+-- ===========================================
 DROP POLICY IF EXISTS "support_chats_select" ON public.support_chats;
 DROP POLICY IF EXISTS "support_chats_insert" ON public.support_chats;
 DROP POLICY IF EXISTS "support_chats_update" ON public.support_chats;
@@ -26,7 +61,7 @@ CREATE POLICY "support_chats_select" ON public.support_chats
         OR EXISTS (
             SELECT 1 FROM public.users 
             WHERE id = auth.uid() 
-            AND role IN ('superadmin', 'sindico')
+            AND role = 'superadmin'
         )
     );
 
@@ -40,11 +75,13 @@ CREATE POLICY "support_chats_update" ON public.support_chats
         OR EXISTS (
             SELECT 1 FROM public.users 
             WHERE id = auth.uid() 
-            AND role IN ('superadmin', 'sindico')
+            AND role = 'superadmin'
         )
     );
 
--- 4. Políticas para chat_messages
+-- ===========================================
+-- 4. CHAT_MESSAGES (sender_id, chat_id)
+-- ===========================================
 DROP POLICY IF EXISTS "chat_messages_select" ON public.chat_messages;
 DROP POLICY IF EXISTS "chat_messages_insert" ON public.chat_messages;
 
@@ -59,21 +96,24 @@ CREATE POLICY "chat_messages_select" ON public.chat_messages
         OR EXISTS (
             SELECT 1 FROM public.users 
             WHERE id = auth.uid() 
-            AND role IN ('superadmin', 'sindico')
+            AND role = 'superadmin'
         )
     );
 
 CREATE POLICY "chat_messages_insert" ON public.chat_messages
     FOR INSERT WITH CHECK (sender_id = auth.uid());
 
--- 5. Políticas para turbo_entries
+-- ===========================================
+-- 5. TURBO_ENTRIES (condo_id, porteiro_id)
+-- ===========================================
 DROP POLICY IF EXISTS "turbo_entries_select" ON public.turbo_entries;
 DROP POLICY IF EXISTS "turbo_entries_insert" ON public.turbo_entries;
 DROP POLICY IF EXISTS "turbo_entries_update" ON public.turbo_entries;
 
 CREATE POLICY "turbo_entries_select" ON public.turbo_entries
     FOR SELECT USING (
-        EXISTS (
+        porteiro_id = auth.uid()
+        OR EXISTS (
             SELECT 1 FROM public.users 
             WHERE id = auth.uid() 
             AND (
@@ -85,20 +125,19 @@ CREATE POLICY "turbo_entries_select" ON public.turbo_entries
 
 CREATE POLICY "turbo_entries_insert" ON public.turbo_entries
     FOR INSERT WITH CHECK (
-        EXISTS (
+        porteiro_id = auth.uid()
+        OR EXISTS (
             SELECT 1 FROM public.users 
             WHERE id = auth.uid() 
-            AND (
-                condo_id = turbo_entries.condo_id
-                OR role = 'superadmin'
-            )
             AND role IN ('porteiro', 'sindico', 'superadmin')
+            AND (condo_id = turbo_entries.condo_id OR role = 'superadmin')
         )
     );
 
 CREATE POLICY "turbo_entries_update" ON public.turbo_entries
     FOR UPDATE USING (
-        EXISTS (
+        porteiro_id = auth.uid()
+        OR EXISTS (
             SELECT 1 FROM public.users 
             WHERE id = auth.uid() 
             AND (
@@ -108,7 +147,9 @@ CREATE POLICY "turbo_entries_update" ON public.turbo_entries
         )
     );
 
--- 6. Políticas para governanca_enquetes
+-- ===========================================
+-- 6. GOVERNANCA_ENQUETES (condo_id)
+-- ===========================================
 DROP POLICY IF EXISTS "governanca_enquetes_select" ON public.governanca_enquetes;
 DROP POLICY IF EXISTS "governanca_enquetes_insert" ON public.governanca_enquetes;
 DROP POLICY IF EXISTS "governanca_enquetes_update" ON public.governanca_enquetes;
@@ -119,10 +160,7 @@ CREATE POLICY "governanca_enquetes_select" ON public.governanca_enquetes
         EXISTS (
             SELECT 1 FROM public.users 
             WHERE id = auth.uid() 
-            AND (
-                condo_id = governanca_enquetes.condo_id
-                OR role = 'superadmin'
-            )
+            AND (condo_id = governanca_enquetes.condo_id OR role = 'superadmin')
         )
     );
 
@@ -131,11 +169,8 @@ CREATE POLICY "governanca_enquetes_insert" ON public.governanca_enquetes
         EXISTS (
             SELECT 1 FROM public.users 
             WHERE id = auth.uid() 
-            AND (
-                condo_id = governanca_enquetes.condo_id
-                OR role = 'superadmin'
-            )
             AND role IN ('sindico', 'superadmin')
+            AND (condo_id = governanca_enquetes.condo_id OR role = 'superadmin')
         )
     );
 
@@ -144,11 +179,8 @@ CREATE POLICY "governanca_enquetes_update" ON public.governanca_enquetes
         EXISTS (
             SELECT 1 FROM public.users 
             WHERE id = auth.uid() 
-            AND (
-                condo_id = governanca_enquetes.condo_id
-                OR role = 'superadmin'
-            )
             AND role IN ('sindico', 'superadmin')
+            AND (condo_id = governanca_enquetes.condo_id OR role = 'superadmin')
         )
     );
 
@@ -161,7 +193,9 @@ CREATE POLICY "governanca_enquetes_delete" ON public.governanca_enquetes
         )
     );
 
--- 7. Políticas para occurrence_comments
+-- ===========================================
+-- 7. OCCURRENCE_COMMENTS (user_id, occurrence_id)
+-- ===========================================
 DROP POLICY IF EXISTS "occurrence_comments_select" ON public.occurrence_comments;
 DROP POLICY IF EXISTS "occurrence_comments_insert" ON public.occurrence_comments;
 DROP POLICY IF EXISTS "occurrence_comments_update" ON public.occurrence_comments;
@@ -174,11 +208,7 @@ CREATE POLICY "occurrence_comments_select" ON public.occurrence_comments
             SELECT 1 FROM public.occurrences o
             JOIN public.users u ON u.id = auth.uid()
             WHERE o.id = occurrence_comments.occurrence_id
-            AND (
-                o.criado_por_user_id = auth.uid()
-                OR u.condo_id = o.condo_id
-                OR u.role = 'superadmin'
-            )
+            AND (u.condo_id = o.condo_id OR u.role = 'superadmin')
         )
     );
 

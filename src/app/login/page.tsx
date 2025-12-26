@@ -16,8 +16,18 @@ export default function LoginPage() {
     const { signIn, user, loading: authLoading } = useAuth();
     const router = useRouter();
 
-    // Redirect if already logged in
+    // Redirect if already logged in (but NOT if coming from logout)
     useEffect(() => {
+        // Check if user just logged out
+        const urlParams = new URLSearchParams(window.location.search);
+        const isLogout = urlParams.get('logout') === 'true';
+
+        if (isLogout) {
+            // Clean up URL without refresh
+            window.history.replaceState({}, '', '/login');
+            return; // Don't redirect, user just logged out
+        }
+
         if (!authLoading && user) {
             router.replace('/dashboard');
         }

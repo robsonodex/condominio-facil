@@ -63,24 +63,33 @@ export function Header({ onMenuClick }: HeaderProps) {
         setShowUserMenu(false);
 
         try {
-            // Timeout de 3 segundos para evitar travamento
-            const signOutPromise = signOut();
-            const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('Timeout')), 3000)
-            );
+            // 1. First clear ALL client-side storage
+            if (typeof window !== 'undefined') {
+                // Clear all localStorage
+                localStorage.clear();
+                // Clear all sessionStorage  
+                sessionStorage.clear();
 
-            await Promise.race([signOutPromise, timeoutPromise]);
+                // Clear ALL cookies (including Supabase auth cookies)
+                document.cookie.split(";").forEach((c) => {
+                    document.cookie = c
+                        .replace(/^ +/, "")
+                        .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+                });
+            }
+
+            // 2. Then sign out from Supabase
+            await supabase.auth.signOut();
+
         } catch (error) {
             console.error('[Header] Logout error:', error);
-        } finally {
-            // Clean client-side storage explicitly
-            localStorage.clear();
-            sessionStorage.clear();
-
-            // Redirect using replace to avoid history loops
-            window.location.replace('/login');
         }
+
+        // 3. Force hard reload to login page (always, even if error)
+        // Using href instead of replace to ensure clean navigation
+        window.location.href = '/login?logout=true';
     };
+
 
     return (
         <header className="sticky top-0 z-30 h-16 bg-white border-b border-gray-200">
