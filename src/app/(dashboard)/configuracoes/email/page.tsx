@@ -1,10 +1,8 @@
 'use client';
 
+import * as React from 'react';
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { useToast } from '@/components/ui/Toast';
+import { Card, CardContent, CardHeader, CardTitle, Button, Input } from '@/components/ui';
 import { Mail, Server, Lock, CheckCircle2, AlertTriangle, Loader2, Eye, EyeOff, Save, TestTube, Trash2, Info } from 'lucide-react';
 
 const SMTP_PRESETS = [
@@ -15,7 +13,6 @@ const SMTP_PRESETS = [
 ];
 
 export default function EmailConfigPage() {
-    const { success, error: showError, info } = useToast();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [testing, setTesting] = useState(false);
@@ -71,12 +68,11 @@ export default function EmailConfigPage() {
             smtp_port: String(preset.port),
             smtp_secure: preset.secure
         }));
-        info('Preset aplicado', `Configurações do ${preset.name} aplicadas`);
     };
 
     const handleTestConnection = async () => {
         if (!formData.smtp_host || !formData.smtp_port || !formData.smtp_user || !formData.smtp_password) {
-            showError('Erro', 'Preencha todos os campos para testar');
+            alert('Preencha todos os campos para testar');
             return;
         }
         setTesting(true);
@@ -96,14 +92,14 @@ export default function EmailConfigPage() {
             const data = await res.json();
             if (data.success) {
                 setTestSuccess(true);
-                success('Sucesso', 'Conexão SMTP testada com sucesso!');
+                alert('Conexão SMTP testada com sucesso!');
             } else {
                 setTestSuccess(false);
-                showError('Falha', data.error || 'Falha no teste');
+                alert('Falha: ' + (data.error || 'Erro desconhecido'));
             }
         } catch {
             setTestSuccess(false);
-            showError('Erro', 'Erro ao testar conexão');
+            alert('Erro ao testar conexão');
         } finally {
             setTesting(false);
         }
@@ -111,11 +107,11 @@ export default function EmailConfigPage() {
 
     const handleSave = async () => {
         if (!formData.smtp_host || !formData.smtp_port || !formData.smtp_user || !formData.smtp_from_email) {
-            showError('Erro', 'Preencha todos os campos obrigatórios');
+            alert('Preencha todos os campos obrigatórios');
             return;
         }
         if (!configured && !formData.smtp_password) {
-            showError('Erro', 'A senha SMTP é obrigatória');
+            alert('A senha SMTP é obrigatória');
             return;
         }
         setSaving(true);
@@ -129,12 +125,12 @@ export default function EmailConfigPage() {
             if (data.success) {
                 setConfigured(true);
                 setFormData(prev => ({ ...prev, smtp_password: '' }));
-                success('Sucesso', data.message);
+                alert('Configurações salvas com sucesso!');
             } else {
-                showError('Erro', data.error || 'Erro ao salvar');
+                alert('Erro: ' + (data.error || 'Erro ao salvar'));
             }
         } catch {
-            showError('Erro', 'Erro ao salvar configurações');
+            alert('Erro ao salvar configurações');
         } finally {
             setSaving(false);
         }
@@ -151,12 +147,12 @@ export default function EmailConfigPage() {
                     smtp_host: '', smtp_port: '587', smtp_user: '', smtp_password: '',
                     smtp_from_email: '', smtp_from_name: '', smtp_secure: true, is_active: true
                 });
-                success('Sucesso', 'Configuração removida');
+                alert('Configuração removida com sucesso!');
             } else {
-                showError('Erro', data.error);
+                alert('Erro: ' + data.error);
             }
         } catch {
-            showError('Erro', 'Erro ao remover configuração');
+            alert('Erro ao remover configuração');
         }
     };
 
@@ -189,18 +185,6 @@ export default function EmailConfigPage() {
                 )}
             </div>
 
-            {!configured && (
-                <div className="mb-6 p-4 rounded-lg border border-amber-200 bg-amber-50 flex items-start gap-3">
-                    <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                    <div>
-                        <p className="font-medium text-amber-800">Atenção</p>
-                        <p className="text-amber-700 text-sm">
-                            Configure o SMTP para enviar e-mails de cobrança, avisos, etc.
-                        </p>
-                    </div>
-                </div>
-            )}
-
             <Card className="mb-6">
                 <CardHeader className="pb-3">
                     <CardTitle className="text-sm font-medium text-gray-600">Configuração Rápida</CardTitle>
@@ -208,7 +192,7 @@ export default function EmailConfigPage() {
                 <CardContent>
                     <div className="flex flex-wrap gap-2">
                         {SMTP_PRESETS.map((preset) => (
-                            <Button key={preset.name} variant="outline" size="sm" onClick={() => handlePresetSelect(preset)}>
+                            <Button key={preset.name} variant="outline" onClick={() => handlePresetSelect(preset)}>
                                 {preset.name}
                             </Button>
                         ))}
@@ -218,7 +202,7 @@ export default function EmailConfigPage() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 text-lg">
                         <Server className="h-5 w-5 text-gray-500" />
                         Servidor SMTP
                     </CardTitle>
@@ -241,10 +225,10 @@ export default function EmailConfigPage() {
                             <Input type="email" placeholder="seu@email.com" value={formData.smtp_user} onChange={(e) => setFormData(prev => ({ ...prev, smtp_user: e.target.value }))} />
                         </div>
                         <div className="space-y-2">
-                            <label className="block text-sm font-medium text-gray-700">Senha {configured && '(deixe vazio para manter)'}</label>
+                            <label className="block text-sm font-medium text-gray-700">Senha {configured && '(vazio para manter)'}</label>
                             <div className="relative">
                                 <Input type={showPassword ? 'text' : 'password'} placeholder={configured ? '••••••••' : 'Senha'} value={formData.smtp_password} onChange={(e) => setFormData(prev => ({ ...prev, smtp_password: e.target.value }))} />
-                                <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" onClick={() => setShowPassword(!showPassword)}>
+                                <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" onClick={() => setShowPassword(!showPassword)}>
                                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                 </button>
                             </div>
@@ -274,28 +258,17 @@ export default function EmailConfigPage() {
                         </label>
                     </div>
 
-                    {testSuccess !== null && (
-                        <div className={`p-4 rounded-lg border flex items-start gap-3 ${testSuccess ? 'border-emerald-200 bg-emerald-50' : 'border-red-200 bg-red-50'}`}>
-                            <CheckCircle2 className={`h-5 w-5 ${testSuccess ? 'text-emerald-600' : 'text-red-600'} flex-shrink-0 mt-0.5`} />
-                            <div>
-                                <p className={`font-medium ${testSuccess ? 'text-emerald-800' : 'text-red-800'}`}>
-                                    {testSuccess ? 'Teste OK!' : 'Falha no Teste'}
-                                </p>
-                            </div>
-                        </div>
-                    )}
-
                     <div className="flex flex-wrap items-center gap-3 pt-4 border-t">
-                        <Button variant="outline" onClick={handleTestConnection} disabled={testing || !formData.smtp_password}>
+                        <Button variant="outline" onClick={handleTestConnection} disabled={testing || (!formData.smtp_password && !configured)}>
                             {testing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <TestTube className="h-4 w-4 mr-2" />}
                             Testar Conexão
                         </Button>
-                        <Button onClick={handleSave} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700">
+                        <Button onClick={handleSave} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700 text-white">
                             {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
                             Salvar
                         </Button>
                         {configured && (
-                            <Button variant="outline" onClick={handleDelete} className="ml-auto text-red-600 hover:text-red-700 hover:bg-red-50">
+                            <Button variant="ghost" onClick={handleDelete} className="ml-auto text-red-600 hover:text-red-700">
                                 <Trash2 className="h-4 w-4 mr-2" />
                                 Remover
                             </Button>
