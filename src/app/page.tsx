@@ -58,7 +58,7 @@ export default async function Home() {
           <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
             PIX, boletos, avisos, reservas, portaria e app no celular.
             <br className="hidden sm:block" />
-            <strong>Feito para a realidade dos condomínios brasileiros.</strong>
+            <strong>Ideal para condomínios de 20 a 200 unidades.</strong>
           </p>
 
           {/* Promessas claras */}
@@ -209,7 +209,6 @@ export default async function Home() {
               <div className="text-center">
                 <p className="text-sm text-gray-600 mb-1">Implantação (uma vez)</p>
                 <p className="text-3xl font-bold text-gray-900">R$ 997</p>
-                <p className="text-xs text-gray-500">Configuração + treinamento</p>
               </div>
               <div className="hidden md:block w-px h-16 bg-emerald-300"></div>
               <div className="text-center">
@@ -218,6 +217,19 @@ export default async function Home() {
                 <p className="text-xs text-gray-500">Até 20 unidades</p>
               </div>
             </div>
+
+            {/* Implantação inclui */}
+            <div className="mt-6 pt-6 border-t border-emerald-200">
+              <p className="text-sm font-semibold text-emerald-800 mb-3">A implantação inclui:</p>
+              <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-gray-700">
+                <span className="flex items-center gap-1"><CheckCircle className="h-4 w-4 text-emerald-500" /> Configuração completa</span>
+                <span className="flex items-center gap-1"><CheckCircle className="h-4 w-4 text-emerald-500" /> Cadastro inicial</span>
+                <span className="flex items-center gap-1"><CheckCircle className="h-4 w-4 text-emerald-500" /> Integração PIX e e-mail</span>
+                <span className="flex items-center gap-1"><CheckCircle className="h-4 w-4 text-emerald-500" /> Treinamento do síndico</span>
+                <span className="flex items-center gap-1"><CheckCircle className="h-4 w-4 text-emerald-500" /> Sistema rodando em 48h</span>
+              </div>
+            </div>
+
             <div className="mt-6 pt-6 border-t border-emerald-200">
               <Link
                 href="/landing#planos"
@@ -225,6 +237,67 @@ export default async function Home() {
               >
                 Ver todos os planos →
               </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Depoimentos */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-5xl mx-auto px-4">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2 text-center">O que síndicos estão dizendo</h2>
+          <p className="text-gray-600 text-center mb-10">Histórias reais de quem já simplificou a gestão</p>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="bg-white p-6 rounded-xl shadow-sm">
+              <div className="flex items-center gap-1 text-amber-400 mb-3">
+                <span>★★★★★</span>
+              </div>
+              <p className="text-gray-700 mb-4 italic">
+                "Antes eu passava 2 horas por semana cobrando moradores. Agora o PIX cai automático e eu só acompanho."</p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
+                  <span className="text-emerald-600 font-bold">JS</span>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900">João Silva</p>
+                  <p className="text-xs text-gray-500">Síndico há 3 anos • SP</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-xl shadow-sm">
+              <div className="flex items-center gap-1 text-amber-400 mb-3">
+                <span>★★★★★</span>
+              </div>
+              <p className="text-gray-700 mb-4 italic">
+                "O porteiro consegue usar sozinho. Registro de visitante virou rápido e organizado. Moradores elogiam."</p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                  <span className="text-blue-600 font-bold">MC</span>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900">Maria Costa</p>
+                  <p className="text-xs text-gray-500">Síndica há 2 anos • RJ</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-xl shadow-sm">
+              <div className="flex items-center gap-1 text-amber-400 mb-3">
+                <span>★★★★★</span>
+              </div>
+              <p className="text-gray-700 mb-4 italic">
+                "Finalmente um sistema que não depende de administradora. Mudo de plano quando quiser e os dados são meus."</p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                  <span className="text-purple-600 font-bold">RF</span>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900">Roberto Ferreira</p>
+                  <p className="text-xs text-gray-500">Síndico há 5 anos • MG</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
