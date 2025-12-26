@@ -82,17 +82,30 @@ export async function POST(request: NextRequest) {
         }
 
         // Criar transporter para teste
+        // IMPORTANTE: Porta 465 = SSL implícito (secure: true)
+        //             Porta 587 = STARTTLS (secure: false)
+        const port = parseInt(smtp_port);
+        const useSecure = port === 465; // SSL implícito apenas na 465
+
+        console.log(`[SMTP Test] Configurando: ${smtp_host}:${port}, secure=${useSecure}, user=${smtp_user}`);
+
         const transporter = nodemailer.createTransport({
             host: smtp_host,
-            port: parseInt(smtp_port),
-            secure: smtp_secure !== false,
+            port: port,
+            secure: useSecure, // true para 465, false para 587
             auth: {
                 user: smtp_user,
                 pass: smtp_password
             },
-            connectionTimeout: 15000,
-            greetingTimeout: 10000,
-            socketTimeout: 15000
+            tls: {
+                // Não falhar em certificados inválidos
+                rejectUnauthorized: false
+            },
+            connectionTimeout: 30000,
+            greetingTimeout: 15000,
+            socketTimeout: 30000,
+            debug: true,
+            logger: true
         });
 
         try {

@@ -797,15 +797,21 @@ async function createTransporter(supabase: any, condoId?: string): Promise<{ tra
     if (condoId) {
         const config = await getSmtpConfig(supabase, condoId);
         if (config) {
-            console.log(`[Email] Usando SMTP do condomínio ${condoId}`);
+            console.log(`[Email] Usando SMTP do condomínio ${condoId}: ${config.host}:${config.port}`);
+            // Porta 465 = SSL implícito, 587 = STARTTLS
+            const useSecure = config.port === 465;
             const transporter = nodemailer.createTransport({
                 host: config.host,
                 port: config.port,
-                secure: config.secure,
+                secure: useSecure,
                 auth: {
                     user: config.user,
                     pass: config.pass,
                 },
+                tls: { rejectUnauthorized: false },
+                connectionTimeout: 30000,
+                greetingTimeout: 15000,
+                socketTimeout: 30000
             });
             return { transporter, from: config.from, smtpConfigured: true };
         }
@@ -821,15 +827,21 @@ async function createTransporter(supabase: any, condoId?: string): Promise<{ tra
             .single();
 
         if (!error && globalConfig) {
-            console.log(`[Email] Usando SMTP GLOBAL como fallback (condomínio ${condoId || 'sem condo'} não tem SMTP)`);
+            console.log(`[Email] Usando SMTP GLOBAL: ${globalConfig.smtp_host}:${globalConfig.smtp_port}`);
+            // Porta 465 = SSL implícito, 587 = STARTTLS
+            const useSecure = globalConfig.smtp_port === 465;
             const transporter = nodemailer.createTransport({
                 host: globalConfig.smtp_host,
                 port: globalConfig.smtp_port,
-                secure: globalConfig.smtp_secure !== false,
+                secure: useSecure,
                 auth: {
                     user: globalConfig.smtp_user,
                     pass: decryptPassword(globalConfig.smtp_password),
                 },
+                tls: { rejectUnauthorized: false },
+                connectionTimeout: 30000,
+                greetingTimeout: 15000,
+                socketTimeout: 30000
             });
             const from = globalConfig.smtp_from_name
                 ? `"${globalConfig.smtp_from_name}" <${globalConfig.smtp_from_email}>`
