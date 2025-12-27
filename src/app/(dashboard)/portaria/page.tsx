@@ -240,6 +240,27 @@ export default function PortariaProfissionalPage() {
     };
 
     const extractName = (text: string): string | null => {
+        // Função auxiliar para validar se parece um nome real (não ruído de OCR)
+        const isLikelyRealName = (candidate: string): boolean => {
+            // Rejeita se tiver muitas consoantes seguidas (ex: "VWLNPTRD" = lixo)
+            if (/[BCDFGHJKLMNPQRSTVWXYZ]{4,}/i.test(candidate)) return false;
+
+            // Rejeita se tiver padrões estranhos de caracteres
+            if (/[ÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÄËÏÖÜÇ]{2,}/i.test(candidate)) return false; // Acentos consecutivos = lixo
+
+            // Verifica proporção vogais/consoantes (nomes reais têm ~40% vogais)
+            const vowels = (candidate.match(/[AEIOUÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÄËÏÖÜÇ]/gi) || []).length;
+            const consonants = (candidate.match(/[BCDFGHJKLMNPQRSTVWXYZ]/gi) || []).length;
+            if (consonants > 0 && vowels / consonants < 0.25) return false; // Menos de 25% vogais = lixo
+
+            // Verifica se tem pelo menos um "pedaço" que parece nome (2+ letras, vogal, consoante)
+            const words = candidate.split(/\s+/);
+            const validWords = words.filter(w => w.length >= 2 && /[AEIOU]/i.test(w) && /[BCDFGHJKLMNPQRSTVWXYZ]/i.test(w));
+            if (validWords.length < 2) return false; // Nome precisa de 2+ palavras válidas
+
+            return true;
+        };
+
         // Primeiro tenta encontrar nome após labels
         const labelPatterns = [
             /NOME[:\s]+([A-ZÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÄËÏÖÜÇ][A-ZÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÄËÏÖÜÇa-záéíóúâêîôûàèìòùäëïöüç\s]+)/i,
@@ -251,7 +272,7 @@ export default function PortariaProfissionalPage() {
             const match = text.match(pattern);
             if (match && match[1]) {
                 const name = match[1].trim().split('\n')[0].trim();
-                if (name.length >= 5 && name.includes(' ')) {
+                if (name.length >= 5 && name.includes(' ') && isLikelyRealName(name)) {
                     return name.toUpperCase();
                 }
             }
@@ -261,34 +282,18 @@ export default function PortariaProfissionalPage() {
         const lines = text.split('\n');
         const excludeWords = ['REPÚBLICA', 'FEDERATIVA', 'BRASIL', 'REGISTRO', 'IDENTIDADE',
             'CARTEIRA', 'NACIONAL', 'HABILITAÇÃO', 'MINISTÉRIO', 'SECRETARIA', 'DETRAN',
-            'VÁLIDA', 'DATA', 'NASCIMENTO', 'FILIAÇÃO', 'LOCAL', 'EMISSÃO'];
+            'VÁLIDA', 'DATA', 'NASCIMENTO', 'FILIAÇÃO', 'LOCAL', 'EMISSÃO', 'ASSINATURA',
+            'PERMISSÃO', 'CATEGORIA', 'OBSERVAÇÕES', 'PRIMEIRA', 'VALIDADE', 'EXPEDIÇÃO'];
 
-        for (const line of lines) {
-            const cleanLine = line.trim();
-            // Aceita maiúsculas ou título (primeira letra maiúscula)
-            const isAllCaps = cleanLine === cleanLine.toUpperCase();
-            const hasLettersOnly = /^[A-ZÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÄËÏÖÜÇa-záéíóúâêîôûàèìòùäëïöüç\s]+$/.test(cleanLine);
-            const hasSpace = cleanLine.includes(' ');
-            const goodLength = cleanLine.length >= 6 && cleanLine.length <= 60;
-            const notExcluded = !excludeWords.some(word => cleanLine.toUpperCase().includes(word));
-
-            if (hasLettersOnly && hasSpace && goodLength && notExcluded) {
-                // Prioriza linhas em maiúsculas
-                if (isAllCaps) {
-                    return cleanLine;
-                }
-            }
-        }
-
-        // Segunda passada - aceita mixed case
         for (const line of lines) {
             const cleanLine = line.trim();
             const hasLettersOnly = /^[A-ZÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÄËÏÖÜÇa-záéíóúâêîôûàèìòùäëïöüç\s]+$/.test(cleanLine);
             const hasSpace = cleanLine.includes(' ');
-            const goodLength = cleanLine.length >= 6 && cleanLine.length <= 60;
+            const goodLength = cleanLine.length >= 8 && cleanLine.length <= 50;
             const notExcluded = !excludeWords.some(word => cleanLine.toUpperCase().includes(word));
+            const isReal = isLikelyRealName(cleanLine);
 
-            if (hasLettersOnly && hasSpace && goodLength && notExcluded) {
+            if (hasLettersOnly && hasSpace && goodLength && notExcluded && isReal) {
                 return cleanLine.toUpperCase();
             }
         }
