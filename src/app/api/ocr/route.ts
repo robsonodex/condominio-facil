@@ -24,23 +24,32 @@ export async function POST(req: NextRequest) {
         const arrayBuffer = await file.arrayBuffer();
         let buffer = Buffer.from(arrayBuffer);
 
-        // Pipeline agressivo de pré-processamento
-        const processedImageBuffer = await sharp(buffer)
-            .resize({ width: 1000, withoutEnlargement: true }) // Reduz para acelerar
-            .grayscale() // Remove cor (ruído)
-            .threshold(128) // Binarização (Preto e Branco) para alto contraste
-            .toBuffer();
+        try {
+            console.log('[OCR] Tentando otimização com Sharp...');
+            // Pipeline agressivo de pré-processamento
+            buffer = await sharp(buffer)
+                .resize({ width: 1000, withoutEnlargement: true }) // Reduz para acelerar
+                .grayscale() // Remove cor (ruído)
+                .threshold(128) // Binarização (Preto e Branco) para alto contraste
+                .toBuffer();
+            console.log('[OCR] Sharp: Sucesso na otimização.');
+        } catch (sharpError: any) {
+            console.error('[OCR] Sharp falhou, usando imagem original:', sharpError);
+            // Continua com o buffer original se o sharp falhar (fallback)
+        }
 
         // 2. OCR (TESSERACT.JS)
         // Cache em /tmp para ambiente serverless (única pasta writeable)
         const cachePath = '/tmp';
 
+        console.log('[OCR] Iniciando Worker Tesseract...');
         const worker = await createWorker('por', 1, {
             cachePath,
-            logger: m => console.log(m), // Opcional: ver progresso nos logs
+            logger: m => console.log(`[Tesseract] ${m.status}: ${Math.round(m.progress * 100)}%`),
+            errorHandler: err => console.error('[Tesseract Worker Error]', err)
         });
 
-        const { data: { text } } = await worker.recognize(processedImageBuffer);
+        const { data: { text } } = await worker.recognize(buffer);
         await worker.terminate();
 
         console.log('[OCR Raw Text]:', text);

@@ -315,7 +315,15 @@ export default function PortariaProfissionalPage() {
                 body: formData,
             });
 
-            const result = await response.json();
+            let result;
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                result = await response.json();
+            } else {
+                // Se não for JSON (ex: erro 500 do Next.js), lê como texto
+                const textError = await response.text();
+                throw new Error(`Erro do Servidor (${response.status}): ${textError.substring(0, 100)}...`);
+            }
 
             if (!result.success) {
                 throw new Error(result.error || 'Falha no OCR Local');
