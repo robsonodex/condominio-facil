@@ -34,10 +34,6 @@
         {
             "path": "/api/cron/learn-prices",
             "schedule": "0 6 * * *"
-        },
-        {
-            "path": "/api/cron/hard-delete",
-            "schedule": "0 7 * * *"
         }
     ]
 }

@@ -3,6 +3,7 @@ import { runHealthCheck } from '../health-check/task';
 import { runManutencaoCheck } from '../manutencao-check/task';
 import { runProcessNotifications } from '../process-notifications/task';
 import { runReconcilePayments } from '../reconcile-payments/task';
+import { runHardDelete } from '../hard-delete/task';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,11 +23,12 @@ export async function GET(req: NextRequest) {
         runHealthCheck().then(res => ({ task: 'health-check', ...res })),
         runManutencaoCheck().then(res => ({ task: 'manutencao-check', ...res })),
         runProcessNotifications().then(res => ({ task: 'process-notifications', ...res })),
-        runReconcilePayments().then(res => ({ task: 'reconcile-payments', ...res }))
+        runReconcilePayments().then(res => ({ task: 'reconcile-payments', ...res })),
+        runHardDelete().then(res => ({ task: 'hard-delete', ...res }))
     ]);
 
     const summary = results.map((r, index) => {
-        const taskName = ['health-check', 'manutencao-check', 'process-notifications', 'reconcile-payments'][index];
+        const taskName = ['health-check', 'manutencao-check', 'process-notifications', 'reconcile-payments', 'hard-delete'][index];
         if (r.status === 'fulfilled') {
             return { task: taskName, status: 'ok', result: r.value };
         } else {
