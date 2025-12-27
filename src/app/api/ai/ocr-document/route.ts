@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
         formData.append('isOverlayRequired', 'false');
         formData.append('detectOrientation', 'true');
         formData.append('scale', 'true');
-        formData.append('OCREngine', '2');
+        formData.append('OCREngine', '1'); // Engine 1 pode ter melhor precisão de caracteres
 
         const response = await fetch(OCR_SPACE_URL, {
             method: 'POST',
