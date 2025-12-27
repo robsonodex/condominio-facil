@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import Tesseract from 'tesseract.js';
 
 const HUGGINGFACE_API_KEY = process.env.HUGGINGFACE_API_KEY;
-const HF_OCR_MODEL = 'https://api-inference.huggingface.co/models/microsoft/trocr-base-printed';
+// Usando modelo de OCR para documentos
+const HF_OCR_MODEL = 'https://api-inference.huggingface.co/models/microsoft/trocr-large-printed';
 
 // Regex patterns para documentos brasileiros
 const CPF_REGEX = /(\d{3}[.\s]?\d{3}[.\s]?\d{3}[-.\s]?\d{2})/g;
 const RG_REGEX = /(\d{1,2}[.\s]?\d{3}[.\s]?\d{3}[-.\s]?[\dXx]?)/g;
 
-// Função para extrair CPF do texto
 function extractCPF(text: string): string | null {
     const matches = text.match(CPF_REGEX);
     if (matches && matches.length > 0) {
@@ -17,7 +17,6 @@ function extractCPF(text: string): string | null {
     return null;
 }
 
-// Função para extrair RG do texto
 function extractRG(text: string): string | null {
     const matches = text.match(RG_REGEX);
     if (matches && matches.length > 0) {
@@ -26,11 +25,10 @@ function extractRG(text: string): string | null {
     return null;
 }
 
-// Função para extrair nome do texto
 function extractName(text: string): string | null {
     const namePatterns = [
         /NOME[:\s]+([A-ZÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÄËÏÖÜÇ\s]+)/i,
-        /NOME\s*:\s*([A-ZÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÄËÏÖÜÇ][A-ZÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÄËÏÖÜÇa-záéíóúâêîôûàèìòùäëïöüç\s]+)/i,
+        /NOME\s*:\s*([A-ZÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÄËÏÖÜÇ][A-Za-záéíóúâêîôûàèìòùäëïöüç\s]+)/i,
     ];
 
     for (const pattern of namePatterns) {
@@ -54,10 +52,8 @@ function extractName(text: string): string | null {
             cleanLine.includes(' ') &&
             /^[A-ZÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÄËÏÖÜÇ\s]+$/.test(cleanLine) &&
             !cleanLine.includes('REPÚBLICA') &&
-            !cleanLine.includes('FEDERATIVA') &&
             !cleanLine.includes('BRASIL') &&
-            !cleanLine.includes('REGISTRO') &&
-            !cleanLine.includes('IDENTIDADE')
+            !cleanLine.includes('REGISTRO')
         ) {
             return cleanLine;
         }
@@ -66,45 +62,11 @@ function extractName(text: string): string | null {
     return null;
 }
 
-// OCR com Hugging Face (primário)
-async function ocrWithHuggingFace(imageBase64: string): Promise<string> {
-    if (!HUGGINGFACE_API_KEY) {
-        throw new Error('HUGGINGFACE_API_KEY não configurada');
-    }
-
-    // Remove o prefixo data:image/xxx;base64, se existir
-    const base64Data = imageBase64.replace(/^data:image\/[a-z]+;base64,/, '');
-    const imageBuffer = Buffer.from(base64Data, 'base64');
-
-    const response = await fetch(HF_OCR_MODEL, {
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${HUGGINGFACE_API_KEY}`,
-            'Content-Type': 'application/octet-stream',
-        },
-        body: imageBuffer,
-    });
-
-    if (!response.ok) {
-        const error = await response.text();
-        console.error('[HuggingFace] Erro:', response.status, error);
-        throw new Error(`HuggingFace API error: ${response.status}`);
-    }
-
-    const result = await response.json();
-
-    // TrOCR retorna array de textos
-    if (Array.isArray(result)) {
-        return result.map((r: any) => r.generated_text || '').join(' ');
-    }
-
-    return result.generated_text || result.text || '';
-}
-
-// OCR com Tesseract (fallback)
+// OCR direto com Tesseract (mais rápido para documentos completos)
 async function ocrWithTesseract(imageData: string): Promise<string> {
-    console.log('[Tesseract] Usando fallback...');
-    const result = await Tesseract.recognize(imageData, 'por');
+    const result = await Tesseract.recognize(imageData, 'por', {
+        logger: () => { } // Desabilita logs para performance
+    });
     return result.data.text;
 }
 
@@ -116,25 +78,15 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Imagem não fornecida' }, { status: 400 });
         }
 
-        let text = '';
-        let provider = 'unknown';
+        console.log('[OCR] Iniciando processamento...');
+        const startTime = Date.now();
 
-        // Tenta Hugging Face primeiro, se falhar usa Tesseract
-        try {
-            if (HUGGINGFACE_API_KEY) {
-                console.log('[OCR] Tentando Hugging Face...');
-                text = await ocrWithHuggingFace(image);
-                provider = 'huggingface';
-                console.log('[OCR HuggingFace] Texto:', text.substring(0, 100));
-            } else {
-                throw new Error('API key não configurada');
-            }
-        } catch (hfError: any) {
-            console.log('[OCR] Hugging Face falhou, usando Tesseract...', hfError.message);
-            text = await ocrWithTesseract(image);
-            provider = 'tesseract';
-            console.log('[OCR Tesseract] Texto:', text.substring(0, 100));
-        }
+        // Usa Tesseract diretamente (mais confiável para documentos brasileiros)
+        const text = await ocrWithTesseract(image);
+
+        const elapsed = Date.now() - startTime;
+        console.log(`[OCR] Concluído em ${elapsed}ms`);
+        console.log('[OCR] Texto:', text.substring(0, 150));
 
         // Extrair dados estruturados
         const name = extractName(text);
@@ -142,12 +94,22 @@ export async function POST(req: NextRequest) {
         const rg = extractRG(text);
         const doc = cpf || rg;
 
-        console.log('[OCR] Resultado:', { name, doc, provider });
+        console.log('[OCR] Resultado:', { name, doc });
+
+        // Se não encontrou nada, retorna aviso
+        if (!name && !doc) {
+            return NextResponse.json({
+                name: null,
+                doc: null,
+                message: 'Não foi possível identificar dados. Tente uma foto mais clara.',
+                elapsed,
+            });
+        }
 
         return NextResponse.json({
             name: name || null,
             doc: doc || null,
-            provider,
+            elapsed,
         });
 
     } catch (error: any) {
