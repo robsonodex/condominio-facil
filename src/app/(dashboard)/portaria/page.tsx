@@ -177,42 +177,122 @@ export default function PortariaProfissionalPage() {
         }
     };
 
-    // Regex patterns para documentos brasileiros
+    // Regex patterns para documentos brasileiros - MELHORADO
     const extractCPF = (text: string): string | null => {
-        const matches = text.match(/(\d{3}[.\s]?\d{3}[.\s]?\d{3}[-.\s]?\d{2})/g);
-        if (matches && matches.length > 0) {
-            return matches[0].replace(/[.\s-]/g, '').replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+        // CPF: XXX.XXX.XXX-XX ou variações
+        const patterns = [
+            /(\d{3}[.\s]?\d{3}[.\s]?\d{3}[-.\s]?\d{2})/g,
+            /CPF[:\s]*(\d{3}[.\s]?\d{3}[.\s]?\d{3}[-.\s]?\d{2})/gi,
+            /(\d{11})/g, // 11 dígitos seguidos
+        ];
+
+        for (const pattern of patterns) {
+            const matches = text.match(pattern);
+            if (matches) {
+                for (const match of matches) {
+                    const digits = match.replace(/\D/g, '');
+                    if (digits.length === 11) {
+                        return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+                    }
+                }
+            }
         }
         return null;
     };
 
     const extractRG = (text: string): string | null => {
-        const matches = text.match(/(\d{1,2}[.\s]?\d{3}[.\s]?\d{3}[-.\s]?[\dXx]?)/g);
-        if (matches && matches.length > 0) {
-            return matches[0].replace(/[.\s-]/g, '');
+        // RG: XX.XXX.XXX-X ou variações
+        const patterns = [
+            /RG[:\s]*(\d{1,2}[.\s]?\d{3}[.\s]?\d{3}[-.\s]?[\dXx]?)/gi,
+            /(\d{1,2}[.\s]\d{3}[.\s]\d{3}[-.\s]?[\dXx])/g,
+            /(\d{7,9})/g, // 7-9 dígitos seguidos
+        ];
+
+        for (const pattern of patterns) {
+            const matches = text.match(pattern);
+            if (matches) {
+                for (const match of matches) {
+                    const digits = match.replace(/\D/g, '');
+                    if (digits.length >= 7 && digits.length <= 9) {
+                        return match.replace(/[.\s-]/g, '').toUpperCase();
+                    }
+                }
+            }
+        }
+        return null;
+    };
+
+    const extractCNH = (text: string): string | null => {
+        // CNH: 9-11 dígitos
+        const patterns = [
+            /CNH[:\s]*(\d{9,11})/gi,
+            /REGISTRO[:\s]*(\d{9,11})/gi,
+            /N[°º]?\s*REGISTRO[:\s]*(\d{9,11})/gi,
+        ];
+
+        for (const pattern of patterns) {
+            const match = text.match(pattern);
+            if (match && match[1]) {
+                return match[1];
+            }
         }
         return null;
     };
 
     const extractName = (text: string): string | null => {
-        const lines = text.split('\n');
-        for (const line of lines) {
-            const cleanLine = line.trim();
-            if (
-                cleanLine.length >= 8 &&
-                cleanLine.length <= 60 &&
-                cleanLine === cleanLine.toUpperCase() &&
-                cleanLine.includes(' ') &&
-                /^[A-ZÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÄËÏÖÜÇ\s]+$/.test(cleanLine) &&
-                !cleanLine.includes('REPÚBLICA') &&
-                !cleanLine.includes('BRASIL') &&
-                !cleanLine.includes('REGISTRO') &&
-                !cleanLine.includes('IDENTIDADE') &&
-                !cleanLine.includes('CARTEIRA')
-            ) {
-                return cleanLine;
+        // Primeiro tenta encontrar nome após labels
+        const labelPatterns = [
+            /NOME[:\s]+([A-ZÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÄËÏÖÜÇ][A-ZÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÄËÏÖÜÇa-záéíóúâêîôûàèìòùäëïöüç\s]+)/i,
+            /NOME\s*:\s*([^\n]+)/i,
+            /MOTORISTA[:\s]+([A-ZÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÄËÏÖÜÇ][A-ZÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÄËÏÖÜÇa-záéíóúâêîôûàèìòùäëïöüç\s]+)/i,
+        ];
+
+        for (const pattern of labelPatterns) {
+            const match = text.match(pattern);
+            if (match && match[1]) {
+                const name = match[1].trim().split('\n')[0].trim();
+                if (name.length >= 5 && name.includes(' ')) {
+                    return name.toUpperCase();
+                }
             }
         }
+
+        // Fallback: procura linhas que parecem nomes
+        const lines = text.split('\n');
+        const excludeWords = ['REPÚBLICA', 'FEDERATIVA', 'BRASIL', 'REGISTRO', 'IDENTIDADE',
+            'CARTEIRA', 'NACIONAL', 'HABILITAÇÃO', 'MINISTÉRIO', 'SECRETARIA', 'DETRAN',
+            'VÁLIDA', 'DATA', 'NASCIMENTO', 'FILIAÇÃO', 'LOCAL', 'EMISSÃO'];
+
+        for (const line of lines) {
+            const cleanLine = line.trim();
+            // Aceita maiúsculas ou título (primeira letra maiúscula)
+            const isAllCaps = cleanLine === cleanLine.toUpperCase();
+            const hasLettersOnly = /^[A-ZÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÄËÏÖÜÇa-záéíóúâêîôûàèìòùäëïöüç\s]+$/.test(cleanLine);
+            const hasSpace = cleanLine.includes(' ');
+            const goodLength = cleanLine.length >= 6 && cleanLine.length <= 60;
+            const notExcluded = !excludeWords.some(word => cleanLine.toUpperCase().includes(word));
+
+            if (hasLettersOnly && hasSpace && goodLength && notExcluded) {
+                // Prioriza linhas em maiúsculas
+                if (isAllCaps) {
+                    return cleanLine;
+                }
+            }
+        }
+
+        // Segunda passada - aceita mixed case
+        for (const line of lines) {
+            const cleanLine = line.trim();
+            const hasLettersOnly = /^[A-ZÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÄËÏÖÜÇa-záéíóúâêîôûàèìòùäëïöüç\s]+$/.test(cleanLine);
+            const hasSpace = cleanLine.includes(' ');
+            const goodLength = cleanLine.length >= 6 && cleanLine.length <= 60;
+            const notExcluded = !excludeWords.some(word => cleanLine.toUpperCase().includes(word));
+
+            if (hasLettersOnly && hasSpace && goodLength && notExcluded) {
+                return cleanLine.toUpperCase();
+            }
+        }
+
         return null;
     };
 
@@ -235,22 +315,27 @@ export default function PortariaProfissionalPage() {
             );
 
             const text = result.data.text;
-            console.log('[OCR] Texto extraído:', text.substring(0, 200));
+            console.log('[OCR] Texto completo extraído:\n', text);
 
             // Extrair dados estruturados
             const name = extractName(text);
             const cpf = extractCPF(text);
             const rg = extractRG(text);
-            const doc = cpf || rg;
+            const cnh = extractCNH(text);
+            const doc = cpf || cnh || rg;
+
+            console.log('[OCR] Dados extraídos:', { name, cpf, rg, cnh });
 
             // Preenche os campos automaticamente
             if (name) setNome(name);
             if (doc) setDocumento(doc);
 
             if (!name && !doc) {
-                alert('Não foi possível identificar nome ou documento. Dicas:\n\n• Foto bem iluminada\n• Documento centralizado\n• Texto legível');
+                // Mostra o texto extraído para debug
+                const preview = text.substring(0, 300).replace(/\n/g, ' | ');
+                alert(`Não foi possível identificar nome ou documento.\n\nTexto lido: "${preview}..."\n\nDicas:\n• Foto bem iluminada\n• Documento centralizado\n• Texto legível`);
             } else {
-                console.log('[OCR] Dados encontrados:', { name, doc });
+                console.log('[OCR] Sucesso! Dados encontrados:', { name, doc });
             }
 
         } catch (error: any) {
