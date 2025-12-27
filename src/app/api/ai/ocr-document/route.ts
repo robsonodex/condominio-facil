@@ -1,73 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Tesseract from 'tesseract.js';
 
-const HUGGINGFACE_API_KEY = process.env.HUGGINGFACE_API_KEY;
-// Usando modelo de OCR para documentos
-const HF_OCR_MODEL = 'https://api-inference.huggingface.co/models/microsoft/trocr-large-printed';
+const OCR_SPACE_API_KEY = process.env.OCR_SPACE_API_KEY;
+const OCR_SPACE_ENDPOINT = 'https://api.ocr.space/parse/image';
 
-// Regex patterns para documentos brasileiros
+// Pattern para extrair JSON limpo caso a IA retorne markdown
+function cleanResponse(text: string) {
+    return text.replace(/```json/g, '').replace(/```/g, '').trim();
+}
+
+// Regex patterns (mantidos para extração no backend se necessário, mas o foco é retornar texto)
 const CPF_REGEX = /(\d{3}[.\s]?\d{3}[.\s]?\d{3}[-.\s]?\d{2})/g;
 const RG_REGEX = /(\d{1,2}[.\s]?\d{3}[.\s]?\d{3}[-.\s]?[\dXx]?)/g;
 
 function extractCPF(text: string): string | null {
-    const matches = text.match(CPF_REGEX);
-    if (matches && matches.length > 0) {
-        return matches[0].replace(/[.\s-]/g, '').replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-    }
-    return null;
-}
-
-function extractRG(text: string): string | null {
-    const matches = text.match(RG_REGEX);
-    if (matches && matches.length > 0) {
-        return matches[0].replace(/[.\s-]/g, '');
+    text = text.replace(/[^\d]/g, ''); // Remove tudo que não é dígito
+    const match = text.match(/(\d{11})/);
+    if (match) {
+        return match[1].replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
     }
     return null;
 }
 
 function extractName(text: string): string | null {
+    // Tenta encontrar padrões comuns de nome
     const namePatterns = [
         /NOME[:\s]+([A-ZÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÄËÏÖÜÇ\s]+)/i,
-        /NOME\s*:\s*([A-ZÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÄËÏÖÜÇ][A-Za-záéíóúâêîôûàèìòùäëïöüç\s]+)/i,
+        /NOME\s*[:\.]\s*([A-ZÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÄËÏÖÜÇ\s]+)/i
     ];
 
     for (const pattern of namePatterns) {
         const match = text.match(pattern);
         if (match && match[1]) {
-            const name = match[1].trim();
-            if (name.length >= 5 && name.includes(' ')) {
-                return name.split('\n')[0].trim();
-            }
+            const potentialName = match[1].split('\n')[0].trim();
+            if (potentialName.length > 3) return potentialName.toUpperCase();
         }
     }
-
-    // Fallback: procura linhas em maiúsculas que parecem nomes
-    const lines = text.split('\n');
-    for (const line of lines) {
-        const cleanLine = line.trim();
-        if (
-            cleanLine.length >= 8 &&
-            cleanLine.length <= 60 &&
-            cleanLine === cleanLine.toUpperCase() &&
-            cleanLine.includes(' ') &&
-            /^[A-ZÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÄËÏÖÜÇ\s]+$/.test(cleanLine) &&
-            !cleanLine.includes('REPÚBLICA') &&
-            !cleanLine.includes('BRASIL') &&
-            !cleanLine.includes('REGISTRO')
-        ) {
-            return cleanLine;
-        }
-    }
-
     return null;
-}
-
-// OCR direto com Tesseract (mais rápido para documentos completos)
-async function ocrWithTesseract(imageData: string): Promise<string> {
-    const result = await Tesseract.recognize(imageData, 'por', {
-        logger: () => { } // Desabilita logs para performance
-    });
-    return result.data.text;
 }
 
 export async function POST(req: NextRequest) {
@@ -78,45 +46,75 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Imagem não fornecida' }, { status: 400 });
         }
 
-        console.log('[OCR] Iniciando processamento...');
-        const startTime = Date.now();
-
-        // Usa Tesseract diretamente (mais confiável para documentos brasileiros)
-        const text = await ocrWithTesseract(image);
-
-        const elapsed = Date.now() - startTime;
-        console.log(`[OCR] Concluído em ${elapsed}ms`);
-        console.log('[OCR] Texto:', text.substring(0, 150));
-
-        // Extrair dados estruturados
-        const name = extractName(text);
-        const cpf = extractCPF(text);
-        const rg = extractRG(text);
-        const doc = cpf || rg;
-
-        console.log('[OCR] Resultado:', { name, doc });
-
-        // Se não encontrou nada, retorna aviso
-        if (!name && !doc) {
+        if (!OCR_SPACE_API_KEY) {
             return NextResponse.json({
-                name: null,
-                doc: null,
-                message: 'Não foi possível identificar dados. Tente uma foto mais clara.',
-                elapsed,
-            });
+                error: 'OCR_SPACE_API_KEY não configurada',
+                fallbackToClient: true
+            }, { status: 500 });
         }
 
+        console.log('[OCR.space] Iniciando processamento...');
+
+        const formData = new FormData();
+        formData.append('base64Image', image);
+        formData.append('language', 'por');
+        formData.append('isOverlayRequired', 'false');
+        formData.append('detectOrientation', 'true');
+        formData.append('scale', 'true');
+        formData.append('OCREngine', '2'); // Engine 2 é melhor para números e caracteres especiais
+
+        const response = await fetch(OCR_SPACE_ENDPOINT, {
+            method: 'POST',
+            headers: {
+                'apikey': OCR_SPACE_API_KEY,
+            },
+            body: formData,
+        });
+
+        if (!response.ok) {
+            console.error('[OCR.space] Erro API:', response.status);
+            return NextResponse.json({
+                error: 'Erro na API OCR.space',
+                fallbackToClient: true
+            }, { status: 502 });
+        }
+
+        const data = await response.json();
+
+        if (data.IsErroredOnProcessing) {
+            console.error('[OCR.space] Erro processamento:', data.ErrorMessage);
+            return NextResponse.json({
+                error: data.ErrorMessage || 'Erro no processamento da imagem',
+                fallbackToClient: true
+            }, { status: 422 });
+        }
+
+        if (!data.ParsedResults || data.ParsedResults.length === 0) {
+            return NextResponse.json({
+                error: 'Nenhum texto encontrado',
+                fallbackToClient: true
+            }, { status: 404 });
+        }
+
+        const text = data.ParsedResults[0].ParsedText;
+        console.log('[OCR.space] Texto extraído:', text.substring(0, 100));
+
+        // Tenta extrair dados básicos no servidor
+        const possibleName = extractName(text);
+        const possibleCpf = extractCPF(text);
+
         return NextResponse.json({
-            name: name || null,
-            doc: doc || null,
-            elapsed,
+            name: possibleName,
+            doc: possibleCpf,
+            rawText: text, // Envia texto bruto para o frontend processar melhor
+            provider: 'ocr.space'
         });
 
     } catch (error: any) {
-        console.error('[OCR] Erro:', error);
+        console.error('[OCR.space] Erro crítico:', error);
         return NextResponse.json({
-            error: 'Erro ao processar documento',
-            details: error.message
+            error: error.message,
+            fallbackToClient: true
         }, { status: 500 });
     }
 }
