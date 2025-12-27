@@ -41,23 +41,33 @@ export async function POST(req: NextRequest) {
                     content: [
                         {
                             type: "text",
-                            text: `Você é uma API de OCR especializada em documentos brasileiros (CNH, RG e CPF).
-                            
-Sua tarefa é extrair APENAS o NOME COMPLETO e o NÚMERO DO DOCUMENTO da imagem.
+                            text: `ATUE COMO UM ESPECIALISTA EM ANÁLISE FORENSE DE DOCUMENTOS.
 
-REGRAS RÍGIDAS:
-1. Retorne APENAS um JSON válido. NÃO escreva nada além do JSON.
-2. Formato do JSON: {"name": "NOME COMPLETO", "doc": "NUMERO"}
-3. Para o campo 'doc', extraia CPF (11 dígitos) OU RG (9 dígitos) OU CNH (11 dígitos). Preferência para CPF se houver.
-4. Se o documento estiver deitado/rotacionado, leia corretamente.
-5. Se não conseguir ler, retorne null.
+Sua missão é extrair dados de uma CNH (Carteira Nacional de Habilitação) ou RG/CPF brasileiro.
+A imagem pode estar rotacionada, com baixo contraste ou tremida. Use sua visão avançada.
 
-EXEMPLOS DE ONDE PROCURAR:
-- CNH: O nome geralmente está abaixo de 'NOME'. O CPF fica ao lado de 'CPF'.
-- RG: O nome está na parte superior ou central. O número do RG está no topo.
-- CPF (Cartão): O número está em destaque no centro ou topo.
+PASSO 1: Identifique visualmente onde estão os campos "NOME", "CPF", "DOC. IDENTIDADE", "DATA NASCIMENTO".
+PASSO 2: Leia o texto que está IMEDIATAMENTE PRÓXIMO a esses rótulos.
+PASSO 3: Ignore sufixos como ", pai", ", filho", "SSP", "DETRAN".
+PASSO 4: Formate a saída.
 
-Retorne SOMENTE o JSON.`
+Retorne APENAS este JSON:
+{
+  "name": "NOME COMPLETO DO CIDADÃO (Sem rótulos)",
+  "doc": "APENAS OS NÚMEROS DO CPF OU RG (Priorize CPF)"
+}
+
+DICAS PARA CNH:
+- O NOME está logo abaixo do título "NOME".
+- O CPF está abaixo de "CPF".
+- O RG está abaixo de "DOC. IDENTIDADE".
+
+DICAS PARA RG:
+- O NOME está no centro.
+- O RG está no topo.
+- O CPF (se houver) está identificado como CPF.
+
+Se não conseguir ler com certeza absoluta, retorne null.`
                         },
                         {
                             type: "image_url",
@@ -68,8 +78,8 @@ Retorne SOMENTE o JSON.`
                     ]
                 }
             ],
-            temperature: 0, // Zero para máxima precisão e determinismo
-            max_tokens: 300,
+            temperature: 0.1, // Levemente acima de 0 para permitir certa flexibilidade na interpretação visual
+            max_tokens: 500,
             response_format: { type: "json_object" } // Llama 3 suporta JSON mode
         };
 
