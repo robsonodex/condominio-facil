@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
             console.log('[OCR] Tentando otimização com Sharp...');
             // Pipeline agressivo de pré-processamento
             buffer = await sharp(buffer)
-                .resize({ width: 1000, withoutEnlargement: true }) // Reduz para acelerar
+                .resize({ width: 600, withoutEnlargement: true }) // Reduz para 600px para evitar Timeout na Vercel
                 .grayscale() // Remove cor (ruído)
                 .threshold(128) // Binarização (Preto e Branco) para alto contraste
                 .toBuffer();

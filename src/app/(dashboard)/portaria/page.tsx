@@ -339,12 +339,55 @@ export default function PortariaProfissionalPage() {
 
             if (!name && !doc) {
                 const preview = result.raw_text?.substring(0, 300).replace(/\n/g, ' | ') || 'Sem texto';
-                alert(`O OCR processou a imagem mas não identificou dados com confiança.\n\nTexto bruto: "${preview}..."\n\nTente aproximar mais a câmera.`);
+                // Se o servidor respondeu mas não achou nada, talvez nem adiante tentar client, 
+                // mas vou manter o fluxo limpo.
+                alert(`O OCR processou a imagem mas não identificou dados.\n\nTexto: "${preview}..."`);
             }
 
         } catch (error: any) {
-            console.error('Erro Fatal OCR:', error);
-            alert(`Erro ao processar documento: ${error.message}. Tente novamente.`);
+            console.error('[OCR] Servidor falhou:', error);
+            console.log('[OCR] Iniciando Fallback: Tesseract Client-Side (Navegador)...');
+
+            try {
+                // FALLBACK CLIENT-SIDE (ROBUSTEZ TOTAL)
+                const result = await Tesseract.recognize(
+                    imageData,
+                    'por',
+                    {
+                        logger: m => {
+                            if (m.status === 'recognizing text') {
+                                console.log(`[OCR Client] ${Math.round(m.progress * 100)}%`);
+                            }
+                        }
+                    }
+                );
+
+                const text = result.data.text;
+                console.log('[OCR Client] Texto bruto:', text);
+
+                // Reutilizando as regex functions que já existem no componente
+                const name = extractName(text);
+                const cpf = extractCPF(text);
+                const rg = extractRG(text);
+                const cnh = extractCNH(text); // Função que também já existe
+                const doc = cpf || cnh || rg;
+
+                console.log('[OCR Client] Extraído:', { name, doc });
+
+                if (name) setNome(name);
+                if (doc) setDocumento(doc);
+
+                if (!name && !doc) {
+                    alert('Falha total no OCR (Servidor e Client). Tente uma foto mais clara.');
+                } else {
+                    // Sucesso no fallback - silencioso ou aviso discreto
+                    console.log('Dados recuperados via Fallback Client-Side');
+                }
+
+            } catch (clientError) {
+                console.error('Erro Fatal OCR Client:', clientError);
+                alert(`Erro ao processar documento: ${error.message}. Tente novamente.`);
+            }
         } finally {
             setIsScanning(false);
         }
