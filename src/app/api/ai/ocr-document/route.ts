@@ -102,20 +102,46 @@ function extractDocumentData(text: string): { name: string | null; doc: string |
     // ========== EXTRAÇÃO DE NOME (AGRESSIVA) ==========
     let name: string | null = null;
 
-    // Estratégia 1: Procura após "NOME" literal
-    const nomeIndex = upperText.indexOf('NOME');
-    if (nomeIndex !== -1) {
-        const afterNome = text.substring(nomeIndex + 4);
-        const nextLine = afterNome.split('\n').find(l => {
-            const clean = l.trim();
-            return clean.length > 5 &&
-                /^[A-ZÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÇ\s]+$/i.test(clean) &&
-                !clean.includes('FILIAÇÃO') &&
-                !clean.includes('CPF') &&
-                !clean.includes('DATA');
-        });
-        if (nextLine) {
-            name = nextLine.trim().toUpperCase();
+    // Palavras que NÃO fazem parte de um nome
+    const notNameWords = [
+        'REPÚBLICA', 'REPUBLICA', 'FEDERATIVA', 'BRASIL', 'BRASE', 'BRASI',
+        'MINISTÉRIO', 'MINISTERIO', 'DEPARTAMENTO', 'NACIONAL', 'CARTEIRA',
+        'HABILITAÇÃO', 'HABILITACAO', 'TRÂNSITO', 'TRANSITO', 'INFRAESTRUTURA',
+        'VÁLIDA', 'VALIDA', 'TERRITÓRIO', 'TERRITORIO', 'TODO',
+        'DETRAN', 'IDENTIDADE', 'REGISTRO', 'SSP', 'EMISSOR',
+        'FILIAÇÃO', 'FILIACAO', 'DATA', 'NASCIMENTO', 'VALIDADE', 'EMISSÃO',
+        'PERMISSÃO', 'CATEGORIA', 'OBSERVAÇÕES', 'HABILITAÇÃO'
+    ];
+
+    // Função para validar se parece nome de pessoa
+    const isValidName = (text: string): boolean => {
+        const clean = text.trim().toUpperCase();
+        // Verifica se contém palavras proibidas
+        if (notNameWords.some(w => clean.includes(w))) return false;
+        // Deve ter só letras e espaços
+        if (!/^[A-ZÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÇ\s]+$/i.test(clean)) return false;
+        // Deve ter pelo menos 3 palavras (nome sobrenome sobrenome)
+        const words = clean.split(/\s+/).filter(w => w.length >= 2);
+        if (words.length < 3) return false;
+        // Tamanho razoável
+        if (clean.length < 15 || clean.length > 60) return false;
+        return true;
+    };
+
+    // Estratégia 1: Procura linha IMEDIATAMENTE após "NOME" (não FILIAÇÃO)
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].toUpperCase();
+        // Procura linha que contém apenas "NOME" (não FILIAÇÃO)
+        if (line.includes('NOME') && !line.includes('FILIAÇÃO') && !line.includes('FILIACAO')) {
+            // Próxima linha pode ser o nome
+            for (let j = i + 1; j < Math.min(i + 3, lines.length); j++) {
+                const candidate = lines[j].trim();
+                if (isValidName(candidate)) {
+                    name = candidate.toUpperCase();
+                    break;
+                }
+            }
+            if (name) break;
         }
     }
 
