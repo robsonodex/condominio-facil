@@ -296,80 +296,47 @@ export default function PortariaProfissionalPage() {
         return null;
     };
 
-    // OCR Híbrido: Tenta Servidor (HuggingFace) -> Falha -> Client (Tesseract)
+    // OCR Híbrido: AGORA USA LOCAL FIRST (/api/ocr) com Sharp + Tesseract
     const handleScanDocument = async (imageData: string) => {
         setIsScanning(true);
-        let serverError = null;
 
         try {
-            console.log('[OCR] Tentando OCR via Servidor (HuggingFace)...');
+            console.log('[OCR] Iniciando OCR Local Otimizado (/api/ocr)...');
 
-            // 1. Tenta API do Servidor
-            const response = await fetch('/api/ai/ocr-document', {
+            // Converter DataURL para Blob para enviar como FormData
+            const blob = await (await fetch(imageData)).blob();
+            const formData = new FormData();
+            formData.append('file', blob, 'documento.jpg');
+            if (condoId) formData.append('condo_id', condoId);
+
+            // 1. Chama API Local (Sharp + Tesseract /tmp)
+            const response = await fetch('/api/ocr', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ image: imageData }),
+                body: formData,
             });
 
-            const data = await response.json();
+            const result = await response.json();
 
-            // Se o servidor pedir fallback ou der erro
-            if (!response.ok || data.fallbackToClient) {
-                console.warn('[OCR] Servidor indisponível ou pediu fallback. Iniciando Tesseract local...');
-                throw new Error(data.error || 'Fallback solicitado');
+            if (!result.success) {
+                throw new Error(result.error || 'Falha no OCR Local');
             }
 
-            console.log('[OCR] Sucesso via Servidor:', data);
+            console.log('[OCR] Sucesso Local:', result.data);
 
-            if (data.name) setNome(data.name);
-            if (data.doc) setDocumento(data.doc);
+            const { name, cpf, registro, data_nascimento, data_validade } = result.data;
+            const doc = cpf || registro;
 
-            if (!data.name && !data.doc) {
-                // Se servidor não achou nada, tenta local também
-                throw new Error('Servidor não encontrou dados');
+            if (name) setNome(name);
+            if (doc) setDocumento(doc);
+
+            if (!name && !doc) {
+                const preview = result.raw_text?.substring(0, 300).replace(/\n/g, ' | ') || 'Sem texto';
+                alert(`O OCR processou a imagem mas não identificou dados com confiança.\n\nTexto bruto: "${preview}..."\n\nTente aproximar mais a câmera.`);
             }
 
         } catch (error: any) {
-            serverError = error.message;
-            console.log(`[OCR] Executando fallback local (Tesseract). Motivo: ${serverError}`);
-
-            try {
-                const result = await Tesseract.recognize(
-                    imageData,
-                    'por', // Português
-                    {
-                        logger: (m) => {
-                            if (m.status === 'recognizing text') {
-                                console.log(`[OCR Local] Progresso: ${Math.round(m.progress * 100)}%`);
-                            }
-                        }
-                    }
-                );
-
-                const text = result.data.text;
-                console.log('[OCR Local] Texto extraído:\n', text);
-
-                // Extrair dados estruturados (usando as funções locais)
-                const name = extractName(text);
-                const cpf = extractCPF(text);
-                const rg = extractRG(text);
-                const cnh = extractCNH(text);
-                const doc = cpf || cnh || rg;
-
-                console.log('[OCR Local] Dados extraídos:', { name, cpf, rg, cnh });
-
-                if (name) setNome(name);
-                if (doc) setDocumento(doc);
-
-                if (!name && !doc) {
-                    const preview = text.substring(0, 300).replace(/\n/g, ' | ');
-                    alert(`Não foi possível identificar dados.\n\nServidor: ${serverError}\nLocal: Falhou\n\nTexto lido: "${preview}..."`);
-                }
-
-            } catch (clientError: any) {
-                console.error('Erro fatal no OCR:', clientError);
-                alert('Erro ao processar documento (Servidor e Local falharam). Tente novamente.');
-            }
+            console.error('Erro Fatal OCR:', error);
+            alert(`Erro ao processar documento: ${error.message}. Tente novamente.`);
         } finally {
             setIsScanning(false);
         }
