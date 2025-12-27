@@ -99,13 +99,13 @@ Se não conseguir ler com certeza absoluta, retorne null.`
             // Rate limit ou Overloaded
             if (response.status === 429 || response.status === 503) {
                 return NextResponse.json({
-                    error: 'Serviço ocupado, usando fallback local',
+                    error: `Serviço ocupado (${response.status}), usando fallback local`,
                     fallbackToClient: true
                 }, { status: response.status });
             }
 
             return NextResponse.json({
-                error: 'Erro na API Groq',
+                error: `Erro na API Groq: ${response.status} - ${errorText.substring(0, 50)}`,
                 fallbackToClient: true
             }, { status: 500 });
         }
@@ -125,10 +125,10 @@ Se não conseguir ler com certeza absoluta, retorne null.`
             result = JSON.parse(cleanJsonResponse(content));
         } catch (e) {
             console.error('[Groq AI] Erro ao parsear JSON:', e);
-            // Tenta extrair manualmente se o JSON falhar
-            // (Llama costuma ser bom em JSON, mas fallback é bom)
+            console.error('[Groq AI] Conteúdo recebido:', content);
+
             return NextResponse.json({
-                error: 'Erro formato JSON',
+                error: 'Erro formato JSON da IA',
                 rawText: content,
                 fallbackToClient: true
             }, { status: 422 });
