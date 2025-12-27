@@ -41,34 +41,34 @@ export async function POST(req: NextRequest) {
                     content: [
                         {
                             type: "text",
-                            text: `ATUE COMO UM ESPECIALISTA EM ANÁLISE FORENSE DE DOCUMENTOS.
+                            text: `VOCÊ É UM LEITOR ESPECIALISTA DE DOCUMENTOS BRASILEIROS (CNH, RG, CPF).
 
-Sua missão é extrair dados de uma CNH (Carteira Nacional de Habilitação) ou RG/CPF brasileiro.
-A imagem pode estar rotacionada, com baixo contraste ou tremida. Use sua visão avançada.
+TAREFA: Extrair o NOME COMPLETO e o CPF do documento na imagem.
 
-PASSO 1: Identifique visualmente onde estão os campos "NOME", "CPF", "DOC. IDENTIDADE", "DATA NASCIMENTO".
-PASSO 2: Leia o texto que está IMEDIATAMENTE PRÓXIMO a esses rótulos.
-PASSO 3: Ignore sufixos como ", pai", ", filho", "SSP", "DETRAN".
-PASSO 4: Formate a saída.
+ONDE ENCONTRAR O NOME:
+- Na CNH: O nome fica na linha "NOME" (geralmente a segunda linha de dados).
+- No RG: O nome fica na área central, após "NOME".
+- No CPF: O nome fica abaixo do número do CPF.
 
-Retorne APENAS este JSON:
+ONDE ENCONTRAR O CPF:
+- Na CNH: Campo "CPF" com 11 dígitos.
+- No RG novo: Campo "CPF" na parte inferior.
+- No CPF: Número principal com 11 dígitos.
+
+REGRAS IMPORTANTES:
+1. O nome SEMPRE tem nome e sobrenome (mínimo 2 palavras).
+2. O nome NÃO contém números, datas ou siglas como SSP/DETRAN.
+3. Ignore "FILIAÇÃO" - isso é o nome dos pais, NÃO do titular.
+4. CPF tem exatamente 11 dígitos (XXX.XXX.XXX-XX).
+
+Retorne APENAS este JSON (sem explicações):
 {
-  "name": "NOME COMPLETO DO CIDADÃO (Sem rótulos)",
-  "doc": "NÚMERO DO DOCUMENTO PREFERENCIAL"
+  "name": "NOME COMPLETO DO TITULAR",
+  "doc": "CPF COM 11 DIGITOS"
 }
 
-REGRAS DE PRIORIDADE PARA O CAMPO 'doc':
-1. PRIORIDADE MÁXIMA: CPF (11 dígitos, ex: 123.456.789-00).
-2. Se houver CPF e RG na imagem -> RETORNE O CPF.
-3. Se houver APENAS RG -> Retorne o RG.
-4. Se for CNH -> Retorne o CPF (que consta nela).
-
-DICAS VISUAIS:
-- Em identidades novas, o CPF fica em destaque.
-- Em CNH, o CPF fica ao lado do rótulo "CPF".
-- Em RG antigo, o CPF pode estar na parte inferior.
-
-Se não conseguir ler com certeza absoluta, retorne null.`
+Se não encontrar o nome, retorne o campo como null.
+Se não encontrar o CPF, retorne o campo como null.`
                         },
                         {
                             type: "image_url",
