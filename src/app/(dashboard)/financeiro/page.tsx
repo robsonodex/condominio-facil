@@ -1,14 +1,20 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, Button, Input, Select, Badge, Table } from '@/components/ui';
 import { Modal } from '@/components/ui/modal';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/hooks/useUser';
 import { useAuth } from '@/hooks/useAuth';
 import { formatCurrency, formatDate, getStatusColor, getStatusLabel } from '@/lib/utils';
-import { Plus, Download, DollarSign, TrendingUp, TrendingDown, AlertCircle, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Download, DollarSign, TrendingUp, TrendingDown, AlertCircle, Edit2, Trash2, RefreshCw } from 'lucide-react';
 import { FinancialEntry } from '@/types/database';
+
+// TanStack Query Hooks
+import { useFinanceiro } from '@/hooks/queries/useFinanceiro';
+import { useCreateTransacao, useUpdateTransacao, useDeleteTransacao } from '@/hooks/mutations/useFinanceiroMutations';
+import { queryKeys, type FinanceiroFilters } from '@/lib/query/queryKeys';
 
 const CATEGORIAS_RECEITA = [
     { value: '', label: 'Selecione a categoria...' },
@@ -41,70 +47,23 @@ const STATUS_OPTIONS = [
 ];
 
 export default function FinanceiroPage() {
-    const { condoId, isMorador, isSuperAdmin, isSindico, profile, loading: userLoading } = useUser();
-    const { session } = useAuth();
-    const [entries, setEntries] = useState<FinancialEntry[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { condoId, isMorador, isSuperAdmin, isSindico } = useUser();
     const [showModal, setShowModal] = useState(false);
     const [editingEntry, setEditingEntry] = useState<FinancialEntry | null>(null);
-    const [filterType, setFilterType] = useState('');
-    const [filterStatus, setFilterStatus] = useState('');
-    const [stats, setStats] = useState({ receitas: 0, despesas: 0, inadimplencia: 0 });
-    const supabase = createClient();
+    const [filterType, setFilterType] = useState<'' | 'receita' | 'despesa'>('');
+    const [filterStatus, setFilterStatus] = useState<'' | 'previsto' | 'em_aberto' | 'pago' | 'atrasado'>('');
 
-    useEffect(() => {
-        if (!userLoading) {
-            if (condoId) {
-                fetchEntries();
-            } else if (isSuperAdmin) {
-                fetchAllEntries();
-            } else {
-                setLoading(false);
-            }
-        }
-    }, [condoId, filterType, filterStatus, userLoading, isSuperAdmin]);
-
-    const fetchAllEntries = async () => {
-        setLoading(true);
-        let query = supabase.from('financial_entries')
-            .select('*, unit:units(bloco, numero_unidade), condo:condos(nome)')
-            .order('data_vencimento', { ascending: false })
-            .limit(100);
-
-        if (filterType) query = query.eq('tipo', filterType);
-        if (filterStatus) query = query.eq('status', filterStatus);
-
-        const { data } = await query;
-        setEntries(data || []);
-        calculateStats(data || []);
-        setLoading(false);
+    // Filtros para o hook
+    const filters: FinanceiroFilters = {
+        tipo: filterType || undefined,
+        status: filterStatus || undefined,
     };
 
-    const calculateStats = (data: any[]) => {
-        const receitas = data.filter(e => e.tipo === 'receita' && e.status === 'pago').reduce((s, e) => s + Number(e.valor), 0);
-        const despesas = data.filter(e => e.tipo === 'despesa' && e.status === 'pago').reduce((s, e) => s + Number(e.valor), 0);
-        const inadimplencia = data.filter(e => e.tipo === 'receita' && (e.status === 'em_aberto' || e.status === 'atrasado')).reduce((s, e) => s + Number(e.valor), 0);
-        setStats({ receitas, despesas, inadimplencia });
-    };
+    // ✅ TanStack Query - Substituindo useEffect + useState
+    const { data: entries, stats, isLoading, isFetching, refetch } = useFinanceiro(filters);
 
-    const fetchEntries = async () => {
-        setLoading(true);
-        let query = supabase.from('financial_entries')
-            .select('*, unit:units(bloco, numero_unidade)')
-            .eq('condo_id', condoId)
-            .order('data_vencimento', { ascending: false });
-
-        if (isMorador && profile?.unidade_id) {
-            query = query.eq('unidade_id', profile.unidade_id);
-        }
-        if (filterType) query = query.eq('tipo', filterType);
-        if (filterStatus) query = query.eq('status', filterStatus);
-
-        const { data } = await query;
-        setEntries(data || []);
-        calculateStats(data || []);
-        setLoading(false);
-    };
+    // ✅ Mutation para deletar
+    const { mutate: deleteEntry, isPending: isDeleting } = useDeleteTransacao();
 
     const handleEdit = (entry: FinancialEntry) => {
         setEditingEntry(entry);
@@ -116,19 +75,14 @@ export default function FinanceiroPage() {
             return;
         }
 
-        try {
-            const { error } = await supabase
-                .from('financial_entries')
-                .delete()
-                .eq('id', entry.id);
-
-            if (error) throw error;
-
-            setEntries(prev => prev.filter(e => e.id !== entry.id));
-            alert('✅ Lançamento excluído com sucesso!');
-        } catch (err: any) {
-            alert('❌ Erro ao excluir: ' + err.message);
-        }
+        deleteEntry(entry.id, {
+            onSuccess: () => {
+                alert('✅ Lançamento excluído com sucesso!');
+            },
+            onError: (err) => {
+                alert('❌ Erro ao excluir: ' + err.message);
+            },
+        });
     };
 
     const canEdit = !isMorador && (isSindico || isSuperAdmin);
@@ -180,7 +134,7 @@ export default function FinanceiroPage() {
                     <Button size="sm" variant="ghost" onClick={() => handleEdit(e)} title="Editar">
                         <Edit2 className="h-4 w-4 text-blue-600" />
                     </Button>
-                    <Button size="sm" variant="ghost" onClick={() => handleDelete(e)} title="Excluir">
+                    <Button size="sm" variant="ghost" onClick={() => handleDelete(e)} title="Excluir" disabled={isDeleting}>
                         <Trash2 className="h-4 w-4 text-red-600" />
                     </Button>
                 </div>
@@ -205,6 +159,15 @@ export default function FinanceiroPage() {
                 </div>
                 {!isMorador && condoId && (
                     <div className="flex gap-2">
+                        <Button
+                            variant="outline"
+                            onClick={() => refetch()}
+                            disabled={isFetching}
+                            title="Atualizar dados"
+                        >
+                            <RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
+                            {isFetching ? 'Atualizando...' : 'Atualizar'}
+                        </Button>
                         <Button variant="outline" onClick={() => { }}>
                             <Download className="h-4 w-4 mr-2" />
                             Gerar PDF
@@ -217,7 +180,7 @@ export default function FinanceiroPage() {
                 )}
             </div>
 
-            {/* Stats */}
+            {/* Stats - Agora vem do hook useFinanceiro */}
             {!isMorador && (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white">
@@ -266,7 +229,7 @@ export default function FinanceiroPage() {
             <div className="flex flex-wrap gap-4">
                 <Select
                     value={filterType}
-                    onChange={(e) => setFilterType(e.target.value)}
+                    onChange={(e) => setFilterType(e.target.value as '' | 'receita' | 'despesa')}
                     options={[
                         { value: '', label: 'Todos os tipos' },
                         { value: 'receita', label: 'Receitas' },
@@ -276,7 +239,7 @@ export default function FinanceiroPage() {
                 />
                 <Select
                     value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value)}
+                    onChange={(e) => setFilterStatus(e.target.value as '' | 'previsto' | 'em_aberto' | 'pago' | 'atrasado')}
                     options={STATUS_OPTIONS}
                     className="w-40"
                 />
@@ -288,7 +251,7 @@ export default function FinanceiroPage() {
                     <Table
                         data={entries}
                         columns={columns}
-                        loading={loading}
+                        loading={isLoading}
                         emptyMessage="Nenhum lançamento encontrado"
                     />
                 </CardContent>
@@ -299,25 +262,22 @@ export default function FinanceiroPage() {
                 <NewEntryModal
                     isOpen={showModal}
                     onClose={() => { setShowModal(false); setEditingEntry(null); }}
-                    onSuccess={() => { fetchEntries(); setEditingEntry(null); }}
+                    onSuccess={() => { setEditingEntry(null); }}
                     condoId={condoId}
                     editingEntry={editingEntry}
-                    session={session}
                 />
             )}
         </div>
     );
 }
 
-function NewEntryModal({ isOpen, onClose, onSuccess, condoId, editingEntry, session }: {
+function NewEntryModal({ isOpen, onClose, onSuccess, condoId, editingEntry }: {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
     condoId: string | null | undefined;
     editingEntry?: FinancialEntry | null;
-    session: any;
 }) {
-    const [loading, setLoading] = useState(false);
     const [tipo, setTipo] = useState('receita');
     const [categoria, setCategoria] = useState('');
     const [descricao, setDescricao] = useState('');
@@ -327,9 +287,16 @@ function NewEntryModal({ isOpen, onClose, onSuccess, condoId, editingEntry, sess
     const [unidadeId, setUnidadeId] = useState('');
     const [units, setUnits] = useState<{ id: string; bloco: string; numero_unidade: string }[]>([]);
     const supabase = createClient();
+    const queryClient = useQueryClient();
+
+    // ✅ Mutations do TanStack Query
+    const { mutate: createEntry, isPending: isCreating } = useCreateTransacao();
+    const { mutate: updateEntry, isPending: isUpdating } = useUpdateTransacao();
+
+    const isLoading = isCreating || isUpdating;
 
     // Populate form when editing
-    useEffect(() => {
+    useState(() => {
         if (editingEntry) {
             setTipo(editingEntry.tipo);
             setCategoria(editingEntry.categoria);
@@ -348,15 +315,16 @@ function NewEntryModal({ isOpen, onClose, onSuccess, condoId, editingEntry, sess
             setStatus('em_aberto');
             setUnidadeId('');
         }
-    }, [editingEntry, isOpen]);
+    });
 
-    useEffect(() => {
+    // Fetch units - usando useEffect tradicional (simples, não precisa de cache)
+    useState(() => {
         if (condoId) {
             supabase.from('units').select('id, bloco, numero_unidade').eq('condo_id', condoId).then(({ data }) => {
                 setUnits(data || []);
             });
         }
-    }, [condoId]);
+    });
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -381,53 +349,42 @@ function NewEntryModal({ isOpen, onClose, onSuccess, condoId, editingEntry, sess
             return;
         }
 
-        setLoading(true);
-        try {
-            const entryData = {
-                condo_id: condoId,
-                tipo,
-                categoria,
-                descricao,
-                valor: parseFloat(valor),
-                data_vencimento: dataVencimento,
-                status,
-                unidade_id: unidadeId || null,
-            };
+        const entryData = {
+            tipo: tipo as 'receita' | 'despesa',
+            categoria,
+            descricao,
+            valor: parseFloat(valor),
+            data_vencimento: dataVencimento,
+            status: status as 'previsto' | 'em_aberto' | 'pago',
+            unidade_id: unidadeId || null,
+        };
 
-            if (editingEntry) {
-                // Update existing entry
-                const { error } = await supabase
-                    .from('financial_entries')
-                    .update(entryData)
-                    .eq('id', editingEntry.id);
-
-                if (error) throw error;
-            } else {
-                // Create new entry
-                const response = await fetch('/api/financial/entries', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${session?.access_token}`,
+        if (editingEntry) {
+            // ✅ Update usando mutation
+            updateEntry(
+                { id: editingEntry.id, ...entryData },
+                {
+                    onSuccess: () => {
+                        onSuccess();
+                        onClose();
                     },
-                    credentials: 'include',
-                    body: JSON.stringify(entryData),
-                });
-
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.error || 'Erro ao criar lançamento');
+                    onError: (error) => {
+                        alert(error.message || 'Erro ao atualizar lançamento');
+                    },
                 }
-            }
-
-            onSuccess();
-            onClose();
-        } catch (error: any) {
-            console.error('Error saving entry:', error);
-            alert(error.message || 'Erro ao salvar lançamento');
+            );
+        } else {
+            // ✅ Create usando mutation - cache invalidado automaticamente!
+            createEntry(entryData, {
+                onSuccess: () => {
+                    onSuccess();
+                    onClose();
+                },
+                onError: (error) => {
+                    alert(error.message || 'Erro ao criar lançamento');
+                },
+            });
         }
-        setLoading(false);
     };
 
     const categorias = tipo === 'receita' ? CATEGORIAS_RECEITA : CATEGORIAS_DESPESA;
@@ -509,8 +466,8 @@ function NewEntryModal({ isOpen, onClose, onSuccess, condoId, editingEntry, sess
                     <Button type="button" variant="ghost" onClick={onClose}>
                         Cancelar
                     </Button>
-                    <Button type="submit" loading={loading}>
-                        Salvar
+                    <Button type="submit" loading={isLoading}>
+                        {isLoading ? 'Salvando...' : 'Salvar'}
                     </Button>
                 </div>
             </form>

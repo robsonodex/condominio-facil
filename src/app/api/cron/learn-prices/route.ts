@@ -13,16 +13,28 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
 
-// Cliente Admin para ignorar RLS (precisamos ler dados de todos os condomínios)
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Lazy initialization dos clientes (evita erro no build quando env vars não estão disponíveis)
+let supabaseAdminClient: SupabaseClient | null = null;
+function getSupabaseAdmin(): SupabaseClient {
+    if (!supabaseAdminClient) {
+        supabaseAdminClient = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
+    }
+    return supabaseAdminClient;
+}
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+let openaiClient: OpenAI | null = null;
+function getOpenAI(): OpenAI {
+    if (!openaiClient) {
+        openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    }
+    return openaiClient;
+}
 
 // Configurações
 const BATCH_SIZE = 50; // Processar 50 por vez para não estourar timeout
@@ -107,14 +119,14 @@ export async function GET(request: NextRequest) {
         for (const entry of entries as FinancialEntry[]) {
             try {
                 // 2. Gerar Embedding da descrição real
-                const embeddingResponse = await openai.embeddings.create({
+                const embeddingResponse = await getOpenAI().embeddings.create({
                     model: "text-embedding-3-small",
                     input: `${entry.categoria}: ${entry.descricao}`,
                 });
                 const vector = embeddingResponse.data[0].embedding;
 
                 // 3. Buscar Benchmark Similar usando função RPC
-                const { data: matches, error: matchError } = await supabaseAdmin.rpc('match_services', {
+                const { data: matches, error: matchError } = await getSupabaseAdmin().rpc('match_services', {
                     query_embedding: vector,
                     match_threshold: SIMILARITY_THRESHOLD,
                     match_count: 1
