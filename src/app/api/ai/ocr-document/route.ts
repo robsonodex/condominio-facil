@@ -41,7 +41,23 @@ export async function POST(req: NextRequest) {
                     content: [
                         {
                             type: "text",
-                            text: "Analise esta imagem de um documento brasileiro (CNH, RG ou CPF). Extraia o NOME COMPLETO e o NÚMERO DO DOCUMENTO (CPF, RG ou CNH). Retorne APENAS um JSON válido com as chaves 'name' e 'doc'. Se não encontrar, retorne null nos campos. Exemplo: {\"name\": \"JOAO SILVA\", \"doc\": \"123.456.789-00\"}"
+                            text: `Você é uma API de OCR especializada em documentos brasileiros (CNH, RG e CPF).
+                            
+Sua tarefa é extrair APENAS o NOME COMPLETO e o NÚMERO DO DOCUMENTO da imagem.
+
+REGRAS RÍGIDAS:
+1. Retorne APENAS um JSON válido. NÃO escreva nada além do JSON.
+2. Formato do JSON: {"name": "NOME COMPLETO", "doc": "NUMERO"}
+3. Para o campo 'doc', extraia CPF (11 dígitos) OU RG (9 dígitos) OU CNH (11 dígitos). Preferência para CPF se houver.
+4. Se o documento estiver deitado/rotacionado, leia corretamente.
+5. Se não conseguir ler, retorne null.
+
+EXEMPLOS DE ONDE PROCURAR:
+- CNH: O nome geralmente está abaixo de 'NOME'. O CPF fica ao lado de 'CPF'.
+- RG: O nome está na parte superior ou central. O número do RG está no topo.
+- CPF (Cartão): O número está em destaque no centro ou topo.
+
+Retorne SOMENTE o JSON.`
                         },
                         {
                             type: "image_url",
@@ -52,7 +68,7 @@ export async function POST(req: NextRequest) {
                     ]
                 }
             ],
-            temperature: 0.1,
+            temperature: 0, // Zero para máxima precisão e determinismo
             max_tokens: 300,
             response_format: { type: "json_object" } // Llama 3 suporta JSON mode
         };
