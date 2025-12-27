@@ -301,52 +301,33 @@ export default function PortariaProfissionalPage() {
         return null;
     };
 
-    // OCR Híbrido: AGORA USA LOCAL FIRST (/api/ocr) com Sharp + Tesseract
+    // OCR Híbrido: Groq Vision (primário) → Tesseract Client-Side (fallback)
     const handleScanDocument = async (imageData: string) => {
         setIsScanning(true);
 
         try {
-            console.log('[OCR] Iniciando OCR Local Otimizado (/api/ocr)...');
+            console.log('[OCR] Tentando Groq Vision (/api/ai/ocr-document)...');
 
-            // Converter DataURL para Blob para enviar como FormData
-            const blob = await (await fetch(imageData)).blob();
-            const formData = new FormData();
-            formData.append('file', blob, 'documento.jpg');
-            if (condoId) formData.append('condo_id', condoId);
-
-            // 1. Chama API Local (Sharp + Tesseract /tmp)
-            const response = await fetch('/api/ocr', {
+            // 1. Tenta Groq Vision (API rápida)
+            const response = await fetch('/api/ai/ocr-document', {
                 method: 'POST',
-                body: formData,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: imageData }),
             });
 
-            let result;
-            const contentType = response.headers.get('content-type');
-            if (contentType && contentType.includes('application/json')) {
-                result = await response.json();
-            } else {
-                // Se não for JSON (ex: erro 500 do Next.js), lê como texto
-                const textError = await response.text();
-                throw new Error(`Erro do Servidor (${response.status}): ${textError.substring(0, 100)}...`);
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Groq Error (${response.status}): ${errorText.substring(0, 100)}`);
             }
 
-            if (!result.success) {
-                throw new Error(result.error || 'Falha no OCR Local');
-            }
+            const data = await response.json();
+            console.log('[OCR] Sucesso Groq:', data);
 
-            console.log('[OCR] Sucesso Local:', result.data);
+            if (data.name) setNome(data.name);
+            if (data.doc) setDocumento(data.doc);
 
-            const { name, cpf, registro, data_nascimento, data_validade } = result.data;
-            const doc = cpf || registro;
-
-            if (name) setNome(name);
-            if (doc) setDocumento(doc);
-
-            if (!name && !doc) {
-                const preview = result.raw_text?.substring(0, 300).replace(/\n/g, ' | ') || 'Sem texto';
-                // Se o servidor respondeu mas não achou nada, talvez nem adiante tentar client, 
-                // mas vou manter o fluxo limpo.
-                alert(`O OCR processou a imagem mas não identificou dados.\n\nTexto: "${preview}..."`);
+            if (!data.name && !data.doc) {
+                throw new Error('Groq não encontrou dados - tentando fallback');
             }
 
         } catch (error: any) {
