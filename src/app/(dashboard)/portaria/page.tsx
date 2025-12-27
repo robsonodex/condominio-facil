@@ -9,9 +9,10 @@ import { createClient } from '@/lib/supabase/client';
 import { formatDate } from '@/lib/utils';
 import {
     Users, UserPlus, LogIn, LogOut, Search, Camera, Printer, QrCode,
-    Clock, Car, CreditCard, Shield, Maximize, Minimize, RefreshCw, MessageSquare, AlertCircle
+    Clock, Car, CreditCard, Shield, Maximize, Minimize, RefreshCw, MessageSquare, AlertCircle, Scan
 } from 'lucide-react';
 import { QRCodeScanner } from '@/components/invites';
+import Tesseract from 'tesseract.js';
 
 interface Visitor {
     id: string;
@@ -176,34 +177,85 @@ export default function PortariaProfissionalPage() {
         }
     };
 
-    // Função de scan do documento via OCR
+    // Regex patterns para documentos brasileiros
+    const extractCPF = (text: string): string | null => {
+        const matches = text.match(/(\d{3}[.\s]?\d{3}[.\s]?\d{3}[-.\s]?\d{2})/g);
+        if (matches && matches.length > 0) {
+            return matches[0].replace(/[.\s-]/g, '').replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+        }
+        return null;
+    };
+
+    const extractRG = (text: string): string | null => {
+        const matches = text.match(/(\d{1,2}[.\s]?\d{3}[.\s]?\d{3}[-.\s]?[\dXx]?)/g);
+        if (matches && matches.length > 0) {
+            return matches[0].replace(/[.\s-]/g, '');
+        }
+        return null;
+    };
+
+    const extractName = (text: string): string | null => {
+        const lines = text.split('\n');
+        for (const line of lines) {
+            const cleanLine = line.trim();
+            if (
+                cleanLine.length >= 8 &&
+                cleanLine.length <= 60 &&
+                cleanLine === cleanLine.toUpperCase() &&
+                cleanLine.includes(' ') &&
+                /^[A-ZÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÄËÏÖÜÇ\s]+$/.test(cleanLine) &&
+                !cleanLine.includes('REPÚBLICA') &&
+                !cleanLine.includes('BRASIL') &&
+                !cleanLine.includes('REGISTRO') &&
+                !cleanLine.includes('IDENTIDADE') &&
+                !cleanLine.includes('CARTEIRA')
+            ) {
+                return cleanLine;
+            }
+        }
+        return null;
+    };
+
+    // OCR no navegador com Tesseract.js (100% cliente, sem servidor)
     const handleScanDocument = async (imageData: string) => {
         setIsScanning(true);
         try {
-            const response = await fetch('/api/ai/ocr-document', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ image: imageData }),
-            });
+            console.log('[OCR] Iniciando leitura no navegador...');
 
-            const data = await response.json();
+            const result = await Tesseract.recognize(
+                imageData,
+                'por', // Português
+                {
+                    logger: (m) => {
+                        if (m.status === 'recognizing text') {
+                            console.log(`[OCR] Progresso: ${Math.round(m.progress * 100)}%`);
+                        }
+                    }
+                }
+            );
 
-            if (!response.ok) {
-                const errorMsg = data.details || data.error || 'Erro desconhecido';
-                throw new Error(errorMsg);
-            }
+            const text = result.data.text;
+            console.log('[OCR] Texto extraído:', text.substring(0, 200));
+
+            // Extrair dados estruturados
+            const name = extractName(text);
+            const cpf = extractCPF(text);
+            const rg = extractRG(text);
+            const doc = cpf || rg;
 
             // Preenche os campos automaticamente
-            if (data.name) setNome(data.name);
-            if (data.doc) setDocumento(data.doc);
+            if (name) setNome(name);
+            if (doc) setDocumento(doc);
 
-            if (!data.name && !data.doc) {
-                alert('Não foi possível identificar nome ou documento na imagem. Tente com uma foto mais clara.');
+            if (!name && !doc) {
+                alert('Não foi possível identificar nome ou documento. Dicas:\n\n• Foto bem iluminada\n• Documento centralizado\n• Texto legível');
+            } else {
+                console.log('[OCR] Dados encontrados:', { name, doc });
             }
 
         } catch (error: any) {
             console.error('Erro no OCR:', error);
-            alert(`Erro no OCR: ${error.message || 'Tente novamente ou preencha manualmente.'}`);
+            alert('Erro ao ler documento. Tente novamente.');
         } finally {
             setIsScanning(false);
         }
