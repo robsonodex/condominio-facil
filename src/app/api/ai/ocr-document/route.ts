@@ -1,16 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import OpenAI from 'openai';
 
-const GROQ_API_KEY = process.env.GROQ_API_KEY;
-const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const MODEL = 'llama-3.2-11b-vision-preview';
-
-// Função para limpar JSON retornado pela IA
-function cleanJsonResponse(text: string) {
-    // Remove blocos de código markdown se existirem
-    const match = text.match(/```json\n([\s\S]*?)\n```/);
-    if (match) return match[1];
-    return text.replace(/```json/g, '').replace(/```/g, '');
-}
+const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+});
 
 export async function POST(req: NextRequest) {
     try {
@@ -20,132 +13,95 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Imagem não fornecida' }, { status: 400 });
         }
 
-        if (!GROQ_API_KEY) {
+        if (!process.env.OPENAI_API_KEY) {
             return NextResponse.json({
-                error: 'GROQ_API_KEY não configurada',
+                error: 'OPENAI_API_KEY não configurada',
                 fallbackToClient: true
             }, { status: 500 });
         }
 
-        console.log('[Groq AI] Iniciando análise com Llama 3 Vision...');
+        console.log('[GPT-4 Vision] Iniciando análise...');
 
-        // Certifica que a imagem tem o prefixo correto para a API
-        // A imagem já deve vir como data URI do frontend, mas garantimos aqui
+        // Garante formato correto da imagem
         const imageUrl = image.startsWith('data:') ? image : `data:image/jpeg;base64,${image}`;
 
-        const payload = {
-            model: MODEL,
+        const response = await openai.chat.completions.create({
+            model: 'gpt-4o',
             messages: [
                 {
-                    role: "user",
+                    role: 'user',
                     content: [
                         {
-                            type: "text",
-                            text: `VOCÊ É UM LEITOR ESPECIALISTA DE DOCUMENTOS BRASILEIROS (CNH, RG, CPF).
+                            type: 'text',
+                            text: `Analise este documento brasileiro (CNH, RG ou CPF) e extraia:
 
-TAREFA: Extrair o NOME COMPLETO e o CPF do documento na imagem.
+1. O NOME COMPLETO do titular (não é filiação/nome dos pais)
+2. O número do CPF (11 dígitos)
 
-ONDE ENCONTRAR O NOME:
-- Na CNH: O nome fica na linha "NOME" (geralmente a segunda linha de dados).
-- No RG: O nome fica na área central, após "NOME".
-- No CPF: O nome fica abaixo do número do CPF.
+IMPORTANTE:
+- O nome fica geralmente no campo "NOME" do documento
+- Na CNH, o nome está acima do CPF
+- Ignore campos como FILIAÇÃO, DATA NASCIMENTO, etc.
+- CPF tem formato: XXX.XXX.XXX-XX
 
-ONDE ENCONTRAR O CPF:
-- Na CNH: Campo "CPF" com 11 dígitos.
-- No RG novo: Campo "CPF" na parte inferior.
-- No CPF: Número principal com 11 dígitos.
+Responda APENAS com JSON:
+{"name": "NOME AQUI", "doc": "CPF AQUI"}
 
-REGRAS IMPORTANTES:
-1. O nome SEMPRE tem nome e sobrenome (mínimo 2 palavras).
-2. O nome NÃO contém números, datas ou siglas como SSP/DETRAN.
-3. Ignore "FILIAÇÃO" - isso é o nome dos pais, NÃO do titular.
-4. CPF tem exatamente 11 dígitos (XXX.XXX.XXX-XX).
-
-Retorne APENAS este JSON (sem explicações):
-{
-  "name": "NOME COMPLETO DO TITULAR",
-  "doc": "CPF COM 11 DIGITOS"
-}
-
-Se não encontrar o nome, retorne o campo como null.
-Se não encontrar o CPF, retorne o campo como null.`
+Se não conseguir identificar, use null no campo.`
                         },
                         {
-                            type: "image_url",
+                            type: 'image_url',
                             image_url: {
-                                url: imageUrl
+                                url: imageUrl,
+                                detail: 'high'
                             }
                         }
                     ]
                 }
             ],
-            temperature: 0, // Zero para garantir obediência à regra do CPF
-            max_tokens: 500,
-            response_format: { type: "json_object" } // Llama 3 suporta JSON mode
-        };
-
-        const response = await fetch(GROQ_API_URL, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${GROQ_API_KEY}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(payload)
+            max_tokens: 300,
+            temperature: 0
         });
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('[Groq AI] Erro API:', response.status, errorText);
-
-            // Rate limit ou Overloaded
-            if (response.status === 429 || response.status === 503) {
-                return NextResponse.json({
-                    error: `Serviço ocupado (${response.status}), usando fallback local`,
-                    fallbackToClient: true
-                }, { status: response.status });
-            }
-
-            return NextResponse.json({
-                error: `Erro na API Groq: ${response.status} - ${errorText.substring(0, 50)}`,
-                fallbackToClient: true
-            }, { status: 500 });
-        }
-
-        const data = await response.json();
-        const content = data.choices[0]?.message?.content;
-
-        console.log('[Groq AI] Resposta:', content);
+        const content = response.choices[0]?.message?.content;
+        console.log('[GPT-4 Vision] Resposta:', content);
 
         if (!content) {
             throw new Error('Sem resposta da IA');
         }
 
-        // Parse do JSON
+        // Parse JSON da resposta
         let result;
         try {
-            result = JSON.parse(cleanJsonResponse(content));
+            // Remove possíveis blocos de código markdown
+            const cleanContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+            result = JSON.parse(cleanContent);
         } catch (e) {
-            console.error('[Groq AI] Erro ao parsear JSON:', e);
-            console.error('[Groq AI] Conteúdo recebido:', content);
+            console.error('[GPT-4 Vision] Erro ao parsear JSON:', e);
+            console.error('[GPT-4 Vision] Conteúdo:', content);
 
-            return NextResponse.json({
-                error: 'Erro formato JSON da IA',
-                rawText: content,
-                fallbackToClient: true
-            }, { status: 422 });
+            // Tenta extrair manualmente se o JSON falhou
+            const nameMatch = content.match(/"name":\s*"([^"]+)"/);
+            const docMatch = content.match(/"doc":\s*"([^"]+)"/);
+
+            result = {
+                name: nameMatch ? nameMatch[1] : null,
+                doc: docMatch ? docMatch[1] : null
+            };
         }
 
         return NextResponse.json({
             name: result.name || null,
             doc: result.doc || null,
-            provider: 'groq-llama3'
+            provider: 'openai-gpt4o'
         });
 
     } catch (error: any) {
-        console.error('[Groq AI] Erro crítico:', error);
+        console.error('[GPT-4 Vision] Erro:', error);
         return NextResponse.json({
             error: error.message,
             fallbackToClient: true
         }, { status: 500 });
     }
 }
+
