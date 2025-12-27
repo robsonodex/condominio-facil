@@ -6,21 +6,28 @@ const supabase = createClient(
     process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = 'gemini-1.5-flash';
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+// 🚀 UNIFICAÇÃO AI: Groq (Llama 3.2 Vision)
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
+const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const AUDIT_MODEL = 'llama-3.2-11b-vision-preview'; // Modelo de visão para analisar orçamentos
 
-// Função para converter File para base64
 async function fileToBase64(file: File): Promise<string> {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
     return buffer.toString('base64');
 }
 
+// Limpa JSON do Llama
+function cleanJsonResponse(text: string) {
+    const match = text.match(/```json\n([\s\S]*?)\n```/);
+    if (match) return match[1];
+    return text.replace(/```json/g, '').replace(/```/g, '');
+}
+
 export async function POST(req: NextRequest) {
     try {
-        if (!GEMINI_API_KEY) {
-            return NextResponse.json({ error: 'GEMINI_API_KEY não configurada' }, { status: 500 });
+        if (!GROQ_API_KEY) {
+            return NextResponse.json({ error: 'GROQ_API_KEY não configurada' }, { status: 500 });
         }
 
         const formData = await req.formData();
@@ -32,22 +39,30 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Arquivo não enviado' }, { status: 400 });
         }
 
-        // 1. Converter arquivo para base64
         const base64File = await fileToBase64(file);
-        const mimeType = file.type || 'image/jpeg';
+        const imageUrl = `data:${file.type || 'image/jpeg'};base64,${base64File}`;
 
-        // 2. OCR Inteligente com Gemini (Extrai dados do PDF/Imagem)
-        const response = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
+        console.log('[Audit Groq] Iniciando análise...');
+
+        // Chamada Groq (Llama Vision)
+        const response = await fetch(GROQ_API_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Authorization': `Bearer ${GROQ_API_KEY}`,
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify({
-                contents: [
+                model: AUDIT_MODEL,
+                messages: [
                     {
-                        parts: [
+                        role: "user",
+                        content: [
                             {
-                                text: `Você é um Auditor de Condomínios sênior especializado no mercado do Rio de Janeiro.
-                    
-Analise esta imagem de orçamento e extraia os dados em JSON com o seguinte formato:
+                                type: "text",
+                                text: `Você é um Auditor de Condomínios sênior.
+Analise esta imagem de orçamento e extraia os dados em JSON puro.
+
+FORMATO ESPERADO:
 {
   "fornecedor": "Nome da empresa/prestador",
   "data_orcamento": "DD/MM/YYYY ou null",
@@ -55,75 +70,57 @@ Analise esta imagem de orçamento e extraia os dados em JSON com o seguinte form
     {
       "descricao": "Descrição completa do serviço",
       "quantidade": 1,
-      "unidade": "global/m2/hora/unidade/mensal",
+      "unidade": "un/m2/hora/global",
       "valor_unitario": 0.00,
       "valor_total": 0.00
     }
   ],
   "valor_total_orcamento": 0.00,
-  "observacoes": "Qualquer informação relevante"
+  "observacoes": "Texto relevante"
 }
 
-IMPORTANTE:
-- Extraia TODOS os itens do orçamento
-- Mantenha as descrições originais mas normalizadas
-- Se não conseguir ler algum valor, coloque 0
-- Se não for um orçamento válido, retorne { "erro": "descrição do problema" }
-- Retorne APENAS JSON válido, sem markdown ou explicações.`
+REGRAS:
+- Extraia TODOS os itens.
+- Retorne APENAS o JSON válido.
+- Se houver erro, retorne { "erro": "motivo" }.`
                             },
                             {
-                                inline_data: {
-                                    mime_type: mimeType,
-                                    data: base64File
-                                }
+                                type: "image_url",
+                                image_url: { url: imageUrl }
                             }
                         ]
                     }
                 ],
-                generationConfig: {
-                    temperature: 0.1,
-                    maxOutputTokens: 2000,
-                }
+                temperature: 0.1, // Baixa temperatura para extração exata
+                max_tokens: 2000,
+                response_format: { type: "json_object" }
             })
         });
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('[Audit Gemini] Erro na API:', errorText);
-            return NextResponse.json({
-                status: 'error',
-                message: 'Erro ao processar imagem com IA'
-            }, { status: 500 });
+            console.error('[Audit Groq] Erro API:', errorText);
+            throw new Error(`Erro na API Groq: ${response.status}`);
         }
 
         const data = await response.json();
-        const rawContent = data?.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+        const content = data.choices[0]?.message?.content;
 
-        // Limpa possíveis blocos de código
-        const cleanContent = rawContent
-            .replace(/```json\n?|\n?```/g, '')
-            .replace(/```\n?|\n?```/g, '')
-            .trim();
+        if (!content) throw new Error('Sem resposta da IA');
 
         let extractedData;
         try {
-            extractedData = JSON.parse(cleanContent);
-        } catch (parseError) {
-            console.error('[Audit] Erro ao parsear JSON:', cleanContent);
-            return NextResponse.json({
-                status: 'error',
-                message: 'Não foi possível extrair dados do orçamento. Tente com uma imagem mais clara.',
-            }, { status: 400 });
+            extractedData = JSON.parse(cleanJsonResponse(content));
+        } catch (e) {
+            console.error('[Audit] Erro JSON:', content);
+            throw new Error('Erro ao interpretar resposta da IA');
         }
 
         if (extractedData.erro) {
-            return NextResponse.json({
-                status: 'error',
-                message: extractedData.erro,
-            }, { status: 400 });
+            return NextResponse.json({ status: 'error', message: extractedData.erro }, { status: 400 });
         }
 
-        // 3. Para cada item, buscar benchmark por texto (sem embeddings)
+        // Lógica de Benchmark (Mantida igual, pois é interna)
         const auditResults = [];
         let totalOriginal = 0;
         let totalBenchmark = 0;
@@ -133,8 +130,7 @@ IMPORTANTE:
         for (const item of extractedData.items || []) {
             totalOriginal += item.valor_total || 0;
 
-            // Buscar serviço similar por texto (ILIKE)
-            const searchTerm = item.descricao.split(' ').slice(0, 3).join(' '); // Primeiras 3 palavras
+            const searchTerm = item.descricao.split(' ').slice(0, 3).join(' ');
             const { data: benchmarks } = await supabase
                 .from('service_benchmarks')
                 .select('*')
@@ -147,7 +143,7 @@ IMPORTANTE:
                 quantidade: item.quantidade || 1,
                 unidade: item.unidade,
                 status: 'sem_referencia',
-                mensagem: 'Não encontramos referência de preço para este serviço.',
+                mensagem: 'Não encontramos referência de preço.',
                 benchmark: null,
                 variacao: null,
                 economia: 0,
@@ -157,70 +153,27 @@ IMPORTANTE:
                 const ref = benchmarks[0];
                 const valorRef = ref.avg_price_rj * (item.quantidade || 1);
                 totalBenchmark += valorRef;
-
                 const variacao = ((item.valor_total - valorRef) / valorRef) * 100;
 
                 if (variacao > 25) {
-                    // Mais de 25% acima da média = ALERTA
                     hasAlert = true;
-                    const economia = item.valor_total - valorRef;
-                    totalSavings += economia;
-
-                    itemResult = {
-                        ...itemResult,
-                        status: 'alerta',
-                        mensagem: `Valor ${variacao.toFixed(0)}% acima da média do RJ. Referência: "${ref.service_description}" custa aproximadamente R$ ${ref.avg_price_rj.toFixed(2)}/${ref.unit}.`,
-                        benchmark: {
-                            descricao: ref.service_description,
-                            preco_medio: ref.avg_price_rj,
-                            preco_min: ref.min_price_rj,
-                            preco_max: ref.max_price_rj,
-                            unidade: ref.unit,
-                        },
-                        variacao: variacao.toFixed(1),
-                        economia: economia,
-                    };
+                    totalSavings += (item.valor_total - valorRef);
+                    itemResult = { ...itemResult, status: 'alerta', mensagem: `Valor ${variacao.toFixed(0)}% acima da média.`, benchmark: ref, variacao: variacao.toFixed(1) };
                 } else if (variacao > 10) {
-                    // Entre 10-25% = ATENÇÃO
-                    itemResult = {
-                        ...itemResult,
-                        status: 'atencao',
-                        mensagem: `Valor ${variacao.toFixed(0)}% acima da média, mas ainda aceitável.`,
-                        benchmark: {
-                            descricao: ref.service_description,
-                            preco_medio: ref.avg_price_rj,
-                            unidade: ref.unit,
-                        },
-                        variacao: variacao.toFixed(1),
-                    };
+                    itemResult = { ...itemResult, status: 'atencao', mensagem: `Valor ${variacao.toFixed(0)}% acima da média.`, benchmark: ref, variacao: variacao.toFixed(1) };
                 } else {
-                    // Dentro ou abaixo da média = OK
-                    itemResult = {
-                        ...itemResult,
-                        status: 'aprovado',
-                        mensagem: variacao < 0
-                            ? `Excelente! Valor ${Math.abs(variacao).toFixed(0)}% abaixo da média do RJ.`
-                            : 'Preço dentro da média de mercado.',
-                        benchmark: {
-                            descricao: ref.service_description,
-                            preco_medio: ref.avg_price_rj,
-                            unidade: ref.unit,
-                        },
-                        variacao: variacao.toFixed(1),
-                    };
+                    itemResult = { ...itemResult, status: 'aprovado', mensagem: 'Valor dentro da média.', benchmark: ref, variacao: variacao.toFixed(1) };
                 }
             }
-
             auditResults.push(itemResult);
         }
 
-        // 4. Determinar status geral
         const overallStatus = hasAlert ? 'alert' : 'approved';
         const overallMessage = hasAlert
-            ? `Atenção: Identificamos ${auditResults.filter(r => r.status === 'alerta').length} item(ns) com preços acima da média do mercado carioca.`
-            : 'Orçamento aprovado! Os valores estão dentro da média de mercado do Rio de Janeiro.';
+            ? `Atenção: ${auditResults.filter(r => r.status === 'alerta').length} itens acima do preço.`
+            : 'Orçamento aprovado e dentro da média.';
 
-        // 5. Salvar auditoria no histórico (se tiver condo_id)
+        // Salvar auditoria
         if (condoId) {
             await supabase.from('quote_audits').insert({
                 condo_id: condoId,
@@ -230,15 +183,13 @@ IMPORTANTE:
                 supplier_name: extractedData.fornecedor,
                 status: overallStatus,
                 total_original: totalOriginal,
-                total_benchmark: totalBenchmark > 0 ? totalBenchmark : null,
+                total_benchmark: totalBenchmark || 0,
                 savings_potential: totalSavings,
-                variance_percentage: totalBenchmark > 0 ? ((totalOriginal - totalBenchmark) / totalBenchmark) * 100 : null,
                 audit_details: auditResults,
                 message: overallMessage,
             });
         }
 
-        // 6. Retornar resultado
         return NextResponse.json({
             status: overallStatus,
             message: overallMessage,
@@ -247,22 +198,14 @@ IMPORTANTE:
             items: auditResults,
             resumo: {
                 total_orcamento: totalOriginal,
-                total_referencia: totalBenchmark > 0 ? totalBenchmark : null,
+                total_referencia: totalBenchmark || null,
                 economia_potencial: totalSavings,
-                variacao_geral: totalBenchmark > 0
-                    ? ((totalOriginal - totalBenchmark) / totalBenchmark * 100).toFixed(1) + '%'
-                    : null,
                 itens_em_alerta: auditResults.filter(r => r.status === 'alerta').length,
-                itens_aprovados: auditResults.filter(r => r.status === 'aprovado').length,
-                itens_sem_referencia: auditResults.filter(r => r.status === 'sem_referencia').length,
             }
         });
 
     } catch (error: any) {
         console.error('Erro na auditoria:', error);
-        return NextResponse.json({
-            status: 'error',
-            message: 'Erro ao processar o orçamento: ' + error.message,
-        }, { status: 500 });
+        return NextResponse.json({ status: 'error', message: error.message }, { status: 500 });
     }
 }

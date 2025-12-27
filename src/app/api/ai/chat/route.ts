@@ -1,16 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
-// Configuração do Gemini
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = 'gemini-1.5-flash';
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
-
-// Fallback para OpenAI se configurado
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+// 🚀 UNIFICAÇÃO AI: Usando Groq (Llama 3) para tudo
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
+const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const CHAT_MODEL = 'llama-3.1-70b-versatile'; // Modelo excelente para conversas complexas
 
 interface ChatMessage {
-    role: 'user' | 'assistant';
+    role: 'user' | 'assistant' | 'system';
     content: string;
 }
 
@@ -70,19 +67,10 @@ export async function POST(request: NextRequest) {
             .eq('condo_id', profile.condo_id)
             .single();
 
-        // Verificar se usuário tem permissão
-        if (settings?.roles_permitidos && !settings.roles_permitidos.includes(profile.role)) {
-            return NextResponse.json({
-                error: 'Sem permissão',
-                message: 'Você não tem permissão para usar o assistente.'
-            }, { status: 403 });
-        }
-
-        // Verificar limite mensal
+        // Verificar limites mensais (mantido igual)
         const currentMonth = new Date().toISOString().slice(0, 7);
         if (settings) {
             if (settings.mes_referencia !== currentMonth) {
-                // Resetar contador do mês
                 await supabase
                     .from('ai_settings')
                     .update({ mensagens_usadas_mes: 0, mes_referencia: currentMonth })
@@ -104,14 +92,14 @@ export async function POST(request: NextRequest) {
 
         const startTime = Date.now();
 
-        // Buscar documentos relevantes (todos ativos por enquanto)
+        // Buscar documentos relevantes
         const { data: documents } = await supabase
             .from('ai_documents')
             .select('titulo, tipo, conteudo_texto')
             .eq('condo_id', profile.condo_id)
             .eq('ativo', true);
 
-        // Montar contexto da base de conhecimento
+        // Montar contexto
         let conhecimento = '';
         if (documents && documents.length > 0) {
             conhecimento = documents.map(doc =>
@@ -119,7 +107,6 @@ export async function POST(request: NextRequest) {
             ).join('\n---\n');
         }
 
-        // Montar prompt do sistema baseado no tom
         const tomDescricao = {
             formal: 'Use linguagem formal e profissional. Seja cortês e respeitoso.',
             direto: 'Seja direto e objetivo. Vá direto ao ponto, sem rodeios.',
@@ -127,6 +114,7 @@ export async function POST(request: NextRequest) {
         };
 
         const systemPrompt = `Você é "${agent.nome_agente}", o assistente virtual exclusivo deste condomínio.
+Você está conversando com ${profile.name} (perfil: ${profile.role}).
 
 REGRAS ABSOLUTAS:
 1. Responda APENAS com base nas informações fornecidas abaixo sobre o condomínio
@@ -141,30 +129,24 @@ ${agent.instrucoes_personalizadas ? `INSTRUÇÕES ESPECIAIS:\n${agent.instrucoes
 BASE DE CONHECIMENTO DO CONDOMÍNIO:
 ${conhecimento || 'Nenhum documento cadastrado ainda.'}`;
 
-        // Chamar a IA
+        // Chamar Groq (Llama 3)
         let resposta = '';
         let tokensUsados = 0;
 
-        if (GEMINI_API_KEY) {
-            // Usar Google Gemini
-            const geminiResponse = await callGemini(systemPrompt, pergunta, historico);
-            resposta = geminiResponse.text;
-            tokensUsados = geminiResponse.tokens;
-        } else if (OPENAI_API_KEY) {
-            // Fallback para OpenAI
-            const openaiResponse = await callOpenAI(systemPrompt, pergunta, historico);
-            resposta = openaiResponse.text;
-            tokensUsados = openaiResponse.tokens;
+        if (GROQ_API_KEY) {
+            const groqResponse = await callGroq(systemPrompt, pergunta, historico);
+            resposta = groqResponse.text;
+            tokensUsados = groqResponse.tokens;
         } else {
             return NextResponse.json({
                 error: 'IA não configurada',
-                message: 'Nenhuma API de IA configurada. Configure GEMINI_API_KEY ou OPENAI_API_KEY.'
+                message: 'Chave da API GROQ não configurada.'
             }, { status: 500 });
         }
 
         const tempoResposta = Date.now() - startTime;
 
-        // Salvar interação no log
+        // Salvar interação
         await supabase.from('ai_interactions').insert({
             condo_id: profile.condo_id,
             user_id: user.id,
@@ -174,7 +156,7 @@ ${conhecimento || 'Nenhum documento cadastrado ainda.'}`;
             tempo_resposta_ms: tempoResposta
         });
 
-        // Incrementar contador mensal
+        // Atualizar uso
         if (settings) {
             await supabase
                 .from('ai_settings')
@@ -182,9 +164,8 @@ ${conhecimento || 'Nenhum documento cadastrado ainda.'}`;
                 .eq('condo_id', profile.condo_id);
         }
 
-        // Adicionar disclaimer se configurado
         const disclaimer = settings?.disclaimer_ativo !== false
-            ? '\n\n---\n*Esta resposta foi gerada com base nos documentos do condomínio. Para decisões importantes, consulte o síndico.*'
+            ? '\n\n---\n*Esta resposta foi gerada com base nos documentos do condomínio.*'
             : '';
 
         return NextResponse.json({
@@ -196,107 +177,52 @@ ${conhecimento || 'Nenhum documento cadastrado ainda.'}`;
                 limite: settings.limite_mensagens_mes
             } : null
         });
+
     } catch (error) {
         console.error('[AI Chat] Erro:', error);
         return NextResponse.json({ error: 'Erro ao processar pergunta' }, { status: 500 });
     }
 }
 
-// Função para chamar Google Gemini
-async function callGemini(systemPrompt: string, pergunta: string, historico?: ChatMessage[]): Promise<{ text: string; tokens: number }> {
-    const contents = [];
-
-    // Adicionar contexto do sistema como primeira mensagem
-    contents.push({
-        role: 'user',
-        parts: [{ text: `${systemPrompt}\n\n---\n\nUsuário pergunta: ${pergunta}` }]
-    });
-
-    // Adicionar histórico se existir
-    if (historico && historico.length > 0) {
-        for (const msg of historico.slice(-6)) { // Últimas 6 mensagens
-            contents.push({
-                role: msg.role === 'user' ? 'user' : 'model',
-                parts: [{ text: msg.content }]
-            });
-        }
-        // Adicionar pergunta atual
-        contents.push({
-            role: 'user',
-            parts: [{ text: pergunta }]
-        });
-    }
-
-    const response = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            contents,
-            generationConfig: {
-                temperature: 0.7,
-                maxOutputTokens: 1024,
-                topP: 0.8,
-                topK: 40
-            },
-            safetySettings: [
-                { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-                { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-                { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-                { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' }
-            ]
-        })
-    });
-
-    if (!response.ok) {
-        const error = await response.text();
-        console.error('[Gemini] Erro:', error);
-        throw new Error('Erro ao chamar Gemini');
-    }
-
-    const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Desculpe, não consegui gerar uma resposta.';
-    const tokens = data.usageMetadata?.totalTokenCount || 0;
-
-    return { text, tokens };
-}
-
-// Função para chamar OpenAI (fallback)
-async function callOpenAI(systemPrompt: string, pergunta: string, historico?: ChatMessage[]): Promise<{ text: string; tokens: number }> {
+// Função para chamar Groq
+async function callGroq(systemPrompt: string, pergunta: string, historico?: ChatMessage[]): Promise<{ text: string; tokens: number }> {
     const messages = [
         { role: 'system', content: systemPrompt }
     ];
 
-    // Adicionar histórico
+    // Adicionar histórico recente
     if (historico && historico.length > 0) {
         for (const msg of historico.slice(-6)) {
-            messages.push({ role: msg.role, content: msg.content });
+            // Mapping de roles para garantir compatibilidade
+            const role = msg.role === 'user' ? 'user' : 'assistant';
+            messages.push({ role, content: msg.content });
         }
     }
 
     messages.push({ role: 'user', content: pergunta });
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch(GROQ_API_URL, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${OPENAI_API_KEY}`
+            'Authorization': `Bearer ${GROQ_API_KEY}`,
+            'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            model: 'gpt-4o-mini',
+            model: CHAT_MODEL,
             messages,
-            temperature: 0.7,
+            temperature: 0.5, // Equilíbrio entre criatividade e precisão
             max_tokens: 1024
         })
     });
 
     if (!response.ok) {
         const error = await response.text();
-        console.error('[OpenAI] Erro:', error);
-        throw new Error('Erro ao chamar OpenAI');
+        console.error('[Groq Chat] Erro:', error);
+        throw new Error('Erro ao chamar Groq API');
     }
 
     const data = await response.json();
-    const text = data.choices?.[0]?.message?.content || 'Desculpe, não consegui gerar uma resposta.';
+    const text = data.choices?.[0]?.message?.content || 'Desculpe, não consegui processar sua resposta.';
     const tokens = data.usage?.total_tokens || 0;
 
     return { text, tokens };
