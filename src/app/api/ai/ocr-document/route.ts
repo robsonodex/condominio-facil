@@ -54,18 +54,19 @@ PASSO 4: Formate a saída.
 Retorne APENAS este JSON:
 {
   "name": "NOME COMPLETO DO CIDADÃO (Sem rótulos)",
-  "doc": "APENAS OS NÚMEROS DO CPF OU RG (Priorize CPF)"
+  "doc": "NÚMERO DO DOCUMENTO PREFERENCIAL"
 }
 
-DICAS PARA CNH:
-- O NOME está logo abaixo do título "NOME".
-- O CPF está abaixo de "CPF".
-- O RG está abaixo de "DOC. IDENTIDADE".
+REGRAS DE PRIORIDADE PARA O CAMPO 'doc':
+1. PRIORIDADE MÁXIMA: CPF (11 dígitos, ex: 123.456.789-00).
+2. Se houver CPF e RG na imagem -> RETORNE O CPF.
+3. Se houver APENAS RG -> Retorne o RG.
+4. Se for CNH -> Retorne o CPF (que consta nela).
 
-DICAS PARA RG:
-- O NOME está no centro.
-- O RG está no topo.
-- O CPF (se houver) está identificado como CPF.
+DICAS VISUAIS:
+- Em identidades novas, o CPF fica em destaque.
+- Em CNH, o CPF fica ao lado do rótulo "CPF".
+- Em RG antigo, o CPF pode estar na parte inferior.
 
 Se não conseguir ler com certeza absoluta, retorne null.`
                         },
@@ -78,7 +79,7 @@ Se não conseguir ler com certeza absoluta, retorne null.`
                     ]
                 }
             ],
-            temperature: 0.1, // Levemente acima de 0 para permitir certa flexibilidade na interpretação visual
+            temperature: 0, // Zero para garantir obediência à regra do CPF
             max_tokens: 500,
             response_format: { type: "json_object" } // Llama 3 suporta JSON mode
         };
