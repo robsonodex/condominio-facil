@@ -79,23 +79,23 @@ function extractDocumentData(text: string): { name: string | null; doc: string |
     const upperText = text.toUpperCase();
 
     // ========== EXTRAÇÃO DE CPF ==========
-    // Padrão: XXX.XXX.XXX-XX ou 11 dígitos seguidos
+    // PRIORIDADE: formato XXX.XXX.XXX-XX (isso é CPF, não RG)
     let cpf: string | null = null;
 
-    // Tenta padrão formatado primeiro
-    const cpfFormatted = text.match(/\d{3}[.\s]?\d{3}[.\s]?\d{3}[-.\s]?\d{2}/);
-    if (cpfFormatted) {
-        const digits = cpfFormatted[0].replace(/\D/g, '');
-        if (digits.length === 11) {
-            cpf = digits;
-        }
+    // PRIMEIRO: Procura CPF no formato correto com pontos e traço
+    const cpfWithDots = text.match(/\d{3}\.\d{3}\.\d{3}-\d{2}/);
+    if (cpfWithDots) {
+        cpf = cpfWithDots[0].replace(/\D/g, '');
     }
 
-    // Tenta 11 dígitos seguidos
+    // SEGUNDO: Procura após label "CPF" especificamente
     if (!cpf) {
-        const elevenDigits = text.match(/\b\d{11}\b/);
-        if (elevenDigits) {
-            cpf = elevenDigits[0];
+        const cpfLabelMatch = text.match(/CPF[:\s]*(\d{3}[.\s]?\d{3}[.\s]?\d{3}[-.\s]?\d{2})/i);
+        if (cpfLabelMatch) {
+            const digits = cpfLabelMatch[1].replace(/\D/g, '');
+            if (digits.length === 11) {
+                cpf = digits;
+            }
         }
     }
 
@@ -132,7 +132,9 @@ function extractDocumentData(text: string): { name: string | null; doc: string |
             const reserved = ['REPÚBLICA', 'FEDERATIVA', 'BRASIL', 'MINISTÉRIO', 'CARTEIRA',
                 'NACIONAL', 'HABILITAÇÃO', 'DETRAN', 'IDENTIDADE', 'REGISTRO',
                 'FILIAÇÃO', 'DATA', 'NASCIMENTO', 'VALIDADE', 'EMISSÃO',
-                'SECRETARIA', 'SEGURANÇA', 'PÚBLICA', 'CIVIL', 'INSTITUTO'];
+                'SECRETARIA', 'SEGURANÇA', 'PÚBLICA', 'CIVIL', 'INSTITUTO',
+                'VÁLIDA', 'VALIDA', 'TERRITÓRIO', 'TERRITORIO', 'TODO',
+                'PERMISSÃO', 'CATEGORIA', 'OBSERVAÇÕES', 'INFRAESTRUTURA', 'DEPARTAMENTO', 'TRÂNSITO'];
             const hasReserved = reserved.some(r => clean.toUpperCase().includes(r));
             if (hasReserved) continue;
             // Tamanho razoável para nome
