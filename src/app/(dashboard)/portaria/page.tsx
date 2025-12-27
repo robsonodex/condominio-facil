@@ -53,6 +53,7 @@ export default function PortariaProfissionalPage() {
     const [unidadeId, setUnidadeId] = useState('');
     const [observacoes, setObservacoes] = useState('');
     const [saving, setSaving] = useState(false);
+    const [isScanning, setIsScanning] = useState(false);
 
     const [units, setUnits] = useState<any[]>([]);
     const [currentTime, setCurrentTime] = useState(new Date());
@@ -172,6 +173,54 @@ export default function PortariaProfissionalPage() {
             const stream = videoRef.current.srcObject as MediaStream;
             stream?.getTracks().forEach(track => track.stop());
             setShowCameraModal(false);
+        }
+    };
+
+    // Função de scan do documento via OCR
+    const handleScanDocument = async (imageData: string) => {
+        setIsScanning(true);
+        try {
+            const response = await fetch('/api/ai/ocr-document', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: imageData }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Erro ao processar documento');
+            }
+
+            const { name, doc } = await response.json();
+
+            // Preenche os campos automaticamente
+            if (name) setNome(name);
+            if (doc) setDocumento(doc);
+
+        } catch (error) {
+            console.error('Erro no OCR:', error);
+            alert('Não foi possível ler o documento. Tente novamente ou preencha manualmente.');
+        } finally {
+            setIsScanning(false);
+        }
+    };
+
+    // Captura foto e inicia OCR automaticamente
+    const captureAndScanDocument = () => {
+        if (videoRef.current && canvasRef.current) {
+            const ctx = canvasRef.current.getContext('2d');
+            canvasRef.current.width = videoRef.current.videoWidth;
+            canvasRef.current.height = videoRef.current.videoHeight;
+            ctx?.drawImage(videoRef.current, 0, 0);
+            const photoData = canvasRef.current.toDataURL('image/jpeg');
+            setCapturedPhoto(photoData);
+
+            // Stop camera
+            const stream = videoRef.current.srcObject as MediaStream;
+            stream?.getTracks().forEach(track => track.stop());
+            setShowCameraModal(false);
+
+            // Inicia o OCR automaticamente
+            handleScanDocument(photoData);
         }
     };
 
@@ -520,9 +569,23 @@ export default function PortariaProfissionalPage() {
                             )}
                         </div>
                         <div className="flex-1 space-y-3">
-                            <Input label="Nome *" value={nome} onChange={(e) => setNome(e.target.value)} required />
+                            <div className="relative">
+                                <Input label="Nome *" value={nome} onChange={(e) => setNome(e.target.value)} required disabled={isScanning} />
+                                {isScanning && (
+                                    <div className="absolute right-3 top-8">
+                                        <RefreshCw className="h-4 w-4 animate-spin text-blue-500" />
+                                    </div>
+                                )}
+                            </div>
                             <div className="grid grid-cols-2 gap-3">
-                                <Input label="CPF/RG" value={documento} onChange={(e) => setDocumento(e.target.value)} />
+                                <div className="relative">
+                                    <Input label="CPF/RG" value={documento} onChange={(e) => setDocumento(e.target.value)} disabled={isScanning} />
+                                    {isScanning && (
+                                        <div className="absolute right-3 top-8">
+                                            <RefreshCw className="h-4 w-4 animate-spin text-blue-500" />
+                                        </div>
+                                    )}
+                                </div>
                                 <Input label="Placa" value={placa} onChange={(e) => setPlaca(e.target.value.toUpperCase())} placeholder="ABC-1234" />
                             </div>
                         </div>
@@ -592,10 +655,23 @@ export default function PortariaProfissionalPage() {
                 <div className="space-y-4">
                     <video ref={videoRef} autoPlay playsInline className="w-full rounded-lg bg-black" />
                     <canvas ref={canvasRef} className="hidden" />
-                    <div className="flex justify-center">
-                        <Button onClick={capturePhoto}>
+                    <div className="flex justify-center gap-3">
+                        <Button variant="outline" onClick={capturePhoto}>
                             <Camera className="h-4 w-4 mr-2" />
-                            Capturar
+                            Apenas Foto
+                        </Button>
+                        <Button onClick={captureAndScanDocument} disabled={isScanning}>
+                            {isScanning ? (
+                                <>
+                                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                    Escaneando...
+                                </>
+                            ) : (
+                                <>
+                                    <CreditCard className="h-4 w-4 mr-2" />
+                                    Escanear Documento
+                                </>
+                            )}
                         </Button>
                     </div>
                 </div>

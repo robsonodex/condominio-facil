@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import OpenAI from 'openai';
-
 
 const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
+
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const GEMINI_MODEL = 'gemini-1.5-flash';
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 // Função para converter File para base64
 async function fileToBase64(file: File): Promise<string> {
@@ -17,6 +19,10 @@ async function fileToBase64(file: File): Promise<string> {
 
 export async function POST(req: NextRequest) {
     try {
+        if (!GEMINI_API_KEY) {
+            return NextResponse.json({ error: 'GEMINI_API_KEY não configurada' }, { status: 500 });
+        }
+
         const formData = await req.formData();
         const file = formData.get('file') as File;
         const condoId = formData.get('condo_id') as string;
@@ -30,17 +36,16 @@ export async function POST(req: NextRequest) {
         const base64File = await fileToBase64(file);
         const mimeType = file.type || 'image/jpeg';
 
-        // 2. OCR Inteligente com GPT-4o (Extrai dados do PDF/Imagem)
-        const openai = new OpenAI({
-            apiKey: process.env.OPENAI_API_KEY,
-        });
-
-        const completion = await openai.chat.completions.create({
-            model: "gpt-4o",
-            messages: [
-                {
-                    role: "system",
-                    content: `Você é um Auditor de Condomínios sênior especializado no mercado do Rio de Janeiro.
+        // 2. OCR Inteligente com Gemini (Extrai dados do PDF/Imagem)
+        const response = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [
+                    {
+                        parts: [
+                            {
+                                text: `Você é um Auditor de Condomínios sênior especializado no mercado do Rio de Janeiro.
                     
 Analise esta imagem de orçamento e extraia os dados em JSON com o seguinte formato:
 {
@@ -63,26 +68,53 @@ IMPORTANTE:
 - Extraia TODOS os itens do orçamento
 - Mantenha as descrições originais mas normalizadas
 - Se não conseguir ler algum valor, coloque 0
-- Se não for um orçamento válido, retorne { "erro": "descrição do problema" }`
-                },
-                {
-                    role: "user",
-                    content: [
-                        {
-                            type: "image_url",
-                            image_url: {
-                                url: `data:${mimeType};base64,${base64File}`,
-                                detail: "high"
+- Se não for um orçamento válido, retorne { "erro": "descrição do problema" }
+- Retorne APENAS JSON válido, sem markdown ou explicações.`
+                            },
+                            {
+                                inline_data: {
+                                    mime_type: mimeType,
+                                    data: base64File
+                                }
                             }
-                        }
-                    ]
+                        ]
+                    }
+                ],
+                generationConfig: {
+                    temperature: 0.1,
+                    maxOutputTokens: 2000,
                 }
-            ],
-            response_format: { type: "json_object" },
-            max_tokens: 2000,
+            })
         });
 
-        const extractedData = JSON.parse(completion.choices[0].message.content || '{}');
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('[Audit Gemini] Erro na API:', errorText);
+            return NextResponse.json({
+                status: 'error',
+                message: 'Erro ao processar imagem com IA'
+            }, { status: 500 });
+        }
+
+        const data = await response.json();
+        const rawContent = data?.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+
+        // Limpa possíveis blocos de código
+        const cleanContent = rawContent
+            .replace(/```json\n?|\n?```/g, '')
+            .replace(/```\n?|\n?```/g, '')
+            .trim();
+
+        let extractedData;
+        try {
+            extractedData = JSON.parse(cleanContent);
+        } catch (parseError) {
+            console.error('[Audit] Erro ao parsear JSON:', cleanContent);
+            return NextResponse.json({
+                status: 'error',
+                message: 'Não foi possível extrair dados do orçamento. Tente com uma imagem mais clara.',
+            }, { status: 400 });
+        }
 
         if (extractedData.erro) {
             return NextResponse.json({
@@ -91,7 +123,7 @@ IMPORTANTE:
             }, { status: 400 });
         }
 
-        // 3. Para cada item, buscar benchmark correspondente
+        // 3. Para cada item, buscar benchmark por texto (sem embeddings)
         const auditResults = [];
         let totalOriginal = 0;
         let totalBenchmark = 0;
@@ -101,19 +133,13 @@ IMPORTANTE:
         for (const item of extractedData.items || []) {
             totalOriginal += item.valor_total || 0;
 
-            // Gerar embedding para o item
-            const embeddingResponse = await openai.embeddings.create({
-                model: "text-embedding-3-small",
-                input: item.descricao,
-            });
-            const embeddingVector = embeddingResponse.data[0].embedding;
-
-            // Buscar serviço similar no banco
-            const { data: benchmarks, error } = await supabase.rpc('match_services', {
-                query_embedding: embeddingVector,
-                match_threshold: 0.70,
-                match_count: 1
-            });
+            // Buscar serviço similar por texto (ILIKE)
+            const searchTerm = item.descricao.split(' ').slice(0, 3).join(' '); // Primeiras 3 palavras
+            const { data: benchmarks } = await supabase
+                .from('service_benchmarks')
+                .select('*')
+                .ilike('service_description', `%${searchTerm}%`)
+                .limit(1);
 
             let itemResult: any = {
                 descricao: item.descricao,
@@ -150,7 +176,6 @@ IMPORTANTE:
                             preco_min: ref.min_price_rj,
                             preco_max: ref.max_price_rj,
                             unidade: ref.unit,
-                            similaridade: (ref.similarity * 100).toFixed(0) + '%',
                         },
                         variacao: variacao.toFixed(1),
                         economia: economia,
@@ -165,7 +190,6 @@ IMPORTANTE:
                             descricao: ref.service_description,
                             preco_medio: ref.avg_price_rj,
                             unidade: ref.unit,
-                            similaridade: (ref.similarity * 100).toFixed(0) + '%',
                         },
                         variacao: variacao.toFixed(1),
                     };
@@ -181,7 +205,6 @@ IMPORTANTE:
                             descricao: ref.service_description,
                             preco_medio: ref.avg_price_rj,
                             unidade: ref.unit,
-                            similaridade: (ref.similarity * 100).toFixed(0) + '%',
                         },
                         variacao: variacao.toFixed(1),
                     };
