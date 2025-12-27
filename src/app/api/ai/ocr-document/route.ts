@@ -1,117 +1,122 @@
 import { NextRequest, NextResponse } from 'next/server';
+import Tesseract from 'tesseract.js';
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = 'gemini-1.5-flash';
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+// Regex patterns para documentos brasileiros
+const CPF_REGEX = /(\d{3}[.\s]?\d{3}[.\s]?\d{3}[-.\s]?\d{2})/g;
+const RG_REGEX = /(\d{1,2}[.\s]?\d{3}[.\s]?\d{3}[-.\s]?[\dXx]?)/g;
+const CNH_REGEX = /(\d{9,11})/g;
+
+// Função para extrair CPF do texto
+function extractCPF(text: string): string | null {
+    const matches = text.match(CPF_REGEX);
+    if (matches && matches.length > 0) {
+        // Normaliza o CPF
+        return matches[0].replace(/[.\s-]/g, '').replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    }
+    return null;
+}
+
+// Função para extrair RG do texto
+function extractRG(text: string): string | null {
+    const matches = text.match(RG_REGEX);
+    if (matches && matches.length > 0) {
+        return matches[0].replace(/[.\s-]/g, '');
+    }
+    return null;
+}
+
+// Função para extrair nome do texto (geralmente em maiúsculas após "NOME" ou no início)
+function extractName(text: string): string | null {
+    // Tenta encontrar nome após labels comuns
+    const namePatterns = [
+        /NOME[:\s]+([A-ZÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÄËÏÖÜÇ\s]+)/i,
+        /NOME\s*:\s*([A-ZÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÄËÏÖÜÇ][A-ZÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÄËÏÖÜÇa-záéíóúâêîôûàèìòùäëïöüç\s]+)/i,
+        /FILIAÇÃO[:\s]+([A-ZÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÄËÏÖÜÇ\s]+)/i,
+    ];
+
+    for (const pattern of namePatterns) {
+        const match = text.match(pattern);
+        if (match && match[1]) {
+            const name = match[1].trim();
+            // Valida que parece um nome (pelo menos 2 palavras, mínimo 5 caracteres)
+            if (name.length >= 5 && name.includes(' ')) {
+                return name.split('\n')[0].trim(); // Pega só a primeira linha
+            }
+        }
+    }
+
+    // Fallback: procura linhas em maiúsculas que parecem nomes
+    const lines = text.split('\n');
+    for (const line of lines) {
+        const cleanLine = line.trim();
+        // Se a linha está toda em maiúsculas, tem espaços e parece um nome
+        if (
+            cleanLine.length >= 8 &&
+            cleanLine.length <= 60 &&
+            cleanLine === cleanLine.toUpperCase() &&
+            cleanLine.includes(' ') &&
+            /^[A-ZÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÄËÏÖÜÇ\s]+$/.test(cleanLine) &&
+            !cleanLine.includes('REPÚBLICA') &&
+            !cleanLine.includes('FEDERATIVA') &&
+            !cleanLine.includes('BRASIL') &&
+            !cleanLine.includes('REGISTRO') &&
+            !cleanLine.includes('IDENTIDADE') &&
+            !cleanLine.includes('CARTEIRA')
+        ) {
+            return cleanLine;
+        }
+    }
+
+    return null;
+}
 
 export async function POST(req: NextRequest) {
     try {
-        if (!GEMINI_API_KEY) {
-            return NextResponse.json({ error: 'GEMINI_API_KEY não configurada' }, { status: 500 });
-        }
-
         const { image } = await req.json();
 
         if (!image) {
             return NextResponse.json({ error: 'Imagem não fornecida' }, { status: 400 });
         }
 
-        // Extrai o base64 e o mime type da imagem
-        // Formato esperado: "data:image/jpeg;base64,/9j/4AAQ..."
-        let base64Data = image;
-        let mimeType = 'image/jpeg';
+        console.log('[OCR Tesseract] Iniciando reconhecimento...');
 
-        if (image.startsWith('data:')) {
-            const matches = image.match(/^data:([^;]+);base64,(.+)$/);
-            if (matches) {
-                mimeType = matches[1];
-                base64Data = matches[2];
-            }
-        }
-
-        const response = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [
-                    {
-                        parts: [
-                            {
-                                text: `Você é um assistente de OCR especializado em ler documentos brasileiros (RG, CNH, CPF).
-Analise a imagem e extraia APENAS:
-1. O nome completo da pessoa
-2. O número do documento principal (CPF, RG ou CNH)
-
-Responda APENAS com JSON válido no formato:
-{"name": "NOME COMPLETO", "doc": "000.000.000-00"}
-
-Se não conseguir ler algum campo, retorne null para ele.
-NÃO inclua explicações, markdown ou texto adicional. APENAS o JSON.`
-                            },
-                            {
-                                inline_data: {
-                                    mime_type: mimeType,
-                                    data: base64Data
-                                }
-                            }
-                        ]
+        // OCR com Tesseract.js (100% gratuito, roda no servidor)
+        const result = await Tesseract.recognize(
+            image,
+            'por', // Português
+            {
+                logger: (m) => {
+                    if (m.status === 'recognizing text') {
+                        console.log(`[OCR] Progresso: ${Math.round(m.progress * 100)}%`);
                     }
-                ],
-                generationConfig: {
-                    temperature: 0.1,
-                    maxOutputTokens: 200,
                 }
-            })
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('[OCR Gemini] Erro na API:', response.status, errorText);
-
-            if (response.status === 400) {
-                return NextResponse.json({
-                    error: 'Imagem inválida ou formato não suportado',
-                    details: 'Tente tirar uma foto mais clara do documento'
-                }, { status: 400 });
             }
+        );
 
-            if (response.status === 403) {
-                return NextResponse.json({
-                    error: 'Chave de API inválida ou sem permissão',
-                    details: 'Verifique GEMINI_API_KEY no Vercel'
-                }, { status: 500 });
-            }
+        const text = result.data.text;
+        console.log('[OCR Tesseract] Texto extraído:', text.substring(0, 200) + '...');
 
-            return NextResponse.json({
-                error: 'Erro ao processar documento',
-                details: `Status: ${response.status}`
-            }, { status: 500 });
-        }
+        // Extrair dados estruturados
+        const name = extractName(text);
+        const cpf = extractCPF(text);
+        const rg = extractRG(text);
 
-        const data = await response.json();
-        const content = data?.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+        // Usa CPF se encontrou, senão RG
+        const doc = cpf || rg;
 
-        // Parse do JSON retornado pela IA
-        let parsed;
-        try {
-            // Remove possíveis blocos de código markdown
-            const cleanContent = content
-                .replace(/```json\n?|\n?```/g, '')
-                .replace(/```\n?|\n?```/g, '')
-                .trim();
-            parsed = JSON.parse(cleanContent);
-        } catch {
-            console.error('[OCR Gemini] Erro ao parsear resposta:', content);
-            parsed = { name: null, doc: null };
-        }
+        console.log('[OCR Tesseract] Dados extraídos:', { name, doc });
 
         return NextResponse.json({
-            name: parsed.name || null,
-            doc: parsed.doc || null,
+            name: name || null,
+            doc: doc || null,
+            rawText: text.substring(0, 500), // Para debug
         });
 
-    } catch (error) {
-        console.error('[OCR Gemini] Erro:', error);
-        return NextResponse.json({ error: 'Erro ao processar documento' }, { status: 500 });
+    } catch (error: any) {
+        console.error('[OCR Tesseract] Erro:', error);
+        return NextResponse.json({
+            error: 'Erro ao processar documento',
+            details: error.message
+        }, { status: 500 });
     }
 }
