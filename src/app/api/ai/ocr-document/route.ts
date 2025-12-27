@@ -66,8 +66,26 @@ NÃO inclua explicações, markdown ou texto adicional. APENAS o JSON.`
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('[OCR Gemini] Erro na API:', errorText);
-            return NextResponse.json({ error: 'Erro ao processar documento' }, { status: 500 });
+            console.error('[OCR Gemini] Erro na API:', response.status, errorText);
+
+            if (response.status === 400) {
+                return NextResponse.json({
+                    error: 'Imagem inválida ou formato não suportado',
+                    details: 'Tente tirar uma foto mais clara do documento'
+                }, { status: 400 });
+            }
+
+            if (response.status === 403) {
+                return NextResponse.json({
+                    error: 'Chave de API inválida ou sem permissão',
+                    details: 'Verifique GEMINI_API_KEY no Vercel'
+                }, { status: 500 });
+            }
+
+            return NextResponse.json({
+                error: 'Erro ao processar documento',
+                details: `Status: ${response.status}`
+            }, { status: 500 });
         }
 
         const data = await response.json();

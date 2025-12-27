@@ -186,19 +186,24 @@ export default function PortariaProfissionalPage() {
                 body: JSON.stringify({ image: imageData }),
             });
 
+            const data = await response.json();
+
             if (!response.ok) {
-                throw new Error('Erro ao processar documento');
+                const errorMsg = data.details || data.error || 'Erro desconhecido';
+                throw new Error(errorMsg);
             }
 
-            const { name, doc } = await response.json();
-
             // Preenche os campos automaticamente
-            if (name) setNome(name);
-            if (doc) setDocumento(doc);
+            if (data.name) setNome(data.name);
+            if (data.doc) setDocumento(data.doc);
 
-        } catch (error) {
+            if (!data.name && !data.doc) {
+                alert('Não foi possível identificar nome ou documento na imagem. Tente com uma foto mais clara.');
+            }
+
+        } catch (error: any) {
             console.error('Erro no OCR:', error);
-            alert('Não foi possível ler o documento. Tente novamente ou preencha manualmente.');
+            alert(`Erro no OCR: ${error.message || 'Tente novamente ou preencha manualmente.'}`);
         } finally {
             setIsScanning(false);
         }
