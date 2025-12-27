@@ -1,265 +1,262 @@
 -- =============================================
--- SOFT DELETE STRATEGY
--- Versão: 1.0
+-- SOFT DELETE STRATEGY (VERSÃO CORRIGIDA)
+-- Versão: 1.1
 -- Data: 26/12/2024
--- Descrição: Implementa Soft Delete para evitar
---            timeouts em exclusões em cascata
+-- Descrição: Implementa Soft Delete com verificação
+--            de tabelas existentes
 -- =============================================
 
 -- ============================================
 -- PARTE 1: ADICIONAR COLUNAS deleted_at
+-- (Ignora tabelas que não existem)
 -- ============================================
 
--- Função helper para adicionar deleted_at se não existir
-CREATE OR REPLACE FUNCTION add_deleted_at_column(table_name TEXT)
-RETURNS VOID AS $$
+DO $$
+DECLARE
+    tables_to_update TEXT[] := ARRAY[
+        'condos',
+        'users',
+        'units',
+        'financial_entries',
+        'ocorrencias',
+        'avisos',
+        'notifications',
+        'reservas',
+        'visitantes',
+        'admin_charges',
+        'support_tickets',
+        'support_messages',
+        'support_chats',
+        'chat_messages',
+        'areas_comuns',
+        'moradores',
+        'assinaturas',
+        'suggestions',
+        'suggestion_votes',
+        'marketplace_ads',
+        'service_recommendations',
+        'marketplace_interests',
+        'manutencao_schedule',
+        'manutencao_history',
+        'governanca_enquetes',
+        'governanca_assembleias',
+        'governanca_documents',
+        'guest_invites',
+        'mensageria_entregas',
+        'chat_sindico_conversas',
+        'chat_sindico_mensagens',
+        'ai_interactions',
+        'configuracoes_smtp',
+        'email_logs',
+        'turbo_entries',
+        'unit_reforms',
+        'fire_tax_payments',
+        'building_inspections',
+        'quote_audits',
+        'price_learning_logs'
+    ];
+    t TEXT;
 BEGIN
-    EXECUTE format('
-        ALTER TABLE %I 
-        ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ DEFAULT NULL
-    ', table_name);
-EXCEPTION WHEN OTHERS THEN
-    RAISE NOTICE 'Erro ao adicionar deleted_at em %: %', table_name, SQLERRM;
-END;
-$$ LANGUAGE plpgsql;
-
--- Tabelas principais
-SELECT add_deleted_at_column('condos');
-SELECT add_deleted_at_column('users');
-SELECT add_deleted_at_column('units');
-SELECT add_deleted_at_column('financial_entries');
-SELECT add_deleted_at_column('occurrences');
-SELECT add_deleted_at_column('billings');
-SELECT add_deleted_at_column('notices');
-SELECT add_deleted_at_column('notifications');
-SELECT add_deleted_at_column('reservations');
-SELECT add_deleted_at_column('visitors');
-SELECT add_deleted_at_column('deliveries');
-SELECT add_deleted_at_column('chat_conversations');
-SELECT add_deleted_at_column('chat_messages');
-SELECT add_deleted_at_column('support_tickets');
-SELECT add_deleted_at_column('support_messages');
-SELECT add_deleted_at_column('common_areas');
-SELECT add_deleted_at_column('residents');
-SELECT add_deleted_at_column('subscriptions');
-SELECT add_deleted_at_column('marketplace_ads');
-SELECT add_deleted_at_column('service_recommendations');
-SELECT add_deleted_at_column('maintenance_orders');
-SELECT add_deleted_at_column('suppliers');
-SELECT add_deleted_at_column('assemblies');
-SELECT add_deleted_at_column('polls');
-SELECT add_deleted_at_column('documents');
-SELECT add_deleted_at_column('qr_passes');
-
--- Remover função helper (não mais necessária)
-DROP FUNCTION IF EXISTS add_deleted_at_column(TEXT);
+    FOREACH t IN ARRAY tables_to_update LOOP
+        -- Verificar se a tabela existe
+        IF EXISTS (SELECT FROM pg_tables WHERE tablename = t AND schemaname = 'public') THEN
+            -- Verificar se a coluna já existe
+            IF NOT EXISTS (
+                SELECT FROM information_schema.columns 
+                WHERE table_schema = 'public' 
+                AND table_name = t 
+                AND column_name = 'deleted_at'
+            ) THEN
+                EXECUTE format('ALTER TABLE %I ADD COLUMN deleted_at TIMESTAMPTZ DEFAULT NULL', t);
+                RAISE NOTICE 'Adicionada coluna deleted_at em %', t;
+            ELSE
+                RAISE NOTICE 'Coluna deleted_at já existe em %', t;
+            END IF;
+        ELSE
+            RAISE NOTICE 'Tabela % não existe, ignorando', t;
+        END IF;
+    END LOOP;
+END $$;
 
 -- ============================================
 -- PARTE 2: CRIAR ÍNDICES PARCIAIS
--- (Apenas registros ativos, muito mais rápido)
 -- ============================================
 
--- Índices para busca de registros ativos
-CREATE INDEX IF NOT EXISTS idx_condos_active 
-ON condos(id) WHERE deleted_at IS NULL;
-
-CREATE INDEX IF NOT EXISTS idx_users_active 
-ON users(id) WHERE deleted_at IS NULL;
-
-CREATE INDEX IF NOT EXISTS idx_users_condo_active 
-ON users(condo_id) WHERE deleted_at IS NULL;
-
-CREATE INDEX IF NOT EXISTS idx_units_active 
-ON units(condo_id) WHERE deleted_at IS NULL;
-
-CREATE INDEX IF NOT EXISTS idx_financial_entries_active 
-ON financial_entries(condo_id) WHERE deleted_at IS NULL;
-
-CREATE INDEX IF NOT EXISTS idx_occurrences_active 
-ON occurrences(condo_id) WHERE deleted_at IS NULL;
-
-CREATE INDEX IF NOT EXISTS idx_billings_active 
-ON billings(condo_id) WHERE deleted_at IS NULL;
-
-CREATE INDEX IF NOT EXISTS idx_notices_active 
-ON notices(condo_id) WHERE deleted_at IS NULL;
-
-CREATE INDEX IF NOT EXISTS idx_notifications_active 
-ON notifications(user_id) WHERE deleted_at IS NULL;
-
-CREATE INDEX IF NOT EXISTS idx_reservations_active 
-ON reservations(condo_id) WHERE deleted_at IS NULL;
-
-CREATE INDEX IF NOT EXISTS idx_visitors_active 
-ON visitors(condo_id) WHERE deleted_at IS NULL;
-
-CREATE INDEX IF NOT EXISTS idx_deliveries_active 
-ON deliveries(condo_id) WHERE deleted_at IS NULL;
-
-CREATE INDEX IF NOT EXISTS idx_chat_conversations_active 
-ON chat_conversations(condo_id) WHERE deleted_at IS NULL;
-
-CREATE INDEX IF NOT EXISTS idx_marketplace_ads_active 
-ON marketplace_ads(condo_id) WHERE deleted_at IS NULL;
-
--- Índices para limpeza (registros deletados há mais de 30 dias)
-CREATE INDEX IF NOT EXISTS idx_condos_deleted 
-ON condos(deleted_at) WHERE deleted_at IS NOT NULL;
-
-CREATE INDEX IF NOT EXISTS idx_users_deleted 
-ON users(deleted_at) WHERE deleted_at IS NOT NULL;
-
-CREATE INDEX IF NOT EXISTS idx_financial_entries_deleted 
-ON financial_entries(deleted_at) WHERE deleted_at IS NOT NULL;
+-- Índices principais (apenas se tabelas existirem)
+DO $$
+BEGIN
+    -- Condos
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'condos') THEN
+        CREATE INDEX IF NOT EXISTS idx_condos_active ON condos(id) WHERE deleted_at IS NULL;
+        CREATE INDEX IF NOT EXISTS idx_condos_deleted ON condos(deleted_at) WHERE deleted_at IS NOT NULL;
+    END IF;
+    
+    -- Users
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'users') THEN
+        CREATE INDEX IF NOT EXISTS idx_users_active ON users(id) WHERE deleted_at IS NULL;
+        CREATE INDEX IF NOT EXISTS idx_users_condo_active ON users(condo_id) WHERE deleted_at IS NULL;
+        CREATE INDEX IF NOT EXISTS idx_users_deleted ON users(deleted_at) WHERE deleted_at IS NOT NULL;
+    END IF;
+    
+    -- Units
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'units') THEN
+        CREATE INDEX IF NOT EXISTS idx_units_active ON units(condo_id) WHERE deleted_at IS NULL;
+    END IF;
+    
+    -- Financial entries
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'financial_entries') THEN
+        CREATE INDEX IF NOT EXISTS idx_financial_entries_active ON financial_entries(condo_id) WHERE deleted_at IS NULL;
+        CREATE INDEX IF NOT EXISTS idx_financial_entries_deleted ON financial_entries(deleted_at) WHERE deleted_at IS NOT NULL;
+    END IF;
+    
+    -- Notifications
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'notifications') THEN
+        CREATE INDEX IF NOT EXISTS idx_notifications_active ON notifications(user_id) WHERE deleted_at IS NULL;
+    END IF;
+    
+    -- Marketplace
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'marketplace_ads') THEN
+        CREATE INDEX IF NOT EXISTS idx_marketplace_ads_active ON marketplace_ads(condo_id) WHERE deleted_at IS NULL;
+    END IF;
+END $$;
 
 -- ============================================
--- PARTE 3: VIEWS PARA DADOS ATIVOS
--- (Alternativa se RLS for complexo demais)
+-- PARTE 3: FUNÇÃO DE SOFT DELETE CONDOMÍNIO
 -- ============================================
 
--- View de condomínios ativos
-CREATE OR REPLACE VIEW active_condos AS
-SELECT * FROM condos WHERE deleted_at IS NULL;
-
--- View de usuários ativos
-CREATE OR REPLACE VIEW active_users AS
-SELECT * FROM users WHERE deleted_at IS NULL;
-
--- View de unidades ativas
-CREATE OR REPLACE VIEW active_units AS
-SELECT * FROM units WHERE deleted_at IS NULL;
-
--- ============================================
--- PARTE 4: FUNÇÕES DE SOFT DELETE
--- ============================================
-
--- Função para soft delete de um condomínio e todos os dados relacionados
 CREATE OR REPLACE FUNCTION soft_delete_condo(p_condo_id UUID)
 RETURNS JSON AS $$
 DECLARE
     v_deleted_at TIMESTAMPTZ := NOW();
-    v_counts JSON;
+    v_table_name TEXT;
+    v_count INTEGER := 0;
 BEGIN
-    -- Verificar se condomínio existe e não está deletado
-    IF NOT EXISTS (SELECT 1 FROM condos WHERE id = p_condo_id AND deleted_at IS NULL) THEN
-        RETURN json_build_object('success', false, 'error', 'Condomínio não encontrado ou já deletado');
+    -- Verificar se condomínio existe
+    IF NOT EXISTS (SELECT 1 FROM condos WHERE id = p_condo_id AND (deleted_at IS NULL OR deleted_at IS NOT NULL)) THEN
+        RETURN json_build_object('success', false, 'error', 'Condomínio não encontrado');
+    END IF;
+    
+    -- Verificar se já está deletado
+    IF EXISTS (SELECT 1 FROM condos WHERE id = p_condo_id AND deleted_at IS NOT NULL) THEN
+        RETURN json_build_object('success', false, 'error', 'Condomínio já está deletado');
     END IF;
 
-    -- Soft delete em cascata (ordem importa para evitar FK violations em hard delete futuro)
+    -- Soft delete em tabelas que têm condo_id
+    -- (Usando dynamic SQL para ignorar tabelas inexistentes)
     
-    -- 1. Mensagens de chat
-    UPDATE chat_messages SET deleted_at = v_deleted_at
-    WHERE conversation_id IN (
-        SELECT id FROM chat_conversations WHERE condo_id = p_condo_id
-    ) AND deleted_at IS NULL;
+    -- Financial entries
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'financial_entries') THEN
+        UPDATE financial_entries SET deleted_at = v_deleted_at WHERE condo_id = p_condo_id AND deleted_at IS NULL;
+        GET DIAGNOSTICS v_count = ROW_COUNT;
+        RAISE NOTICE 'financial_entries: % registros', v_count;
+    END IF;
     
-    -- 2. Conversas de chat
-    UPDATE chat_conversations SET deleted_at = v_deleted_at
-    WHERE condo_id = p_condo_id AND deleted_at IS NULL;
+    -- Notifications
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'notifications') THEN
+        UPDATE notifications SET deleted_at = v_deleted_at WHERE condo_id = p_condo_id AND deleted_at IS NULL;
+    END IF;
     
-    -- 3. Mensagens de suporte
-    UPDATE support_messages SET deleted_at = v_deleted_at
-    WHERE ticket_id IN (
-        SELECT id FROM support_tickets WHERE condo_id = p_condo_id
-    ) AND deleted_at IS NULL;
+    -- Avisos
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'avisos') THEN
+        UPDATE avisos SET deleted_at = v_deleted_at WHERE condo_id = p_condo_id AND deleted_at IS NULL;
+    END IF;
     
-    -- 4. Tickets de suporte
-    UPDATE support_tickets SET deleted_at = v_deleted_at
-    WHERE condo_id = p_condo_id AND deleted_at IS NULL;
+    -- Ocorrências
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'ocorrencias') THEN
+        UPDATE ocorrencias SET deleted_at = v_deleted_at WHERE condo_id = p_condo_id AND deleted_at IS NULL;
+    END IF;
     
-    -- 5. Notificações
-    UPDATE notifications SET deleted_at = v_deleted_at
-    WHERE condo_id = p_condo_id AND deleted_at IS NULL;
+    -- Reservas
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'reservas') THEN
+        UPDATE reservas SET deleted_at = v_deleted_at WHERE condo_id = p_condo_id AND deleted_at IS NULL;
+    END IF;
     
-    -- 6. Entregas
-    UPDATE deliveries SET deleted_at = v_deleted_at
-    WHERE condo_id = p_condo_id AND deleted_at IS NULL;
+    -- Visitantes
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'visitantes') THEN
+        UPDATE visitantes SET deleted_at = v_deleted_at WHERE condo_id = p_condo_id AND deleted_at IS NULL;
+    END IF;
     
-    -- 7. Visitantes
-    UPDATE visitors SET deleted_at = v_deleted_at
-    WHERE condo_id = p_condo_id AND deleted_at IS NULL;
+    -- Admin charges
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'admin_charges') THEN
+        UPDATE admin_charges SET deleted_at = v_deleted_at WHERE condo_id = p_condo_id AND deleted_at IS NULL;
+    END IF;
     
-    -- 8. Reservas
-    UPDATE reservations SET deleted_at = v_deleted_at
-    WHERE condo_id = p_condo_id AND deleted_at IS NULL;
+    -- Support tickets
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'support_tickets') THEN
+        UPDATE support_tickets SET deleted_at = v_deleted_at WHERE condo_id = p_condo_id AND deleted_at IS NULL;
+    END IF;
     
-    -- 9. Áreas comuns
-    UPDATE common_areas SET deleted_at = v_deleted_at
-    WHERE condo_id = p_condo_id AND deleted_at IS NULL;
+    -- Support chats
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'support_chats') THEN
+        UPDATE support_chats SET deleted_at = v_deleted_at WHERE condo_id = p_condo_id AND deleted_at IS NULL;
+    END IF;
     
-    -- 10. Ocorrências
-    UPDATE occurrences SET deleted_at = v_deleted_at
-    WHERE condo_id = p_condo_id AND deleted_at IS NULL;
+    -- Suggestions
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'suggestions') THEN
+        UPDATE suggestions SET deleted_at = v_deleted_at WHERE condo_id = p_condo_id AND deleted_at IS NULL;
+    END IF;
     
-    -- 11. Cobranças
-    UPDATE billings SET deleted_at = v_deleted_at
-    WHERE condo_id = p_condo_id AND deleted_at IS NULL;
+    -- Marketplace
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'marketplace_ads') THEN
+        UPDATE marketplace_ads SET deleted_at = v_deleted_at WHERE condo_id = p_condo_id AND deleted_at IS NULL;
+    END IF;
     
-    -- 12. Lançamentos financeiros
-    UPDATE financial_entries SET deleted_at = v_deleted_at
-    WHERE condo_id = p_condo_id AND deleted_at IS NULL;
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'service_recommendations') THEN
+        UPDATE service_recommendations SET deleted_at = v_deleted_at WHERE condo_id = p_condo_id AND deleted_at IS NULL;
+    END IF;
     
-    -- 13. Avisos
-    UPDATE notices SET deleted_at = v_deleted_at
-    WHERE condo_id = p_condo_id AND deleted_at IS NULL;
+    -- Governança
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'governanca_enquetes') THEN
+        UPDATE governanca_enquetes SET deleted_at = v_deleted_at WHERE condo_id = p_condo_id AND deleted_at IS NULL;
+    END IF;
     
-    -- 14. Marketplace
-    UPDATE marketplace_ads SET deleted_at = v_deleted_at
-    WHERE condo_id = p_condo_id AND deleted_at IS NULL;
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'governanca_assembleias') THEN
+        UPDATE governanca_assembleias SET deleted_at = v_deleted_at WHERE condo_id = p_condo_id AND deleted_at IS NULL;
+    END IF;
     
-    UPDATE service_recommendations SET deleted_at = v_deleted_at
-    WHERE condo_id = p_condo_id AND deleted_at IS NULL;
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'governanca_documents') THEN
+        UPDATE governanca_documents SET deleted_at = v_deleted_at WHERE condo_id = p_condo_id AND deleted_at IS NULL;
+    END IF;
     
-    -- 15. Manutenção
-    UPDATE maintenance_orders SET deleted_at = v_deleted_at
-    WHERE condo_id = p_condo_id AND deleted_at IS NULL;
+    -- Mensageria
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'mensageria_entregas') THEN
+        UPDATE mensageria_entregas SET deleted_at = v_deleted_at WHERE condo_id = p_condo_id AND deleted_at IS NULL;
+    END IF;
     
-    UPDATE suppliers SET deleted_at = v_deleted_at
-    WHERE condo_id = p_condo_id AND deleted_at IS NULL;
+    -- Chat síndico
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'chat_sindico_conversas') THEN
+        UPDATE chat_sindico_conversas SET deleted_at = v_deleted_at WHERE condo_id = p_condo_id AND deleted_at IS NULL;
+    END IF;
     
-    -- 16. Governança
-    UPDATE assemblies SET deleted_at = v_deleted_at
-    WHERE condo_id = p_condo_id AND deleted_at IS NULL;
+    -- Guest invites
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'guest_invites') THEN
+        UPDATE guest_invites SET deleted_at = v_deleted_at WHERE condo_id = p_condo_id AND deleted_at IS NULL;
+    END IF;
     
-    UPDATE polls SET deleted_at = v_deleted_at
-    WHERE condo_id = p_condo_id AND deleted_at IS NULL;
+    -- Units
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'units') THEN
+        UPDATE units SET deleted_at = v_deleted_at WHERE condo_id = p_condo_id AND deleted_at IS NULL;
+    END IF;
     
-    UPDATE documents SET deleted_at = v_deleted_at
-    WHERE condo_id = p_condo_id AND deleted_at IS NULL;
+    -- Users (exceto superadmin)
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'users') THEN
+        UPDATE users SET deleted_at = v_deleted_at 
+        WHERE condo_id = p_condo_id AND role != 'superadmin' AND deleted_at IS NULL;
+    END IF;
     
-    -- 17. QR Passes
-    UPDATE qr_passes SET deleted_at = v_deleted_at
-    WHERE condo_id = p_condo_id AND deleted_at IS NULL;
+    -- Assinaturas
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'assinaturas') THEN
+        UPDATE assinaturas SET deleted_at = v_deleted_at WHERE condo_id = p_condo_id AND deleted_at IS NULL;
+    END IF;
     
-    -- 18. Moradores/Residents
-    UPDATE residents SET deleted_at = v_deleted_at
-    WHERE unit_id IN (
-        SELECT id FROM units WHERE condo_id = p_condo_id
-    ) AND deleted_at IS NULL;
-    
-    -- 19. Unidades
-    UPDATE units SET deleted_at = v_deleted_at
-    WHERE condo_id = p_condo_id AND deleted_at IS NULL;
-    
-    -- 20. Usuários do condomínio (exceto superadmin)
-    UPDATE users SET deleted_at = v_deleted_at
-    WHERE condo_id = p_condo_id 
-    AND role != 'superadmin'
-    AND deleted_at IS NULL;
-    
-    -- 21. Assinaturas
-    UPDATE subscriptions SET deleted_at = v_deleted_at
-    WHERE condo_id = p_condo_id AND deleted_at IS NULL;
-    
-    -- 22. Por fim, o condomínio
-    UPDATE condos SET deleted_at = v_deleted_at
-    WHERE id = p_condo_id AND deleted_at IS NULL;
+    -- Por fim, o condomínio
+    UPDATE condos SET deleted_at = v_deleted_at WHERE id = p_condo_id;
     
     RETURN json_build_object(
         'success', true, 
         'deleted_at', v_deleted_at,
         'condo_id', p_condo_id,
-        'message', 'Condomínio marcado para exclusão. Dados serão removidos permanentemente após 30 dias.'
+        'message', 'Condomínio marcado para exclusão. Dados serão removidos após 30 dias.'
     );
     
 EXCEPTION WHEN OTHERS THEN
@@ -267,15 +264,18 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Função para soft delete de um usuário
+-- ============================================
+-- PARTE 4: FUNÇÃO DE SOFT DELETE USUÁRIO
+-- ============================================
+
 CREATE OR REPLACE FUNCTION soft_delete_user(p_user_id UUID)
 RETURNS JSON AS $$
 DECLARE
     v_deleted_at TIMESTAMPTZ := NOW();
 BEGIN
     -- Verificar se usuário existe
-    IF NOT EXISTS (SELECT 1 FROM users WHERE id = p_user_id AND deleted_at IS NULL) THEN
-        RETURN json_build_object('success', false, 'error', 'Usuário não encontrado ou já deletado');
+    IF NOT EXISTS (SELECT 1 FROM users WHERE id = p_user_id) THEN
+        RETURN json_build_object('success', false, 'error', 'Usuário não encontrado');
     END IF;
     
     -- Não permitir deletar superadmin
@@ -284,24 +284,16 @@ BEGIN
     END IF;
 
     -- Soft delete dados relacionados
-    UPDATE notifications SET deleted_at = v_deleted_at
-    WHERE user_id = p_user_id AND deleted_at IS NULL;
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'notifications') THEN
+        UPDATE notifications SET deleted_at = v_deleted_at WHERE user_id = p_user_id AND deleted_at IS NULL;
+    END IF;
     
-    UPDATE chat_conversations SET deleted_at = v_deleted_at
-    WHERE user_id = p_user_id AND deleted_at IS NULL;
-    
-    UPDATE occurrences SET deleted_at = v_deleted_at
-    WHERE user_id = p_user_id AND deleted_at IS NULL;
-    
-    UPDATE reservations SET deleted_at = v_deleted_at
-    WHERE user_id = p_user_id AND deleted_at IS NULL;
-    
-    UPDATE marketplace_ads SET deleted_at = v_deleted_at
-    WHERE user_id = p_user_id AND deleted_at IS NULL;
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'marketplace_ads') THEN
+        UPDATE marketplace_ads SET deleted_at = v_deleted_at WHERE user_id = p_user_id AND deleted_at IS NULL;
+    END IF;
     
     -- Soft delete usuário
-    UPDATE users SET deleted_at = v_deleted_at
-    WHERE id = p_user_id AND deleted_at IS NULL;
+    UPDATE users SET deleted_at = v_deleted_at WHERE id = p_user_id;
     
     RETURN json_build_object(
         'success', true,
@@ -318,118 +310,98 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- PARTE 5: HARD DELETE (LGPD - 30 dias)
 -- ============================================
 
--- Função para hard delete de registros antigos
 CREATE OR REPLACE FUNCTION hard_delete_expired_records()
 RETURNS JSON AS $$
 DECLARE
     v_cutoff TIMESTAMPTZ := NOW() - INTERVAL '30 days';
     v_deleted_condos INTEGER := 0;
     v_deleted_users INTEGER := 0;
-    v_deleted_records INTEGER := 0;
 BEGIN
-    -- ORDEM CRÍTICA: Deletar de baixo para cima (dependências primeiro)
+    -- Deletar tabelas dependentes primeiro (ordem importa!)
     
-    -- 1. Chat messages
-    DELETE FROM chat_messages 
-    WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
-    GET DIAGNOSTICS v_deleted_records = ROW_COUNT;
+    -- Tabelas com FK para outras tabelas
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'chat_messages') THEN
+        DELETE FROM chat_messages WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
+    END IF;
     
-    -- 2. Chat conversations  
-    DELETE FROM chat_conversations 
-    WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'chat_sindico_mensagens') THEN
+        DELETE FROM chat_sindico_mensagens WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
+    END IF;
     
-    -- 3. Support messages
-    DELETE FROM support_messages 
-    WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'support_messages') THEN
+        DELETE FROM support_messages WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
+    END IF;
     
-    -- 4. Support tickets
-    DELETE FROM support_tickets 
-    WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'suggestion_votes') THEN
+        DELETE FROM suggestion_votes WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
+    END IF;
     
-    -- 5. Notifications
-    DELETE FROM notifications 
-    WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
+    -- Tabelas principais
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'notifications') THEN
+        DELETE FROM notifications WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
+    END IF;
     
-    -- 6. Deliveries
-    DELETE FROM deliveries 
-    WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'financial_entries') THEN
+        DELETE FROM financial_entries WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
+    END IF;
     
-    -- 7. Visitors
-    DELETE FROM visitors 
-    WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'marketplace_ads') THEN
+        DELETE FROM marketplace_ads WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
+    END IF;
     
-    -- 8. Reservations
-    DELETE FROM reservations 
-    WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'service_recommendations') THEN
+        DELETE FROM service_recommendations WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
+    END IF;
     
-    -- 9. Common areas
-    DELETE FROM common_areas 
-    WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'support_tickets') THEN
+        DELETE FROM support_tickets WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
+    END IF;
     
-    -- 10. Occurrences
-    DELETE FROM occurrences 
-    WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'support_chats') THEN
+        DELETE FROM support_chats WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
+    END IF;
     
-    -- 11. Billings
-    DELETE FROM billings 
-    WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'suggestions') THEN
+        DELETE FROM suggestions WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
+    END IF;
     
-    -- 12. Financial entries
-    DELETE FROM financial_entries 
-    WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'chat_sindico_conversas') THEN
+        DELETE FROM chat_sindico_conversas WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
+    END IF;
     
-    -- 13. Notices
-    DELETE FROM notices 
-    WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'guest_invites') THEN
+        DELETE FROM guest_invites WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
+    END IF;
     
-    -- 14. Marketplace
-    DELETE FROM marketplace_ads 
-    WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'mensageria_entregas') THEN
+        DELETE FROM mensageria_entregas WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
+    END IF;
     
-    DELETE FROM service_recommendations 
-    WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'governanca_enquetes') THEN
+        DELETE FROM governanca_enquetes WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
+    END IF;
     
-    -- 15. Maintenance
-    DELETE FROM maintenance_orders 
-    WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'governanca_assembleias') THEN
+        DELETE FROM governanca_assembleias WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
+    END IF;
     
-    DELETE FROM suppliers 
-    WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'governanca_documents') THEN
+        DELETE FROM governanca_documents WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
+    END IF;
     
-    -- 16. Governance
-    DELETE FROM assemblies 
-    WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
+    -- Units
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'units') THEN
+        DELETE FROM units WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
+    END IF;
     
-    DELETE FROM polls 
-    WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
+    -- Users
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'users') THEN
+        DELETE FROM users WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff AND role != 'superadmin';
+        GET DIAGNOSTICS v_deleted_users = ROW_COUNT;
+    END IF;
     
-    DELETE FROM documents 
-    WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
-    
-    -- 17. QR Passes
-    DELETE FROM qr_passes 
-    WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
-    
-    -- 18. Residents
-    DELETE FROM residents 
-    WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
-    
-    -- 19. Units
-    DELETE FROM units 
-    WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
-    
-    -- 20. Users
-    DELETE FROM users 
-    WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
-    GET DIAGNOSTICS v_deleted_users = ROW_COUNT;
-    
-    -- 21. Subscriptions
-    DELETE FROM subscriptions 
-    WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
-    
-    -- 22. Condos (por último!)
-    DELETE FROM condos 
-    WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
+    -- Condos (por último!)
+    DELETE FROM condos WHERE deleted_at IS NOT NULL AND deleted_at < v_cutoff;
     GET DIAGNOSTICS v_deleted_condos = ROW_COUNT;
     
     RETURN json_build_object(
@@ -446,113 +418,21 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- ============================================
--- PARTE 6: ATUALIZAR RLS POLICIES
+-- PARTE 6: PERMISSIONS
 -- ============================================
 
--- Função helper para verificar se registro está ativo
-CREATE OR REPLACE FUNCTION is_active_record(p_deleted_at TIMESTAMPTZ)
-RETURNS BOOLEAN AS $$
-BEGIN
-    RETURN p_deleted_at IS NULL;
-END;
-$$ LANGUAGE plpgsql IMMUTABLE;
-
--- Recriar policies principais com filtro de deleted_at
--- NOTA: Executar apenas se as policies existirem
-
--- CONDOS
-DROP POLICY IF EXISTS "condos_select_active" ON condos;
-CREATE POLICY "condos_select_active" ON condos FOR SELECT
-USING (deleted_at IS NULL);
-
--- USERS  
-DROP POLICY IF EXISTS "users_select_active" ON users;
-CREATE POLICY "users_select_active" ON users FOR SELECT
-USING (deleted_at IS NULL OR id = auth.uid());
-
--- UNITS
-DROP POLICY IF EXISTS "units_select_active" ON units;
-CREATE POLICY "units_select_active" ON units FOR SELECT
-USING (deleted_at IS NULL);
-
--- FINANCIAL_ENTRIES
-DROP POLICY IF EXISTS "financial_entries_select_active" ON financial_entries;
-CREATE POLICY "financial_entries_select_active" ON financial_entries FOR SELECT
-USING (deleted_at IS NULL);
-
--- OCCURRENCES
-DROP POLICY IF EXISTS "occurrences_select_active" ON occurrences;
-CREATE POLICY "occurrences_select_active" ON occurrences FOR SELECT
-USING (deleted_at IS NULL);
-
--- BILLINGS
-DROP POLICY IF EXISTS "billings_select_active" ON billings;
-CREATE POLICY "billings_select_active" ON billings FOR SELECT
-USING (deleted_at IS NULL);
-
--- NOTICES
-DROP POLICY IF EXISTS "notices_select_active" ON notices;
-CREATE POLICY "notices_select_active" ON notices FOR SELECT
-USING (deleted_at IS NULL);
-
--- NOTIFICATIONS
-DROP POLICY IF EXISTS "notifications_select_active" ON notifications;
-CREATE POLICY "notifications_select_active" ON notifications FOR SELECT
-USING (deleted_at IS NULL);
-
--- RESERVATIONS
-DROP POLICY IF EXISTS "reservations_select_active" ON reservations;
-CREATE POLICY "reservations_select_active" ON reservations FOR SELECT
-USING (deleted_at IS NULL);
-
--- VISITORS
-DROP POLICY IF EXISTS "visitors_select_active" ON visitors;
-CREATE POLICY "visitors_select_active" ON visitors FOR SELECT
-USING (deleted_at IS NULL);
-
--- DELIVERIES
-DROP POLICY IF EXISTS "deliveries_select_active" ON deliveries;
-CREATE POLICY "deliveries_select_active" ON deliveries FOR SELECT
-USING (deleted_at IS NULL);
-
--- CHAT_CONVERSATIONS
-DROP POLICY IF EXISTS "chat_conversations_select_active" ON chat_conversations;
-CREATE POLICY "chat_conversations_select_active" ON chat_conversations FOR SELECT
-USING (deleted_at IS NULL);
-
--- CHAT_MESSAGES
-DROP POLICY IF EXISTS "chat_messages_select_active" ON chat_messages;
-CREATE POLICY "chat_messages_select_active" ON chat_messages FOR SELECT
-USING (deleted_at IS NULL);
-
--- MARKETPLACE_ADS
-DROP POLICY IF EXISTS "marketplace_ads_select_active" ON marketplace_ads;
-CREATE POLICY "marketplace_ads_select_active" ON marketplace_ads FOR SELECT
-USING (deleted_at IS NULL);
-
--- ============================================
--- PARTE 7: COMENTÁRIOS E DOCUMENTAÇÃO
--- ============================================
-
-COMMENT ON FUNCTION soft_delete_condo(UUID) IS 
-'Marca um condomínio e todos os dados relacionados como deletados (soft delete). 
-Os dados serão removidos permanentemente após 30 dias pela função hard_delete_expired_records.';
-
-COMMENT ON FUNCTION soft_delete_user(UUID) IS 
-'Marca um usuário e seus dados como deletados. Não permite deletar superadmin.';
-
-COMMENT ON FUNCTION hard_delete_expired_records() IS 
-'Remove permanentemente registros marcados como deletados há mais de 30 dias. 
-Deve ser executado via cron job diariamente. Compliance LGPD.';
-
--- ============================================
--- PARTE 8: GRANT PERMISSIONS
--- ============================================
-
--- Permitir que authenticated execute as funções de soft delete
 GRANT EXECUTE ON FUNCTION soft_delete_condo(UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION soft_delete_user(UUID) TO authenticated;
-
--- Hard delete apenas via service_role (cron job)
 REVOKE EXECUTE ON FUNCTION hard_delete_expired_records() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION hard_delete_expired_records() TO service_role;
+
+-- ============================================
+-- COMENTÁRIOS
+-- ============================================
+
+COMMENT ON FUNCTION soft_delete_condo(UUID) IS 'Soft delete de condomínio e dados relacionados';
+COMMENT ON FUNCTION soft_delete_user(UUID) IS 'Soft delete de usuário';
+COMMENT ON FUNCTION hard_delete_expired_records() IS 'Remove registros deletados há mais de 30 dias (LGPD)';
+
+-- Mensagem de sucesso
+DO $$ BEGIN RAISE NOTICE 'Soft Delete implementado com sucesso!'; END $$;
