@@ -188,9 +188,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     .single();
 
                 if (profile && !profile.ativo) {
-                    // User not verified yet
+                    // User is deactivated
                     await supabase.auth.signOut();
-                    throw new Error('Sua conta ainda não foi verificada. Por favor, verifique seu email e clique no link de confirmação.');
+                    throw new Error('USUARIO_DESATIVADO');
                 }
             }
 

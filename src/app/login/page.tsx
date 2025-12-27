@@ -99,10 +99,18 @@ export default function LoginPage() {
             <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
                 <div className="bg-white py-8 px-4 shadow-xl shadow-gray-200/50 rounded-2xl sm:px-10 border border-gray-100">
                     <form onSubmit={handleSubmit} className="space-y-6">
-                        {error && (
-                            <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg">
-                                {error}
+                        {error === 'USUARIO_DESATIVADO' ? (
+                            <div className="bg-red-50 border-2 border-red-300 text-red-700 p-4 rounded-lg text-center">
+                                <p className="font-bold text-lg">🚫 Usuário Desativado</p>
+                                <p className="text-sm mt-1">Sua conta foi desativada.</p>
+                                <p className="text-sm">Entre em contato com o administrador do sistema.</p>
                             </div>
+                        ) : (
+                            error && (
+                                <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg">
+                                    {error}
+                                </div>
+                            )
                         )}
 
                         <Input

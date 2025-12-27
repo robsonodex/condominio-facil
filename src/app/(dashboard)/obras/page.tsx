@@ -79,13 +79,39 @@ export default function ObrasPage() {
 
                 setReforms(reformsData || []);
 
-                const { data: unitsData } = await supabase
-                    .from('units')
-                    .select('id, identificacao')
-                    .eq('condo_id', profile.condo_id)
-                    .order('identificacao');
+                // Para moradores, busca sua unidade específica; síndico vê todas
+                if (profile.role === 'morador' || profile.role === 'inquilino') {
+                    // Buscar unidade vinculada ao morador
+                    const { data: userWithUnit } = await supabase
+                        .from('users')
+                        .select('unit_id')
+                        .eq('id', user.id)
+                        .single();
 
-                setUnits(unitsData || []);
+                    if (userWithUnit?.unit_id) {
+                        const { data: unitsData } = await supabase
+                            .from('units')
+                            .select('id, identificacao')
+                            .eq('id', userWithUnit.unit_id);
+                        setUnits(unitsData || []);
+                    } else {
+                        // Se não tem unidade vinculada, tenta buscar todas do condomínio
+                        const { data: unitsData } = await supabase
+                            .from('units')
+                            .select('id, identificacao')
+                            .eq('condo_id', profile.condo_id)
+                            .order('identificacao');
+                        setUnits(unitsData || []);
+                    }
+                } else {
+                    // Síndico/admin vê todas as unidades
+                    const { data: unitsData } = await supabase
+                        .from('units')
+                        .select('id, identificacao')
+                        .eq('condo_id', profile.condo_id)
+                        .order('identificacao');
+                    setUnits(unitsData || []);
+                }
             }
         } catch (error) {
             console.error('Erro ao carregar:', error);

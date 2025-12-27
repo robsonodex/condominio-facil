@@ -503,6 +503,62 @@ export default function ReservasPage() {
                 </Card>
             )}
 
+            {/* Minhas Reservas - Para Moradores */}
+            {!isSindico && !isSuperAdmin && reservations.length > 0 && (
+                <Card className="border-blue-200">
+                    <CardContent className="p-4">
+                        <h3 className="font-semibold mb-3 flex items-center gap-2">
+                            <Calendar className="h-5 w-5 text-blue-500" />
+                            Minhas Reservas
+                        </h3>
+                        <div className="space-y-2">
+                            {reservations.filter(r => r.status === 'aprovada').length > 0 && (
+                                <div className="mb-4">
+                                    <p className="text-xs font-bold text-emerald-600 uppercase tracking-wide mb-2">✅ Aprovadas</p>
+                                    {reservations.filter(r => r.status === 'aprovada').map(r => (
+                                        <div key={r.id} className="flex items-center justify-between p-3 bg-emerald-50 rounded-lg mb-2">
+                                            <div>
+                                                <p className="font-medium">{r.area?.nome} - {formatDate(r.data_reserva)}</p>
+                                                <p className="text-sm text-gray-600">{r.horario_inicio} às {r.horario_fim}</p>
+                                            </div>
+                                            {getStatusBadge(r.status)}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                            {reservations.filter(r => r.status === 'pendente').length > 0 && (
+                                <div className="mb-4">
+                                    <p className="text-xs font-bold text-amber-600 uppercase tracking-wide mb-2">⏳ Aguardando Aprovação</p>
+                                    {reservations.filter(r => r.status === 'pendente').map(r => (
+                                        <div key={r.id} className="flex items-center justify-between p-3 bg-amber-50 rounded-lg mb-2">
+                                            <div>
+                                                <p className="font-medium">{r.area?.nome} - {formatDate(r.data_reserva)}</p>
+                                                <p className="text-sm text-gray-600">{r.horario_inicio} às {r.horario_fim}</p>
+                                            </div>
+                                            {getStatusBadge(r.status)}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                            {reservations.filter(r => r.status === 'rejeitada').length > 0 && (
+                                <div>
+                                    <p className="text-xs font-bold text-red-600 uppercase tracking-wide mb-2">❌ Rejeitadas</p>
+                                    {reservations.filter(r => r.status === 'rejeitada').map(r => (
+                                        <div key={r.id} className="flex items-center justify-between p-3 bg-red-50 rounded-lg mb-2">
+                                            <div>
+                                                <p className="font-medium">{r.area?.nome} - {formatDate(r.data_reserva)}</p>
+                                                <p className="text-sm text-gray-600">{r.horario_inicio} às {r.horario_fim}</p>
+                                            </div>
+                                            {getStatusBadge(r.status)}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
             {/* Modal Nova/Editar Reserva */}
             <Modal isOpen={showModal} onClose={() => { setShowModal(false); resetForm(); }} title={editingReservation ? 'Editar Reserva' : 'Nova Reserva'} size="md">
                 <form onSubmit={handleSaveReservation} className="space-y-4">

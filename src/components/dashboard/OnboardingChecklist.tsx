@@ -21,12 +21,10 @@ interface ChecklistItem {
 const CHECKLIST_ITEMS: ChecklistItem[] = [
     { key: 'cadastrar_unidades', label: 'Cadastrar unidades', icon: <Building2 className="h-4 w-4" />, href: '/unidades' },
     { key: 'cadastrar_moradores', label: 'Cadastrar moradores', icon: <Users className="h-4 w-4" />, href: '/moradores' },
-    { key: 'configurar_financeiro', label: 'Configurar financeiro', icon: <DollarSign className="h-4 w-4" />, href: '/financeiro' },
-    { key: 'ativar_cobrancas', label: 'Configurar cobranças', icon: <CreditCard className="h-4 w-4" />, href: '/cobrancas' },
     { key: 'cadastrar_porteiro', label: 'Cadastrar porteiro', icon: <Shield className="h-4 w-4" />, href: '/usuarios' },
     { key: 'ativar_reservas', label: 'Configurar reservas', icon: <Calendar className="h-4 w-4" />, href: '/reservas' },
     { key: 'criar_primeiro_aviso', label: 'Publicar primeiro aviso', icon: <Bell className="h-4 w-4" />, href: '/avisos' },
-    { key: 'ver_relatorio_financeiro', label: 'Visualizar relatórios', icon: <FileText className="h-4 w-4" />, href: '/relatorios' },
+    { key: 'configurar_smtp', label: 'Configurar e-mail SMTP', icon: <Smartphone className="h-4 w-4" />, href: '/configuracoes/email' },
 ];
 
 interface OnboardingProgress {

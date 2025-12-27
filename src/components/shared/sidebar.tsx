@@ -76,6 +76,8 @@ interface PlanFeatures {
 }
 
 const navItems: NavItem[] = [
+    // Porteiro vê Portaria no topo
+    { href: '/portaria', label: 'Portaria', icon: <UserCheck className="h-5 w-5" />, roles: ['porteiro'] },
     { href: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" />, roles: ['sindico', 'morador', 'inquilino'] },
     { href: '/status', label: 'Status Geral', icon: <Settings className="h-5 w-5" />, roles: ['sindico'] },
     { href: '/financeiro', label: 'Financeiro', icon: <DollarSign className="h-5 w-5" />, roles: ['sindico'] },
@@ -86,12 +88,10 @@ const navItems: NavItem[] = [
     { href: '/moradores', label: 'Moradores', icon: <Users className="h-5 w-5" />, roles: ['sindico'] },
     { href: '/unidades', label: 'Unidades', icon: <Home className="h-5 w-5" />, roles: ['sindico'] },
     { href: '/usuarios', label: 'Usuários', icon: <Users className="h-5 w-5" />, roles: ['sindico'] },
-    { href: '/avisos', label: 'Avisos', icon: <Bell className="h-5 w-5" />, roles: ['sindico', 'morador', 'inquilino', 'porteiro'] },
+    { href: '/avisos', label: 'Mural de Avisos', icon: <Bell className="h-5 w-5" />, roles: ['sindico', 'morador', 'inquilino', 'porteiro'] },
     { href: '/notificacoes', label: 'Notificações', icon: <Bell className="h-5 w-5" />, roles: ['sindico'] },
-    { href: '/minhas-notificacoes', label: 'Notificações', icon: <Bell className="h-5 w-5" />, roles: ['morador', 'inquilino', 'porteiro'] },
     { href: '/ocorrencias', label: 'Ocorrências', icon: <AlertTriangle className="h-5 w-5" />, roles: ['sindico', 'morador', 'inquilino', 'porteiro'], requiresFeature: 'hasOccurrences' },
     { href: '/reservas', label: 'Reservas', icon: <Calendar className="h-5 w-5" />, roles: ['sindico', 'morador', 'inquilino'], requiresFeature: 'hasCommonAreas' },
-    { href: '/portaria', label: 'Portaria', icon: <UserCheck className="h-5 w-5" />, roles: ['porteiro'], requiresFeature: 'hasOccurrences' },
     { href: '/mensageria', label: 'Mensageria', icon: <Package className="h-5 w-5" />, roles: ['porteiro', 'sindico'], requiresFeature: 'hasMensageria' },
     { href: '/portaria/cameras', label: 'Câmeras', icon: <Settings className="h-5 w-5" />, roles: ['porteiro'], requiresFeature: 'hasCameras' },
     { href: '/relatorios', label: 'Relatórios', icon: <FileText className="h-5 w-5" />, roles: ['sindico'], requiresFeature: 'hasOccurrences' },
@@ -117,13 +117,13 @@ const navItems: NavItem[] = [
     { href: '/configuracoes/integracao-pagamentos', label: 'Integração Premium', icon: <Zap className="h-5 w-5 text-amber-400" />, roles: ['sindico'] },
     { href: '/configuracoes/pix', label: 'Configurar PIX', icon: <QrCode className="h-5 w-5" />, roles: ['sindico'] },
     { href: '/configuracoes/email', label: 'Configuração de E-mail', icon: <Mail className="h-5 w-5 text-blue-500" />, roles: ['sindico'] },
-    { href: '/configuracoes/assistente', label: '🤖 Assistente IA', icon: <Bot className="h-5 w-5 text-purple-500" />, roles: ['sindico'] },
+    { href: '/configuracoes/assistente', label: 'Assistente IA', icon: <Bot className="h-5 w-5 text-purple-500" />, roles: ['sindico'], requiresFeature: 'hasAI' },
     { href: '/assinatura', label: 'Assinatura', icon: <CreditCard className="h-5 w-5" />, roles: ['sindico'] },
-    { href: '/sugestoes', label: 'Sugestões', icon: <Lightbulb className="h-5 w-5" />, roles: ['sindico', 'morador', 'inquilino', 'porteiro'] },
+    { href: '/sugestoes', label: 'Sugestões', icon: <Lightbulb className="h-5 w-5" />, roles: ['sindico', 'morador', 'inquilino'] },
     { href: '/marketplace', label: 'Marketplace', icon: <Store className="h-5 w-5 text-emerald-500" />, roles: ['sindico', 'morador', 'inquilino'] },
     { href: '/perfil', label: 'Meu Perfil', icon: <Settings className="h-5 w-5" /> },
     { href: '/minhas-encomendas', label: 'Minhas Encomendas', icon: <Package className="h-5 w-5" />, roles: ['morador', 'inquilino', 'porteiro', 'sindico'], requiresFeature: 'hasMensageria' },
-    { href: '/meus-convites', label: 'Meus Convites', icon: <QrCode className="h-5 w-5" />, roles: ['morador', 'inquilino', 'porteiro', 'sindico'] },
+    { href: '/meus-convites', label: 'Meus Convites', icon: <QrCode className="h-5 w-5" />, roles: ['morador', 'inquilino', 'porteiro'] },
     { href: '/assistente', label: 'Assistente', icon: <Bot className="h-5 w-5 text-purple-500" />, roles: ['morador', 'inquilino'], requiresFeature: 'hasAI' },
 ];
 
