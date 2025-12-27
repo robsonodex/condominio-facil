@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
 
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
-});
+const MINDEE_API_KEY = process.env.MINDEE_API_KEY;
+const MINDEE_API_URL = 'https://api.mindee.net/v1/products/mindee/idcard_br/v1/predict';
 
 export async function POST(req: NextRequest) {
     try {
@@ -13,95 +11,84 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Imagem não fornecida' }, { status: 400 });
         }
 
-        if (!process.env.OPENAI_API_KEY) {
+        if (!MINDEE_API_KEY) {
             return NextResponse.json({
-                error: 'OPENAI_API_KEY não configurada',
+                error: 'MINDEE_API_KEY não configurada',
                 fallbackToClient: true
             }, { status: 500 });
         }
 
-        console.log('[GPT-4 Vision] Iniciando análise...');
+        console.log('[Mindee] Iniciando análise de documento brasileiro...');
 
-        // Garante formato correto da imagem
-        const imageUrl = image.startsWith('data:') ? image : `data:image/jpeg;base64,${image}`;
+        // Extrai o base64 da imagem (remove o prefixo data:image/...)
+        const base64Data = image.includes(',') ? image.split(',')[1] : image;
 
-        const response = await openai.chat.completions.create({
-            model: 'gpt-4o',
-            messages: [
-                {
-                    role: 'user',
-                    content: [
-                        {
-                            type: 'text',
-                            text: `Analise este documento brasileiro (CNH, RG ou CPF) e extraia:
+        // Monta o form data para Mindee
+        const formData = new FormData();
 
-1. O NOME COMPLETO do titular (não é filiação/nome dos pais)
-2. O número do CPF (11 dígitos)
+        // Converte base64 para Blob
+        const binaryString = atob(base64Data);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+        }
+        const blob = new Blob([bytes], { type: 'image/jpeg' });
+        formData.append('document', blob, 'document.jpg');
 
-IMPORTANTE:
-- O nome fica geralmente no campo "NOME" do documento
-- Na CNH, o nome está acima do CPF
-- Ignore campos como FILIAÇÃO, DATA NASCIMENTO, etc.
-- CPF tem formato: XXX.XXX.XXX-XX
-
-Responda APENAS com JSON:
-{"name": "NOME AQUI", "doc": "CPF AQUI"}
-
-Se não conseguir identificar, use null no campo.`
-                        },
-                        {
-                            type: 'image_url',
-                            image_url: {
-                                url: imageUrl,
-                                detail: 'high'
-                            }
-                        }
-                    ]
-                }
-            ],
-            max_tokens: 300,
-            temperature: 0
+        const response = await fetch(MINDEE_API_URL, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Token ${MINDEE_API_KEY}`
+            },
+            body: formData
         });
 
-        const content = response.choices[0]?.message?.content;
-        console.log('[GPT-4 Vision] Resposta:', content);
-
-        if (!content) {
-            throw new Error('Sem resposta da IA');
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('[Mindee] Erro API:', response.status, errorText);
+            return NextResponse.json({
+                error: `Erro Mindee: ${response.status}`,
+                fallbackToClient: true
+            }, { status: response.status });
         }
 
-        // Parse JSON da resposta
-        let result;
-        try {
-            // Remove possíveis blocos de código markdown
-            const cleanContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-            result = JSON.parse(cleanContent);
-        } catch (e) {
-            console.error('[GPT-4 Vision] Erro ao parsear JSON:', e);
-            console.error('[GPT-4 Vision] Conteúdo:', content);
+        const data = await response.json();
+        console.log('[Mindee] Resposta completa:', JSON.stringify(data, null, 2));
 
-            // Tenta extrair manualmente se o JSON falhou
-            const nameMatch = content.match(/"name":\s*"([^"]+)"/);
-            const docMatch = content.match(/"doc":\s*"([^"]+)"/);
+        // Extrai os campos do documento
+        const prediction = data.document?.inference?.prediction;
 
-            result = {
-                name: nameMatch ? nameMatch[1] : null,
-                doc: docMatch ? docMatch[1] : null
-            };
+        if (!prediction) {
+            console.error('[Mindee] Sem prediction no response');
+            return NextResponse.json({
+                error: 'Documento não reconhecido',
+                fallbackToClient: true
+            }, { status: 422 });
         }
+
+        // Mindee retorna campos específicos para documentos brasileiros
+        const fullName = prediction.given_names?.join(' ') || '';
+        const surname = prediction.surname?.value || '';
+        const name = surname ? `${fullName} ${surname}`.trim() : fullName;
+
+        // CPF tem prioridade sobre outros documentos
+        const cpf = prediction.cpf_number?.value || null;
+        const rg = prediction.id_number?.value || null;
+        const doc = cpf || rg;
+
+        console.log('[Mindee] Extraído:', { name, doc });
 
         return NextResponse.json({
-            name: result.name || null,
-            doc: result.doc || null,
-            provider: 'openai-gpt4o'
+            name: name || null,
+            doc: doc || null,
+            provider: 'mindee-idcard-br'
         });
 
     } catch (error: any) {
-        console.error('[GPT-4 Vision] Erro:', error);
+        console.error('[Mindee] Erro:', error);
         return NextResponse.json({
             error: error.message,
             fallbackToClient: true
         }, { status: 500 });
     }
 }
-
