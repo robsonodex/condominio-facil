@@ -296,51 +296,80 @@ export default function PortariaProfissionalPage() {
         return null;
     };
 
-    // OCR no navegador com Tesseract.js (100% cliente, sem servidor)
+    // OCR Híbrido: Tenta Servidor (HuggingFace) -> Falha -> Client (Tesseract)
     const handleScanDocument = async (imageData: string) => {
         setIsScanning(true);
+        let serverError = null;
+
         try {
-            console.log('[OCR] Iniciando leitura no navegador...');
+            console.log('[OCR] Tentando OCR via Servidor (HuggingFace)...');
 
-            const result = await Tesseract.recognize(
-                imageData,
-                'por', // Português
-                {
-                    logger: (m) => {
-                        if (m.status === 'recognizing text') {
-                            console.log(`[OCR] Progresso: ${Math.round(m.progress * 100)}%`);
-                        }
-                    }
-                }
-            );
+            // 1. Tenta API do Servidor
+            const response = await fetch('/api/ai/ocr-document', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: imageData }),
+            });
 
-            const text = result.data.text;
-            console.log('[OCR] Texto completo extraído:\n', text);
+            const data = await response.json();
 
-            // Extrair dados estruturados
-            const name = extractName(text);
-            const cpf = extractCPF(text);
-            const rg = extractRG(text);
-            const cnh = extractCNH(text);
-            const doc = cpf || cnh || rg;
+            // Se o servidor pedir fallback ou der erro
+            if (!response.ok || data.fallbackToClient) {
+                console.warn('[OCR] Servidor indisponível ou pediu fallback. Iniciando Tesseract local...');
+                throw new Error(data.error || 'Fallback solicitado');
+            }
 
-            console.log('[OCR] Dados extraídos:', { name, cpf, rg, cnh });
+            console.log('[OCR] Sucesso via Servidor:', data);
 
-            // Preenche os campos automaticamente
-            if (name) setNome(name);
-            if (doc) setDocumento(doc);
+            if (data.name) setNome(data.name);
+            if (data.doc) setDocumento(data.doc);
 
-            if (!name && !doc) {
-                // Mostra o texto extraído para debug
-                const preview = text.substring(0, 300).replace(/\n/g, ' | ');
-                alert(`Não foi possível identificar nome ou documento.\n\nTexto lido: "${preview}..."\n\nDicas:\n• Foto bem iluminada\n• Documento centralizado\n• Texto legível`);
-            } else {
-                console.log('[OCR] Sucesso! Dados encontrados:', { name, doc });
+            if (!data.name && !data.doc) {
+                // Se servidor não achou nada, tenta local também
+                throw new Error('Servidor não encontrou dados');
             }
 
         } catch (error: any) {
-            console.error('Erro no OCR:', error);
-            alert('Erro ao ler documento. Tente novamente.');
+            serverError = error.message;
+            console.log(`[OCR] Executando fallback local (Tesseract). Motivo: ${serverError}`);
+
+            try {
+                const result = await Tesseract.recognize(
+                    imageData,
+                    'por', // Português
+                    {
+                        logger: (m) => {
+                            if (m.status === 'recognizing text') {
+                                console.log(`[OCR Local] Progresso: ${Math.round(m.progress * 100)}%`);
+                            }
+                        }
+                    }
+                );
+
+                const text = result.data.text;
+                console.log('[OCR Local] Texto extraído:\n', text);
+
+                // Extrair dados estruturados (usando as funções locais)
+                const name = extractName(text);
+                const cpf = extractCPF(text);
+                const rg = extractRG(text);
+                const cnh = extractCNH(text);
+                const doc = cpf || cnh || rg;
+
+                console.log('[OCR Local] Dados extraídos:', { name, cpf, rg, cnh });
+
+                if (name) setNome(name);
+                if (doc) setDocumento(doc);
+
+                if (!name && !doc) {
+                    const preview = text.substring(0, 300).replace(/\n/g, ' | ');
+                    alert(`Não foi possível identificar dados.\n\nServidor: ${serverError}\nLocal: Falhou\n\nTexto lido: "${preview}..."`);
+                }
+
+            } catch (clientError: any) {
+                console.error('Erro fatal no OCR:', clientError);
+                alert('Erro ao processar documento (Servidor e Local falharam). Tente novamente.');
+            }
         } finally {
             setIsScanning(false);
         }
