@@ -169,7 +169,6 @@ export default function LoginPage() {
                                 setLoading(true);
                                 setError('');
                                 try {
-                                    // 1. Fazer login primeiro
                                     const { error: signInError } = await signIn(
                                         'sindico.demo@condofacil.com',
                                         'demo123456'
@@ -181,18 +180,14 @@ export default function LoginPage() {
                                         return;
                                     }
 
-                                    // 2. Garantir que dados sejam criados ANTES de redirecionar
                                     console.log('[DEMO] Criando dados...');
                                     const setupRes = await fetch('/api/demo/setup', { method: 'POST' });
                                     const setupData = await setupRes.json();
 
                                     if (!setupRes.ok) {
                                         console.error('[DEMO] Erro no setup:', setupData);
-                                    } else {
-                                        console.log('[DEMO] Setup completo:', setupData);
                                     }
 
-                                    // 3. Redirecionar
                                     router.push('/dashboard');
                                 } catch (err: any) {
                                     console.error('[DEMO] Erro:', err);
@@ -200,14 +195,23 @@ export default function LoginPage() {
                                     setLoading(false);
                                 }
                             }}
-                            className="w-full group relative overflow-hidden rounded-xl bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500 p-[2px] transition-all duration-300 hover:shadow-lg hover:shadow-amber-200/50 hover:scale-[1.02] disabled:opacity-60 disabled:cursor-not-allowed"
+                            className="w-full group relative overflow-hidden rounded-xl bg-gradient-to-r from-[#D4AF37] via-[#F4CF63] to-[#B8860B] p-[1.5px] transition-all duration-500 hover:shadow-[0_0_20px_rgba(212,175,55,0.3)] hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed"
                         >
-                            <div className="relative flex items-center justify-center gap-2 rounded-[10px] bg-white px-4 py-3 transition-all duration-300 group-hover:bg-gradient-to-r group-hover:from-amber-50 group-hover:to-orange-50">
-                                <Sparkles className="h-5 w-5 text-amber-500 group-hover:animate-pulse" />
-                                <span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-orange-600">
-                                    {loading ? 'Preparando demo...' : 'Demonstração'}
+                            <div className="relative flex items-center justify-center gap-3 rounded-[10px] bg-white px-6 py-3.5 transition-all duration-500 overflow-hidden group-hover:bg-transparent">
+                                {/* Shimmer Effect */}
+                                <div className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/40 to-transparent z-10" />
+
+                                <Sparkles className="h-5 w-5 text-[#B8860B] group-hover:text-white transition-colors duration-500 z-20" />
+
+                                <span className="font-bold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-[#B8860B] to-[#6B4E00] group-hover:text-white transition-all duration-500 z-20">
+                                    {loading ? 'PREPARANDO AMBIENTE...' : 'VISITAR DEMONSTRAÇÃO'}
                                 </span>
-                                {loading && <Loader2 className="h-4 w-4 text-amber-500 animate-spin" />}
+
+                                {loading ? (
+                                    <Loader2 className="h-4 w-4 text-[#B8860B] animate-spin z-20" />
+                                ) : (
+                                    <ArrowRight className="h-4 w-4 text-[#B8860B] group-hover:text-white group-hover:translate-x-1 transition-all duration-500 z-20 opacity-0 group-hover:opacity-100" />
+                                )}
                             </div>
                         </button>
                     </div>
