@@ -142,6 +142,13 @@ export default function RegisterPage() {
                             required
                         />
 
+                        <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-3 flex items-start gap-3">
+                            <CheckCircle className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                            <p className="text-sm text-emerald-800">
+                                Você iniciará um período de <strong>7 dias de teste grátis</strong> no plano <strong>Básico</strong>.
+                            </p>
+                        </div>
+
                         <Button type="submit" className="w-full" loading={loading}>
                             Criar conta
                             <ArrowRight className="ml-2 h-4 w-4" />
