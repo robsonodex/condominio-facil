@@ -106,11 +106,22 @@ export async function POST(request: NextRequest) {
         const { data: invite, error: fetchError } = await query.single();
 
         if (fetchError || !invite) {
+            console.log('[INVITES VALIDATE] Convite não encontrado:', { inviteId, fetchError });
             return NextResponse.json({
                 valid: false,
                 message: 'Convite não encontrado ou já processado',
             });
         }
+
+        // LOG: Debug do status do convite
+        console.log('[INVITES VALIDATE] Convite encontrado:', {
+            id: invite.id,
+            guest_name: invite.guest_name,
+            status: invite.status,
+            status_type: typeof invite.status,
+            used_at: invite.used_at,
+            visit_date: invite.visit_date,
+        });
 
         // Segurança adicional: Verificar se o convite pertence ao condomínio do porteiro
         if (session.role !== 'superadmin' && invite.condo_id !== session.condoId) {
@@ -122,6 +133,11 @@ export async function POST(request: NextRequest) {
 
         // Verificar status (usando valores em inglês da tabela)
         if (invite.status === 'used') {
+            console.log('[INVITES VALIDATE] Convite marcado como USADO:', {
+                id: invite.id,
+                used_at: invite.used_at,
+                status: invite.status
+            });
             return NextResponse.json({
                 valid: false,
                 message: 'Convite já foi utilizado',
