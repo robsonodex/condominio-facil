@@ -113,13 +113,17 @@ export async function POST(request: NextRequest) {
         await logEvent('INVITE_CREATED', 'info', { inviteId, guestName: guest_name, createdBy: session.userId });
 
         // Retornar dados para gerar QR Code no frontend
+        // Construir valid_from e valid_until para compatibilidade com o frontend
+        const responseValidFrom = `${invite.visit_date}T${invite.visit_time_start || '00:00'}:00`;
+        const responseValidUntil = `${invite.visit_date}T${invite.visit_time_end || '23:59'}:00`;
+
         return NextResponse.json({
             success: true,
             invite: {
                 id: invite.id,
                 guest_name: invite.guest_name,
-                valid_from: invite.valid_from,
-                valid_until: invite.valid_until,
+                valid_from: responseValidFrom,
+                valid_until: responseValidUntil,
                 status: invite.status,
                 unit: invite.unit,
             },

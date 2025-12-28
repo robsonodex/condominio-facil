@@ -49,7 +49,14 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: error.message }, { status: 500 });
         }
 
-        return NextResponse.json({ data });
+        // Transformar dados para compatibilidade com frontend (adicionar valid_from/valid_until)
+        const transformedData = (data || []).map((invite: Record<string, unknown>) => ({
+            ...invite,
+            valid_from: `${invite.visit_date}T${invite.visit_time_start || '00:00'}:00`,
+            valid_until: `${invite.visit_date}T${invite.visit_time_end || '23:59'}:00`,
+        }));
+
+        return NextResponse.json({ data: transformedData });
 
     } catch (error: unknown) {
         console.error('[INVITES] GET error:', error);
