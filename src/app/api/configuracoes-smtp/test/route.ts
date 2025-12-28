@@ -1,30 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
-import { cookies } from 'next/headers';
+import { getSessionFromReq } from '@/lib/supabase/admin';
 import nodemailer from 'nodemailer';
 
 export async function POST(request: NextRequest) {
     try {
-        const supabase = await createClient();
+        // Usar getSessionFromReq que funciona corretamente com cookies
+        const session = await getSessionFromReq(request);
 
-        // Verificar autenticação - tentar getUser primeiro, depois getSession como fallback
-        let user = null;
-        const { data: userData, error: authError } = await supabase.auth.getUser();
-
-        if (authError || !userData?.user) {
-            // Fallback: tentar getSession
-            const { data: sessionData } = await supabase.auth.getSession();
-            if (sessionData?.session?.user) {
-                user = sessionData.session.user;
-                console.log('[TEST_SMTP] Auth via getSession fallback:', user.id);
-            }
-        } else {
-            user = userData.user;
-            console.log('[TEST_SMTP] Auth via getUser:', user.id);
-        }
-
-        if (!user) {
-            console.error('[TEST_SMTP] Auth failed - no user found');
+        if (!session) {
+            console.error('[TEST_SMTP] Auth failed - no session');
             return NextResponse.json({
                 error: 'Não autorizado',
                 details: 'Sessão não encontrada ou expirada. Por favor, faça login novamente.',
@@ -32,25 +16,10 @@ export async function POST(request: NextRequest) {
             }, { status: 401 });
         }
 
-        console.log('[TEST_SMTP] User authenticated:', user.id);
+        console.log('[TEST_SMTP] User authenticated:', session.userId, session.role);
 
-        // Buscar perfil do usuário
-        const { data: profile, error: profileError } = await supabase
-            .from('users')
-            .select('id, role, condo_id')
-            .eq('id', user.id)
-            .single();
-
-        if (profileError || !profile) {
-            console.error('[TEST_SMTP] Profile error:', profileError);
-            return NextResponse.json({
-                error: 'Perfil não encontrado',
-                details: profileError?.message
-            }, { status: 404 });
-        }
-
-        if (!['sindico', 'superadmin'].includes(profile.role)) {
-            console.warn('[TEST_SMTP] Access denied for role:', profile.role);
+        if (!['sindico', 'superadmin'].includes(session.role)) {
+            console.warn('[TEST_SMTP] Access denied for role:', session.role);
             return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
         }
 
