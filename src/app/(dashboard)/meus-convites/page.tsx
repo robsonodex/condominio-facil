@@ -15,6 +15,9 @@ interface Invite {
     guest_name: string;
     valid_from: string;
     valid_until: string;
+    visit_date?: string;
+    visit_time_start?: string;
+    visit_time_end?: string;
     status: string;
     used_at: string | null;
     created_at: string;
@@ -35,6 +38,8 @@ export default function MeusConvitesPage() {
     const [createdInvite, setCreatedInvite] = useState<InviteWithQR | null>(null);
     const [selectedInvite, setSelectedInvite] = useState<Invite | null>(null);
     const [deleting, setDeleting] = useState<string | null>(null);
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [deletingBulk, setDeletingBulk] = useState(false);
 
     const fetchInvites = async () => {
         try {
@@ -74,11 +79,60 @@ export default function MeusConvitesPage() {
 
             if (response.ok) {
                 fetchInvites();
+                setSelectedIds(prev => {
+                    const newSet = new Set(prev);
+                    newSet.delete(id);
+                    return newSet;
+                });
             }
         } catch (error) {
             console.error('Erro ao cancelar convite:', error);
         } finally {
             setDeleting(null);
+        }
+    };
+
+    const handleToggleSelect = (id: string) => {
+        setSelectedIds(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(id)) {
+                newSet.delete(id);
+            } else {
+                newSet.add(id);
+            }
+            return newSet;
+        });
+    };
+
+    const pendingInvites = invites.filter(i => i.status === 'pending');
+
+    const handleSelectAll = () => {
+        if (selectedIds.size === pendingInvites.length) {
+            setSelectedIds(new Set());
+        } else {
+            setSelectedIds(new Set(pendingInvites.map(i => i.id)));
+        }
+    };
+
+    const handleBulkDelete = async () => {
+        if (selectedIds.size === 0) return;
+        if (!confirm(`Tem certeza que deseja cancelar ${selectedIds.size} convite(s)?`)) return;
+
+        setDeletingBulk(true);
+        try {
+            const deletePromises = Array.from(selectedIds).map(id =>
+                fetch(`/api/invites?id=${id}`, {
+                    method: 'DELETE',
+                    credentials: 'include',
+                })
+            );
+            await Promise.all(deletePromises);
+            setSelectedIds(new Set());
+            fetchInvites();
+        } catch (error) {
+            console.error('Erro ao cancelar convites:', error);
+        } finally {
+            setDeletingBulk(false);
         }
     };
 
@@ -225,11 +279,50 @@ export default function MeusConvitesPage() {
                         </div>
                     ) : (
                         <div className="divide-y">
+                            {/* Header com ações em lote */}
+                            {pendingInvites.length > 0 && (
+                                <div className="p-3 bg-gray-50 flex items-center justify-between border-b">
+                                    <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-600">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedIds.size === pendingInvites.length && pendingInvites.length > 0}
+                                            onChange={handleSelectAll}
+                                            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                        />
+                                        Selecionar todos ({pendingInvites.length} pendentes)
+                                    </label>
+                                    {selectedIds.size > 0 && (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={handleBulkDelete}
+                                            disabled={deletingBulk}
+                                            className="text-red-600 border-red-200 hover:bg-red-50"
+                                        >
+                                            {deletingBulk ? (
+                                                <RefreshCw className="h-4 w-4 mr-1 animate-spin" />
+                                            ) : (
+                                                <Trash2 className="h-4 w-4 mr-1" />
+                                            )}
+                                            Excluir {selectedIds.size} selecionado(s)
+                                        </Button>
+                                    )}
+                                </div>
+                            )}
                             {invites.map((invite) => (
                                 <div
                                     key={invite.id}
-                                    className="p-4 hover:bg-gray-50 flex items-center gap-4"
+                                    className={`p-4 hover:bg-gray-50 flex items-center gap-4 ${selectedIds.has(invite.id) ? 'bg-blue-50' : ''}`}
                                 >
+                                    {/* Checkbox para pendentes */}
+                                    {invite.status === 'pending' && (
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedIds.has(invite.id)}
+                                            onChange={() => handleToggleSelect(invite.id)}
+                                            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                        />
+                                    )}
                                     <div className="flex-shrink-0">
                                         {getStatusIcon(invite.status)}
                                     </div>

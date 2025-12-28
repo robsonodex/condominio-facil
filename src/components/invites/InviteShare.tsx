@@ -9,8 +9,11 @@ interface InviteShareProps {
     invite: {
         id: string;
         guest_name: string;
-        valid_from: string;
-        valid_until: string;
+        valid_from?: string;
+        valid_until?: string;
+        visit_date?: string;
+        visit_time_start?: string;
+        visit_time_end?: string;
         status: string;
         unit?: { bloco: string; numero_unidade: string } | null;
     };
@@ -21,8 +24,34 @@ interface InviteShareProps {
 export function InviteShare({ invite, qrData, onClose }: InviteShareProps) {
     const [copied, setCopied] = useState(false);
 
+    // Construir datas a partir de valid_from/valid_until ou visit_date/visit_time
+    const getValidFrom = (): string => {
+        if (invite.valid_from && !invite.valid_from.includes('Invalid')) {
+            return invite.valid_from;
+        }
+        if (invite.visit_date) {
+            const time = invite.visit_time_start || '00:00';
+            return `${invite.visit_date}T${time}:00`;
+        }
+        return '';
+    };
+
+    const getValidUntil = (): string => {
+        if (invite.valid_until && !invite.valid_until.includes('Invalid')) {
+            return invite.valid_until;
+        }
+        if (invite.visit_date) {
+            const time = invite.visit_time_end || '23:59';
+            return `${invite.visit_date}T${time}:00`;
+        }
+        return '';
+    };
+
     const formatDate = (dateStr: string) => {
-        return new Date(dateStr).toLocaleString('pt-BR', {
+        if (!dateStr) return 'Data não informada';
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return 'Data não informada';
+        return date.toLocaleString('pt-BR', {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric',
@@ -30,6 +59,9 @@ export function InviteShare({ invite, qrData, onClose }: InviteShareProps) {
             minute: '2-digit',
         });
     };
+
+    const validFrom = getValidFrom();
+    const validUntil = getValidUntil();
 
     const unitLabel = invite.unit
         ? invite.unit.bloco
@@ -41,8 +73,8 @@ export function InviteShare({ invite, qrData, onClose }: InviteShareProps) {
         `🏠 *Convite de Visitante*\n\n` +
         `Olá ${invite.guest_name}!\n\n` +
         `Você está convidado(a) a visitar ${unitLabel}.\n\n` +
-        `📅 Válido de: ${formatDate(invite.valid_from)}\n` +
-        `📅 Válido até: ${formatDate(invite.valid_until)}\n\n` +
+        `📅 Válido de: ${formatDate(validFrom)}\n` +
+        `📅 Válido até: ${formatDate(validUntil)}\n\n` +
         `Ao chegar, apresente o QR Code abaixo na portaria:\n\n` +
         `🔗 ${typeof window !== 'undefined' ? window.location.origin : ''}/convite/${invite.id}`
     );
@@ -127,7 +159,7 @@ export function InviteShare({ invite, qrData, onClose }: InviteShareProps) {
                         <div>
                             <p className="text-sm text-gray-500">Validade</p>
                             <p className="text-sm">
-                                {formatDate(invite.valid_from)} até {formatDate(invite.valid_until)}
+                                {formatDate(validFrom)} até {formatDate(validUntil)}
                             </p>
                         </div>
                     </div>

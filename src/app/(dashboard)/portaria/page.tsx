@@ -49,6 +49,7 @@ export default function PortariaProfissionalPage() {
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterType, setFilterType] = useState('');
+    const [invitePeriodFilter, setInvitePeriodFilter] = useState<'hoje' | 'semana' | 'mes'>('hoje');
     const [showModal, setShowModal] = useState(false);
     const [showCameraModal, setShowCameraModal] = useState(false);
     const [showQRScanner, setShowQRScanner] = useState(false);
@@ -84,15 +85,20 @@ export default function PortariaProfissionalPage() {
     useEffect(() => {
         if (condoId) {
             fetchVisitors();
-            fetchPendingInvites();
             fetchUnits();
             const interval = setInterval(() => {
                 fetchVisitors();
-                fetchPendingInvites();
             }, 30000); // Refresh every 30s
             return () => clearInterval(interval);
         }
     }, [condoId]);
+
+    // Efeito separado para convites - reage ao filtro de período
+    useEffect(() => {
+        if (condoId) {
+            fetchPendingInvites();
+        }
+    }, [condoId, invitePeriodFilter]);
 
     const fetchVisitors = async () => {
         const today = new Date().toISOString().split('T')[0];
@@ -109,15 +115,34 @@ export default function PortariaProfissionalPage() {
     };
 
     const fetchPendingInvites = async () => {
-        const today = new Date().toISOString().split('T')[0];
-        const { data } = await supabase
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+
+        // Calcular datas baseadas no filtro
+        let startDate = todayStr;
+        let endDate = todayStr;
+
+        if (invitePeriodFilter === 'semana') {
+            const weekEnd = new Date(today);
+            weekEnd.setDate(today.getDate() + 7);
+            endDate = weekEnd.toISOString().split('T')[0];
+        } else if (invitePeriodFilter === 'mes') {
+            const monthEnd = new Date(today);
+            monthEnd.setMonth(today.getMonth() + 1);
+            endDate = monthEnd.toISOString().split('T')[0];
+        }
+
+        let query = supabase
             .from('guest_invites')
             .select('*, unit:units(bloco, numero_unidade), creator:users!created_by(nome)')
             .eq('condo_id', condoId)
             .eq('status', 'pending')
-            .eq('visit_date', today)
+            .gte('visit_date', startDate)
+            .lte('visit_date', endDate)
+            .order('visit_date', { ascending: true })
             .order('visit_time_start', { ascending: true });
 
+        const { data } = await query;
         setPendingInvites(data || []);
     };
 
@@ -681,14 +706,46 @@ export default function PortariaProfissionalPage() {
                 />
             </div>
 
-            {/* Convites Pendentes de Hoje */}
-            {pendingInvites.length > 0 && (
-                <Card className={`border-2 border-blue-200 ${isFullscreen ? 'bg-gray-800' : 'bg-blue-50'}`}>
-                    <CardContent className="p-4">
-                        <h3 className={`font-semibold mb-3 flex items-center gap-2 ${isFullscreen ? 'text-white' : 'text-blue-800'}`}>
+            {/* Convites Pendentes */}
+            <Card className={`border-2 border-blue-200 ${isFullscreen ? 'bg-gray-800' : 'bg-blue-50'}`}>
+                <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                        <h3 className={`font-semibold flex items-center gap-2 ${isFullscreen ? 'text-white' : 'text-blue-800'}`}>
                             <Ticket className="h-5 w-5 text-blue-600" />
-                            Convites Pendentes Hoje ({pendingInvites.length})
+                            Convites Pendentes ({pendingInvites.length})
                         </h3>
+                        <div className="flex gap-1">
+                            <Button
+                                variant={invitePeriodFilter === 'hoje' ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => setInvitePeriodFilter('hoje')}
+                                className={invitePeriodFilter === 'hoje' ? 'bg-blue-600 text-white' : ''}
+                            >
+                                Hoje
+                            </Button>
+                            <Button
+                                variant={invitePeriodFilter === 'semana' ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => setInvitePeriodFilter('semana')}
+                                className={invitePeriodFilter === 'semana' ? 'bg-blue-600 text-white' : ''}
+                            >
+                                Semana
+                            </Button>
+                            <Button
+                                variant={invitePeriodFilter === 'mes' ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => setInvitePeriodFilter('mes')}
+                                className={invitePeriodFilter === 'mes' ? 'bg-blue-600 text-white' : ''}
+                            >
+                                Mês
+                            </Button>
+                        </div>
+                    </div>
+                    {pendingInvites.length === 0 ? (
+                        <p className={`text-center py-4 ${isFullscreen ? 'text-gray-400' : 'text-gray-500'}`}>
+                            Nenhum convite pendente para o período selecionado
+                        </p>
+                    ) : (
                         <div className="grid gap-2">
                             {pendingInvites.map(invite => (
                                 <div
@@ -721,9 +778,9 @@ export default function PortariaProfissionalPage() {
                                 </div>
                             ))}
                         </div>
-                    </CardContent>
-                </Card>
-            )}
+                    )}
+                </CardContent>
+            </Card>
             {activeVisitors.length > 0 && (
                 <Card className={isFullscreen ? 'bg-gray-800 border-gray-700' : ''}>
                     <CardContent className="p-4">
