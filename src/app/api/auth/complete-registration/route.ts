@@ -4,7 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { userId, email, nome } = body;
+        const { userId, email, nome, condoNome } = body;
 
         if (!userId || !email || !nome) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
         const { data: condo, error: condoError } = await supabaseAdmin
             .from('condos')
             .insert({
-                nome: `Condomínio de ${nome}`,
+                nome: condoNome || `Condomínio de ${nome}`,
                 email_contato: email,
                 telefone: '',
                 endereco: 'A definir',

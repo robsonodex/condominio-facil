@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 
 export default function RegisterPage() {
     const [nome, setNome] = useState('');
+    const [condoNome, setCondoNome] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -36,7 +37,7 @@ export default function RegisterPage() {
             return;
         }
 
-        const { error } = await signUp(email, password, nome);
+        const { error } = await signUp(email, password, nome, condoNome);
 
         if (error) {
             setError(error.message || 'Erro ao criar conta');
@@ -102,6 +103,15 @@ export default function RegisterPage() {
                             value={nome}
                             onChange={(e) => setNome(e.target.value)}
                             placeholder="Seu nome"
+                            required
+                        />
+
+                        <Input
+                            label="Nome do Condomínio"
+                            type="text"
+                            value={condoNome}
+                            onChange={(e) => setCondoNome(e.target.value)}
+                            placeholder="Ex: Residencial Flores"
                             required
                         />
 

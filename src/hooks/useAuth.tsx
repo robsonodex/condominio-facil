@@ -11,7 +11,7 @@ interface AuthContextType {
     profile: User | null;
     loading: boolean;
     signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-    signUp: (email: string, password: string, nome: string) => Promise<{ error: Error | null }>;
+    signUp: (email: string, password: string, nome: string, condoNome?: string) => Promise<{ error: Error | null }>;
     signOut: () => Promise<void>;
     signInWithMagicLink: (email: string) => Promise<{ error: Error | null }>;
     resetPassword: (email: string) => Promise<{ error: Error | null }>;
@@ -200,7 +200,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, [supabase]);
 
-    const signUp = useCallback(async (email: string, password: string, nome: string) => {
+    const signUp = useCallback(async (email: string, password: string, nome: string, condoNome?: string) => {
         try {
             const { data, error } = await supabase.auth.signUp({
                 email,
@@ -220,7 +220,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         body: JSON.stringify({
                             userId: data.user.id,
                             email,
-                            nome
+                            nome,
+                            condoNome
                         })
                     });
                 } catch (regError) {
