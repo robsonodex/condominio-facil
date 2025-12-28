@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
                 )
             `)
             .eq('status', 'aberto')
+            .is('deleted_at', null)
             .order('created_at', { ascending: false });
 
         if (error) {
