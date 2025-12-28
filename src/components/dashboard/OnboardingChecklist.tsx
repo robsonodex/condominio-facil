@@ -23,7 +23,7 @@ const CHECKLIST_ITEMS: ChecklistItem[] = [
     { key: 'cadastrar_moradores', label: 'Cadastrar moradores', icon: <Users className="h-4 w-4" />, href: '/moradores' },
     { key: 'cadastrar_porteiro', label: 'Cadastrar porteiro', icon: <Shield className="h-4 w-4" />, href: '/usuarios' },
     { key: 'ativar_reservas', label: 'Configurar reservas', icon: <Calendar className="h-4 w-4" />, href: '/reservas' },
-    { key: 'criar_primeiro_aviso', label: 'Publicar primeiro aviso', icon: <Bell className="h-4 w-4" />, href: '/avisos' },
+
     { key: 'configurar_smtp', label: 'Configurar e-mail SMTP', icon: <Smartphone className="h-4 w-4" />, href: '/configuracoes/email' },
 ];
 
