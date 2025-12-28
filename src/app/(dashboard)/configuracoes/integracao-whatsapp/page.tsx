@@ -335,7 +335,7 @@ ${statusChip === 'em_uso' ? '⚠️ ATENÇÃO: Chip em uso. Orientar cliente a d
                     <div>
                         <h4 className="font-semibold text-blue-900">Prazo de Implantação</h4>
                         <p className="text-sm text-blue-800">
-                            Após confirmação do pagamento e disponibilidade do chip: <strong>3-5 dias úteis</strong>
+                            (Mercado Pago): 1-3 dias úteis | Bancos tradicionais: 7-15 dias úteis (O prazo depende do envio correto da documentação necessária)
                         </p>
                     </div>
                 </CardContent>
