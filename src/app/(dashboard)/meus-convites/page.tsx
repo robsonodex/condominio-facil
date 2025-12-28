@@ -107,10 +107,10 @@ export default function MeusConvitesPage() {
     const pendingInvites = invites.filter(i => i.status === 'pending');
 
     const handleSelectAll = () => {
-        if (selectedIds.size === pendingInvites.length) {
+        if (selectedIds.size === invites.length) {
             setSelectedIds(new Set());
         } else {
-            setSelectedIds(new Set(pendingInvites.map(i => i.id)));
+            setSelectedIds(new Set(invites.map(i => i.id)));
         }
     };
 
@@ -285,11 +285,11 @@ export default function MeusConvitesPage() {
                                     <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-600">
                                         <input
                                             type="checkbox"
-                                            checked={selectedIds.size === pendingInvites.length && pendingInvites.length > 0}
+                                            checked={selectedIds.size === invites.length && invites.length > 0}
                                             onChange={handleSelectAll}
                                             className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                         />
-                                        Selecionar todos ({pendingInvites.length} pendentes)
+                                        Selecionar todos ({invites.length} convites)
                                     </label>
                                     {selectedIds.size > 0 && (
                                         <Button
@@ -314,15 +314,13 @@ export default function MeusConvitesPage() {
                                     key={invite.id}
                                     className={`p-4 hover:bg-gray-50 flex items-center gap-4 ${selectedIds.has(invite.id) ? 'bg-blue-50' : ''}`}
                                 >
-                                    {/* Checkbox para pendentes */}
-                                    {invite.status === 'pending' && (
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedIds.has(invite.id)}
-                                            onChange={() => handleToggleSelect(invite.id)}
-                                            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                        />
-                                    )}
+                                    {/* Checkbox para todos os convites */}
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedIds.has(invite.id)}
+                                        onChange={() => handleToggleSelect(invite.id)}
+                                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    />
                                     <div className="flex-shrink-0">
                                         {getStatusIcon(invite.status)}
                                     </div>
