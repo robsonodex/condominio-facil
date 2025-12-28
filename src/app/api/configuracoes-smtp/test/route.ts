@@ -33,18 +33,32 @@ export async function POST(request: NextRequest) {
             }, { status: 400 });
         }
 
+        // Determinar se usa SSL direto
+        // Porta 465 = SSL direto (secure: true)
+        // Porta 587 = STARTTLS (secure: false)
+        const portNum = parseInt(smtp_port);
+        const useSecure = portNum === 465 ? true : (smtp_secure === true);
+
+        console.log('[TEST_SMTP] Config:', {
+            host: smtp_host,
+            port: portNum,
+            user: smtp_user,
+            secure: useSecure,
+            smtp_secure_param: smtp_secure
+        });
+
         // Testar conexão SMTP
         const transporter = nodemailer.createTransport({
             host: smtp_host,
-            port: parseInt(smtp_port),
-            secure: smtp_secure !== false,
+            port: portNum,
+            secure: useSecure,
             auth: {
                 user: smtp_user,
                 pass: smtp_password
             },
-            connectionTimeout: 10000, // 10 segundos
-            greetingTimeout: 5000,
-            socketTimeout: 10000
+            connectionTimeout: 15000,
+            greetingTimeout: 10000,
+            socketTimeout: 15000
         });
 
         try {
