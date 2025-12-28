@@ -3,8 +3,7 @@
 import { useEffect, useState, use } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Card, CardContent } from '@/components/ui';
-import { Building, Clock, MapPin, User, ShieldCheck, AlertCircle } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
+import { Building, Clock, MapPin, ShieldCheck, AlertCircle } from 'lucide-react';
 
 interface InviteData {
     id: string;
@@ -22,29 +21,20 @@ export default function PublicInvitePage({ params }: { params: Promise<{ id: str
     const [invite, setInvite] = useState<InviteData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const supabase = createClient();
 
     useEffect(() => {
         const fetchInvite = async () => {
             try {
-                // Not using JWT here for simplicity of viewing, just internal DB ID
-                // Security is handled by the fact that the ID is a hard-to-guess UUID
-                const { data, error: fetchError } = await supabase
-                    .from('guest_invites')
-                    .select(`
-                        id, guest_name, visit_date, visit_time_start, visit_time_end, status,
-                        condo:condos(nome, endereco),
-                        unit:units(bloco, numero_unidade)
-                    `)
-                    .eq('id', id)
-                    .single();
+                // Usar API server-side para bypassar RLS
+                const response = await fetch(`/api/invites/public/${id}`);
+                const data = await response.json();
 
-                if (fetchError || !data) {
-                    setError('Convite não encontrado ou ID inválido.');
+                if (!response.ok || !data.invite) {
+                    setError(data.error || 'Convite não encontrado ou ID inválido.');
                     return;
                 }
 
-                setInvite(data as any);
+                setInvite(data.invite);
             } catch (err) {
                 setError('Erro ao carregar convite.');
             } finally {
@@ -53,7 +43,7 @@ export default function PublicInvitePage({ params }: { params: Promise<{ id: str
         };
 
         fetchInvite();
-    }, [id, supabase]);
+    }, [id]);
 
     const formatDate = (dateStr: string) => {
         return new Date(dateStr).toLocaleString('pt-BR', {
