@@ -61,6 +61,7 @@ export async function GET(req: NextRequest) {
         let query = supabaseAdmin
             .from('support_chats')
             .select('*')
+            .is('deleted_at', null)
             .order('ultima_mensagem_at', { ascending: false });
 
         if (userData?.role !== 'superadmin') {
@@ -294,6 +295,57 @@ export async function PUT(req: NextRequest) {
 
         if (error) {
             return NextResponse.json({ error: 'Erro ao atualizar' }, { status: 500 });
+        }
+
+        return NextResponse.json({ success: true });
+
+    } catch (error) {
+        console.error('Erro:', error);
+        return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+    }
+}
+
+export async function DELETE(req: NextRequest) {
+    try {
+        const authHeader = req.headers.get('authorization');
+        if (!authHeader?.startsWith('Bearer ')) {
+            return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+        }
+
+        const token = authHeader.replace('Bearer ', '');
+        const { data: { user: authUser }, error: authError } = await supabaseAdmin.auth.getUser(token);
+
+        if (authError || !authUser) {
+            return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
+        }
+
+        const { data: userData } = await supabaseAdmin
+            .from('users')
+            .select('role')
+            .eq('id', authUser.id)
+            .single();
+
+        const { searchParams } = new URL(req.url);
+        const chatId = searchParams.get('chat_id');
+
+        if (!chatId) {
+            return NextResponse.json({ error: 'Chat ID obrigatório' }, { status: 400 });
+        }
+
+        // Apenas superadmin pode deletar
+        if (userData?.role !== 'superadmin') {
+            return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
+        }
+
+        // Soft delete
+        const { error } = await supabaseAdmin
+            .from('support_chats')
+            .update({ deleted_at: new Date().toISOString() })
+            .eq('id', chatId);
+
+        if (error) {
+            console.error('Erro ao deletar:', error);
+            return NextResponse.json({ error: 'Erro ao deletar' }, { status: 500 });
         }
 
         return NextResponse.json({ success: true });
