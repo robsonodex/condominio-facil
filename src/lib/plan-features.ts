@@ -20,6 +20,7 @@ export interface PlanFeatures {
     hasAI: boolean;               // Assistente IA
     hasMensageria: boolean;       // Módulo Mensageria (toggle do admin)
     hasChatSindico: boolean;      // Chat Morador-Síndico (add-on R$29,90)
+    hasSupportChat: boolean;      // Chat com equipe do sistema (Premium/Pro)
 }
 
 export async function getPlanFeatures(condoId: string): Promise<PlanFeatures> {
@@ -39,9 +40,9 @@ export async function getPlanFeatures(condoId: string): Promise<PlanFeatures> {
                 .single();
 
             if (condo?.status === 'teste') {
-                return { ...getPremiumFeatures(), hasMensageria: condo?.mensageria_ativo || false, hasChatSindico: condo?.chat_sindico_ativo || false };
+                return { ...getPremiumFeatures(), hasMensageria: condo?.mensageria_ativo || false, hasChatSindico: condo?.chat_sindico_ativo || false, hasSupportChat: true };
             }
-            return { ...getBasicFeatures(), hasMensageria: condo?.mensageria_ativo || false, hasChatSindico: condo?.chat_sindico_ativo || false };
+            return { ...getBasicFeatures(), hasMensageria: condo?.mensageria_ativo || false, hasChatSindico: condo?.chat_sindico_ativo || false, hasSupportChat: false };
         }
 
         const condoData = subscription.condos as any;
@@ -100,7 +101,8 @@ function getBasicFeatures(): PlanFeatures {
         maxUnits: 20,
         hasAI: false,
         hasMensageria: false,
-        hasChatSindico: false
+        hasChatSindico: false,
+        hasSupportChat: false
     };
 }
 
@@ -122,7 +124,8 @@ function getProfessionalFeatures(): PlanFeatures {
         maxUnits: 50,
         hasAI: false,
         hasMensageria: false,
-        hasChatSindico: false
+        hasChatSindico: false,
+        hasSupportChat: true
     };
 }
 
@@ -144,7 +147,8 @@ function getPremiumFeatures(): PlanFeatures {
         maxUnits: 999999,
         hasAI: true,  // Premium inclui IA
         hasMensageria: false,  // Mensageria vem do toggle do admin, não do plano
-        hasChatSindico: false  // Chat Síndico vem do toggle do admin (add-on R$29,90)
+        hasChatSindico: false,  // Chat Síndico vem do toggle do admin (add-on R$29,90)
+        hasSupportChat: true
     };
 }
 

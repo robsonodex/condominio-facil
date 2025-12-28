@@ -50,7 +50,8 @@ export function UnifiedChatWidget() {
     const [sending, setSending] = useState(false);
     const [unreadSuport, setUnreadSuport] = useState(0);
     const [unreadSindico, setUnreadSindico] = useState(0);
-    const [chatAtivo, setChatAtivo] = useState(false);
+    const [hasChatSindico, setHasChatSindico] = useState(false);
+    const [hasSupportChat, setHasSupportChat] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const userId = profile?.id || '';
@@ -58,8 +59,8 @@ export function UnifiedChatWidget() {
     // Definir opções de chat baseado no role
     const chatOptions: ChatOption[] = [];
 
-    // Suporte - apenas síndico e superadmin
-    if (isSindico || isSuperAdmin) {
+    // Suporte - apenas síndico e superadmin (se o plano permitir)
+    if ((isSindico && hasSupportChat) || isSuperAdmin) {
         chatOptions.push({
             id: 'suporte',
             label: 'Suporte',
@@ -70,8 +71,8 @@ export function UnifiedChatWidget() {
         });
     }
 
-    // Chat Síndico - morador e porteiro (se ativo)
-    if ((isMorador || isPorteiro) && chatAtivo) {
+    // Chat Síndico - morador e porteiro (se ativo no plano)
+    if ((isMorador || isPorteiro) && hasChatSindico) {
         chatOptions.push({
             id: 'sindico',
             label: 'Síndico',
@@ -82,15 +83,21 @@ export function UnifiedChatWidget() {
         });
     }
 
-    // Verificar se chat síndico está ativo para o condomínio
+    // Verificar funcionalidades do plano
     useEffect(() => {
-        if (condoId && (isMorador || isPorteiro)) {
+        if (condoId && !isSuperAdmin) {
             fetch(`/api/plan-features?condoId=${condoId}`)
                 .then(res => res.json())
-                .then(data => setChatAtivo(data.hasChatSindico))
-                .catch(() => setChatAtivo(false));
+                .then(data => {
+                    setHasChatSindico(data.hasChatSindico);
+                    setHasSupportChat(data.hasSupportChat);
+                })
+                .catch(() => {
+                    setHasChatSindico(false);
+                    setHasSupportChat(false);
+                });
         }
-    }, [condoId, isMorador, isPorteiro]);
+    }, [condoId, isSuperAdmin]);
 
     // Buscar contagem de não lidas
     useEffect(() => {
@@ -137,7 +144,7 @@ export function UnifiedChatWidget() {
             }
 
             // Chat Síndico
-            if ((isMorador || isPorteiro) && chatAtivo) {
+            if ((isMorador || isPorteiro) && hasChatSindico) {
                 const res = await fetch('/api/chat-sindico', {
                     headers: { 'Authorization': `Bearer ${session?.access_token}` }
                 });
