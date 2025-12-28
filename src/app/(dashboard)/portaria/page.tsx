@@ -136,9 +136,10 @@ export default function PortariaProfissionalPage() {
             .from('guest_invites')
             .select('*, unit:units(bloco, numero_unidade), creator:users!created_by(nome)')
             .eq('condo_id', condoId)
-            .eq('status', 'pending')
+            .in('status', ['pending', 'used']) // Mostrar pendentes e liberados
             .gte('visit_date', startDate)
             .lte('visit_date', endDate)
+            .order('status', { ascending: false }) // pending primeiro, depois used
             .order('visit_date', { ascending: true })
             .order('visit_time_start', { ascending: true });
 
@@ -706,17 +707,17 @@ export default function PortariaProfissionalPage() {
                 />
             </div>
 
-            {/* Convites Pendentes */}
+            {/* Convites do Período */}
             <Card className={`border-2 border-blue-200 ${isFullscreen ? 'bg-gray-800' : 'bg-blue-50'}`}>
                 <CardContent className="p-4">
                     <div className="flex items-center justify-between mb-3">
                         <h3 className={`font-semibold flex items-center gap-2 ${isFullscreen ? 'text-white' : 'text-blue-800'}`}>
                             <Ticket className="h-5 w-5 text-blue-600" />
-                            Convites Pendentes ({pendingInvites.length})
+                            Convites ({pendingInvites.filter(i => i.status === 'pending').length} pendentes / {pendingInvites.filter(i => i.status === 'used').length} liberados)
                         </h3>
                         <div className="flex gap-1">
                             <Button
-                                variant={invitePeriodFilter === 'hoje' ? 'default' : 'outline'}
+                                variant={invitePeriodFilter === 'hoje' ? 'primary' : 'outline'}
                                 size="sm"
                                 onClick={() => setInvitePeriodFilter('hoje')}
                                 className={invitePeriodFilter === 'hoje' ? 'bg-blue-600 text-white' : ''}
@@ -724,7 +725,7 @@ export default function PortariaProfissionalPage() {
                                 Hoje
                             </Button>
                             <Button
-                                variant={invitePeriodFilter === 'semana' ? 'default' : 'outline'}
+                                variant={invitePeriodFilter === 'semana' ? 'primary' : 'outline'}
                                 size="sm"
                                 onClick={() => setInvitePeriodFilter('semana')}
                                 className={invitePeriodFilter === 'semana' ? 'bg-blue-600 text-white' : ''}
@@ -732,7 +733,7 @@ export default function PortariaProfissionalPage() {
                                 Semana
                             </Button>
                             <Button
-                                variant={invitePeriodFilter === 'mes' ? 'default' : 'outline'}
+                                variant={invitePeriodFilter === 'mes' ? 'primary' : 'outline'}
                                 size="sm"
                                 onClick={() => setInvitePeriodFilter('mes')}
                                 className={invitePeriodFilter === 'mes' ? 'bg-blue-600 text-white' : ''}
@@ -772,9 +773,15 @@ export default function PortariaProfissionalPage() {
                                             )}
                                         </div>
                                     </div>
-                                    <Badge className="bg-blue-100 text-blue-800">
-                                        Aguardando
-                                    </Badge>
+                                    {invite.status === 'pending' ? (
+                                        <Badge className="bg-blue-100 text-blue-800">
+                                            Aguardando
+                                        </Badge>
+                                    ) : (
+                                        <Badge className="bg-green-100 text-green-800">
+                                            ✓ Liberado
+                                        </Badge>
+                                    )}
                                 </div>
                             ))}
                         </div>

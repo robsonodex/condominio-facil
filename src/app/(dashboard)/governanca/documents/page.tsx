@@ -84,7 +84,7 @@ export default function DocumentosPage() {
             {/* Filtros por categoria */}
             <div className="flex flex-wrap gap-2">
                 <Button
-                    variant={categoriaFiltro === '' ? 'default' : 'outline'}
+                    variant={categoriaFiltro === '' ? 'primary' : 'outline'}
                     size="sm"
                     onClick={() => setCategoriaFiltro('')}
                     className={categoriaFiltro === '' ? 'bg-amber-600 text-white' : ''}
@@ -94,7 +94,7 @@ export default function DocumentosPage() {
                 {categorias.map((cat) => (
                     <Button
                         key={cat.value}
-                        variant={categoriaFiltro === cat.value ? 'default' : 'outline'}
+                        variant={categoriaFiltro === cat.value ? 'primary' : 'outline'}
                         size="sm"
                         onClick={() => setCategoriaFiltro(cat.value)}
                         className={categoriaFiltro === cat.value ? 'bg-amber-600 text-white' : ''}
