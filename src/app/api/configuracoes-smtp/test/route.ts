@@ -7,26 +7,28 @@ export async function POST(request: NextRequest) {
     try {
         const supabase = await createClient();
 
-        // Verificar autenticação
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        // Verificar autenticação - tentar getUser primeiro, depois getSession como fallback
+        let user = null;
+        const { data: userData, error: authError } = await supabase.auth.getUser();
 
-        if (authError || !user) {
-            console.error('[TEST_SMTP] Auth error details:', authError);
-
-            const cookieStore = await cookies();
-            const allCookies = cookieStore.getAll();
-            const cookieNames = allCookies.map(c => c.name);
-
-            // Tentar getSession como fallback para diagnóstico
+        if (authError || !userData?.user) {
+            // Fallback: tentar getSession
             const { data: sessionData } = await supabase.auth.getSession();
+            if (sessionData?.session?.user) {
+                user = sessionData.session.user;
+                console.log('[TEST_SMTP] Auth via getSession fallback:', user.id);
+            }
+        } else {
+            user = userData.user;
+            console.log('[TEST_SMTP] Auth via getUser:', user.id);
+        }
 
+        if (!user) {
+            console.error('[TEST_SMTP] Auth failed - no user found');
             return NextResponse.json({
                 error: 'Não autorizado',
                 details: 'Sessão não encontrada ou expirada. Por favor, faça login novamente.',
-                auth_error: authError,
-                has_session: !!sessionData.session,
-                cookies_found: cookieNames,
-                code: authError?.code || 'AUTH_NOT_FOUND'
+                code: 'AUTH_NOT_FOUND'
             }, { status: 401 });
         }
 
