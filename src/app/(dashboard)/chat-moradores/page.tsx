@@ -55,6 +55,7 @@ export default function ChatMoradoresPage() {
     const [novaMensagem, setNovaMensagem] = useState('');
     const [sending, setSending] = useState(false);
     const [userId, setUserId] = useState('');
+    const [featureAtivo, setFeatureAtivo] = useState<boolean | null>(null);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -63,11 +64,23 @@ export default function ChatMoradoresPage() {
         'Authorization': `Bearer ${session?.access_token}`,
     });
 
+    // Verificar se a funcionalidade está ativa para o condomínio
     useEffect(() => {
-        if (session?.access_token) {
+        if (condoId) {
+            fetch(`/api/plan-features?condoId=${condoId}`)
+                .then(res => res.json())
+                .then(data => {
+                    setFeatureAtivo(data.hasChatSindico === true);
+                })
+                .catch(() => setFeatureAtivo(false));
+        }
+    }, [condoId]);
+
+    useEffect(() => {
+        if (session?.access_token && featureAtivo) {
             fetchConversas();
         }
-    }, [session]);
+    }, [session, featureAtivo]);
 
     useEffect(() => {
         if (selectedConversa) {
@@ -213,6 +226,31 @@ export default function ChatMoradoresPage() {
 
     const canManage = isSindico || isSuperAdmin;
 
+    // Verificando se a funcionalidade está ativa
+    if (featureAtivo === null) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+                <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full" />
+                <p className="text-gray-500">Verificando permissões...</p>
+            </div>
+        );
+    }
+
+    // Funcionalidade desativada pelo admin
+    if (!featureAtivo) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+                <MessageCircle className="h-16 w-16 text-gray-300" />
+                <h2 className="text-xl font-bold text-gray-700">Funcionalidade Desativada</h2>
+                <p className="text-gray-500 text-center max-w-md">
+                    O chat com moradores não está ativo para este condomínio.
+                    Entre em contato com o administrador para ativar.
+                </p>
+            </div>
+        );
+    }
+
+    // Usuário não tem permissão de role
     if (!canManage) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
@@ -257,8 +295,8 @@ export default function ChatMoradoresPage() {
                                     key={s}
                                     onClick={() => setFilterStatus(s)}
                                     className={`text-xs px-2 py-1 rounded-full ${filterStatus === s
-                                            ? 'bg-blue-500 text-white'
-                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                        ? 'bg-blue-500 text-white'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                         }`}
                                 >
                                     {s === '' ? 'Todas' : s === 'em_atendimento' ? 'Em atendimento' : s.charAt(0).toUpperCase() + s.slice(1)}
@@ -405,8 +443,8 @@ export default function ChatMoradoresPage() {
                                                 className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
                                             >
                                                 <div className={`max-w-[70%] rounded-lg p-3 ${isMe
-                                                        ? 'bg-blue-500 text-white'
-                                                        : 'bg-white shadow'
+                                                    ? 'bg-blue-500 text-white'
+                                                    : 'bg-white shadow'
                                                     }`}>
                                                     {!isMe && (
                                                         <p className="text-xs text-gray-500 mb-1 font-medium">
