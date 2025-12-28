@@ -34,71 +34,71 @@ export default function TermosPage() {
                         </div>
                     </div>
 
-                    <div className="prose prose-emerald max-w-none">
-                        <h2>1. Aceitação dos Termos</h2>
-                        <p>
-                            Ao acessar e usar o sistema Condomínio Fácil, você concorda em cumprir estes Termos de Uso.
-                            Se você não concordar com qualquer parte destes termos, não deve usar nosso serviço.
+                    <div className="prose prose-emerald max-w-none text-gray-700">
+                        <p className="lead">
+                            Bem-vindo ao Condomínio Fácil. Ao utilizar nossa plataforma, você concorda inteiramente com estes termos.
+                            Por favor, leia-os atentamente.
                         </p>
 
-                        <h2>2. Descrição do Serviço</h2>
+                        <h2>1. Objeto e Aceitação</h2>
                         <p>
-                            O Condomínio Fácil é uma plataforma SaaS (Software as a Service) para gestão de condomínios,
-                            oferecendo funcionalidades como controle financeiro, gestão de moradores, comunicação e relatórios.
+                            Estes Termos de Uso regem o acesso e a utilização da plataforma "Condomínio Fácil", um sistema SaaS de gestão condominial de propriedade da Robsonodex (CNPJ: 57.444.727/0001-85).
+                            O uso do sistema implica na aceitação plena e sem reservas de todos os itens aqui descritos.
                         </p>
 
-                        <h2>3. Cadastro e Conta</h2>
+                        <h2>2. Cadastro e Responsabilidade</h2>
                         <p>
-                            Para utilizar o sistema, você deve fornecer informações verdadeiras, completas e atualizadas.
-                            Você é responsável por manter a confidencialidade de sua senha e por todas as atividades
-                            realizadas em sua conta.
+                            Para utilizar as funcionalidades do sistema, o usuário deve realizar um cadastro fornecendo dados verídicos.
+                            A responsabilidade pela guarda das credenciais de acesso é exclusiva do usuário.
+                            O Condomínio Fácil não se responsabiliza por acessos não autorizados decorrentes da má gestão de senhas pelo usuário.
                         </p>
 
-                        <h2>4. Assinatura e Pagamento</h2>
+                        <h2>3. Uso do Sistema e Mensageria</h2>
                         <p>
-                            O acesso ao sistema requer uma assinatura paga após o período de teste gratuito.
-                            Os planos e preços estão disponíveis em nosso site. O não pagamento pode resultar
-                            na suspensão temporária ou cancelamento do serviço.
+                            O sistema oferece integração com serviços de mensageria (WhatsApp, E-mail).
+                            O usuário é o único responsável pelo conteúdo das mensagens enviadas. É terminantemente proibido o uso do sistema para:
                         </p>
-
-                        <h2>5. Uso Aceitável</h2>
-                        <p>Você concorda em não:</p>
                         <ul>
-                            <li>Usar o sistema para fins ilegais ou não autorizados</li>
-                            <li>Compartilhar sua conta com terceiros não autorizados</li>
-                            <li>Tentar acessar áreas restritas do sistema</li>
-                            <li>Copiar, modificar ou distribuir o software</li>
-                            <li>Sobrecarregar ou interferir no funcionamento do sistema</li>
+                            <li>Envio de SPAM ou mensagens abusivas/ilegais;</li>
+                            <li>Assédio moral ou divulgação de dados sensíveis de terceiros;</li>
+                            <li>Qualquer atividade que viole as leis brasileiras vigentes.</li>
                         </ul>
 
-                        <h2>6. Propriedade Intelectual</h2>
+                        <h2>4. Disponibilidade e Suporte</h2>
                         <p>
-                            Todo o conteúdo do sistema, incluindo código, design, textos e imagens,
-                            é propriedade exclusiva do Condomínio Fácil e protegido por leis de direitos autorais.
+                            Nós nos empenhamos para manter o sistema online 24 horas por dia, 7 dias por semana, com um uptime alvo de 99,9%.
+                            No entanto, interrupções podem ocorrer por manutenções programadas ou fatores externos.
+                            O suporte técnico é prestado em dias úteis, em horário comercial, conforme o plano contratado.
                         </p>
 
-                        <h2>7. Privacidade</h2>
+                        <h2>5. Propriedade Intelectual</h2>
                         <p>
-                            A coleta e uso de dados pessoais estão descritos em nossa Política de Privacidade,
-                            que faz parte integrante destes Termos de Uso.
+                            Todo o software, design, algoritmos (incluindo IA baseada em Llama 3) e logotipos são de propriedade exclusiva da robsonodex.
+                            A licença de uso é intransferível e não confere ao usuário qualquer direito de copiar, modificar ou realizar engenharia reversa no sistema.
                         </p>
 
-                        <h2>8. Limitação de Responsabilidade</h2>
+                        <h2>6. Proteção de Dados (LGPD)</h2>
                         <p>
-                            O Condomínio Fácil não se responsabiliza por danos indiretos, incidentais ou consequenciais
-                            decorrentes do uso ou impossibilidade de uso do sistema.
+                            Tratamos seus dados com o mais alto rigor de segurança, seguindo a Lei Geral de Proteção de Dados (L13.709/2018).
+                            Não comercializamos seus dados. Eles são usados exclusivamente para a execução do serviço contratado.
                         </p>
 
-                        <h2>9. Modificações</h2>
+                        <h2>7. Assinatura e Cancelamento</h2>
                         <p>
-                            Reservamo-nos o direito de modificar estes termos a qualquer momento.
-                            Alterações significativas serão comunicadas por email.
+                            A assinatura é renovada mensalmente. O cancelamento pode ser solicitado a qualquer momento sem multa,
+                            interrompendo a próxima cobrança. Não há reembolso de períodos já pagos e utilizados.
                         </p>
 
-                        <h2>10. Contato</h2>
+                        <h2>8. Modificações dos Termos</h2>
                         <p>
-                            Para dúvidas sobre estes Termos de Uso, entre em contato pelo email:
-                            <a href="mailto:contato@condominiofacil.com.br"> contato@condominiofacil.com.br</a>
+                            Reservamo-nos o direito de atualizar estes termos periodicamente para refletir melhorias no sistema ou mudanças legais.
+                            O uso continuado do sistema após alterações constitui aceitação dos novos termos.
+                        </p>
+
+                        <h2>9. Contato e Foro</h2>
+                        <p>
+                            Para suporte: <a href="mailto:contato@meucondominiofacil.com">contato@meucondominiofacil.com</a>.
+                            Fica eleito o foro da comarca de Juazeiro do Norte/CE para dirimir controvérsias deste instrumento.
                         </p>
                     </div>
 

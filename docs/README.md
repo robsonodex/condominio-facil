@@ -1,161 +1,202 @@
-# Meu Condomínio Fácil - Documentação Técnica
+# Meu Condomínio Fácil
 
-## Visão Geral
+Sistema SaaS **100% WEB** para gestão de condomínios pequenos e médios no Brasil.
 
-**Meu Condomínio Fácil** é uma plataforma SaaS completa para gestão condominial que oferece ferramentas modernas para síndicos, moradores, porteiros e administradores.
+**CNPJ:** 57.444.727/0001-85
 
-### Tecnologias Principais
+---
 
-- **Frontend**: Next.js 15 (App Router), React 19, TailwindCSS
-- **Backend**: Next.js API Routes (serverless)
-- **Banco de Dados**: Supabase (PostgreSQL)
-- **Autenticação**: Supabase Auth
+## ⚠️ AVISO IMPORTANTE
+
+Este sistema é **100% WEB** (acessado via navegador) e focado em facilitar a vida do síndico.
+
+🚀 **NOVIDADE 2026:** Agora possuímos **App Móvel nativo** para Android e iOS! Disponível nas lojas oficiais.
+
+---
+
+## 🚀 Tecnologias
+
+### Sistema Web
+- **Frontend**: Next.js 14 (App Router), TypeScript, React
+- **Estilização**: Tailwind CSS
+- **Backend**: Supabase (PostgreSQL + Auth + Storage)
+- **PDF**: jsPDF
+- **Gráficos**: Recharts
 - **Hospedagem**: Vercel
-- **E-mail**: Nodemailer (SMTP configurável)
-- **Pagamentos**: Mercado Pago
-- **Mobile**: React Native + Expo
 
-### Arquitetura
+---
 
-```
-┌─────────────────────────────────────────┐
-│         Frontend (Next.js 15)           │
-│   - App Router                          │
-│   - Server Components                   │
-│   - Client Components                   │
-└─────────────────┬───────────────────────┘
-                  │
-┌─────────────────▼───────────────────────┐
-│       API Routes (Serverless)           │
-│   - 45 módulos de API                   │
-│   - Autenticação via Supabase           │
-│   - Rate limiting                       │
-└─────────────────┬───────────────────────┘
-                  │
-┌─────────────────▼───────────────────────┐
-│      Supabase (PostgreSQL)              │
-│   - Row Level Security (RLS)            │
-│   - Real-time subscriptions             │
-│   - Storage para arquivos               │
-└─────────────────────────────────────────┘
-```
+## 📋 Funcionalidades
 
-## Estrutura de Pastas
+### Papéis de Usuário
 
-```
-condominio-facil/
-├── src/
-│   ├── app/
-│   │   ├── (dashboard)/        # Páginas autenticadas
-│   │   ├── (public)/           # Páginas públicas
-│   │   └── api/                # API Routes (45 módulos)
-│   ├── components/
-│   │   ├── ui/                 # Componentes base (shadcn)
-│   │   ├── shared/             # Componentes compartilhados
-│   │   ├── admin/              # Componentes de admin
-│   │   └── payments/           # Componentes de pagamento
-│   ├── lib/
-│   │   ├── supabase/           # Cliente Supabase
-│   │   └── utils/              # Utilitários
-│   └── hooks/                  # React Hooks customizados
-├── supabase/
-│   └── migrations/             # 36 migrations SQL
-├── mobile/                     # App React Native
-├── docs/                       # Documentação
-└── tests/                      # Testes E2E e unitários
-```
+1. **Super Admin** - Gestão de todos os condomínios, planos e assinaturas
+2. **Síndico** - Gestão completa do condomínio (financeiro, moradores, ocorrências)
+3. **Porteiro** - Controle de visitantes e registro de ocorrências
+4. **Morador** - Visualização de avisos, boletos e ocorrências
 
-## Perfis de Usuário
+### Módulos Inclusos (por plano)
 
-### 1. **Superadmin**
-- Acesso total ao sistema
-- Gerencia condomínios, planos e assinaturas
-- Impersonificação de usuários
-- Dashboard administrativo global
+| Módulo | Básico | Profissional | Premium |
+|--------|--------|--------------|---------|
+| Dashboard | ✅ | ✅ | ✅ |
+| Gestão Financeira | ✅ | ✅ | ✅ |
+| Moradores | ✅ | ✅ | ✅ |
+| Unidades | ✅ | ✅ | ✅ |
+| Avisos | ✅ | ✅ | ✅ |
+| Cobranças (manual) | ✅ | ✅ | ✅ |
+| Portaria Virtual | ❌ | ✅ | ✅ |
+| Encomendas | ❌ | ✅ | ✅ |
+| Reservas | ❌ | ✅ | ✅ |
+| Ocorrências | ❌ | ✅ | ✅ |
+| Relatórios | ❌ | ✅ | ✅ |
+| Câmeras | ❌ | ❌ | ✅ |
+| Governança | ❌ | ❌ | ✅ |
+| Automações | ❌ | ❌ | ✅ |
 
-### 2. **Síndico**
-- Gestão completa do condomínio
-- Financeiro, cobranças, usuários
-- Reservas de áreas comuns
-- Chat com moradores
-- Relatórios
+### Serviços de Implantação (Opcionais)
 
-### 3. **Morador/Inquilino**
-- Visualização de cobranças
-- Reserva de áreas comuns
-- Registro de ocorrências
-- Chat com síndico
-- Sugestões
+⚠️ **NÃO inclusos nos planos padrão** - contratados separadamente:
 
-### 4. **Porteiro**
-- Registro de visitantes
-- Controle de encomendas
-- Registro de ocorrências
-- Visualização de câmeras
+| Serviço | Descrição | Implantação | Mensal |
+|---------|-----------|-------------|--------|
+| Integração Bancária | PIX dinâmico, boleto automático, conciliação | R$ 999 | +R$ 199 |
+| Integração WhatsApp | Mensagens automáticas via Evolution API | R$ 697 | +R$ 149 |
 
-## Módulos Principais
+**Disponível para**: Planos Profissional e Premium
 
-| Módulo | Descrição | Status |
-|--------|-----------|--------|
-| Autenticação | Login, registro, recuperação de senha | ✅ Implementado |
-| Dashboard | Visão geral por perfil | ✅ Implementado |
-| Financeiro | Controle de receitas e despesas | ✅ Implementado |
-| Cobranças | Geração e envio de boletos | ✅ Implementado |
-| Usuários | Gestão de moradores e perfis | ✅ Implementado |
-| Unidades | Cadastro de apartamentos/casas | ✅ Implementado |
-| Ocorrências | Registro e acompanhamento | ✅ Implementado |
-| Reservas | Agendamento de áreas comuns | ✅ Implementado |
-| Portaria | Visitantes, encomendas, câmeras | ✅ Implementado |
-| Chat Síndico | Comunicação síndico-morador | ✅ Implementado |
-| Notificações | Sistema in-app | ✅ Implementado |
-| Sugestões | Caixa de sugestões com votação | ✅ Implementado |
-| Governança | Assembleias, enquetes, documentos | ✅ Implementado |
-| Assinaturas | Planos e pagamentos recorrentes | ✅ Implementado |
-| Integrações | WhatsApp, pagamentos, PIX | ✅ Implementado |
-| E-mail | SMTP por condomínio + global (envio direto) | ✅ Implementado |
-| Assistente IA | Chat GPT integrado | ✅ Implementado |
-| Mobile App | App nativo iOS/Android | ✅ Implementado |
-| QR Code Pass | Convites digitais para visitantes | ✅ Implementado |
-| Auditor IA | Auditoria de orçamentos via GPT-4o | ✅ Implementado |
-| Emergency Tools | Reset de senha e ferramentas admin | ✅ Implementado |
+---
 
-## Links da Documentação
+## 🛠️ Instalação (Desenvolvimento)
 
-1. [Arquitetura Detalhada](./ARQUITETURA.md)
-2. [API Routes](./API.md)
-3. [Banco de Dados](./DATABASE.md)
-4. [Fluxos de Usuário](./FLUXOS.md)
-5. [Integrações](./INTEGRACOES.md)
-6. [Deploy e Infraestrutura](./DEPLOY.md)
-
-## Início Rápido
-
-### Desenvolvimento Local
+### 1. Clone o projeto
 
 ```bash
-# Instalar dependências
+git clone [repo-url]
+cd condominio-facil
+```
+
+### 2. Instale as dependências
+
+```bash
 npm install
+```
 
-# Configurar variáveis de ambiente
-cp .env.example .env.local
-# Edite .env.local com suas chaves
+### 3. Configure o Supabase
 
-# Rodar servidor de desenvolvimento
+1. Crie um projeto no [Supabase](https://supabase.com)
+2. Execute o SQL em `supabase/schema.sql` no SQL Editor
+3. Copie as credenciais e crie o arquivo `.env.local`:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://seu-projeto.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sua-chave-anon
+SUPABASE_SERVICE_ROLE_KEY=sua-service-role-key
+```
+
+### 4. Configure a Autenticação no Supabase
+
+1. Vá em Authentication > Providers
+2. Habilite Email/Password
+3. Configure o Site URL: `http://localhost:3000`
+4. Configure Redirect URLs: `http://localhost:3000/auth/callback`
+
+### 5. Inicie o servidor de desenvolvimento
+
+```bash
 npm run dev
 ```
 
-### Testes
+Acesse: http://localhost:3000
 
-```bash
-# Testes unitários
-npm run test:unit
+---
 
-# Testes E2E
-npm run test:e2e
+## 📁 Estrutura do Projeto
+
+```
+src/
+├── app/
+│   ├── (auth)/           # Páginas de autenticação
+│   ├── (dashboard)/      # Páginas protegidas
+│   ├── (public)/         # Páginas públicas (landing, termos)
+│   └── admin/            # Painel SuperAdmin
+├── components/
+│   ├── ui/               # Componentes base
+│   └── shared/           # Componentes compartilhados
+├── hooks/                # Custom hooks
+├── lib/                  # Utilitários e configurações
+│   ├── supabase/         # Clientes Supabase
+│   ├── integrations/     # Service de integrações multi-tenant
+│   ├── whatsapp/         # Providers WhatsApp
+│   └── payments/         # Providers pagamentos
+└── types/                # TypeScript types
 ```
 
-## Suporte
+---
 
-- **Email**: suporte@meucondominiofacil.com
-- **Documentação**: https://docs.meucondominiofacil.com
-- **Status**: https://status.meucondominiofacil.com
+## 🔒 Segurança
+
+- Row Level Security (RLS) configurado em todas as tabelas
+- Multi-tenant: dados isolados por condomínio
+- Autenticação via Supabase Auth
+- Middleware de proteção de rotas
+- Conformidade com LGPD
+
+---
+
+## 📊 Banco de Dados
+
+Principais tabelas:
+
+- `plans` - Planos de assinatura
+- `condos` - Condomínios
+- `units` - Unidades/apartamentos
+- `users` - Usuários
+- `residents` - Moradores
+- `financial_entries` - Lançamentos financeiros
+- `notices` - Avisos/comunicados
+- `occurrences` - Ocorrências
+- `visitors` - Visitantes
+- `subscriptions` - Assinaturas
+- `condo_integrations` - Credenciais de integração multi-tenant
+
+---
+
+## 📚 Documentação
+
+| Arquivo | Descrição |
+|---------|-----------|
+| `MANUAL_COMPLETO.md` | Manual completo do sistema |
+| `VENDAS.md` | Guia de vendas e scripts |
+| `DEPLOY.md` | Guia de deploy |
+| `docs/INTEGRACAO_BANCARIA.md` | Manual de integração bancária |
+| `docs/INTEGRACAO_WHATSAPP.md` | Manual de integração WhatsApp |
+| `legal/termos_uso_v1.0.md` | Termos de uso |
+| `legal/lgpd_v1.0.md` | Política LGPD |
+
+---
+
+## 🚀 Deploy
+
+### Vercel (Recomendado)
+
+1. Conecte seu repositório ao Vercel
+2. Adicione as variáveis de ambiente
+3. Deploy automático a cada push
+
+```bash
+npm run build
+```
+
+---
+
+## 📝 Licença
+
+Projeto privado - Todos os direitos reservados.
+
+**CNPJ:** 57.444.727/0001-85
+
+---
+
+**Última atualização:** 26/12/2024 (v8.2)
+

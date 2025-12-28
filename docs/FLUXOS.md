@@ -358,5 +358,6 @@ API → Users: Para cada usuário (exceto superadmin):
 API → Database: DELETE FROM condos WHERE id = ?
 API → Database: COMMIT
 API → Frontend: Retorna sucesso
-Frontend → Superadmin: Atualiza lista
+**Última Atualização:** 28/12/2025  
+**Versão:** 9.0 (Unified AI)
 ```

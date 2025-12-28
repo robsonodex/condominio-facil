@@ -33,96 +33,58 @@ export default function ContratoPage() {
                         </div>
                     </div>
 
-                    <div className="prose prose-emerald max-w-none">
-                        <h2>CONTRATO DE LICENÇA E PRESTAÇÃO DE SERVIÇOS DE SOFTWARE</h2>
+                    <div className="prose prose-emerald max-w-none text-gray-700">
+                        <h2 className="text-center text-gray-900">CONTRATO DE LICENÇA DE USO DE SOFTWARE (SaaS)</h2>
 
                         <p>
-                            Pelo presente instrumento particular, as partes abaixo qualificadas têm entre si
-                            justo e contratado o seguinte:
+                            Pelo presente instrumento particular, as partes abaixo qualificadas têm entre si justo e contratado o seguinte:
                         </p>
 
                         <h3>CLÁUSULA 1 - DAS PARTES</h3>
                         <p>
-                            <strong>CONTRATADA:</strong> Condomínio Fácil Tecnologia Ltda, inscrita no CNPJ sob nº 00.000.000/0001-00,
-                            com sede na cidade de Juazeiro do Norte/CE.
+                            <strong>CONTRATADA:</strong> Robsonodex, inscrita no CNPJ sob nº 57.444.727/0001-85, com sede administrativa no Brasil, doravante denominada simplesmente "CONTRATADA".
                         </p>
                         <p>
-                            <strong>CONTRATANTE:</strong> A pessoa física ou jurídica identificada no cadastro do sistema.
+                            <strong>CONTRATANTE:</strong> A pessoa física ou jurídica identificada no ato do cadastro e aceite digital, doravante denominada simplesmente "CONTRATANTE".
                         </p>
 
                         <h3>CLÁUSULA 2 - DO OBJETO</h3>
                         <p>
-                            2.1. O presente contrato tem por objeto a licença de uso do software "Condomínio Fácil"
-                            para gestão condominial, na modalidade SaaS (Software as a Service).
+                            2.1. O objeto deste contrato é a licença de uso, não exclusiva e intransferível, da plataforma "Condomínio Fácil", incluindo suporte técnico e armazenamento de dados em nuvem.
                         </p>
                         <p>
-                            2.2. A licença inclui acesso à plataforma online, atualizações, suporte técnico e
-                            armazenamento de dados conforme o plano contratado.
+                            2.2. A CONTRATADA reserva-se o direito de atualizar o software para melhorias funcionais e de segurança sem aviso prévio, desde que mantida a finalidade principal do serviço.
                         </p>
 
-                        <h3>CLÁUSULA 3 - DO PRAZO</h3>
+                        <h3>CLÁUSULA 3 - VALORES E ASSINATURA</h3>
                         <p>
-                            3.1. O contrato terá vigência enquanto houver assinatura ativa, renovada automaticamente
-                            a cada período de faturamento (mensal ou anual).
+                            3.1. O CONTRATANTE pagará os valores referentes ao plano escolhido (Básico, Plus ou Pro).
+                            Valores vigentes estão sempre atualizados na página `/upgrade` da plataforma.
                         </p>
                         <p>
-                            3.2. O período de teste gratuito é de 7 (sete) dias, sem compromisso.
-                        </p>
-
-                        <h3>CLÁUSULA 4 - DO PREÇO E PAGAMENTO</h3>
-                        <p>
-                            4.1. O CONTRATANTE pagará à CONTRATADA o valor correspondente ao plano escolhido,
-                            conforme tabela de preços vigente.
-                        </p>
-                        <p>
-                            4.2. O pagamento poderá ser realizado via PIX, cartão de crédito ou boleto bancário.
-                        </p>
-                        <p>
-                            4.3. O não pagamento até a data de vencimento acarretará:
-                        </p>
-                        <ul>
-                            <li>Após 5 dias: notificação por email</li>
-                            <li>Após 10 dias: suspensão do acesso</li>
-                            <li>Após 30 dias: cancelamento do contrato</li>
-                        </ul>
-
-                        <h3>CLÁUSULA 5 - DAS OBRIGAÇÕES DA CONTRATADA</h3>
-                        <p>A CONTRATADA se obriga a:</p>
-                        <ul>
-                            <li>Manter o sistema disponível 24/7 (excepto manutenções programadas)</li>
-                            <li>Realizar backups diários dos dados</li>
-                            <li>Prestar suporte técnico em horário comercial</li>
-                            <li>Manter sigilo sobre os dados do CONTRATANTE</li>
-                        </ul>
-
-                        <h3>CLÁUSULA 6 - DAS OBRIGAÇÕES DO CONTRATANTE</h3>
-                        <p>O CONTRATANTE se obriga a:</p>
-                        <ul>
-                            <li>Efetuar os pagamentos pontualmente</li>
-                            <li>Utilizar o sistema de forma lícita</li>
-                            <li>Manter seus dados cadastrais atualizados</li>
-                            <li>Não compartilhar credenciais de acesso</li>
-                        </ul>
-
-                        <h3>CLÁUSULA 7 - DA RESCISÃO</h3>
-                        <p>
-                            7.1. O CONTRATANTE pode cancelar a assinatura a qualquer momento, sem multa.
-                        </p>
-                        <p>
-                            7.2. Após o cancelamento, os dados serão mantidos por 30 dias para possível reativação,
-                            sendo eliminados após esse período.
+                            3.2. A inadimplência superior a 10 dias autoriza a suspensão total do acesso ao sistema.
+                            Após 30 dias de atraso, o presente contrato será rescindido de pleno direito com exclusão definitiva dos dados.
                         </p>
 
-                        <h3>CLÁUSULA 8 - DA PROPRIEDADE INTELECTUAL</h3>
+                        <h3>CLÁUSULA 4 - DISPONIBILIDADE (SLA)</h3>
                         <p>
-                            O software Condomínio Fácil é de propriedade exclusiva da CONTRATADA.
-                            A licença concedida não transfere qualquer direito de propriedade intelectual.
+                            4.1. A CONTRATADA garante uma disponibilidade (uptime) do sistema de 99%, salvo interrupções decorrentes de falhas na infraestrutura global de internet ou provedores de nuvem (Vercel/Supabase).
                         </p>
 
-                        <h3>CLÁUSULA 9 - DO FORO</h3>
+                        <h3>CLÁUSULA 5 - PROTEÇÃO DE DADOS E LGPD</h3>
                         <p>
-                            Fica eleito o foro da comarca de Juazeiro do Norte/CE para dirimir quaisquer
-                            questões oriundas deste contrato.
+                            5.1. Ambas as partes comprometem-se a cumprir a Lei Geral de Proteção de Dados (L13.709/18).
+                            A CONTRATADA atua como operadora dos dados inseridos pelo CONTRATANTE, que permanece como controlador dos mesmos.
+                        </p>
+
+                        <h3>CLÁUSULA 6 - RESCISÃO</h3>
+                        <p>
+                            6.1. O presente contrato pode ser rescindido por qualquer das partes a qualquer momento, mediante cancelamento da assinatura digital no painel do sistema, sem incidência de multas rescisórias.
+                        </p>
+
+                        <h3>CLÁUSULA 7 - DO FORO</h3>
+                        <p>
+                            7.1. Fica eleito o foro da comarca de Juazeiro do Norte/CE como o único competente para dirimir quaisquer dúvidas ou controvérsias oriundas deste contrato.
                         </p>
                     </div>
 

@@ -1,8 +1,8 @@
 # Banco de Dados - Documentação Completa
 
-**Versão:** 8.2  
-**Última Atualização:** 26/12/2024  
-**Total de Migrations:** 38+
+**Versão:** 9.0 (Unified AI)  
+**Última Atualização:** 28/12/2025  
+**Total de Migrations:** 45+
 
 ---
 
@@ -548,4 +548,4 @@ Todas as tabelas possuem RLS habilitado com políticas que:
 
 ---
 
-**Atualizado em:** 26/12/2024
+**Atualizado em:** 28/12/2025

@@ -152,13 +152,13 @@ export function UnifiedChatWidget() {
         }
     };
 
-    const fetchMessages = async () => {
+    const fetchMessages = async (showLoading = true) => {
         if (!activeChatData) return;
-        setLoading(true);
+        if (showLoading) setLoading(true);
         try {
             const endpoint = activeChat === 'suporte'
                 ? `/api/support-chat?chat_id=${activeChatData.id}`
-                : `/api/chat-sindico?conversaId=${activeChatData.id}`;
+                : `/api/chat-sindico?conversa_id=${activeChatData.id}`;
 
             const res = await fetch(endpoint, {
                 headers: { 'Authorization': `Bearer ${session?.access_token}` }
@@ -168,12 +168,12 @@ export function UnifiedChatWidget() {
         } catch (e) {
             console.error('Erro ao buscar mensagens:', e);
         } finally {
-            setLoading(false);
+            if (showLoading) setLoading(false);
         }
     };
 
     const handleSendMessage = async () => {
-        if (!newMessage.trim() || sending || !activeChatData) return;
+        if (!newMessage.trim() || sending) return;
 
         const tempMessage = newMessage;
         setNewMessage('');
@@ -181,11 +181,20 @@ export function UnifiedChatWidget() {
 
         try {
             const endpoint = activeChat === 'suporte' ? '/api/support-chat' : '/api/chat-sindico';
-            const body = activeChat === 'suporte'
-                ? { action: 'send_message', chat_id: activeChatData.id, mensagem: tempMessage }
-                : { action: 'enviar_mensagem', conversaId: activeChatData.id, mensagem: tempMessage };
 
-            await fetch(endpoint, {
+            let body;
+            if (!activeChatData) {
+                // Criar nova conversa se não existir
+                body = activeChat === 'suporte'
+                    ? { action: 'create_chat', assunto: 'Suporte Geral', mensagem: tempMessage }
+                    : { action: 'nova_conversa', assunto: 'Contato Morador', mensagem: tempMessage };
+            } else {
+                body = activeChat === 'suporte'
+                    ? { action: 'send_message', chat_id: activeChatData.id, mensagem: tempMessage }
+                    : { action: 'enviar_mensagem', conversa_id: activeChatData.id, mensagem: tempMessage };
+            }
+
+            const res = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -194,9 +203,24 @@ export function UnifiedChatWidget() {
                 body: JSON.stringify(body),
             });
 
-            fetchMessages();
+            if (res.ok) {
+                const data = await res.json();
+                if (!activeChatData) {
+                    const newChat = data.chat || data.conversa;
+                    if (newChat) {
+                        setActiveChatData(newChat);
+                    }
+                } else {
+                    fetchMessages(false); // Não mostrar loading global ao enviar mensagem em chat aberto
+                }
+            } else {
+                const errorData = await res.json();
+                console.error('Erro ao enviar mensagem:', errorData.error);
+                setNewMessage(tempMessage); // Devolve a mensagem em caso de erro
+            }
         } catch (e) {
             console.error('Erro ao enviar:', e);
+            setNewMessage(tempMessage); // Devolve a mensagem em caso de erro
         } finally {
             setSending(false);
         }
@@ -216,13 +240,15 @@ export function UnifiedChatWidget() {
             const chats = data.chats || data.conversas || [];
             if (chats.length > 0) {
                 setActiveChatData(chats[0]);
+                // Se já temos chat, buscar mensagens sem mostrar spinner global depois
+                // fetchMessages() já é chamado pelo useEffect [activeChatData]
             } else {
-                // Criar nova conversa se não existir
                 setActiveChatData(null);
+                setMessages([]);
+                setLoading(false);
             }
         } catch (e) {
             console.error('Erro:', e);
-        } finally {
             setLoading(false);
         }
     };
@@ -376,10 +402,16 @@ export function UnifiedChatWidget() {
                                             disabled={!newMessage.trim() || sending}
                                             className={cn(
                                                 "p-2 rounded-full transition-colors",
-                                                newMessage.trim() ? `${currentOption?.bgColor} text-white` : "bg-gray-200 text-gray-400"
+                                                newMessage.trim()
+                                                    ? `${currentOption?.bgColor} text-white`
+                                                    : "bg-gray-200 text-gray-400"
                                             )}
                                         >
-                                            <Send className="h-4 w-4" />
+                                            {sending ? (
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                            ) : (
+                                                <Send className="h-4 w-4" />
+                                            )}
                                         </button>
                                     </div>
                                 </div>

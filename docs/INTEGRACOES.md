@@ -288,9 +288,9 @@ OPENAI_API_KEY=sk-xxx
 # SMTP (fallback global - opcional se configurado no DB)
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
-SMTP_USER=noreply@meucondominiofacil.com
+SMTP_USER=suporte@condominiofacil.com
 SMTP_PASSWORD=xxx
-SMTP_FROM_EMAIL=noreply@meucondominiofacil.com
+SMTP_FROM_EMAIL=suporte@condominiofacil.com
 SMTP_FROM_NAME=Meu Condomínio Fácil
 
 # Vercel (auto-populated)

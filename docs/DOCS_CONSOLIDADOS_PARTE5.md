@@ -215,23 +215,23 @@ COMMIT
 > O sistema permite cadastrar cobranças. Para geração automática, temos Integração Bancária. Taxa R$ 999 + R$ 199/mês.
 
 **"Quanto custa no total?"**
-> Plano Profissional (mais vendido): R$ 249,90/mês. Integrações são opcionais.
+> Plano Básico: R$ 149,90/mês. Plano Profissional (mais vendido): R$ 249,90/mês. Integrações são opcionais.
 
 ### 3.5 Diferenciais
 
 | Vs. | Problema | Nossa Solução |
 |-----|----------|---------------|
-| Excel | Bagunçado, sem backup | Organizado, cloud |
-| Concorrentes | Caros (R$ 500-1000) | Acessível (R$ 99-399) |
-| WhatsApp | Informal, sem registro | Profissional, histórico |
+| Excel | Bagunçado, sem backup | Organizado, 100% Cloud |
+| Concorrentes | Caros (R$ 500-1000) | Justo e Moderno (R$ 149-399) |
+| WhatsApp | Informal, sem registro | Profissional e Centralizado |
 
 ### 3.6 Metas de Vendas
 
-| Clientes | Básico (30%) | Prof (50%) | Premium (20%) | MRR |
+| Clientes | Básico (30%) | Prof (50%) | Premium (20%) | MRR Estimado |
 |----------|--------------|------------|---------------|-----|
-| 10 | 3 × R$99 | 5 × R$249 | 2 × R$399 | R$ 2.340 |
-| 50 | 15 × R$99 | 25 × R$249 | 10 × R$399 | R$ 11.706 |
-| 100 | 30 × R$99 | 50 × R$249 | 20 × R$399 | R$ 23.427 |
+| 10 | 3 × R$149 | 5 × R$249 | 2 × R$399 | R$ 2.490 |
+| 50 | 15 × R$149| 25 × R$249 | 10 × R$399 | R$ 12.450 |
+| 100 | 30 × R$149| 50 × R$249 | 20 × R$399 | R$ 24.900 |
 
 ---
 

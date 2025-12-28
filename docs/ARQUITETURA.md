@@ -398,5 +398,6 @@ Supabase Client
     ↓
 PostgreSQL + RLS
     ↓
-Response → Browser
+**Última Atualização:** 28/12/2025  
+**Versão:** 9.0 (Unified AI)
 ```

@@ -3,7 +3,7 @@
 ## Parte 2: Banco de Dados
 
 **Versão:** 9.0 (Unified AI)  
-**Última Atualização:** 01/01/2026  
+**Última Atualização:** 28/12/2025  
 **Total de Migrations:** 45+
 
 ---
@@ -71,7 +71,7 @@ O sistema utiliza **Supabase PostgreSQL** com:
 |--------|------|-----------|
 | id | UUID | PK |
 | nome_plano | VARCHAR(100) | Nome do plano |
-| valor_mensal | DECIMAL(10,2) | Valor mensal |
+| valor_mensal | DECIMAL(10,2) | Valor mensal (Ex: 149.90) |
 | max_units | INTEGER | Máximo de unidades |
 | features | JSONB | Features habilitadas |
 | ativo | BOOLEAN | Plano disponível |

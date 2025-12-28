@@ -284,7 +284,7 @@ condominio-facil/
 
 | Plano | Preço Mensal | Unidades | Funcionalidades |
 |-------|--------------|----------|-----------------|
-| **Básico** | R$ 99,90 | Até 20 | Financeiro, Moradores, Avisos, App Móvel |
+| **Básico** | R$ 149,90 | Até 20 | Financeiro, Moradores, Avisos, App Móvel, Chat Síndico, Marketplace |
 | **Profissional** | R$ 249,90 | Até 50 | + Portaria, Ocorrências, Reservas, Relatórios |
 | **Premium** | R$ 399,90 | Ilimitado | + Câmeras, Governança, IA, Multi-condo |
 

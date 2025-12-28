@@ -1,7 +1,7 @@
 # API Routes - Documentação Completa
 
-**Versão:** 8.2  
-**Última Atualização:** 26/12/2024  
+**Versão:** 9.0 (Unified AI)  
+**Última Atualização:** 28/12/2025  
 **Total de Endpoints:** 110+
 
 ---
@@ -125,8 +125,8 @@ Configuração SMTP global.
 {
   "smtp_host": "smtp.hostinger.com",
   "smtp_port": 465,
-  "smtp_user": "noreply@...",
-  "smtp_from_email": "noreply@..."
+  "smtp_user": "suporte@condominiofacil.com",
+  "smtp_from_email": "suporte@condominiofacil.com"
 }
 ```
 
@@ -137,7 +137,7 @@ Configuração SMTP global.
   "smtp_port": 465,
   "smtp_user": "noreply@...",
   "smtp_password": "senha",
-  "smtp_from_email": "noreply@...",
+  "smtp_from_email": "suporte@condominiofacil.com",
   "smtp_from_name": "Condomínio Fácil"
 }
 ```
@@ -532,4 +532,4 @@ Authorization: Bearer <token> (quando autenticado)
 
 ---
 
-**Atualizado em:** 26/12/2024
+**Atualizado em:** 28/12/2025

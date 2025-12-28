@@ -33,86 +33,58 @@ export default function PrivacidadePage() {
                         </div>
                     </div>
 
-                    <div className="prose prose-emerald max-w-none">
-                        <h2>1. Introdução</h2>
-                        <p>
-                            Esta Política de Privacidade descreve como o Condomínio Fácil coleta, usa, armazena e protege
-                            seus dados pessoais, em conformidade com a Lei Geral de Proteção de Dados (LGPD).
+                    <div className="prose prose-emerald max-w-none text-gray-700">
+                        <p className="lead">
+                            O Condomínio Fácil, operado pela Robsonodex (CNPJ: 57.444.727/0001-85), está comprometido com a transparência e a segurança dos seus dados.
+                            Esta política detalha como tratamos suas informações em conformidade com a LGPD.
                         </p>
 
-                        <h2>2. Dados Coletados</h2>
-                        <p>Coletamos os seguintes tipos de dados:</p>
+                        <h2>1. Coleta de Dados</h2>
+                        <p>Coletamos dados necessários para a operação do sistema:</p>
                         <ul>
-                            <li><strong>Dados de cadastro:</strong> nome, email, telefone, CPF/CNPJ</li>
-                            <li><strong>Dados do condomínio:</strong> nome, endereço, unidades, moradores</li>
-                            <li><strong>Dados de uso:</strong> logs de acesso, ações realizadas no sistema</li>
-                            <li><strong>Dados de pagamento:</strong> informações necessárias para cobrança</li>
+                            <li><strong>Dados Pessoais:</strong> Nome, CPF, e-mail e telefone para identificação e login;</li>
+                            <li><strong>Dados Condominiais:</strong> Endereço, número da unidade e histórico de pagamentos/reservas;</li>
+                            <li><strong>Dados de Portaria:</strong> Nomes e documentos de visitantes, placas de veículos e fotos de encomendas;</li>
+                            <li><strong>Logs de Auditoria:</strong> Registramos IP, data e hora de ações críticas para segurança do condomínio.</li>
                         </ul>
 
-                        <h2>3. Finalidade do Tratamento</h2>
-                        <p>Seus dados são utilizados para:</p>
+                        <h2>2. Finalidade do Tratamento</h2>
+                        <p>Os dados são processados exclusivamente para:</p>
                         <ul>
-                            <li>Prestação do serviço de gestão condominial</li>
-                            <li>Comunicação sobre o serviço (avisos, cobranças)</li>
-                            <li>Melhoria contínua da plataforma</li>
-                            <li>Cumprimento de obrigações legais</li>
+                            <li>Gestão administrativa e financeira do condomínio;</li>
+                            <li>Segurança e controle de acesso (Portaria);</li>
+                            <li>Envio de notificações de serviço (Avisos, Boletos e Encomendas);</li>
+                            <li>Melhoria contínua da experiência do usuário via IA.</li>
                         </ul>
 
-                        <h2>4. Base Legal</h2>
+                        <h2>3. Compartilhamento Seguro</h2>
                         <p>
-                            O tratamento de dados é realizado com base no consentimento do titular,
-                            execução de contrato e cumprimento de obrigação legal (Art. 7º da LGPD).
-                        </p>
-
-                        <h2>5. Compartilhamento de Dados</h2>
-                        <p>
-                            Seus dados podem ser compartilhados com:
+                            Não vendemos dados de usuários para terceiros. O compartilhamento ocorre apenas com parceiros essenciais:
                         </p>
                         <ul>
-                            <li>Processadores de pagamento (Mercado Pago, bancos)</li>
-                            <li>Provedores de infraestrutura (Vercel, Supabase)</li>
-                            <li>Autoridades públicas, quando exigido por lei</li>
+                            <li><strong>Supabase:</strong> Armazenamento de banco de dados criptografado;</li>
+                            <li><strong>Vercel:</strong> Hospedagem da plataforma;</li>
+                            <li><strong>Mercado Pago / Bancos:</strong> Processamento de pagamentos;</li>
+                            <li><strong>Evolution API:</strong> Intermediação técnica para mensagens via WhatsApp.</li>
                         </ul>
 
-                        <h2>6. Segurança</h2>
+                        <h2>4. Direitos do Titular</h2>
                         <p>
-                            Adotamos medidas técnicas e organizacionais para proteger seus dados, incluindo:
-                            criptografia, controle de acesso, backups e monitoramento.
+                            Em conformidade com o Art. 18 da LGPD, você pode solicitar a qualquer momento: confirmação da existência de tratamento, acesso, correção, anonimização ou exclusão de dados desnecessários.
+                            Solicitações devem ser enviadas para <a href="mailto:privacidade@meucondominiofacil.com">privacidade@meucondominiofacil.com</a>.
                         </p>
 
-                        <h2>7. Retenção de Dados</h2>
+                        <h2>5. Segurança e Retenção</h2>
                         <p>
-                            Os dados são mantidos pelo período necessário para prestação do serviço e
-                            cumprimento de obrigações legais, sendo eliminados após esse período.
+                            Utilizamos criptografia de ponta (SSL/TLS) e backups redundantes.
+                            Os dados são mantidos enquanto a assinatura estiver ativa. Em caso de cancelamento,
+                            os dados são eliminados definitivamente após 30 dias (período de carência para recuperação), exceto quando a retenção for exigida por lei.
                         </p>
 
-                        <h2>8. Direitos do Titular</h2>
-                        <p>Você tem direito a:</p>
-                        <ul>
-                            <li>Confirmar a existência de tratamento</li>
-                            <li>Acessar seus dados</li>
-                            <li>Corrigir dados incompletos ou incorretos</li>
-                            <li>Solicitar anonimização ou eliminação</li>
-                            <li>Revogar o consentimento</li>
-                            <li>Portabilidade dos dados</li>
-                        </ul>
-
-                        <h2>9. Cookies</h2>
+                        <h2>6. Foro e Legislação</h2>
                         <p>
-                            Utilizamos cookies essenciais para funcionamento do sistema e cookies analíticos
-                            para melhorar a experiência do usuário. Você pode gerenciar cookies no seu navegador.
-                        </p>
-
-                        <h2>10. Encarregado de Dados (DPO)</h2>
-                        <p>
-                            Para exercer seus direitos ou esclarecer dúvidas, entre em contato com nosso
-                            Encarregado de Dados pelo email: <a href="mailto:privacidade@condominiofacil.com.br">privacidade@condominiofacil.com.br</a>
-                        </p>
-
-                        <h2>11. Alterações</h2>
-                        <p>
-                            Esta política pode ser atualizada periodicamente. Alterações significativas
-                            serão comunicadas por email ou através do sistema.
+                            Esta política é regida pelas leis da República Federativa do Brasil.
+                            Qualquer disputa será resolvida no foro da comarca de Juazeiro do Norte/CE.
                         </p>
                     </div>
 

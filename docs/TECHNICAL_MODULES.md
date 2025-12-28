@@ -278,3 +278,61 @@ export function CameraPlayer({ src }: { src: string }) {
 - **MediaMTX** - https://github.com/bluenviron/mediamtx
 - **HLS.js** - https://github.com/video-dev/hls.js
 - **SRS** - https://github.com/ossrs/srs
+
+---
+
+## 4. QR CODE PASS (CONVITES DIGITAIS)
+
+### 4.1 Schema PostgreSQL
+
+```sql
+CREATE TABLE guest_invites (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  condo_id UUID NOT NULL REFERENCES condos(id) ON DELETE CASCADE,
+  unit_id UUID NOT NULL REFERENCES units(id) ON DELETE CASCADE,
+  created_by UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  guest_name TEXT NOT NULL,
+  valid_from TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  valid_until TIMESTAMPTZ NOT NULL,
+  token_hash TEXT NOT NULL UNIQUE,
+  status VARCHAR(20) DEFAULT 'pendente',
+  used_at TIMESTAMPTZ,
+  validated_by UUID REFERENCES users(id),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+### 4.2 Segurança (JWT + SHA-256)
+
+1. **Geração**: O sistema gera um JWT contendo `inviteId` e `condoId`, assinado com `JWT_INVITE_SECRET`.
+2. **Armazenamento**: O hash SHA-256 do token é armazenado no banco (`token_hash`).
+3. **Validação**: 
+   - Decodifica o JWT.
+   - Gera o hash do token recebido e compara com o banco.
+   - Verifica data de expiração e se o convite já foi utilizado.
+
+---
+
+## 5. AUDITOR DE ORÇAMENTOS IA (OCR + BENCHMARK)
+
+### 5.1 Fluxo de Funcionamento
+
+1. **Extração**: O documento (PDF/Imagem) é enviado ao GPT-4o para extração estruturada de itens e valores.
+2. **Embeddings**: As descrições dos serviços são convertidas em vetores via `text-embedding-3-small`.
+3. **Busca Semântica**: Realiza uma busca no banco `price_benchmarks` usando distância de cosseno.
+4. **Benchmark**: Compara o valor do orçamento com a média (`avg_price_rj`) e limites (min/max) do Rio de Janeiro.
+
+### 5.2 Schema PostgreSQL (pgvector)
+
+```sql
+CREATE TABLE price_benchmarks (
+  id uuid primary key default gen_random_uuid(),
+  category varchar(50) not null,
+  service_description text not null,
+  embedding vector(1536),
+  avg_price_rj decimal(10,2) not null,
+  unit varchar(20) not null,
+  source varchar(100),
+  updated_at timestamptz default now()
+);
+```
