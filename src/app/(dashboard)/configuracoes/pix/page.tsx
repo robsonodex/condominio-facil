@@ -27,7 +27,7 @@ export default function ConfiguracoesPixPage() {
             setPixTipo(condo.pix_tipo || '');
             setPixChave(condo.pix_chave || '');
             setPixNome(condo.pix_nome_recebedor || condo.nome || '');
-            setPixCidade(condo.pix_cidade || condo.cidade?.toUpperCase().replace(/[^A-Z ]/g, '') || '');
+            setPixCidade(condo.pix_cidade || '');
         }
     }, [condo]);
 
