@@ -97,7 +97,7 @@ export function LinkedInChat() {
     // Quando oculto, mostra apenas ícone flutuante
     if (isHidden) {
         return (
-            <div className="fixed bottom-4 right-8 z-[100] pointer-events-auto">
+            <div className="fixed bottom-4 right-80 z-[100] pointer-events-auto">
                 <button
                     onClick={() => setIsHidden(false)}
                     className="relative w-12 h-12 bg-emerald-600 rounded-full shadow-lg hover:bg-emerald-700 transition-colors flex items-center justify-center"
@@ -115,7 +115,7 @@ export function LinkedInChat() {
     }
 
     return (
-        <div className="fixed bottom-0 right-8 z-[100] flex items-end gap-3 pointer-events-none">
+        <div className="fixed bottom-0 right-80 z-[100] flex items-end gap-3 pointer-events-none">
             {/* Chat List Window */}
             <div className={cn(
                 "w-[280px] bg-white border border-gray-200 shadow-xl rounded-t-xl transition-all duration-300 pointer-events-auto",
@@ -216,7 +216,7 @@ export function LinkedInChat() {
                                 <div className="p-8 text-center">
                                     <p className="text-sm text-gray-500">Nenhuma conversa encontrada.</p>
                                     <Button
-                                        variant="link"
+                                        variant="outline"
                                         className="text-emerald-600 mt-2"
                                         onClick={() => setShowNewChat(true)}
                                     >
