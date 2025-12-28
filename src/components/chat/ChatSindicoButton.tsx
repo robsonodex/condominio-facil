@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { Button, Input } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { useUser } from '@/hooks/useUser';
+import { createClient } from '@/lib/supabase/client';
 import { formatDateTime } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import {
@@ -32,6 +33,7 @@ interface Mensagem {
 export function ChatSindicoButton() {
     const { session } = useAuth();
     const { profile, isMorador, isPorteiro, condoId } = useUser();
+    const supabase = createClient();
 
     const [isExpanded, setIsExpanded] = useState(false);
     const [isHidden, setIsHidden] = useState(false);
@@ -85,10 +87,33 @@ export function ChatSindicoButton() {
     useEffect(() => {
         if (canUseChat && session?.access_token) {
             fetchConversas();
+            // Polling a cada 30s como fallback
             const interval = setInterval(fetchConversas, 30000);
-            return () => clearInterval(interval);
+
+            // Supabase Realtime para novas mensagens
+            const channel = supabase
+                .channel('chat-sindico-realtime')
+                .on(
+                    'postgres_changes',
+                    { event: 'INSERT', schema: 'public', table: 'chat_sindico_mensagens' },
+                    (payload) => {
+                        console.log('[ChatSindico] Nova mensagem realtime:', payload);
+                        // Atualizar lista de conversas para pegar novas mensagens
+                        fetchConversas();
+                        // Se a conversa ativa é a mesma, atualizar mensagens
+                        if (activeConversa && payload.new.conversa_id === activeConversa.id) {
+                            fetchMensagens(activeConversa.id);
+                        }
+                    }
+                )
+                .subscribe();
+
+            return () => {
+                clearInterval(interval);
+                supabase.removeChannel(channel);
+            };
         }
-    }, [canUseChat, session]);
+    }, [canUseChat, session, activeConversa]);
 
     useEffect(() => {
         if (activeConversa) {
