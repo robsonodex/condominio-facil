@@ -42,10 +42,20 @@ export async function GET() {
             .eq('condo_id', profile.condo_id)
             .single();
 
+        // Verificar se IA está ativa para o condomínio (ativado pelo SuperAdmin)
+        const { data: condo } = await supabase
+            .from('condos')
+            .select('ai_ativo')
+            .eq('id', profile.condo_id)
+            .single();
+
+        const aiAtivo = condo?.ai_ativo === true;
+
         return NextResponse.json({
             agent: agent || null,
             settings: settings || null,
-            hasAgent: !!agent
+            hasAgent: !!agent,
+            aiAtivo // Indica se SuperAdmin ativou a IA para este condomínio
         });
     } catch (error) {
         console.error('[AI Agent] Erro:', error);

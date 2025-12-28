@@ -23,6 +23,7 @@ export default function ConfiguracaoAssistentePage() {
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [hasAgent, setHasAgent] = useState(false);
+    const [aiAtivo, setAiAtivo] = useState(false); // Se SuperAdmin ativou IA para este condomínio
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
     const [formData, setFormData] = useState<AgentData>({
@@ -55,6 +56,11 @@ export default function ConfiguracaoAssistentePage() {
 
             if (data.settings) {
                 setSettings(data.settings);
+            }
+
+            // Se SuperAdmin ativou a IA para este condomínio
+            if (data.aiAtivo !== undefined) {
+                setAiAtivo(data.aiAtivo);
             }
         } catch {
             console.error('Erro ao carregar agente');
@@ -238,26 +244,26 @@ export default function ConfiguracaoAssistentePage() {
                     <div>
                         <p className="font-medium text-gray-900">Status do Assistente</p>
                         <p className="text-sm text-gray-500">
-                            {hasAgent ? 'Quando desativado, ninguém consegue usar o chat' : 'Contrate o plano com IA para ativar'}
+                            {aiAtivo ? 'Quando desativado, ninguém consegue usar o chat' : 'Aguardando ativação pelo administrador'}
                         </p>
                     </div>
                     <button
                         type="button"
                         onClick={() => {
-                            if (!hasAgent) {
+                            if (!aiAtivo) {
                                 setShowUpgradeModal(true);
                             } else {
                                 setFormData(prev => ({ ...prev, ativo: !prev.ativo }));
                             }
                         }}
-                        className={`relative w-14 h-7 rounded-full transition-colors ${hasAgent && formData.ativo ? 'bg-emerald-600' : 'bg-gray-300'
-                            } ${!hasAgent ? 'cursor-not-allowed opacity-60' : ''}`}
+                        className={`relative w-14 h-7 rounded-full transition-colors ${aiAtivo && formData.ativo ? 'bg-emerald-600' : 'bg-gray-300'
+                            } ${!aiAtivo ? 'cursor-not-allowed opacity-60' : ''}`}
                     >
                         <span
-                            className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-transform ${hasAgent && formData.ativo ? 'right-1' : 'left-1'
+                            className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-transform ${aiAtivo && formData.ativo ? 'right-1' : 'left-1'
                                 }`}
                         />
-                        {!hasAgent && (
+                        {!aiAtivo && (
                             <span className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center text-[10px] text-white font-bold">🔒</span>
                         )}
                     </button>
