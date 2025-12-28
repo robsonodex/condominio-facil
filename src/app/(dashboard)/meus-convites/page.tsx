@@ -280,7 +280,7 @@ export default function MeusConvitesPage() {
                     ) : (
                         <div className="divide-y">
                             {/* Header com ações em lote */}
-                            {pendingInvites.length > 0 && (
+                            {invites.length > 0 && (
                                 <div className="p-3 bg-gray-50 flex items-center justify-between border-b">
                                     <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-600">
                                         <input
