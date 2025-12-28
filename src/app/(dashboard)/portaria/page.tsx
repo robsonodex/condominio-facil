@@ -9,7 +9,7 @@ import { createClient } from '@/lib/supabase/client';
 import { formatDate } from '@/lib/utils';
 import {
     Users, UserPlus, LogIn, LogOut, Search, Camera, Printer, QrCode,
-    Clock, Car, CreditCard, Shield, Maximize, Minimize, RefreshCw, MessageSquare, AlertCircle, Scan
+    Clock, Car, CreditCard, Shield, Maximize, Minimize, RefreshCw, MessageSquare, AlertCircle, Scan, Ticket
 } from 'lucide-react';
 import { QRCodeScanner } from '@/components/invites';
 import Tesseract from 'tesseract.js';
@@ -28,11 +28,23 @@ interface Visitor {
     foto_url: string | null;
 }
 
+interface PendingInvite {
+    id: string;
+    guest_name: string;
+    visit_date: string;
+    visit_time_start: string;
+    visit_time_end: string;
+    status: string;
+    unit: { bloco: string; numero_unidade: string } | null;
+    creator: { nome: string } | null;
+}
+
 export default function PortariaProfissionalPage() {
     const { session } = useAuth();
     const { condoId, profile } = useUser();
     const [visitors, setVisitors] = useState<Visitor[]>([]);
     const [activeVisitors, setActiveVisitors] = useState<Visitor[]>([]);
+    const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([]);
     const [loading, setLoading] = useState(true);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -72,8 +84,12 @@ export default function PortariaProfissionalPage() {
     useEffect(() => {
         if (condoId) {
             fetchVisitors();
+            fetchPendingInvites();
             fetchUnits();
-            const interval = setInterval(fetchVisitors, 30000); // Refresh every 30s
+            const interval = setInterval(() => {
+                fetchVisitors();
+                fetchPendingInvites();
+            }, 30000); // Refresh every 30s
             return () => clearInterval(interval);
         }
     }, [condoId]);
@@ -90,6 +106,19 @@ export default function PortariaProfissionalPage() {
         setVisitors(data || []);
         setActiveVisitors((data || []).filter(v => !v.data_hora_saida));
         setLoading(false);
+    };
+
+    const fetchPendingInvites = async () => {
+        const today = new Date().toISOString().split('T')[0];
+        const { data } = await supabase
+            .from('guest_invites')
+            .select('*, unit:units(bloco, numero_unidade), creator:users!created_by(nome)')
+            .eq('condo_id', condoId)
+            .eq('status', 'pending')
+            .eq('visit_date', today)
+            .order('visit_time_start', { ascending: true });
+
+        setPendingInvites(data || []);
     };
 
     const fetchUnits = async () => {
@@ -652,7 +681,49 @@ export default function PortariaProfissionalPage() {
                 />
             </div>
 
-            {/* Active Visitors (Quick Exit) */}
+            {/* Convites Pendentes de Hoje */}
+            {pendingInvites.length > 0 && (
+                <Card className={`border-2 border-blue-200 ${isFullscreen ? 'bg-gray-800' : 'bg-blue-50'}`}>
+                    <CardContent className="p-4">
+                        <h3 className={`font-semibold mb-3 flex items-center gap-2 ${isFullscreen ? 'text-white' : 'text-blue-800'}`}>
+                            <Ticket className="h-5 w-5 text-blue-600" />
+                            Convites Pendentes Hoje ({pendingInvites.length})
+                        </h3>
+                        <div className="grid gap-2">
+                            {pendingInvites.map(invite => (
+                                <div
+                                    key={invite.id}
+                                    className={`flex items-center justify-between p-3 rounded-lg ${isFullscreen ? 'bg-gray-700' : 'bg-white border border-blue-100'}`}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                                            <QrCode className="h-5 w-5 text-blue-600" />
+                                        </div>
+                                        <div>
+                                            <p className={`font-medium ${isFullscreen ? 'text-white' : 'text-gray-900'}`}>
+                                                {invite.guest_name}
+                                            </p>
+                                            <p className={`text-sm ${isFullscreen ? 'text-gray-400' : 'text-gray-500'}`}>
+                                                {invite.unit ? `${invite.unit.bloco || ''} ${invite.unit.numero_unidade}` : 'Sem unidade'}
+                                                {invite.visit_time_start && ` • ${invite.visit_time_start.substring(0, 5)}`}
+                                                {invite.visit_time_end && ` - ${invite.visit_time_end.substring(0, 5)}`}
+                                            </p>
+                                            {invite.creator?.nome && (
+                                                <p className={`text-xs ${isFullscreen ? 'text-gray-500' : 'text-gray-400'}`}>
+                                                    Criado por: {invite.creator.nome}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <Badge className="bg-blue-100 text-blue-800">
+                                        Aguardando
+                                    </Badge>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
             {activeVisitors.length > 0 && (
                 <Card className={isFullscreen ? 'bg-gray-800 border-gray-700' : ''}>
                     <CardContent className="p-4">

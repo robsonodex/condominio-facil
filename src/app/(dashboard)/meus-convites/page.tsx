@@ -6,7 +6,7 @@ import { Modal } from '@/components/ui/modal';
 import { useAuth } from '@/hooks/useAuth';
 import {
     UserPlus, QrCode, Clock, CheckCircle, XCircle, AlertCircle,
-    Trash2, RefreshCw, Calendar, Users
+    Trash2, RefreshCw, Calendar, Users, Eye
 } from 'lucide-react';
 import { CreateInviteForm, InviteShare } from '@/components/invites';
 
@@ -33,6 +33,7 @@ export default function MeusConvitesPage() {
     const [loading, setLoading] = useState(true);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [createdInvite, setCreatedInvite] = useState<InviteWithQR | null>(null);
+    const [selectedInvite, setSelectedInvite] = useState<Invite | null>(null);
     const [deleting, setDeleting] = useState<string | null>(null);
 
     const fetchInvites = async () => {
@@ -253,19 +254,31 @@ export default function MeusConvitesPage() {
                                         {getStatusBadge(invite.status)}
 
                                         {invite.status === 'pending' && (
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => handleCancelInvite(invite.id)}
-                                                disabled={deleting === invite.id}
-                                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                            >
-                                                {deleting === invite.id ? (
-                                                    <RefreshCw className="h-4 w-4 animate-spin" />
-                                                ) : (
-                                                    <Trash2 className="h-4 w-4" />
-                                                )}
-                                            </Button>
+                                            <>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => setSelectedInvite(invite)}
+                                                    className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                                    title="Ver QR Code"
+                                                >
+                                                    <Eye className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => handleCancelInvite(invite.id)}
+                                                    disabled={deleting === invite.id}
+                                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                    title="Cancelar convite"
+                                                >
+                                                    {deleting === invite.id ? (
+                                                        <RefreshCw className="h-4 w-4 animate-spin" />
+                                                    ) : (
+                                                        <Trash2 className="h-4 w-4" />
+                                                    )}
+                                                </Button>
+                                            </>
                                         )}
                                     </div>
                                 </div>
@@ -287,7 +300,7 @@ export default function MeusConvitesPage() {
                 />
             </Modal>
 
-            {/* Modal QR Code */}
+            {/* Modal QR Code - Convite Recém Criado */}
             {createdInvite && (
                 <Modal
                     isOpen={!!createdInvite}
@@ -298,6 +311,21 @@ export default function MeusConvitesPage() {
                         invite={createdInvite}
                         qrData={createdInvite.qrData}
                         onClose={() => setCreatedInvite(null)}
+                    />
+                </Modal>
+            )}
+
+            {/* Modal QR Code - Ver Convite Existente */}
+            {selectedInvite && (
+                <Modal
+                    isOpen={!!selectedInvite}
+                    onClose={() => setSelectedInvite(null)}
+                    title=""
+                >
+                    <InviteShare
+                        invite={selectedInvite}
+                        qrData={selectedInvite.id}
+                        onClose={() => setSelectedInvite(null)}
                     />
                 </Modal>
             )}
