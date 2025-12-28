@@ -233,7 +233,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     const verificationToken = Buffer.from(data.user.id).toString('base64');
                     const verificationUrl = `${window.location.origin}/api/auth/verify-email?token=${verificationToken}`;
 
-                    await fetch('/api/email', {
+                    const emailResponse = await fetch('/api/email', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -247,9 +247,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                             internalCall: true
                         })
                     });
-                    console.log('[AUTH] Welcome email sent to:', email);
+
+                    if (!emailResponse.ok) {
+                        const errData = await emailResponse.json();
+                        console.error('[AUTH] Email API Failed:', errData);
+                    } else {
+                        console.log('[AUTH] Welcome email sent successfully to:', email);
+                    }
                 } catch (emailError) {
-                    console.error('[AUTH] Failed to send welcome email:', emailError);
+                    console.error('[AUTH] Failed to reach email API:', emailError);
                 }
 
                 // Sign out immediately to prevent auto-login

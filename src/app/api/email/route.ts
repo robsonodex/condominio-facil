@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createClient as createServiceClient } from '@supabase/supabase-js';
 import nodemailer from 'nodemailer';
 import {
     supportNewTicketEmail,
@@ -695,7 +696,7 @@ const templates: Record<string, { subject: string; html: (data: any) => string }
         `,
     },
     // User Credentials Email - envio de credenciais de acesso
-    user_credentials: {
+    user_credentials_v2: {
         subject: '🔐 Suas Credenciais de Acesso - Condomínio Fácil',
         html: (data: any) => `
             <!DOCTYPE html>
@@ -793,9 +794,15 @@ async function getSmtpConfig(supabase: any, condoId: string): Promise<SmtpConfig
 
 // Create transporter - agora busca config do condomínio primeiro, depois global
 async function createTransporter(supabase: any, condoId?: string): Promise<{ transporter: nodemailer.Transporter | null; from: string; smtpConfigured: boolean }> {
+    // Usar service role para buscar configurações (bypass RLS)
+    const supabaseAdmin = createServiceClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
     // 1. Tentar buscar config do condomínio
     if (condoId) {
-        const config = await getSmtpConfig(supabase, condoId);
+        const config = await getSmtpConfig(supabaseAdmin, condoId);
         if (config) {
             console.log(`[Email] Usando SMTP do condomínio ${condoId}: ${config.host}:${config.port}`);
             // Porta 465 = SSL implícito, 587 = STARTTLS
@@ -819,12 +826,35 @@ async function createTransporter(supabase: any, condoId?: string): Promise<{ tra
 
     // 2. FALLBACK: Tentar buscar SMTP global (condominio_id = NULL)
     try {
-        const { data: globalConfig, error } = await supabase
+        console.log('[Email] Tentando buscar SMTP Global com Service Role...');
+        // Debug credentials existence (do not log keys)
+        if (!process.env.SUPABASE_SERVICE_ROLE_KEY) console.error('[Email] CRITICAL: SUPABASE_SERVICE_ROLE_KEY is missing!');
+
+        const { data: globalConfig, error } = await supabaseAdmin
             .from('configuracoes_smtp')
             .select('*')
             .is('condominio_id', null)
             .eq('is_active', true)
             .single();
+
+        if (error) {
+            console.error('[Email] Erro ao buscar SMTP global:', error);
+        }
+
+        if (!globalConfig) {
+            console.warn('[Email] Nenhuma configuração SMTP global encontrada (data is null)');
+
+            // DEBUG PROFUNDO: Listar todas as configs para entender o que o admin vê
+            const { data: allConfigs, error: listError } = await supabaseAdmin
+                .from('configuracoes_smtp')
+                .select('id, condominio_id, is_active, smtp_from_email');
+
+            if (listError) {
+                console.error('[Email] DEBUG: Erro ao listar tabela completa:', listError);
+            } else {
+                console.log('[Email] DEBUG: Configs encontradas na tabela:', allConfigs);
+            }
+        }
 
         if (!error && globalConfig) {
             console.log(`[Email] Usando SMTP GLOBAL: ${globalConfig.smtp_host}:${globalConfig.smtp_port}`);
@@ -859,6 +889,20 @@ async function createTransporter(supabase: any, condoId?: string): Promise<{ tra
 
 
 export async function POST(request: NextRequest) {
+    // Verificar chave de serviço (CRÍTICO para operação global)
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        console.error('CRITICAL: SUPABASE_SERVICE_ROLE_KEY is missing in environment variables');
+        return NextResponse.json(
+            { error: 'CRITICAL CONFIG ERROR: SUPABASE_SERVICE_ROLE_KEY missing' },
+            { status: 500 }
+        );
+    }
+
+    const supabaseAdmin = createServiceClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
     try {
         const supabase = await createClient();
         const body = await request.json();
@@ -886,6 +930,7 @@ export async function POST(request: NextRequest) {
             'welcome',
             'legal_acceptance_confirmed',
             'user_credentials',
+            'user_credentials_v2',
             'payment_received',
             'condo_trial',
             'condo_active',
@@ -991,9 +1036,9 @@ export async function POST(request: NextRequest) {
             erro = 'SMTP não configurado. Configure em Configurações > E-mail.';
         }
 
-        // Log email (sem dados sensíveis)
+        // Log email (uso do Admin Client para garantir que logue mesmo sem sessão)
         try {
-            await supabase.from('email_logs').insert({
+            await supabaseAdmin.from('email_logs').insert({
                 condo_id: condoId || profile?.condo_id || null,
                 user_id: userId || user?.id || null,
                 tipo,
@@ -1004,7 +1049,6 @@ export async function POST(request: NextRequest) {
             });
         } catch (logError) {
             console.error('Erro ao registrar log de email:', logError);
-            // Não bloquear por erro de log
         }
 
         return NextResponse.json({
@@ -1014,9 +1058,23 @@ export async function POST(request: NextRequest) {
             error: erro
         });
     } catch (error: any) {
-        console.error('Email API error:', error.message);
+        console.error('Email API Critical Error:', error);
+
+        // Log critical failure to DB
+        try {
+            await supabaseAdmin.from('email_logs').insert({
+                tipo: 'CRITICAL_FAILURE',
+                destinatario: 'SYSTEM',
+                assunto: 'API Crash',
+                status: 'falhou',
+                erro: error.message || 'Unknown critical error'
+            });
+        } catch (e) {
+            console.error('Failed to log critical error:', e);
+        }
+
         return NextResponse.json(
-            { error: 'Erro ao enviar email' },
+            { error: 'Erro interno ao processar email' },
             { status: 500 }
         );
     }
