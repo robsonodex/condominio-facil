@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
                 status: invite.status,
                 unit: invite.unit,
             },
-            qrData: token, // Token JWT que será encoded no QR Code
+            qrData: invite.id, // Usar UUID para QR Code (mais simples e confiável)
         }, { status: 201 });
 
     } catch (error: unknown) {
