@@ -27,6 +27,7 @@ export function QRCodeScanner({ onClose }: QRCodeScannerProps) {
     const [validating, setValidating] = useState(false);
     const scannerRef = useRef<Html5Qrcode | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
+    const isProcessingRef = useRef(false); // Flag para prevenir chamadas duplicadas
 
     const stopScanner = useCallback(async () => {
         if (scannerRef.current && scanning) {
@@ -121,8 +122,20 @@ export function QRCodeScanner({ onClose }: QRCodeScannerProps) {
                     aspectRatio: 1.0,
                 },
                 async (decodedText) => {
+                    // Prevenir chamadas duplicadas
+                    if (isProcessingRef.current) {
+                        console.log('[QR Scanner] Ignorando - já processando');
+                        return;
+                    }
+                    isProcessingRef.current = true;
+
                     await stopScanner();
                     await validateQRCode(decodedText);
+
+                    // Reset após um tempo para permitir novo scan
+                    setTimeout(() => {
+                        isProcessingRef.current = false;
+                    }, 3000);
                 },
                 () => {
                     // QR Code not detected, continue scanning
@@ -143,6 +156,7 @@ export function QRCodeScanner({ onClose }: QRCodeScannerProps) {
     const handleReset = () => {
         setResult(null);
         setError('');
+        isProcessingRef.current = false; // Reset flag para permitir novo scan
         startScanner();
     };
 
