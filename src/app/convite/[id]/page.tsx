@@ -9,8 +9,9 @@ import { createClient } from '@/lib/supabase/client';
 interface InviteData {
     id: string;
     guest_name: string;
-    valid_from: string;
-    valid_until: string;
+    visit_date: string;
+    visit_time_start: string;
+    visit_time_end: string;
     status: string;
     condo: { nome: string; endereco: string } | null;
     unit: { bloco: string; numero_unidade: string } | null;
@@ -31,7 +32,7 @@ export default function PublicInvitePage({ params }: { params: Promise<{ id: str
                 const { data, error: fetchError } = await supabase
                     .from('guest_invites')
                     .select(`
-                        id, guest_name, valid_from, valid_until, status,
+                        id, guest_name, visit_date, visit_time_start, visit_time_end, status,
                         condo:condos(nome, endereco),
                         unit:units(bloco, numero_unidade)
                     `)
@@ -86,9 +87,12 @@ export default function PublicInvitePage({ params }: { params: Promise<{ id: str
         );
     }
 
-    const isExpired = new Date() > new Date(invite.valid_until);
-    const isUsed = invite.status === 'usado';
-    const isValid = invite.status === 'pendente' && !isExpired;
+    const visitEndDate = invite.visit_time_end
+        ? new Date(`${invite.visit_date}T${invite.visit_time_end}:00`)
+        : new Date(`${invite.visit_date}T23:59:59`);
+    const isExpired = new Date() > visitEndDate;
+    const isUsed = invite.status === 'used';
+    const isValid = invite.status === 'pending' && !isExpired;
 
     return (
         <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4 pb-12">
@@ -170,8 +174,12 @@ export default function PublicInvitePage({ params }: { params: Promise<{ id: str
                             <Clock className="h-5 w-5 text-gray-400 mt-1" />
                             <div>
                                 <p className="text-xs text-gray-500 uppercase font-bold">Validade</p>
-                                <p className="font-semibold text-gray-900">{formatDate(invite.valid_from)}</p>
-                                <p className="font-semibold text-gray-900 text-sm">até {formatDate(invite.valid_until)}</p>
+                                <p className="font-semibold text-gray-900">
+                                    {new Date(invite.visit_date).toLocaleDateString('pt-BR')}
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                    {invite.visit_time_start?.substring(0, 5) || '00:00'} até {invite.visit_time_end?.substring(0, 5) || '23:59'}
+                                </p>
                             </div>
                         </div>
                     </div>
