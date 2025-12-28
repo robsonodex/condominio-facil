@@ -31,7 +31,7 @@ interface Mensagem {
 
 export function ChatSindicoButton() {
     const { session } = useAuth();
-    const { profile, isMorador, condoId } = useUser();
+    const { profile, isMorador, isPorteiro, condoId } = useUser();
 
     const [isExpanded, setIsExpanded] = useState(false);
     const [isHidden, setIsHidden] = useState(false);
@@ -60,7 +60,7 @@ export function ChatSindicoButton() {
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    const canUseChat = isMorador && chatAtivo;
+    const canUseChat = (isMorador || isPorteiro) && chatAtivo;
 
     const getAuthHeaders = () => ({
         'Content-Type': 'application/json',
@@ -69,7 +69,7 @@ export function ChatSindicoButton() {
 
     // Verificar se chat está ativo para o condomínio
     useEffect(() => {
-        if (condoId && isMorador) {
+        if (condoId && (isMorador || isPorteiro)) {
             fetch(`/api/plan-features`, {
                 headers: getAuthHeaders(),
                 credentials: 'include'
@@ -80,7 +80,7 @@ export function ChatSindicoButton() {
                 })
                 .catch(() => setChatAtivo(false));
         }
-    }, [condoId, isMorador, session]);
+    }, [condoId, isMorador, isPorteiro, session]);
 
     useEffect(() => {
         if (canUseChat && session?.access_token) {
