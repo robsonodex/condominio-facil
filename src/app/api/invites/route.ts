@@ -102,18 +102,18 @@ export async function DELETE(request: NextRequest) {
 
         // Permitir exclusão de qualquer convite (não apenas pendentes)
 
-        // Cancelar o convite
-        const { error: updateError } = await supabaseAdmin
+        // Excluir o convite permanentemente (hard delete)
+        const { error: deleteError } = await supabaseAdmin
             .from('guest_invites')
-            .update({ status: 'cancelled' })
+            .delete()
             .eq('id', inviteId);
 
-        if (updateError) {
-            console.error('[INVITES] Cancel error:', updateError);
-            return NextResponse.json({ error: updateError.message }, { status: 500 });
+        if (deleteError) {
+            console.error('[INVITES] Delete error:', deleteError);
+            return NextResponse.json({ error: deleteError.message }, { status: 500 });
         }
 
-        return NextResponse.json({ success: true, message: 'Convite cancelado' });
+        return NextResponse.json({ success: true, message: 'Convite excluído' });
 
     } catch (error: unknown) {
         console.error('[INVITES] DELETE error:', error);
