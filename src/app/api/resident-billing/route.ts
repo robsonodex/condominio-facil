@@ -1,40 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { supabaseAdmin, getSessionFromReq } from '@/lib/supabase/admin';
 
 const MP_ACCESS_TOKEN = process.env.MERCADOPAGO_ACCESS_TOKEN;
 const MP_API_URL = 'https://api.mercadopago.com';
 
-// Helper function to get user from Authorization header
-async function getUserFromRequest(request: NextRequest) {
-    const authHeader = request.headers.get('authorization');
-    const token = authHeader?.replace('Bearer ', '');
-
-    if (!token) {
-        return null;
-    }
-
-    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
-    if (error || !user) {
-        return null;
-    }
-
-    // Get profile
-    const { data: profile } = await supabaseAdmin
-        .from('users')
-        .select('id, role, condo_id')
-        .eq('email', user.email)
-        .eq('ativo', true)
-        .single();
-
-    return profile;
-}
-
 // GET: Listar cobranças
 export async function GET(request: NextRequest) {
     try {
-        const profile = await getUserFromRequest(request);
+        const session = await getSessionFromReq(request);
 
-        if (!profile) {
+        if (!session) {
             return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
         }
 
@@ -49,11 +24,11 @@ export async function GET(request: NextRequest) {
             .order('created_at', { ascending: false });
 
         // Síndico vê do seu condomínio, morador vê as suas
-        if (profile.role === 'sindico') {
-            query = query.eq('condo_id', profile.condo_id);
-        } else if (profile.role === 'morador') {
-            query = query.eq('morador_id', profile.id);
-        } else if (profile.role !== 'superadmin') {
+        if (session.role === 'sindico') {
+            query = query.eq('condo_id', session.condoId);
+        } else if (session.role === 'morador') {
+            query = query.eq('morador_id', session.userId);
+        } else if (session.role !== 'superadmin') {
             return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
         }
 
@@ -71,16 +46,15 @@ export async function GET(request: NextRequest) {
     }
 }
 
-// POST: Criar cobrança
 export async function POST(request: NextRequest) {
     try {
-        const profile = await getUserFromRequest(request);
+        const session = await getSessionFromReq(request);
 
-        if (!profile) {
+        if (!session) {
             return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
         }
 
-        if (profile.role !== 'sindico' && profile.role !== 'superadmin') {
+        if (session.role !== 'sindico' && session.role !== 'superadmin') {
             return NextResponse.json({ error: 'Apenas síndicos podem criar cobranças' }, { status: 403 });
         }
 
@@ -105,11 +79,11 @@ export async function POST(request: NextRequest) {
         }
 
         // Verificar se morador pertence ao mesmo condomínio
-        if (profile.role === 'sindico' && morador.condo_id !== profile.condo_id) {
+        if (session.role === 'sindico' && morador.condo_id !== session.condoId) {
             return NextResponse.json({ error: 'Morador não pertence ao seu condomínio' }, { status: 403 });
         }
 
-        const condoId = profile.role === 'sindico' ? profile.condo_id : morador.condo_id;
+        const condoId = session.role === 'sindico' ? session.condoId : morador.condo_id;
 
         // Buscar nome do condomínio
         const { data: condo } = await supabaseAdmin
@@ -128,7 +102,7 @@ export async function POST(request: NextRequest) {
                 descricao,
                 valor: parseFloat(valor),
                 data_vencimento,
-                created_by: profile.id
+                created_by: session.userId
             })
             .select()
             .single();
@@ -179,16 +153,15 @@ export async function POST(request: NextRequest) {
     }
 }
 
-// DELETE: Cancelar cobrança
 export async function DELETE(request: NextRequest) {
     try {
-        const profile = await getUserFromRequest(request);
+        const session = await getSessionFromReq(request);
 
-        if (!profile) {
+        if (!session) {
             return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
         }
 
-        if (profile.role !== 'sindico' && profile.role !== 'superadmin') {
+        if (session.role !== 'sindico' && session.role !== 'superadmin') {
             return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
         }
 
@@ -215,16 +188,15 @@ export async function DELETE(request: NextRequest) {
     }
 }
 
-// PATCH: Atualizar status (marcar como pago)
 export async function PATCH(request: NextRequest) {
     try {
-        const profile = await getUserFromRequest(request);
+        const session = await getSessionFromReq(request);
 
-        if (!profile) {
+        if (!session) {
             return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
         }
 
-        if (profile.role !== 'sindico' && profile.role !== 'superadmin') {
+        if (session.role !== 'sindico' && session.role !== 'superadmin') {
             return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
         }
 
@@ -258,7 +230,7 @@ export async function PATCH(request: NextRequest) {
         }
 
         // Verificar permissão
-        if (profile.role === 'sindico' && invoice.condo_id !== profile.condo_id) {
+        if (session.role === 'sindico' && invoice.condo_id !== session.condoId) {
             return NextResponse.json({ error: 'Cobrança não pertence ao seu condomínio' }, { status: 403 });
         }
 

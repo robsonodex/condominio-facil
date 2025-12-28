@@ -93,14 +93,14 @@ export async function DELETE(request: NextRequest) {
             return NextResponse.json({ error: 'Você não pode cancelar este convite' }, { status: 403 });
         }
 
-        if (invite.status !== 'pendente') {
+        if (invite.status !== 'pending') {
             return NextResponse.json({ error: 'Apenas convites pendentes podem ser cancelados' }, { status: 400 });
         }
 
         // Cancelar o convite
         const { error: updateError } = await supabaseAdmin
             .from('guest_invites')
-            .update({ status: 'cancelado' })
+            .update({ status: 'cancelled' })
             .eq('id', inviteId);
 
         if (updateError) {

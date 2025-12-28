@@ -92,13 +92,13 @@ export default function MeusConvitesPage() {
 
     const getStatusBadge = (status: string) => {
         switch (status) {
-            case 'pendente':
+            case 'pending':
                 return <Badge className="bg-yellow-100 text-yellow-800">Pendente</Badge>;
-            case 'usado':
+            case 'used':
                 return <Badge className="bg-green-100 text-green-800">Utilizado</Badge>;
-            case 'expirado':
+            case 'expired':
                 return <Badge className="bg-gray-100 text-gray-800">Expirado</Badge>;
-            case 'cancelado':
+            case 'cancelled':
                 return <Badge className="bg-red-100 text-red-800">Cancelado</Badge>;
             default:
                 return <Badge>{status}</Badge>;
@@ -107,21 +107,21 @@ export default function MeusConvitesPage() {
 
     const getStatusIcon = (status: string) => {
         switch (status) {
-            case 'pendente':
+            case 'pending':
                 return <Clock className="h-5 w-5 text-yellow-500" />;
-            case 'usado':
+            case 'used':
                 return <CheckCircle className="h-5 w-5 text-green-500" />;
-            case 'expirado':
+            case 'expired':
                 return <AlertCircle className="h-5 w-5 text-gray-500" />;
-            case 'cancelado':
+            case 'cancelled':
                 return <XCircle className="h-5 w-5 text-red-500" />;
             default:
                 return <QrCode className="h-5 w-5" />;
         }
     };
 
-    const pendingCount = invites.filter(i => i.status === 'pendente').length;
-    const usedCount = invites.filter(i => i.status === 'usado').length;
+    const pendingCount = invites.filter(i => i.status === 'pending').length;
+    const usedCount = invites.filter(i => i.status === 'used').length;
 
     return (
         <div className="p-6 space-y-6">
@@ -252,7 +252,7 @@ export default function MeusConvitesPage() {
                                     <div className="flex items-center gap-2">
                                         {getStatusBadge(invite.status)}
 
-                                        {invite.status === 'pendente' && (
+                                        {invite.status === 'pending' && (
                                             <Button
                                                 variant="ghost"
                                                 size="sm"

@@ -1,28 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase/admin';
-
-async function getUserFromToken(request: NextRequest) {
-    const authHeader = request.headers.get('authorization');
-    const token = authHeader?.replace('Bearer ', '');
-    if (!token) return null;
-
-    const { data: { user } } = await supabaseAdmin.auth.getUser(token);
-    if (!user) return null;
-
-    const { data: profile } = await supabaseAdmin
-        .from('users')
-        .select('id, role, condo_id, unidade_id, nome')
-        .eq('email', user.email)
-        .single();
-
-    return profile;
-}
+import { supabaseAdmin, getSessionFromReq } from '@/lib/supabase/admin';
 
 // GET: Listar reservas
 export async function GET(request: NextRequest) {
     try {
-        const profile = await getUserFromToken(request);
-        if (!profile) {
+        const session = await getSessionFromReq(request);
+        if (!session) {
             return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
         }
 
@@ -40,7 +23,7 @@ export async function GET(request: NextRequest) {
                 user:users!user_id(id, nome),
                 unidade:units(bloco, numero_unidade)
             `)
-            .eq('condo_id', profile.condo_id)
+            .eq('condo_id', session.condoId)
             .order('data_reserva', { ascending: true });
 
         if (areaId) query = query.eq('area_id', areaId);
@@ -60,8 +43,8 @@ export async function GET(request: NextRequest) {
 // POST: Criar reserva
 export async function POST(request: NextRequest) {
     try {
-        const profile = await getUserFromToken(request);
-        if (!profile) {
+        const session = await getSessionFromReq(request);
+        if (!session) {
             return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
         }
 
@@ -98,10 +81,10 @@ export async function POST(request: NextRequest) {
 
         // Criar reserva
         const reservationData = {
-            condo_id: profile.condo_id,
+            condo_id: session.condoId,
             area_id,
-            user_id: profile.id,
-            unidade_id: profile.unidade_id,
+            user_id: session.userId,
+            unidade_id: session.unidadeId,
             data_reserva,
             horario_inicio,
             horario_fim,
@@ -135,8 +118,8 @@ export async function POST(request: NextRequest) {
 // PUT: Atualizar reserva (aprovar/rejeitar/cancelar)
 export async function PUT(request: NextRequest) {
     try {
-        const profile = await getUserFromToken(request);
-        if (!profile) {
+        const session = await getSessionFromReq(request);
+        if (!session) {
             return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
         }
 
@@ -159,8 +142,8 @@ export async function PUT(request: NextRequest) {
         }
 
         // Verificar permissão
-        const isSindico = ['sindico', 'superadmin'].includes(profile.role);
-        const isOwner = reservation.user_id === profile.id;
+        const isSindico = ['sindico', 'superadmin'].includes(session.role);
+        const isOwner = reservation.user_id === session.userId;
 
         let updateData: any = { updated_at: new Date().toISOString() };
 
@@ -168,7 +151,7 @@ export async function PUT(request: NextRequest) {
             case 'aprovar':
                 if (!isSindico) return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
                 updateData.status = 'aprovada';
-                updateData.aprovado_por = profile.id;
+                updateData.aprovado_por = session.userId;
                 updateData.data_aprovacao = new Date().toISOString();
                 break;
             case 'rejeitar':
@@ -222,8 +205,8 @@ export async function PUT(request: NextRequest) {
 // DELETE: Cancelar reserva
 export async function DELETE(request: NextRequest) {
     try {
-        const profile = await getUserFromToken(request);
-        if (!profile) {
+        const session = await getSessionFromReq(request);
+        if (!session) {
             return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
         }
 
@@ -238,7 +221,7 @@ export async function DELETE(request: NextRequest) {
             .from('reservations')
             .update({ status: 'cancelada' })
             .eq('id', id)
-            .or(`user_id.eq.${profile.id},condo_id.eq.${profile.condo_id}`);
+            .or(`user_id.eq.${session.userId},condo_id.eq.${session.condoId}`);
 
         if (error) throw error;
         return NextResponse.json({ success: true });

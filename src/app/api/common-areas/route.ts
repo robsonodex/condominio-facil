@@ -1,34 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase/admin';
-
-// Helper to get user from token
-async function getUserFromToken(request: NextRequest) {
-    const authHeader = request.headers.get('authorization');
-    const token = authHeader?.replace('Bearer ', '');
-    if (!token) return null;
-
-    const { data: { user } } = await supabaseAdmin.auth.getUser(token);
-    if (!user) return null;
-
-    const { data: profile } = await supabaseAdmin
-        .from('users')
-        .select('id, role, condo_id')
-        .eq('email', user.email)
-        .single();
-
-    return profile;
-}
+import { supabaseAdmin, getSessionFromReq } from '@/lib/supabase/admin';
 
 // GET: Listar áreas comuns
 export async function GET(request: NextRequest) {
     try {
-        const profile = await getUserFromToken(request);
-        if (!profile) {
+        const session = await getSessionFromReq(request);
+        if (!session) {
             return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
         }
 
         const { searchParams } = new URL(request.url);
-        const condoId = searchParams.get('condo_id') || profile.condo_id;
+        const condoId = searchParams.get('condo_id') || session.condoId;
 
         const { data, error } = await supabaseAdmin
             .from('common_areas')
@@ -47,8 +29,8 @@ export async function GET(request: NextRequest) {
 // POST: Criar área comum
 export async function POST(request: NextRequest) {
     try {
-        const profile = await getUserFromToken(request);
-        if (!profile || !['sindico', 'superadmin'].includes(profile.role)) {
+        const session = await getSessionFromReq(request);
+        if (!session || !['sindico', 'superadmin'].includes(session.role)) {
             return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
         }
 
@@ -62,7 +44,7 @@ export async function POST(request: NextRequest) {
         const { data, error } = await supabaseAdmin
             .from('common_areas')
             .insert({
-                condo_id: profile.condo_id,
+                condo_id: session.condoId,
                 nome,
                 descricao,
                 capacidade_maxima: capacidade_maxima || 20,
@@ -86,8 +68,8 @@ export async function POST(request: NextRequest) {
 // PUT: Atualizar área comum
 export async function PUT(request: NextRequest) {
     try {
-        const profile = await getUserFromToken(request);
-        if (!profile || !['sindico', 'superadmin'].includes(profile.role)) {
+        const session = await getSessionFromReq(request);
+        if (!session || !['sindico', 'superadmin'].includes(session.role)) {
             return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
         }
 
@@ -102,7 +84,7 @@ export async function PUT(request: NextRequest) {
             .from('common_areas')
             .update({ ...updateData, updated_at: new Date().toISOString() })
             .eq('id', id)
-            .eq('condo_id', profile.condo_id)
+            .eq('condo_id', session.condoId)
             .select()
             .single();
 
@@ -116,8 +98,8 @@ export async function PUT(request: NextRequest) {
 // DELETE: Desativar área comum
 export async function DELETE(request: NextRequest) {
     try {
-        const profile = await getUserFromToken(request);
-        if (!profile || !['sindico', 'superadmin'].includes(profile.role)) {
+        const session = await getSessionFromReq(request);
+        if (!session || !['sindico', 'superadmin'].includes(session.role)) {
             return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
         }
 
@@ -132,7 +114,7 @@ export async function DELETE(request: NextRequest) {
             .from('common_areas')
             .update({ ativo: false })
             .eq('id', id)
-            .eq('condo_id', profile.condo_id);
+            .eq('condo_id', session.condoId);
 
         if (error) throw error;
         return NextResponse.json({ success: true });

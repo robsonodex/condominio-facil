@@ -26,37 +26,37 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ profile: null });
         }
 
-        console.log('[PROFILE API] User verified:', user.email);
+        console.log('[PROFILE API] User verified:', user.email, 'ID:', user.id);
 
-        // Fetch profile by EMAIL (most reliable)
+        // Fetch profile by ID (Absolute uniqueness)
         const { data: profile, error: profileError } = await supabaseAdmin
-            .from('users')
-            .select('*')
-            .eq('email', user.email)
-            .eq('ativo', true)
-            .single();
-
-        if (profile) {
-            console.log('[PROFILE API] ✅ Profile found - Role:', profile.role, 'ID:', profile.id);
-            return NextResponse.json({ profile });
-        }
-
-        console.log('[PROFILE API] Email lookup failed:', profileError?.message);
-
-        // Fallback: Try by auth ID
-        const { data: profileById, error: idError } = await supabaseAdmin
             .from('users')
             .select('*')
             .eq('id', user.id)
             .eq('ativo', true)
             .single();
 
-        if (profileById) {
-            console.log('[PROFILE API] ✅ Found by ID - Role:', profileById.role);
-            return NextResponse.json({ profile: profileById });
+        if (profile) {
+            console.log('[PROFILE API] ✅ Profile found by ID - Role:', profile.role);
+            return NextResponse.json({ profile });
         }
 
-        console.log('[PROFILE API] ID lookup failed:', idError?.message);
+        console.log('[PROFILE API] ID lookup failed:', profileError?.message);
+
+        // Fallback: Try by Email only if ID lookup fails and we have an email
+        const { data: profileByEmail, error: emailError } = await supabaseAdmin
+            .from('users')
+            .select('*')
+            .eq('email', user.email)
+            .eq('ativo', true)
+            .single();
+
+        if (profileByEmail) {
+            console.log('[PROFILE API] ✅ Found by Email - Role:', profileByEmail.role);
+            return NextResponse.json({ profile: profileByEmail });
+        }
+
+        console.log('[PROFILE API] Email lookup failed:', emailError?.message);
 
         // Check if user exists but is inactive
         const { data: inactiveUser } = await supabaseAdmin

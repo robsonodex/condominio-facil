@@ -80,10 +80,11 @@ export async function POST(request: NextRequest) {
         const expiresIn = Math.floor((validUntil.getTime() - Date.now()) / 1000);
         const token = jwt.sign(payload, JWT_SECRET, { expiresIn });
 
-        // Gerar hash do token
-        const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+        // Salvar no banco usando as colunas corretas da tabela
+        const visitDate = validFrom.toISOString().split('T')[0]; // Extrair apenas a data
+        const visitTimeStart = validFrom.toTimeString().split(' ')[0].substring(0, 5); // HH:MM
+        const visitTimeEnd = validUntil.toTimeString().split(' ')[0].substring(0, 5); // HH:MM
 
-        // Salvar no banco
         const { data: invite, error: insertError } = await supabaseAdmin
             .from('guest_invites')
             .insert({
@@ -92,10 +93,10 @@ export async function POST(request: NextRequest) {
                 unit_id: userData.unidade_id,
                 created_by: session.userId,
                 guest_name: guest_name.trim(),
-                valid_from: validFrom.toISOString(),
-                valid_until: validUntil.toISOString(),
-                token_hash: tokenHash,
-                status: 'pendente',
+                visit_date: visitDate,
+                visit_time_start: visitTimeStart,
+                visit_time_end: visitTimeEnd,
+                status: 'pending',
             })
             .select(`
                 *,

@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
             });
         }
 
-        // Buscar convite no banco
+        // Buscar convite no banco por ID ou qr_code_token
         let query = supabaseAdmin
             .from('guest_invites')
             .select(`
@@ -93,12 +93,10 @@ export async function POST(request: NextRequest) {
                 creator:users!created_by(nome)
             `);
 
-        if (tokenHash) {
-            query = query.eq('token_hash', tokenHash);
-        } else if (inviteId) { // If it's a UUID, we search by ID
+        // Sempre buscamos por ID (seja UUID direto ou inviteId do JWT)
+        if (inviteId) {
             query = query.eq('id', inviteId);
         } else {
-            // This case should ideally not be reached if token is always either UUID or JWT
             return NextResponse.json({
                 valid: false,
                 message: 'QR Code inválido - formato desconhecido',
@@ -122,8 +120,8 @@ export async function POST(request: NextRequest) {
             });
         }
 
-        // Verificar status
-        if (invite.status === 'usado') {
+        // Verificar status (usando valores em inglês da tabela)
+        if (invite.status === 'used') {
             return NextResponse.json({
                 valid: false,
                 message: 'Convite já foi utilizado',
@@ -131,37 +129,45 @@ export async function POST(request: NextRequest) {
             });
         }
 
-        if (invite.status === 'cancelado') {
+        if (invite.status === 'cancelled') {
             return NextResponse.json({
                 valid: false,
                 message: 'Convite foi cancelado',
             });
         }
 
-        if (invite.status === 'expirado') {
+        if (invite.status === 'expired') {
             return NextResponse.json({
                 valid: false,
                 message: 'Convite expirado',
             });
         }
 
-        // Verificar datas
+        // Verificar data de visita
         const now = new Date();
-        const validFrom = new Date(invite.valid_from);
-        const validUntil = new Date(invite.valid_until);
+        const today = now.toISOString().split('T')[0];
+        const visitDate = invite.visit_date;
 
-        if (now < validFrom) {
+        // Montar datetime de início e fim para verificação
+        const visitStart = invite.visit_time_start
+            ? new Date(`${visitDate}T${invite.visit_time_start}`)
+            : new Date(`${visitDate}T00:00:00`);
+        const visitEnd = invite.visit_time_end
+            ? new Date(`${visitDate}T${invite.visit_time_end}`)
+            : new Date(`${visitDate}T23:59:59`);
+
+        if (now < visitStart) {
             return NextResponse.json({
                 valid: false,
-                message: `Convite válido apenas a partir de ${validFrom.toLocaleString('pt-BR')}`,
+                message: `Convite válido apenas a partir de ${visitStart.toLocaleString('pt-BR')}`,
             });
         }
 
-        if (now > validUntil) {
+        if (now > visitEnd) {
             // Marcar como expirado
             await supabaseAdmin
                 .from('guest_invites')
-                .update({ status: 'expirado' })
+                .update({ status: 'expired' })
                 .eq('id', invite.id);
 
             return NextResponse.json({
@@ -174,7 +180,7 @@ export async function POST(request: NextRequest) {
         const { error: updateError } = await supabaseAdmin
             .from('guest_invites')
             .update({
-                status: 'usado',
+                status: 'used',
                 used_at: now.toISOString(),
                 validated_by: session.userId,
             })

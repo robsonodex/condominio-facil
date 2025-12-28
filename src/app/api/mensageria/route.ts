@@ -1,28 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase/admin';
-
-async function getUserFromToken(request: NextRequest) {
-    const authHeader = request.headers.get('authorization');
-    const token = authHeader?.replace('Bearer ', '');
-    if (!token) return null;
-
-    const { data: { user } } = await supabaseAdmin.auth.getUser(token);
-    if (!user) return null;
-
-    const { data: profile } = await supabaseAdmin
-        .from('users')
-        .select('id, role, condo_id, nome, email')
-        .eq('email', user.email)
-        .single();
-
-    return profile;
-}
+import { supabaseAdmin, getSessionFromReq } from '@/lib/supabase/admin';
 
 // GET: Listar entregas
 export async function GET(request: NextRequest) {
     try {
-        const profile = await getUserFromToken(request);
-        if (!profile) {
+        const session = await getSessionFromReq(request);
+        if (!session) {
             return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
         }
 
@@ -39,7 +22,7 @@ export async function GET(request: NextRequest) {
                 morador:users!morador_id(id, nome, email, telefone),
                 recebedor:users!recebido_por(id, nome)
             `)
-            .eq('condo_id', profile.condo_id)
+            .eq('condo_id', session.condoId)
             .order('created_at', { ascending: false })
             .limit(limit);
 
@@ -47,8 +30,8 @@ export async function GET(request: NextRequest) {
         if (unitId) query = query.eq('unit_id', unitId);
 
         // Se for morador, mostrar apenas suas entregas
-        if (profile.role === 'morador' || profile.role === 'inquilino') {
-            query = query.eq('morador_id', profile.id);
+        if (session.role === 'morador' || session.role === 'inquilino') {
+            query = query.eq('morador_id', session.userId);
         }
 
         const { data, error } = await query;
@@ -64,13 +47,13 @@ export async function GET(request: NextRequest) {
 // POST: Cadastrar nova entrega
 export async function POST(request: NextRequest) {
     try {
-        const profile = await getUserFromToken(request);
-        if (!profile) {
+        const session = await getSessionFromReq(request);
+        if (!session) {
             return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
         }
 
         // Apenas porteiro e síndico podem cadastrar
-        if (!['porteiro', 'sindico', 'superadmin'].includes(profile.role)) {
+        if (!['porteiro', 'sindico', 'superadmin'].includes(session.role)) {
             return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
         }
 
@@ -91,7 +74,7 @@ export async function POST(request: NextRequest) {
         }
 
         const entregaData = {
-            condo_id: profile.condo_id,
+            condo_id: session.condoId,
             unit_id,
             morador_id,
             remetente,
@@ -100,7 +83,7 @@ export async function POST(request: NextRequest) {
             codigo_rastreio,
             foto_url,
             status: 'aguardando',
-            recebido_por: profile.id,
+            recebido_por: session.userId,
             data_recebimento: new Date().toISOString(),
         };
 
@@ -120,7 +103,7 @@ export async function POST(request: NextRequest) {
         if (notificar && entrega) {
             // Criar notificação no sistema
             await supabaseAdmin.from('notifications').insert({
-                condo_id: profile.condo_id,
+                condo_id: session.condoId,
                 user_id: morador_id,
                 title: '📦 Nova entrega na mensageria!',
                 message: `Você tem uma ${tipo || 'encomenda'} aguardando retirada${remetente ? ` de ${remetente}` : ''}. Retire na portaria/mensageria.`,
@@ -153,7 +136,7 @@ export async function POST(request: NextRequest) {
                                 remetente: remetente || 'Não informado',
                                 unidade: entrega.unit ? `${entrega.unit.bloco} ${entrega.unit.numero_unidade}` : '',
                             },
-                            condoId: profile.condo_id,
+                            condoId: session.condoId,
                             internalCall: true
                         }),
                     });
@@ -176,12 +159,12 @@ export async function POST(request: NextRequest) {
 // PUT: Atualizar entrega (registrar retirada)
 export async function PUT(request: NextRequest) {
     try {
-        const profile = await getUserFromToken(request);
-        if (!profile) {
+        const session = await getSessionFromReq(request);
+        if (!session) {
             return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
         }
 
-        if (!['porteiro', 'sindico', 'superadmin'].includes(profile.role)) {
+        if (!['porteiro', 'sindico', 'superadmin'].includes(session.role)) {
             return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
         }
 
@@ -245,7 +228,7 @@ export async function PUT(request: NextRequest) {
                 retirado_por_nome,
                 retirado_por_documento: body.retirado_por_documento,
                 data_retirada: new Date().toISOString(),
-                entregue_por: profile.id,
+                entregue_por: session.userId,
                 signature_url: signatureUrl
             };
 
@@ -278,15 +261,14 @@ export async function PUT(request: NextRequest) {
     }
 }
 
-// DELETE: Excluir entrega
 export async function DELETE(request: NextRequest) {
     try {
-        const profile = await getUserFromToken(request);
-        if (!profile) {
+        const session = await getSessionFromReq(request);
+        if (!session) {
             return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
         }
 
-        if (!['sindico', 'superadmin'].includes(profile.role)) {
+        if (!['sindico', 'superadmin'].includes(session.role)) {
             return NextResponse.json({ error: 'Apenas síndico pode excluir' }, { status: 403 });
         }
 
@@ -301,7 +283,7 @@ export async function DELETE(request: NextRequest) {
             .from('mensageria_entregas')
             .delete()
             .eq('id', id)
-            .eq('condo_id', profile.condo_id);
+            .eq('condo_id', session.condoId);
 
         if (error) throw error;
 

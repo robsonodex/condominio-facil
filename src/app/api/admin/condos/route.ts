@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { supabaseAdmin, getSessionFromReq } from '@/lib/supabase/admin';
 
 /**
  * DELETE /api/admin/condos
@@ -8,28 +8,13 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
  */
 export async function DELETE(request: NextRequest) {
     try {
-        // Get token from Authorization header
-        const authHeader = request.headers.get('authorization');
-        const token = authHeader?.replace('Bearer ', '');
-
-        if (!token) {
+        // Verificar autenticação e permissões
+        const session = await getSessionFromReq(request);
+        if (!session) {
             return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
         }
 
-        // Verify user
-        const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-        if (authError || !user) {
-            return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
-        }
-
-        // Check if superadmin
-        const { data: profile } = await supabaseAdmin
-            .from('users')
-            .select('role')
-            .eq('email', user.email)
-            .single();
-
-        if (!profile || profile.role !== 'superadmin') {
+        if (!session.isSuperadmin) {
             return NextResponse.json({ error: 'Apenas superadmin pode deletar condomínios' }, { status: 403 });
         }
 

@@ -1,12 +1,22 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
+/**
+ * SUPABASE SERVER CLIENT
+ * 
+ * Cria uma NOVA instância para cada request do servidor.
+ * Isso é NECESSÁRIO porque:
+ * - Cada request tem seu próprio contexto de cookies
+ * - Server Components são stateless por design
+ * - O cliente precisa acessar cookies específicos do request
+ * 
+ * ⚠️  NÃO USE SINGLETON aqui - causaria vazamento de sessão entre usuários!
+ * 
+ * @returns {Promise<SupabaseClient>} Nova instância do cliente Supabase para este request
+ */
 export async function createClient() {
     const cookieStore = await cookies();
     const allCookies = cookieStore.getAll();
-
-    // Debug: Log cookie names (not values for security)
-    console.log('[SERVER] Creating Supabase client, cookies found:', allCookies.map(c => c.name).join(', ') || 'NONE');
 
     return createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -31,3 +41,4 @@ export async function createClient() {
         }
     );
 }
+

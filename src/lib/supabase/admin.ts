@@ -97,11 +97,14 @@ export async function getSessionFromReq(req: Request): Promise<{
     userId: string;
     email: string;
     role: string;
+    nome: string | null;
     condoId: string | null;
+    unidadeId: string | null;
     isSindico: boolean;
     isSuperadmin: boolean;
 } | null> {
     try {
+        // ... (resto do código igual até o query do profile)
         // Get authorization header or cookie
         const authHeader = req.headers.get('authorization');
         const cookies = req.headers.get('cookie') || '';
@@ -172,12 +175,13 @@ export async function getSessionFromReq(req: Request): Promise<{
         }
 
         console.log('[GET_SESSION] Auth user email:', user.email);
+        console.log('[GET_SESSION] Auth user ID:', user.id);
 
-        // Get user profile - IMPORTANTE: buscar também usuários inativos para debug
+        // Get user profile - Use ID instead of email to avoid "multiple rows" errors
         const { data: profile, error: profileError } = await supabaseAdmin
             .from('users')
-            .select('id, email, role, condo_id, ativo')
-            .eq('email', user.email)
+            .select('id, email, role, condo_id, ativo, nome, unidade_id')
+            .eq('id', user.id)
             .single();
 
         if (profileError) {
@@ -202,7 +206,9 @@ export async function getSessionFromReq(req: Request): Promise<{
             userId: profile.id,
             email: profile.email,
             role: profile.role,
+            nome: profile.nome,
             condoId: profile.condo_id,
+            unidadeId: profile.unidade_id,
             isSindico: profile.role === 'sindico',
             isSuperadmin: profile.role === 'superadmin',
         };

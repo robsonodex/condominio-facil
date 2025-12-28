@@ -53,25 +53,16 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
-// PATCH /api/admin/subscriptions
 export async function PATCH(request: NextRequest) {
     try {
-        const supabase = await createClient();
-
         // Verificar autenticação
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
+        const session = await getSessionFromReq(request);
+        if (!session) {
             return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
         }
 
         // Verificar se é superadmin
-        const { data: profile } = await supabase
-            .from('users')
-            .select('role')
-            .eq('email', user.email)
-            .single();
-
-        if (!profile || profile.role !== 'superadmin') {
+        if (!session.isSuperadmin) {
             return NextResponse.json({ error: 'Apenas superadmin' }, { status: 403 });
         }
 
@@ -82,11 +73,7 @@ export async function PATCH(request: NextRequest) {
             return NextResponse.json({ error: 'ID da assinatura obrigatório' }, { status: 400 });
         }
 
-        // Usar service role para contornar RLS
-        const supabaseAdmin = createServiceRoleClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY!
-        );
+        // Usar service role para contornar RLS (Já importado como supabaseAdmin)
 
         // Buscar dados atuais da assinatura e síndico para email
         const { data: currentSub } = await supabaseAdmin
