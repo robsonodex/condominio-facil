@@ -1,45 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { getSessionFromReq, supabaseAdmin } from '@/lib/supabase/admin';
 import { encryptPassword, isEncrypted } from '@/lib/smtp-crypto';
 
 export async function GET(request: NextRequest) {
     try {
-        const supabase = await createClient();
+        // Usar getSessionFromReq para autenticação robusta
+        const session = await getSessionFromReq(request);
 
-        // Verificar autenticação
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
+        if (!session) {
             return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
         }
 
-        // Buscar perfil do usuário
-        const { data: profile } = await supabase
-            .from('users')
-            .select('id, role, condo_id')
-            .eq('id', user.id)
-            .single();
-
-        if (!profile || !['sindico', 'superadmin'].includes(profile.role)) {
+        if (!['sindico', 'superadmin'].includes(session.role)) {
             return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
         }
 
         // Buscar configuração SMTP do condomínio
-        const { data: config, error } = await supabase
+        const { data: config, error } = await supabaseAdmin
             .from('configuracoes_smtp')
             .select('id, smtp_host, smtp_port, smtp_user, smtp_from_email, smtp_from_name, smtp_secure, is_active, created_at, updated_at')
-            .eq('condominio_id', profile.condo_id)
+            .eq('condominio_id', session.condoId)
             .single();
 
         // PGRST116 = nenhuma linha encontrada (ok, não configurado ainda)
-        // 42P01 = tabela não existe (precisa executar SQL)
         if (error) {
             if (error.code === 'PGRST116') {
-                // Não encontrou configuração - normal
                 return NextResponse.json({ configured: false, config: null });
             }
             if (error.code === '42P01') {
-                // Tabela não existe - retornar como não configurado
-                console.warn('Tabela configuracoes_smtp não existe. Execute o script SQL.');
+                console.warn('Tabela configuracoes_smtp não existe.');
                 return NextResponse.json({ configured: false, config: null, tableNotFound: true });
             }
             console.error('Erro ao buscar config SMTP:', error);
@@ -53,33 +42,24 @@ export async function GET(request: NextRequest) {
 
     } catch (error: any) {
         console.error('Erro na API configuracoes-smtp:', error);
-        // Retornar como não configurado em vez de erro para não quebrar a página
         return NextResponse.json({ configured: false, config: null, error: error.message });
     }
 }
 
 export async function POST(request: NextRequest) {
     try {
-        const supabase = await createClient();
+        // Usar getSessionFromReq para autenticação robusta
+        const session = await getSessionFromReq(request);
 
-        // Verificar autenticação
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
+        if (!session) {
             return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
         }
 
-        // Buscar perfil do usuário
-        const { data: profile } = await supabase
-            .from('users')
-            .select('id, role, condo_id')
-            .eq('id', user.id)
-            .single();
-
-        if (!profile || !['sindico', 'superadmin'].includes(profile.role)) {
+        if (!['sindico', 'superadmin'].includes(session.role)) {
             return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
         }
 
-        if (!profile.condo_id) {
+        if (!session.condoId) {
             return NextResponse.json({ error: 'Condomínio não encontrado' }, { status: 400 });
         }
 
@@ -104,7 +84,7 @@ export async function POST(request: NextRequest) {
 
         // Preparar dados para salvar
         const dataToSave: any = {
-            condominio_id: profile.condo_id,
+            condominio_id: session.condoId,
             smtp_host,
             smtp_port: parseInt(smtp_port),
             smtp_user,
@@ -121,17 +101,17 @@ export async function POST(request: NextRequest) {
         }
 
         // Verificar se já existe configuração
-        const { data: existing } = await supabase
+        const { data: existing } = await supabaseAdmin
             .from('configuracoes_smtp')
             .select('id')
-            .eq('condominio_id', profile.condo_id)
+            .eq('condominio_id', session.condoId)
             .single();
 
         let result;
 
         if (existing) {
             // Atualizar existente
-            const { data, error } = await supabase
+            const { data, error } = await supabaseAdmin
                 .from('configuracoes_smtp')
                 .update(dataToSave)
                 .eq('id', existing.id)
@@ -146,10 +126,10 @@ export async function POST(request: NextRequest) {
                 return NextResponse.json({ error: 'Senha SMTP é obrigatória para nova configuração' }, { status: 400 });
             }
 
-            dataToSave.created_by = user.id;
+            dataToSave.created_by = session.userId;
             dataToSave.created_at = new Date().toISOString();
 
-            const { data, error } = await supabase
+            const { data, error } = await supabaseAdmin
                 .from('configuracoes_smtp')
                 .insert(dataToSave)
                 .select('id, smtp_host, smtp_port, smtp_user, smtp_from_email, smtp_from_name, smtp_secure, is_active')
@@ -173,29 +153,21 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
     try {
-        const supabase = await createClient();
+        // Usar getSessionFromReq para autenticação robusta
+        const session = await getSessionFromReq(request);
 
-        // Verificar autenticação
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
+        if (!session) {
             return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
         }
 
-        // Buscar perfil do usuário
-        const { data: profile } = await supabase
-            .from('users')
-            .select('id, role, condo_id')
-            .eq('id', user.id)
-            .single();
-
-        if (!profile || !['sindico', 'superadmin'].includes(profile.role)) {
+        if (!['sindico', 'superadmin'].includes(session.role)) {
             return NextResponse.json({ error: 'Sem permissão' }, { status: 403 });
         }
 
-        const { error } = await supabase
+        const { error } = await supabaseAdmin
             .from('configuracoes_smtp')
             .delete()
-            .eq('condominio_id', profile.condo_id);
+            .eq('condominio_id', session.condoId);
 
         if (error) throw error;
 
