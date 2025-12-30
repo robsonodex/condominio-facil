@@ -1,27 +1,51 @@
 import { WhatsAppProvider } from './types';
 import { MetaWhatsAppProvider } from './providers/meta';
 import { TwilioWhatsAppProvider } from './providers/twilio';
+import { EvolutionWhatsAppProvider } from './providers/evolution';
+import { ZApiWhatsAppProvider } from './providers/zapi';
+import { getCondoIntegration } from '../integrations';
 
 // Re-export types for convenience
 export type { WhatsAppProvider, SendMessageParams, SendTemplateParams, WhatsAppResponse } from './types';
 
 /**
  * WhatsApp Service Factory
- * Returns the appropriate provider based on environment configuration
+ * Returns the appropriate provider:
+ * 1. If condoId is provided, looks for a specific integration (Z-API, Evolution)
+ * 2. Fallback to global environment configuration
  */
-export function getWhatsAppProvider(): WhatsAppProvider {
-    const provider = process.env.WHATSAPP_PROVIDER || 'meta';
+export async function getWhatsAppProvider(condoId?: string): Promise<WhatsAppProvider> {
+    // 1. Try to find a specific integration for the condo
+    if (condoId) {
+        const integration = await getCondoIntegration(condoId, 'whatsapp');
 
-    switch (provider.toLowerCase()) {
+        if (integration && integration.ativo) {
+            switch (integration.provider) {
+                case 'evolution':
+                    return new EvolutionWhatsAppProvider();
+                case 'z-api':
+                case 'zapi':
+                    return new ZApiWhatsAppProvider();
+            }
+        }
+    }
+
+    // 2. Global Fallback
+    const globalProvider = process.env.WHATSAPP_PROVIDER || 'meta';
+
+    switch (globalProvider.toLowerCase()) {
+        case 'evolution':
+            return new EvolutionWhatsAppProvider();
+        case 'z-api':
+        case 'zapi':
+            return new ZApiWhatsAppProvider();
         case 'meta':
         case 'facebook':
             return new MetaWhatsAppProvider();
-
         case 'twilio':
             return new TwilioWhatsAppProvider();
-
         default:
-            console.warn(`Unknown WhatsApp provider: ${provider}, defaulting to Meta`);
+            console.warn(`Unknown WhatsApp provider: ${globalProvider}, defaulting to Meta`);
             return new MetaWhatsAppProvider();
     }
 }

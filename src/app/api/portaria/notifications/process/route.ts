@@ -120,6 +120,13 @@ export async function POST(request: NextRequest) {
 // Função para enviar WhatsApp
 async function sendWhatsApp(notification: any): Promise<boolean> {
     const delivery = notification.delivery;
+    const condoId = delivery.condo_id;
+
+    if (!condoId) {
+        console.error('[WhatsApp] Delivery notification missing condoId');
+        return false;
+    }
+
     const unitLabel = delivery.unit ?
         `${delivery.unit.bloco || ''} ${delivery.unit.numero}`.trim() :
         'Unidade';
@@ -141,28 +148,21 @@ ${process.env.NEXT_PUBLIC_APP_URL || 'https://app.condofacil.com'}/deliveries/${
 _Retire na portaria em até 7 dias._
     `.trim();
 
-    // Em produção, integrar com WhatsApp Business API
-    // Exemplo com Twilio, MessageBird, Zenvia, etc.
+    try {
+        const { getWhatsAppProvider } = await import('@/lib/whatsapp');
+        const provider = await getWhatsAppProvider(condoId);
 
-    if (process.env.WHATSAPP_API_URL && process.env.WHATSAPP_API_KEY) {
-        const response = await fetch(process.env.WHATSAPP_API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${process.env.WHATSAPP_API_KEY}`
-            },
-            body: JSON.stringify({
-                to: notification.to_address,
-                message
-            })
+        const result = await provider.sendMessage({
+            to: notification.to_address,
+            message,
+            condoId
         });
 
-        return response.ok;
+        return result.success;
+    } catch (error) {
+        console.error('[WhatsApp] Provider error:', error);
+        return false;
     }
-
-    // Simular envio em desenvolvimento
-    console.log(`[WhatsApp] Enviando para ${notification.to_address}:`, message);
-    return true;
 }
 
 // Função para enviar Email

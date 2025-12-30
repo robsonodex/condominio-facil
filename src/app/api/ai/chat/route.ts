@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
-// 🚀 UNIFICAÇÃO AI: Usando Groq (Llama 3) para tudo
-const GROQ_API_KEY = process.env.GROQ_API_KEY;
-const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const CHAT_MODEL = 'llama-3.1-70b-versatile'; // Modelo excelente para conversas complexas
+// 🚀 UNIFICAÇÃO AI: Usando OpenRouter (NVidia/Llama 3.1) para tudo
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const CHAT_MODEL = 'meta-llama/llama-3.1-70b-instruct'; // Modelo potente via OpenRouter
 
 interface ChatMessage {
     role: 'user' | 'assistant' | 'system';
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
             .eq('condo_id', profile.condo_id)
             .single();
 
-        // Verificar limites mensais (mantido igual)
+        // Verificar limites mensais
         const currentMonth = new Date().toISOString().slice(0, 7);
         if (settings) {
             if (settings.mes_referencia !== currentMonth) {
@@ -129,18 +129,18 @@ ${agent.instrucoes_personalizadas ? `INSTRUÇÕES ESPECIAIS:\n${agent.instrucoes
 BASE DE CONHECIMENTO DO CONDOMÍNIO:
 ${conhecimento || 'Nenhum documento cadastrado ainda.'}`;
 
-        // Chamar Groq (Llama 3)
+        // Chamar OpenRouter
         let resposta = '';
         let tokensUsados = 0;
 
-        if (GROQ_API_KEY) {
-            const groqResponse = await callGroq(systemPrompt, pergunta, historico);
-            resposta = groqResponse.text;
-            tokensUsados = groqResponse.tokens;
+        if (OPENROUTER_API_KEY) {
+            const aiResponse = await callOpenRouter(systemPrompt, pergunta, historico);
+            resposta = aiResponse.text;
+            tokensUsados = aiResponse.tokens;
         } else {
             return NextResponse.json({
                 error: 'IA não configurada',
-                message: 'Chave da API GROQ não configurada.'
+                message: 'Chave da API OPENROUTER não configurada.'
             }, { status: 500 });
         }
 
@@ -184,16 +184,14 @@ ${conhecimento || 'Nenhum documento cadastrado ainda.'}`;
     }
 }
 
-// Função para chamar Groq
-async function callGroq(systemPrompt: string, pergunta: string, historico?: ChatMessage[]): Promise<{ text: string; tokens: number }> {
+// Função para chamar OpenRouter
+async function callOpenRouter(systemPrompt: string, pergunta: string, historico?: ChatMessage[]): Promise<{ text: string; tokens: number }> {
     const messages = [
         { role: 'system', content: systemPrompt }
     ];
 
-    // Adicionar histórico recente
     if (historico && historico.length > 0) {
         for (const msg of historico.slice(-6)) {
-            // Mapping de roles para garantir compatibilidade
             const role = msg.role === 'user' ? 'user' : 'assistant';
             messages.push({ role, content: msg.content });
         }
@@ -201,24 +199,26 @@ async function callGroq(systemPrompt: string, pergunta: string, historico?: Chat
 
     messages.push({ role: 'user', content: pergunta });
 
-    const response = await fetch(GROQ_API_URL, {
+    const response = await fetch(OPENROUTER_URL, {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${GROQ_API_KEY}`,
+            'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+            'HTTP-Referer': 'https://meucondominiofacil.com',
+            'X-Title': 'Meu Condominio Facil',
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
             model: CHAT_MODEL,
             messages,
-            temperature: 0.5, // Equilíbrio entre criatividade e precisão
+            temperature: 0.5,
             max_tokens: 1024
         })
     });
 
     if (!response.ok) {
         const error = await response.text();
-        console.error('[Groq Chat] Erro:', error);
-        throw new Error('Erro ao chamar Groq API');
+        console.error('[OpenRouter Chat] Erro:', error);
+        throw new Error('Erro ao chamar OpenRouter API');
     }
 
     const data = await response.json();

@@ -6,10 +6,10 @@ const supabase = createClient(
     process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// 🚀 UNIFICAÇÃO AI: Groq (Llama 3.2 Vision)
-const GROQ_API_KEY = process.env.GROQ_API_KEY;
-const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const AUDIT_MODEL = 'llama-3.2-11b-vision-preview'; // Modelo de visão para analisar orçamentos
+// 🚀 UNIFICAÇÃO AI: OpenRouter (NVidia/Llama 3.2 Vision)
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const AUDIT_MODEL = 'meta-llama/llama-3.2-11b-vision-instruct'; // Modelo de visão potente via OpenRouter
 
 async function fileToBase64(file: File): Promise<string> {
     const bytes = await file.arrayBuffer();
@@ -26,8 +26,8 @@ function cleanJsonResponse(text: string) {
 
 export async function POST(req: NextRequest) {
     try {
-        if (!GROQ_API_KEY) {
-            return NextResponse.json({ error: 'GROQ_API_KEY não configurada' }, { status: 500 });
+        if (!OPENROUTER_API_KEY) {
+            return NextResponse.json({ error: 'OPENROUTER_API_KEY não configurada' }, { status: 500 });
         }
 
         const formData = await req.formData();
@@ -42,13 +42,15 @@ export async function POST(req: NextRequest) {
         const base64File = await fileToBase64(file);
         const imageUrl = `data:${file.type || 'image/jpeg'};base64,${base64File}`;
 
-        console.log('[Audit Groq] Iniciando análise...');
+        console.log('[Audit OpenRouter] Iniciando análise...');
 
-        // Chamada Groq (Llama Vision)
-        const response = await fetch(GROQ_API_URL, {
+        // Chamada OpenRouter (Llama Vision)
+        const response = await fetch(OPENROUTER_URL, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${GROQ_API_KEY}`,
+                'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+                'HTTP-Referer': 'https://meucondominiofacil.com',
+                'X-Title': 'Meu Condominio Facil',
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
@@ -91,7 +93,7 @@ REGRAS:
                         ]
                     }
                 ],
-                temperature: 0.1, // Baixa temperatura para extração exata
+                temperature: 0.1,
                 max_tokens: 2000,
                 response_format: { type: "json_object" }
             })
@@ -99,8 +101,8 @@ REGRAS:
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('[Audit Groq] Erro API:', errorText);
-            throw new Error(`Erro na API Groq: ${response.status}`);
+            console.error('[Audit OpenRouter] Erro API:', errorText);
+            throw new Error(`Erro na API OpenRouter: ${response.status}`);
         }
 
         const data = await response.json();

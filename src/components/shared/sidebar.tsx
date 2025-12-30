@@ -73,6 +73,7 @@ interface PlanFeatures {
     hasAI: boolean;
     hasMensageria: boolean;
     hasChatSindico: boolean;
+    hasSupportChat: boolean;
 }
 
 const navItems: NavItem[] = [

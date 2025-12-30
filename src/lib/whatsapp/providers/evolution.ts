@@ -38,9 +38,13 @@ export class EvolutionWhatsAppProvider implements WhatsAppProvider {
     /**
      * Envia mensagem de texto
      */
-    async sendMessage(params: SendMessageParams & { condoId: string }): Promise<WhatsAppResponse> {
+    async sendMessage(params: SendMessageParams): Promise<WhatsAppResponse> {
         const { to, message, mediaUrl, condoId } = params;
         const startTime = Date.now();
+
+        if (!condoId) {
+            return { success: false, error: 'condoId é obrigatório para Evolution API', provider: 'evolution' };
+        }
 
         try {
             const { evolution_url, instance_name, api_key } = await this.getCredentials(condoId);
@@ -135,7 +139,7 @@ export class EvolutionWhatsAppProvider implements WhatsAppProvider {
     /**
      * Envia template (Evolution não usa templates como Meta, então envia texto formatado)
      */
-    async sendTemplate(params: SendTemplateParams & { condoId: string }): Promise<WhatsAppResponse> {
+    async sendTemplate(params: SendTemplateParams): Promise<WhatsAppResponse> {
         const { to, templateName, variables, condoId } = params;
 
         // Montar mensagem baseada no template
