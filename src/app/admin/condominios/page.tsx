@@ -503,120 +503,128 @@ function CondoModal({ isOpen, onClose, onSuccess, condo, plans }: {
         e.preventDefault();
         setLoading(true);
 
-        const data = {
-            nome,
-            cnpj: cnpj || null,
-            endereco: endereco || null,
-            cidade: cidade || null,
-            estado: estado || null,
-            cep: cep || null,
-            telefone: telefone || null,
-            email_contato: emailContato || null,
-            plano_id: planoId || null,
-            status,
-            data_fim_teste: dataFimTeste || null,
-        };
+        try {
+            const data = {
+                nome,
+                cnpj: cnpj || null,
+                endereco: endereco || null,
+                cidade: cidade || null,
+                estado: estado || null,
+                cep: cep || null,
+                telefone: telefone || null,
+                email_contato: emailContato || null,
+                plano_id: planoId || null,
+                status,
+                data_fim_teste: dataFimTeste || null,
+            };
 
-        const previousStatus = condo?.status;
-        let insertedCondoId = condo?.id;
+            const previousStatus = condo?.status;
+            let insertedCondoId = condo?.id;
 
-        if (condo) {
-            await supabase.from('condos').update(data).eq('id', condo.id);
-        } else {
-            const { data: insertedData } = await supabase.from('condos').insert(data).select('id').single();
-            insertedCondoId = insertedData?.id;
-        }
+            if (condo) {
+                const { error } = await supabase.from('condos').update(data).eq('id', condo.id);
+                if (error) throw error;
+            } else {
+                const { data: insertedData, error } = await supabase.from('condos').insert(data).select('id').single();
+                if (error) throw error;
+                insertedCondoId = insertedData?.id;
+            }
 
-        // Enviar e-mail quando status muda ou novo condomínio é criado
-        const statusChanged = previousStatus !== status || !condo;
-        const hasEmail = emailContato && emailContato.trim() !== '';
+            // Enviar e-mail quando status muda ou novo condomínio é criado
+            const statusChanged = previousStatus !== status || !condo;
+            const hasEmail = emailContato && emailContato.trim() !== '';
 
-        if (statusChanged && hasEmail && insertedCondoId) {
-            try {
-                // Buscar plano selecionado
-                const selectedPlan = plans.find(p => p.id === planoId);
+            if (statusChanged && hasEmail && insertedCondoId) {
+                try {
+                    // Buscar plano selecionado
+                    const selectedPlan = plans.find(p => p.id === planoId);
 
-                // Definir template baseado no status
-                let emailType = '';
-                let emailData: any = {
-                    nome: nome,
-                    condoNome: nome,
-                    loginUrl: 'https://meucondominiofacil.com/login'
-                };
+                    // Definir template baseado no status
+                    let emailType = '';
+                    let emailData: any = {
+                        nome: nome,
+                        condoNome: nome,
+                        loginUrl: 'https://meucondominiofacil.com/login'
+                    };
 
-                if (status === 'teste') {
-                    emailType = 'condo_trial';
-                    emailData.dataFim = dataFimTeste ? new Date(dataFimTeste).toLocaleDateString('pt-BR') : '';
-                } else if (status === 'ativo') {
-                    emailType = 'condo_active';
-                    emailData.plano = selectedPlan?.nome_plano || 'Profissional';
-                    // Próximo vencimento: 30 dias a partir de hoje
-                    const nextDate = new Date();
-                    nextDate.setDate(nextDate.getDate() + 30);
-                    emailData.proximoVencimento = nextDate.toLocaleDateString('pt-BR');
-                } else if (status === 'suspenso') {
-                    emailType = 'condo_suspended';
+                    if (status === 'teste') {
+                        emailType = 'condo_trial';
+                        emailData.dataFim = dataFimTeste ? new Date(dataFimTeste).toLocaleDateString('pt-BR') : '';
+                    } else if (status === 'ativo') {
+                        emailType = 'condo_active';
+                        emailData.plano = selectedPlan?.nome_plano || 'Profissional';
+                        // Próximo vencimento: 30 dias a partir de hoje
+                        const nextDate = new Date();
+                        nextDate.setDate(nextDate.getDate() + 30);
+                        emailData.proximoVencimento = nextDate.toLocaleDateString('pt-BR');
+                    } else if (status === 'suspenso') {
+                        emailType = 'condo_suspended';
+                    }
+
+                    if (emailType) {
+                        const response = await fetch('/api/email', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                tipo: emailType,
+                                destinatario: emailContato,
+                                dados: emailData,
+                                condoId: insertedCondoId,
+                                internalCall: true
+                            })
+                        });
+
+                        if (response.ok) {
+                            console.log(`[CONDO] Email ${emailType} enviado para ${emailContato}`);
+                        } else {
+                            console.error(`[CONDO] Falha ao enviar email ${emailType}`);
+                        }
+                    }
+                } catch (emailError) {
+                    console.error('[CONDO] Erro ao enviar email:', emailError);
+                    // Não bloquear a operação por falha de email
                 }
+            }
 
-                if (emailType) {
-                    const response = await fetch('/api/email', {
+            // Criar síndico se solicitado (só para novo condo)
+            if (!condo && criarSindico && sindicoEmail && sindicoNome && insertedCondoId) {
+                try {
+                    const response = await fetch('/api/usuarios/create', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${session?.access_token}`,
+                        },
                         body: JSON.stringify({
-                            tipo: emailType,
-                            destinatario: emailContato,
-                            dados: emailData,
-                            condoId: insertedCondoId,
-                            internalCall: true
-                        })
+                            email: sindicoEmail,
+                            password: sindicoSenha,
+                            nome: sindicoNome,
+                            telefone: sindicoTelefone || null,
+                            role: 'sindico',
+                            condo_id: insertedCondoId,
+                        }),
                     });
 
-                    if (response.ok) {
-                        console.log(`[CONDO] Email ${emailType} enviado para ${emailContato}`);
+                    const result = await response.json();
+                    if (result.success) {
+                        console.log('[CONDO] Síndico criado com sucesso:', sindicoEmail);
                     } else {
-                        console.error(`[CONDO] Falha ao enviar email ${emailType}`);
+                        console.error('[CONDO] Erro ao criar síndico:', result.error);
+                        alert('Condomínio criado, mas houve erro ao criar síndico: ' + result.error);
                     }
+                } catch (err: any) {
+                    console.error('[CONDO] Erro ao criar síndico:', err);
                 }
-            } catch (emailError) {
-                console.error('[CONDO] Erro ao enviar email:', emailError);
-                // Não bloquear a operação por falha de email
             }
+
+            onSuccess();
+            onClose();
+        } catch (error: any) {
+            console.error('Erro ao salvar condomínio:', error);
+            alert(`Erro ao salvar condomínio: ${error.message || 'Erro desconhecido'}`);
+        } finally {
+            setLoading(false);
         }
-
-        // Criar síndico se solicitado (só para novo condo)
-        if (!condo && criarSindico && sindicoEmail && sindicoNome && insertedCondoId) {
-            try {
-                const response = await fetch('/api/usuarios/create', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${session?.access_token}`,
-                    },
-                    body: JSON.stringify({
-                        email: sindicoEmail,
-                        password: sindicoSenha,
-                        nome: sindicoNome,
-                        telefone: sindicoTelefone || null,
-                        role: 'sindico',
-                        condo_id: insertedCondoId,
-                    }),
-                });
-
-                const result = await response.json();
-                if (result.success) {
-                    console.log('[CONDO] Síndico criado com sucesso:', sindicoEmail);
-                } else {
-                    console.error('[CONDO] Erro ao criar síndico:', result.error);
-                    alert('Condomínio criado, mas houve erro ao criar síndico: ' + result.error);
-                }
-            } catch (err: any) {
-                console.error('[CONDO] Erro ao criar síndico:', err);
-            }
-        }
-
-        onSuccess();
-        onClose();
-        setLoading(false);
     };
 
     return (
