@@ -41,20 +41,14 @@ import {
 } from 'lucide-react';
 import { ImpersonateModal } from '@/components/admin/ImpersonateModal';
 import { RoleViewSwitcher, useViewAsRole } from '@/components/admin/RoleViewSwitcher';
+import { ALL_NAV_ITEMS, NavItem } from '@/lib/sidebar-items';
 
 interface SidebarProps {
     isOpen: boolean;
     onClose: () => void;
 }
 
-interface NavItem {
-    href: string;
-    label: string;
-    icon: React.ReactNode;
-    roles?: string[];
-    requiresFeature?: string;
-    subItems?: NavItem[];
-}
+// NavItem interface moved to @/lib/sidebar-items
 
 interface PlanFeatures {
     hasOccurrences: boolean;
@@ -76,58 +70,7 @@ interface PlanFeatures {
     hasSupportChat: boolean;
 }
 
-const navItems: NavItem[] = [
-    // Porteiro vê Portaria no topo
-    { href: '/portaria', label: 'Portaria', icon: <UserCheck className="h-5 w-5" />, roles: ['porteiro'] },
-    { href: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" />, roles: ['sindico', 'morador', 'inquilino'] },
-    { href: '/status', label: 'Status Geral', icon: <Settings className="h-5 w-5" />, roles: ['sindico'] },
-    { href: '/financeiro', label: 'Financeiro', icon: <DollarSign className="h-5 w-5" />, roles: ['sindico'] },
-    { href: '/auditor-orcamentos', label: 'Auditor IA', icon: <Search className="h-5 w-5 text-purple-500" />, roles: ['sindico'] },
-    { href: '/taxa-incendio', label: 'Taxa de Incêndio', icon: <Flame className="h-5 w-5 text-red-500" />, roles: ['sindico'] },
-    { href: '/cobrancas', label: 'Cobranças', icon: <CreditCard className="h-5 w-5" />, roles: ['sindico'] },
-    { href: '/minhas-cobrancas', label: 'Minhas Cobranças', icon: <CreditCard className="h-5 w-5" />, roles: ['morador', 'inquilino'] },
-    { href: '/moradores', label: 'Moradores', icon: <Users className="h-5 w-5" />, roles: ['sindico'] },
-    { href: '/unidades', label: 'Unidades', icon: <Home className="h-5 w-5" />, roles: ['sindico'] },
-    { href: '/usuarios', label: 'Usuários', icon: <Users className="h-5 w-5" />, roles: ['sindico'] },
-    { href: '/avisos', label: 'Mural de Avisos', icon: <Bell className="h-5 w-5" />, roles: ['sindico', 'morador', 'inquilino', 'porteiro'] },
-    { href: '/notificacoes', label: 'Notificações', icon: <Bell className="h-5 w-5" />, roles: ['sindico'] },
-    { href: '/ocorrencias', label: 'Ocorrências', icon: <AlertTriangle className="h-5 w-5" />, roles: ['sindico', 'morador', 'inquilino', 'porteiro'] },
-    { href: '/reservas', label: 'Reservas', icon: <Calendar className="h-5 w-5" />, roles: ['sindico', 'morador', 'inquilino', 'porteiro'] },
-    { href: '/mensageria', label: 'Mensageria', icon: <Package className="h-5 w-5" />, roles: ['porteiro', 'sindico'] },
-    { href: '/portaria/cameras', label: 'Câmeras', icon: <Settings className="h-5 w-5" />, roles: ['porteiro', 'sindico'] },
-    { href: '/relatorios', label: 'Relatórios', icon: <FileText className="h-5 w-5" />, roles: ['sindico'], requiresFeature: 'hasOccurrences' },
-    { href: '/chat-moradores', label: 'Chat Moradores', icon: <MessageCircle className="h-5 w-5" />, roles: ['sindico'], requiresFeature: 'hasChatSindico' },
-    { href: '/automacoes', label: 'Automações', icon: <Settings className="h-5 w-5" />, roles: ['sindico'], requiresFeature: 'hasMaintenance' },
-    {
-        href: '/governanca',
-        label: 'Governança',
-        icon: <Vote className="h-5 w-5" />,
-        roles: ['sindico'],
-        requiresFeature: 'hasAssemblies',
-        subItems: [
-            { href: '/governanca/autovistoria', label: 'Autovistoria', icon: <Building2 className="h-4 w-4" /> },
-            { href: '/governanca/enquetes', label: 'Enquetes', icon: <FileText className="h-4 w-4" /> },
-            { href: '/governanca/assembleias', label: 'Assembleias', icon: <Users className="h-4 w-4" /> },
-            { href: '/governanca/documents', label: 'Documentos', icon: <FileText className="h-4 w-4" /> },
-        ]
-    },
-    { href: '/obras', label: 'Obras e Reformas', icon: <Hammer className="h-5 w-5" />, roles: ['sindico', 'morador', 'inquilino'] },
-    { href: '/manutencao', label: 'Manutenção Preventiva', icon: <Settings className="h-5 w-5" />, roles: ['sindico'], requiresFeature: 'hasMaintenance' },
-    { href: '/configuracoes/condominio', label: 'Meu Condomínio', icon: <Building2 className="h-5 w-5 text-emerald-500" />, roles: ['sindico'] },
-    { href: '/configuracoes/integracao-whatsapp', label: 'WhatsApp Oficial', icon: <MessageCircle className="h-5 w-5 text-green-500" />, roles: ['sindico'] },
-    { href: '/configuracoes/integracao-pagamentos', label: 'Integração Premium', icon: <Zap className="h-5 w-5 text-amber-400" />, roles: ['sindico'] },
-    { href: '/configuracoes/pix', label: 'Configurar PIX', icon: <QrCode className="h-5 w-5" />, roles: ['sindico'] },
-    { href: '/configuracoes/email', label: 'Configuração de E-mail', icon: <Mail className="h-5 w-5 text-blue-500" />, roles: ['sindico'] },
-    { href: '/configuracoes/assistente', label: 'Assistente IA', icon: <Bot className="h-5 w-5 text-purple-500" />, roles: ['sindico'], requiresFeature: 'hasAI' },
-    { href: '/assinatura', label: 'Assinatura', icon: <CreditCard className="h-5 w-5" />, roles: ['sindico'] },
-    { href: '/sugestoes', label: 'Sugestões', icon: <Lightbulb className="h-5 w-5" />, roles: ['sindico', 'morador', 'inquilino'] },
-    { href: '/marketplace', label: 'Marketplace', icon: <Store className="h-5 w-5 text-emerald-500" />, roles: ['sindico', 'morador', 'inquilino'] },
-    { href: '/perfil', label: 'Meu Perfil', icon: <Settings className="h-5 w-5" /> },
-    { href: '/minhas-encomendas', label: 'Minhas Encomendas', icon: <Package className="h-5 w-5" />, roles: ['morador', 'inquilino', 'porteiro', 'sindico'], requiresFeature: 'hasMensageria' },
-    { href: '/meus-convites', label: 'Meus Convites', icon: <QrCode className="h-5 w-5" />, roles: ['morador', 'inquilino'] },
-    { href: '/assistente', label: 'Assistente', icon: <Bot className="h-5 w-5 text-purple-500" />, roles: ['morador', 'inquilino'], requiresFeature: 'hasAI' },
-];
-
+// navItems and adminItems moved or managed dynamically
 const adminItems: NavItem[] = [
     { href: '/admin', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
     { href: '/admin/condominios', label: 'Condomínios', icon: <Building2 className="h-5 w-5" /> },
@@ -149,6 +92,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     const [chatSindicoAtivo, setChatSindicoAtivo] = useState<boolean>(false);
     const [expandedItems, setExpandedItems] = useState<string[]>(['/governanca']);
     const [pendingChats, setPendingChats] = useState(0);
+    const [menuConfig, setMenuConfig] = useState<any[]>([]);
+    const [themeConfig, setThemeConfig] = useState<any>(null);
     const supabase = createClient();
 
     useEffect(() => {
@@ -189,6 +134,16 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         }
     }, [profile?.condo_id]);
 
+    useEffect(() => {
+        fetch('/api/sidebar/config')
+            .then(res => res.json())
+            .then(data => {
+                if (data?.menu_items) setMenuConfig(data.menu_items);
+                if (data?.theme) setThemeConfig(data.theme);
+            })
+            .catch(err => console.error('[Sidebar] Error fetching config:', err));
+    }, []);
+
     const fetchPendingChats = async () => {
         try {
             const res = await fetch('/api/admin/pending-chats');
@@ -211,34 +166,40 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         ? viewAsRole
         : (profile?.role || '');
 
-    const filteredNavItems = navItems.filter(item => {
-        // Itens que NÃO devem aparecer para superadmin (são específicos por condomínio)
-        const superadminExcludedItems = ['/chat-moradores'];
-
-        // Superadmin real sem impersonate vê quase tudo (exceto os excluídos acima)
-        if (profile?.role === 'superadmin' && !isImpersonating && viewAsRole === 'superadmin') {
-            return !superadminExcludedItems.includes(item.href);
-        }
-
-        // Check role permissions
+    const filteredNavItems = ALL_NAV_ITEMS.filter(item => {
+        // 1. Filtragem por role e feature (como antes)
         if (item.roles && !item.roles.includes(effectiveFilterRole)) return false;
 
-        // Check plan features
         if (item.requiresFeature) {
             if (item.requiresFeature === 'hasMensageria') return mensageriaAtivo;
             if (item.requiresFeature === 'hasChatSindico') return chatSindicoAtivo;
-
             if (planFeatures) {
                 if (effectiveFilterRole === 'sindico' || effectiveFilterRole === 'porteiro') return true;
                 return planFeatures[item.requiresFeature as keyof PlanFeatures] === true;
             }
-
-            // Se carregando para moradores
             if (effectiveFilterRole === 'morador' || effectiveFilterRole === 'inquilino') return false;
+        }
+
+        // 2. Filtragem por visibilidade salva no banco
+        if (menuConfig.length > 0) {
+            const saved = menuConfig.find(m => m.href === item.href);
+            if (saved && saved.visible === false) return false;
         }
 
         return true;
     });
+
+    // 3. Ordenação baseada no banco (se existir)
+    const sortedNavItems = menuConfig.length > 0
+        ? [...filteredNavItems].sort((a, b) => {
+            const indexA = menuConfig.findIndex(m => m.href === a.href);
+            const indexB = menuConfig.findIndex(m => m.href === b.href);
+            // Se um item não está na config, joga pro final
+            if (indexA === -1) return 1;
+            if (indexB === -1) return -1;
+            return indexA - indexB;
+        })
+        : filteredNavItems;
 
     return (
         <>
@@ -276,8 +237,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                         </>
                     )}
 
-                    {filteredNavItems.length > 0 && <p className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Menu</p>}
-                    {filteredNavItems.map((item) => (
+                    {sortedNavItems.length > 0 && <p className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Menu</p>}
+                    {sortedNavItems.map((item) => (
                         <div key={item.href}>
                             {item.subItems ? (
                                 <>

@@ -308,7 +308,7 @@ const templates: Record<string, { subject: string; html: (data: any) => string }
     },
     // Resident Invoice Template
     resident_invoice: {
-        subject: '💳 Nova Cobrança - ${data.condoNome}',
+        subject: '💳 Nova Cobrança - Condomínio Fácil',
         html: (data: any) => `
             <!DOCTYPE html>
             <html>
@@ -329,13 +329,22 @@ const templates: Record<string, { subject: string; html: (data: any) => string }
                             <p style="color: #6b7280; margin: 10px 0 0 0; font-size: 14px;">Vencimento: <strong>${sanitizeHtml(data.dataVencimento)}</strong></p>
                         </div>
                         <div style="text-align: center; margin: 35px 0;">
-                            <a href="${sanitizeHtml(data.linkPagamento)}" 
-                               style="display: inline-block; background: #10b981; color: #ffffff; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
-                                Pagar Agora →
-                            </a>
+                            ${data.linkPagamento ? `
+                                <a href="${sanitizeHtml(data.linkPagamento)}" 
+                                   style="display: inline-block; background: #10b981; color: #ffffff; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
+                                    Pagar Agora →
+                                </a>
+                            ` : `
+                                <div style="background-color: #f9fafb; border: 1px dashed #d1d5db; padding: 20px; border-radius: 8px; text-align: left;">
+                                    <p style="color: #374151; font-weight: bold; margin-bottom: 10px;">Dados para Pagamento via PIX:</p>
+                                    <p style="color: #4b5563; margin: 5px 0; font-size: 14px;"><strong>Chave:</strong> ${sanitizeHtml(data.pixChave || 'Consulte a administração')}</p>
+                                    ${data.pixNome ? `<p style="color: #4b5563; margin: 5px 0; font-size: 14px;"><strong>Beneficiário:</strong> ${sanitizeHtml(data.pixNome)}</p>` : ''}
+                                    ${data.pixTipo ? `<p style="color: #4b5563; margin: 5px 0; font-size: 14px;"><strong>Tipo:</strong> ${sanitizeHtml(data.pixTipo)}</p>` : ''}
+                                </div>
+                            `}
                         </div>
                         <p style="color: #6b7280; font-size: 14px; text-align: center;">
-                            Você pode pagar via <strong>PIX</strong>, <strong>Cartão</strong> ou <strong>Boleto</strong>.
+                            ${data.linkPagamento ? 'Você pode pagar via <strong>PIX</strong>, <strong>Cartão</strong> ou <strong>Boleto</strong>.' : 'Utilize os dados acima para realizar o pagamento via PIX.'}
                         </p>
                     </div>
                     <div style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">

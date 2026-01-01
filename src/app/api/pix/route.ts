@@ -146,7 +146,7 @@ async function createPixCharge(token: string, pixData: PixRequest, agent: https.
 function generateStaticPix(valor: number, descricao: string): string {
     const pixKey = INTER_PIX_KEY || '57444727000185';
     const merchantName = 'CONDOMINIOFACIL';
-    const city = 'JUAZEIRO DO NORTE';
+    const city = 'BRASIL';
     const valorStr = valor.toFixed(2);
 
     // Build EMV QR Code
