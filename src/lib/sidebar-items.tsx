@@ -39,7 +39,7 @@ export interface NavItem {
 export const ALL_NAV_ITEMS: NavItem[] = [
     { href: '/portaria', label: 'Portaria', icon: <UserCheck className="h-5 w-5" />, roles: ['porteiro'] },
     { href: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" />, roles: ['sindico', 'morador', 'inquilino'] },
-    { href: '/configuracoes/sidebar', label: 'Personalizar Menu', icon: <Settings className="h-5 w-5 text-indigo-500" />, roles: ['sindico'] },
+    { href: '/configuracoes/sidebar', label: 'Personalizar Menu', icon: <Settings className="h-5 w-5 text-indigo-500" />, roles: ['sindico', 'superadmin'] },
     { href: '/status', label: 'Status Geral', icon: <Settings className="h-5 w-5" />, roles: ['sindico'] },
     { href: '/financeiro', label: 'Financeiro', icon: <DollarSign className="h-5 w-5" />, roles: ['sindico'] },
     { href: '/auditor-orcamentos', label: 'Auditor IA', icon: <Search className="h-5 w-5 text-purple-500" />, roles: ['sindico'] },
