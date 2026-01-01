@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, Badge } from '@/components/ui';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -70,7 +70,7 @@ export default function PaymentIntegrationPage() {
                 toast.error(data.error);
             }
         } catch (error: any) {
-            toast.error('Gaiade conexão com o provedor');
+            toast.error('Falha de conexão com o provedor');
         } finally {
             setTesting(false);
         }

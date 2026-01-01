@@ -10,6 +10,7 @@ import { formatDate, formatDateTime } from '@/lib/utils';
 import { Package, Plus, Search, Check, AlertCircle, Clock, User, Home, Mail, Phone, Lock, PenTool } from 'lucide-react';
 import Link from 'next/link';
 import { SignaturePad } from '@/components/ui/SignaturePad';
+import { FeatureGuard } from '@/components/shared/FeatureGuard';
 
 interface Entrega {
     id: string;
@@ -304,289 +305,291 @@ export default function MensageriaPage() {
     }
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                        <Package className="h-6 w-6 text-emerald-500" />
-                        Mensageria
-                    </h1>
-                    <p className="text-gray-500">Controle de encomendas e entregas</p>
+        <FeatureGuard featureKey="module_portaria">
+            <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                            <Package className="h-6 w-6 text-emerald-500" />
+                            Mensageria
+                        </h1>
+                        <p className="text-gray-500">Controle de encomendas e entregas</p>
+                    </div>
+                    <Button onClick={() => setShowModal(true)}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Nova Entrega
+                    </Button>
                 </div>
-                <Button onClick={() => setShowModal(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Nova Entrega
-                </Button>
-            </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <Card className="bg-gradient-to-br from-amber-500 to-amber-600 text-white border-0">
-                    <CardContent className="py-4 text-center">
-                        <Clock className="h-8 w-8 mx-auto mb-2 opacity-80" />
-                        <p className="text-2xl font-bold">{entregas.filter(e => e.status === 'aguardando' || e.status === 'notificado').length}</p>
-                        <p className="text-sm text-amber-100">Aguardando</p>
-                    </CardContent>
-                </Card>
-                <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0">
-                    <CardContent className="py-4 text-center">
-                        <Check className="h-8 w-8 mx-auto mb-2 opacity-80" />
-                        <p className="text-2xl font-bold">{entregas.filter(e => e.status === 'retirado').length}</p>
-                        <p className="text-sm text-emerald-100">Retiradas</p>
-                    </CardContent>
-                </Card>
-                <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0">
-                    <CardContent className="py-4 text-center">
-                        <Mail className="h-8 w-8 mx-auto mb-2 opacity-80" />
-                        <p className="text-2xl font-bold">{entregas.filter(e => e.status === 'notificado').length}</p>
-                        <p className="text-sm text-blue-100">Notificados</p>
-                    </CardContent>
-                </Card>
-                <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0">
-                    <CardContent className="py-4 text-center">
-                        <Package className="h-8 w-8 mx-auto mb-2 opacity-80" />
-                        <p className="text-2xl font-bold">{entregas.length}</p>
-                        <p className="text-sm text-purple-100">Total</p>
-                    </CardContent>
-                </Card>
-            </div>
+                {/* Stats */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <Card className="bg-gradient-to-br from-amber-500 to-amber-600 text-white border-0">
+                        <CardContent className="py-4 text-center">
+                            <Clock className="h-8 w-8 mx-auto mb-2 opacity-80" />
+                            <p className="text-2xl font-bold">{entregas.filter(e => e.status === 'aguardando' || e.status === 'notificado').length}</p>
+                            <p className="text-sm text-amber-100">Aguardando</p>
+                        </CardContent>
+                    </Card>
+                    <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0">
+                        <CardContent className="py-4 text-center">
+                            <Check className="h-8 w-8 mx-auto mb-2 opacity-80" />
+                            <p className="text-2xl font-bold">{entregas.filter(e => e.status === 'retirado').length}</p>
+                            <p className="text-sm text-emerald-100">Retiradas</p>
+                        </CardContent>
+                    </Card>
+                    <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0">
+                        <CardContent className="py-4 text-center">
+                            <Mail className="h-8 w-8 mx-auto mb-2 opacity-80" />
+                            <p className="text-2xl font-bold">{entregas.filter(e => e.status === 'notificado').length}</p>
+                            <p className="text-sm text-blue-100">Notificados</p>
+                        </CardContent>
+                    </Card>
+                    <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0">
+                        <CardContent className="py-4 text-center">
+                            <Package className="h-8 w-8 mx-auto mb-2 opacity-80" />
+                            <p className="text-2xl font-bold">{entregas.length}</p>
+                            <p className="text-sm text-purple-100">Total</p>
+                        </CardContent>
+                    </Card>
+                </div>
 
-            {/* Filters */}
-            <div className="flex flex-wrap gap-4">
-                <div className="relative flex-1 min-w-[200px]">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <Input
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        placeholder="Buscar por remetente, morador ou unidade..."
-                        className="pl-10"
+                {/* Filters */}
+                <div className="flex flex-wrap gap-4">
+                    <div className="relative flex-1 min-w-[200px]">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Input
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            placeholder="Buscar por remetente, morador ou unidade..."
+                            className="pl-10"
+                        />
+                    </div>
+                    <Select
+                        value={filterStatus}
+                        onChange={(e) => { setFilterStatus(e.target.value); fetchEntregas(); }}
+                        options={[
+                            { value: '', label: 'Todos os status' },
+                            { value: 'aguardando', label: 'Aguardando' },
+                            { value: 'notificado', label: 'Notificado' },
+                            { value: 'retirado', label: 'Retirado' },
+                            { value: 'devolvido', label: 'Devolvido' },
+                        ]}
+                        className="w-40"
                     />
                 </div>
-                <Select
-                    value={filterStatus}
-                    onChange={(e) => { setFilterStatus(e.target.value); fetchEntregas(); }}
-                    options={[
-                        { value: '', label: 'Todos os status' },
-                        { value: 'aguardando', label: 'Aguardando' },
-                        { value: 'notificado', label: 'Notificado' },
-                        { value: 'retirado', label: 'Retirado' },
-                        { value: 'devolvido', label: 'Devolvido' },
-                    ]}
-                    className="w-40"
-                />
-            </div>
 
-            {/* Lista */}
-            <Card>
-                <CardContent className="p-0">
-                    {loading ? (
-                        <div className="p-8 text-center text-gray-500">Carregando...</div>
-                    ) : filteredEntregas.length === 0 ? (
-                        <div className="p-8 text-center">
-                            <Package className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                            <p className="text-gray-500">Nenhuma entrega encontrada</p>
-                        </div>
-                    ) : (
-                        <div className="divide-y divide-gray-100">
-                            {filteredEntregas.map((entrega) => (
-                                <div key={entrega.id} className="p-4 hover:bg-gray-50 transition-colors">
-                                    <div className="flex items-start justify-between gap-4">
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                {getStatusBadge(entrega.status)}
-                                                <Badge variant="secondary">{entrega.tipo}</Badge>
-                                            </div>
-                                            <div className="flex items-center gap-4 text-sm">
-                                                <span className="flex items-center gap-1 text-gray-600">
-                                                    <Home className="h-4 w-4" />
-                                                    {entrega.unit ? `${entrega.unit.bloco} ${entrega.unit.numero_unidade}` : '-'}
-                                                </span>
-                                                <span className="flex items-center gap-1 text-gray-600">
-                                                    <User className="h-4 w-4" />
-                                                    {entrega.morador?.nome || '-'}
-                                                </span>
-                                            </div>
-                                            {entrega.remetente && (
-                                                <p className="text-sm text-gray-500 mt-1">
-                                                    <strong>Remetente:</strong> {entrega.remetente}
-                                                </p>
-                                            )}
-                                            {entrega.descricao && (
-                                                <p className="text-sm text-gray-500">{entrega.descricao}</p>
-                                            )}
-                                            <p className="text-xs text-gray-400 mt-2">
-                                                Recebido em {formatDateTime(entrega.data_recebimento)}
-                                                {entrega.data_retirada && (
-                                                    <> • Retirado em {formatDateTime(entrega.data_retirada)} por {entrega.retirado_por_nome}</>
+                {/* Lista */}
+                <Card>
+                    <CardContent className="p-0">
+                        {loading ? (
+                            <div className="p-8 text-center text-gray-500">Carregando...</div>
+                        ) : filteredEntregas.length === 0 ? (
+                            <div className="p-8 text-center">
+                                <Package className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                                <p className="text-gray-500">Nenhuma entrega encontrada</p>
+                            </div>
+                        ) : (
+                            <div className="divide-y divide-gray-100">
+                                {filteredEntregas.map((entrega) => (
+                                    <div key={entrega.id} className="p-4 hover:bg-gray-50 transition-colors">
+                                        <div className="flex items-start justify-between gap-4">
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    {getStatusBadge(entrega.status)}
+                                                    <Badge variant="secondary">{entrega.tipo}</Badge>
+                                                </div>
+                                                <div className="flex items-center gap-4 text-sm">
+                                                    <span className="flex items-center gap-1 text-gray-600">
+                                                        <Home className="h-4 w-4" />
+                                                        {entrega.unit ? `${entrega.unit.bloco} ${entrega.unit.numero_unidade}` : '-'}
+                                                    </span>
+                                                    <span className="flex items-center gap-1 text-gray-600">
+                                                        <User className="h-4 w-4" />
+                                                        {entrega.morador?.nome || '-'}
+                                                    </span>
+                                                </div>
+                                                {entrega.remetente && (
+                                                    <p className="text-sm text-gray-500 mt-1">
+                                                        <strong>Remetente:</strong> {entrega.remetente}
+                                                    </p>
                                                 )}
-                                            </p>
+                                                {entrega.descricao && (
+                                                    <p className="text-sm text-gray-500">{entrega.descricao}</p>
+                                                )}
+                                                <p className="text-xs text-gray-400 mt-2">
+                                                    Recebido em {formatDateTime(entrega.data_recebimento)}
+                                                    {entrega.data_retirada && (
+                                                        <> • Retirado em {formatDateTime(entrega.data_retirada)} por {entrega.retirado_por_nome}</>
+                                                    )}
+                                                </p>
+                                            </div>
+                                            {(entrega.status === 'aguardando' || entrega.status === 'notificado') && (
+                                                <Button size="sm" onClick={() => openRetiradaModal(entrega)}>
+                                                    <Check className="h-4 w-4 mr-1" /> Registrar Retirada
+                                                </Button>
+                                            )}
                                         </div>
-                                        {(entrega.status === 'aguardando' || entrega.status === 'notificado') && (
-                                            <Button size="sm" onClick={() => openRetiradaModal(entrega)}>
-                                                <Check className="h-4 w-4 mr-1" /> Registrar Retirada
-                                            </Button>
-                                        )}
                                     </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
+                                ))}
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
 
-            {/* Modal Nova Entrega */}
-            <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Cadastrar Nova Entrega" size="md">
-                <form onSubmit={handleCadastrar} className="space-y-4">
-                    <Select
-                        label="Unidade *"
-                        value={unitId}
-                        onChange={(e) => setUnitId(e.target.value)}
-                        options={[
-                            { value: '', label: 'Selecione a unidade...' },
-                            ...units.map(u => ({ value: u.id, label: `${u.bloco} ${u.numero_unidade}` }))
-                        ]}
-                        required
-                    />
-
-                    <Select
-                        label="Morador *"
-                        value={moradorId}
-                        onChange={(e) => setMoradorId(e.target.value)}
-                        options={[
-                            { value: '', label: moradores.length === 0 ? 'Selecione a unidade primeiro' : 'Selecione o morador...' },
-                            ...moradores.map(m => ({ value: m.id, label: `${m.nome}${m.telefone ? ` - ${m.telefone}` : ''}` }))
-                        ]}
-                        required
-                        disabled={!unitId}
-                    />
-
-                    <Input
-                        label="Remetente"
-                        value={remetente}
-                        onChange={(e) => setRemetente(e.target.value)}
-                        placeholder="Ex: Amazon, Magazine Luiza, João..."
-                    />
-
-                    <div className="grid grid-cols-2 gap-4">
+                {/* Modal Nova Entrega */}
+                <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Cadastrar Nova Entrega" size="md">
+                    <form onSubmit={handleCadastrar} className="space-y-4">
                         <Select
-                            label="Tipo"
-                            value={tipo}
-                            onChange={(e) => setTipo(e.target.value)}
+                            label="Unidade *"
+                            value={unitId}
+                            onChange={(e) => setUnitId(e.target.value)}
                             options={[
-                                { value: 'encomenda', label: '📦 Encomenda' },
-                                { value: 'carta', label: '✉️ Carta' },
-                                { value: 'pacote', label: '📮 Pacote' },
-                                { value: 'documento', label: '📄 Documento' },
-                                { value: 'outro', label: '📋 Outro' },
+                                { value: '', label: 'Selecione a unidade...' },
+                                ...units.map(u => ({ value: u.id, label: `${u.bloco} ${u.numero_unidade}` }))
                             ]}
-                        />
-                        <Input
-                            label="Código de Rastreio"
-                            value={codigoRastreio}
-                            onChange={(e) => setCodigoRastreio(e.target.value)}
-                            placeholder="Opcional"
-                        />
-                    </div>
-
-                    <Input
-                        label="Descrição"
-                        value={descricao}
-                        onChange={(e) => setDescricao(e.target.value)}
-                        placeholder="Detalhes adicionais..."
-                    />
-
-                    <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
-                        <input
-                            type="checkbox"
-                            id="notificar"
-                            checked={notificar}
-                            onChange={(e) => setNotificar(e.target.checked)}
-                            className="rounded text-blue-600 h-5 w-5"
-                        />
-                        <label htmlFor="notificar" className="text-sm text-blue-800">
-                            📧 Notificar morador por e-mail e push
-                        </label>
-                    </div>
-
-                    {/* WhatsApp bloqueado - Banner de propaganda */}
-                    <div className="p-3 bg-gray-100 rounded-lg border border-gray-200 opacity-70">
-                        <div className="flex items-center gap-2 text-gray-500">
-                            <Phone className="h-5 w-5" />
-                            <span className="text-sm">📱 Notificar via WhatsApp</span>
-                            <Badge variant="secondary" className="text-xs">Premium</Badge>
-                        </div>
-                        <p className="text-xs text-gray-400 mt-1">
-                            Ative o módulo WhatsApp Oficial para enviar notificações via WhatsApp.
-                        </p>
-                    </div>
-
-                    <div className="flex gap-3 justify-end pt-4">
-                        <Button type="button" variant="ghost" onClick={() => setShowModal(false)}>Cancelar</Button>
-                        <Button type="submit" loading={saving}>
-                            <Package className="h-4 w-4 mr-1" /> Cadastrar e Notificar
-                        </Button>
-                    </div>
-                </form>
-            </Modal>
-
-            {/* Modal Retirada com Assinatura */}
-            <Modal isOpen={showRetiradaModal} onClose={() => setShowRetiradaModal(false)} title="Registrar Retirada" size="lg">
-                <div className="space-y-4">
-                    {/* Dados da Entrega */}
-                    <div className="p-3 bg-gray-50 rounded-lg">
-                        <p className="text-sm text-gray-600">
-                            <strong>Entrega:</strong> {selectedEntrega?.tipo} de {selectedEntrega?.remetente || 'N/A'}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                            <strong>Morador:</strong> {selectedEntrega?.morador?.nome}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                            <strong>Unidade:</strong> {selectedEntrega?.unit?.bloco} {selectedEntrega?.unit?.numero_unidade}
-                        </p>
-                    </div>
-
-                    {/* Dados de quem está retirando */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <Input
-                            label="Nome de quem está retirando *"
-                            value={retiradoNome}
-                            onChange={(e) => setRetiradoNome(e.target.value)}
-                            placeholder="Nome completo"
                             required
                         />
+
+                        <Select
+                            label="Morador *"
+                            value={moradorId}
+                            onChange={(e) => setMoradorId(e.target.value)}
+                            options={[
+                                { value: '', label: moradores.length === 0 ? 'Selecione a unidade primeiro' : 'Selecione o morador...' },
+                                ...moradores.map(m => ({ value: m.id, label: `${m.nome}${m.telefone ? ` - ${m.telefone}` : ''}` }))
+                            ]}
+                            required
+                            disabled={!unitId}
+                        />
+
                         <Input
-                            label="Documento (RG/CPF)"
-                            value={retiradoDocumento}
-                            onChange={(e) => setRetiradoDocumento(e.target.value)}
-                            placeholder="Opcional"
+                            label="Remetente"
+                            value={remetente}
+                            onChange={(e) => setRemetente(e.target.value)}
+                            placeholder="Ex: Amazon, Magazine Luiza, João..."
                         />
-                    </div>
 
-                    {/* Captura de Assinatura */}
-                    <div className="border rounded-lg p-4 bg-white">
-                        <div className="flex items-center gap-2 mb-3">
-                            <PenTool className="h-5 w-5 text-emerald-600" />
-                            <span className="font-medium text-gray-900">Assinatura do Recebedor</span>
+                        <div className="grid grid-cols-2 gap-4">
+                            <Select
+                                label="Tipo"
+                                value={tipo}
+                                onChange={(e) => setTipo(e.target.value)}
+                                options={[
+                                    { value: 'encomenda', label: '📦 Encomenda' },
+                                    { value: 'carta', label: '✉️ Carta' },
+                                    { value: 'pacote', label: '📮 Pacote' },
+                                    { value: 'documento', label: '📄 Documento' },
+                                    { value: 'outro', label: '📋 Outro' },
+                                ]}
+                            />
+                            <Input
+                                label="Código de Rastreio"
+                                value={codigoRastreio}
+                                onChange={(e) => setCodigoRastreio(e.target.value)}
+                                placeholder="Opcional"
+                            />
                         </div>
-                        <SignaturePad
-                            onSave={(sig) => handleRetirada(sig)}
-                            onClear={() => setSignatureBase64('')}
-                            disabled={saving || !retiradoNome.trim()}
-                        />
-                        {!retiradoNome.trim() && (
-                            <p className="text-xs text-amber-600 mt-2">
-                                ⚠️ Preencha o nome acima antes de assinar
-                            </p>
-                        )}
-                    </div>
 
-                    <div className="flex gap-3 justify-end pt-2">
-                        <Button type="button" variant="ghost" onClick={() => setShowRetiradaModal(false)}>
-                            Cancelar
-                        </Button>
+                        <Input
+                            label="Descrição"
+                            value={descricao}
+                            onChange={(e) => setDescricao(e.target.value)}
+                            placeholder="Detalhes adicionais..."
+                        />
+
+                        <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
+                            <input
+                                type="checkbox"
+                                id="notificar"
+                                checked={notificar}
+                                onChange={(e) => setNotificar(e.target.checked)}
+                                className="rounded text-blue-600 h-5 w-5"
+                            />
+                            <label htmlFor="notificar" className="text-sm text-blue-800">
+                                📧 Notificar morador por e-mail e push
+                            </label>
+                        </div>
+
+                        {/* WhatsApp bloqueado - Banner de propaganda */}
+                        <div className="p-3 bg-gray-100 rounded-lg border border-gray-200 opacity-70">
+                            <div className="flex items-center gap-2 text-gray-500">
+                                <Phone className="h-5 w-5" />
+                                <span className="text-sm">📱 Notificar via WhatsApp</span>
+                                <Badge variant="secondary" className="text-xs">Premium</Badge>
+                            </div>
+                            <p className="text-xs text-gray-400 mt-1">
+                                Ative o módulo WhatsApp Oficial para enviar notificações via WhatsApp.
+                            </p>
+                        </div>
+
+                        <div className="flex gap-3 justify-end pt-4">
+                            <Button type="button" variant="ghost" onClick={() => setShowModal(false)}>Cancelar</Button>
+                            <Button type="submit" loading={saving}>
+                                <Package className="h-4 w-4 mr-1" /> Cadastrar e Notificar
+                            </Button>
+                        </div>
+                    </form>
+                </Modal>
+
+                {/* Modal Retirada com Assinatura */}
+                <Modal isOpen={showRetiradaModal} onClose={() => setShowRetiradaModal(false)} title="Registrar Retirada" size="lg">
+                    <div className="space-y-4">
+                        {/* Dados da Entrega */}
+                        <div className="p-3 bg-gray-50 rounded-lg">
+                            <p className="text-sm text-gray-600">
+                                <strong>Entrega:</strong> {selectedEntrega?.tipo} de {selectedEntrega?.remetente || 'N/A'}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                                <strong>Morador:</strong> {selectedEntrega?.morador?.nome}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                                <strong>Unidade:</strong> {selectedEntrega?.unit?.bloco} {selectedEntrega?.unit?.numero_unidade}
+                            </p>
+                        </div>
+
+                        {/* Dados de quem está retirando */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <Input
+                                label="Nome de quem está retirando *"
+                                value={retiradoNome}
+                                onChange={(e) => setRetiradoNome(e.target.value)}
+                                placeholder="Nome completo"
+                                required
+                            />
+                            <Input
+                                label="Documento (RG/CPF)"
+                                value={retiradoDocumento}
+                                onChange={(e) => setRetiradoDocumento(e.target.value)}
+                                placeholder="Opcional"
+                            />
+                        </div>
+
+                        {/* Captura de Assinatura */}
+                        <div className="border rounded-lg p-4 bg-white">
+                            <div className="flex items-center gap-2 mb-3">
+                                <PenTool className="h-5 w-5 text-emerald-600" />
+                                <span className="font-medium text-gray-900">Assinatura do Recebedor</span>
+                            </div>
+                            <SignaturePad
+                                onSave={(sig) => handleRetirada(sig)}
+                                onClear={() => setSignatureBase64('')}
+                                disabled={saving || !retiradoNome.trim()}
+                            />
+                            {!retiradoNome.trim() && (
+                                <p className="text-xs text-amber-600 mt-2">
+                                    ⚠️ Preencha o nome acima antes de assinar
+                                </p>
+                            )}
+                        </div>
+
+                        <div className="flex gap-3 justify-end pt-2">
+                            <Button type="button" variant="ghost" onClick={() => setShowRetiradaModal(false)}>
+                                Cancelar
+                            </Button>
+                        </div>
                     </div>
-                </div>
-            </Modal>
-        </div>
+                </Modal>
+            </div>
+        </FeatureGuard>
     );
 }
