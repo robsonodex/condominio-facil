@@ -1,18 +1,18 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { Card, CardContent, Button, Input, Badge, Select } from '@/components/ui';
+import { Card, CardContent } from '@/components/ui';
 import { Modal } from '@/components/ui/modal';
 import { useAuth } from '@/hooks/useAuth';
 import { useUser } from '@/hooks/useUser';
 import { createClient } from '@/lib/supabase/client';
-import { formatDate } from '@/lib/utils';
 import {
-    Users, UserPlus, LogIn, LogOut, Search, Camera, Printer, QrCode,
-    Clock, Car, CreditCard, Shield, Maximize, Minimize, RefreshCw, MessageSquare, AlertCircle, Scan, Ticket
+    Shield, User, RefreshCw, Maximize2, Minimize2, Search, QrCode,
+    Camera, Car, Package, Users, Clock, Calendar, ChevronRight,
+    MapPin, LogOut
 } from 'lucide-react';
-import { QRCodeScanner } from '@/components/invites';
 import Tesseract from 'tesseract.js';
+import { QRCodeScanner } from '@/components/invites';
 
 interface Visitor {
     id: string;
@@ -39,7 +39,7 @@ interface PendingInvite {
     creator: { nome: string } | null;
 }
 
-export default function PortariaProfissionalPage() {
+export default function PortariaPage() {
     const { session } = useAuth();
     const { condoId, profile } = useUser();
     const [visitors, setVisitors] = useState<Visitor[]>([]);
@@ -47,12 +47,15 @@ export default function PortariaProfissionalPage() {
     const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([]);
     const [loading, setLoading] = useState(true);
     const [isFullscreen, setIsFullscreen] = useState(false);
+
+    // Search & Filter
     const [searchTerm, setSearchTerm] = useState('');
-    const [filterType, setFilterType] = useState('');
-    const [invitePeriodFilter, setInvitePeriodFilter] = useState<'hoje' | 'semana' | 'mes'>('hoje');
+    const [timeFilter, setTimeFilter] = useState('Hoje');
+
+    // Modals
     const [showModal, setShowModal] = useState(false);
     const [showCameraModal, setShowCameraModal] = useState(false);
-    const [showQRScanner, setShowQRScanner] = useState(false);
+    const [scanMode, setScanMode] = useState<'doc' | 'qr'>('doc');
     const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -62,20 +65,16 @@ export default function PortariaProfissionalPage() {
     const [nome, setNome] = useState('');
     const [documento, setDocumento] = useState('');
     const [tipo, setTipo] = useState('visitante');
-    const [tipoFixo, setTipoFixo] = useState(false); // Se true, não mostra Select de tipo
+    const [tipoFixo, setTipoFixo] = useState(false);
     const [placa, setPlaca] = useState('');
     const [unidadeId, setUnidadeId] = useState('');
     const [observacoes, setObservacoes] = useState('');
     const [saving, setSaving] = useState(false);
     const [isScanning, setIsScanning] = useState(false);
-
     const [units, setUnits] = useState<any[]>([]);
-    const [currentTime, setCurrentTime] = useState(new Date());
 
-    // WhatsApp notification toggle
-    const [notificarWhatsApp, setNotificarWhatsApp] = useState(false);
-    const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
-    const whatsAppContratado = false; // TODO: Buscar do banco se WhatsApp está contratado
+    // Time
+    const [currentTime, setCurrentTime] = useState(new Date());
 
     useEffect(() => {
         const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -88,29 +87,30 @@ export default function PortariaProfissionalPage() {
             fetchUnits();
             const interval = setInterval(() => {
                 fetchVisitors();
-            }, 30000); // Refresh every 30s
+            }, 30000);
             return () => clearInterval(interval);
         }
     }, [condoId]);
 
-    // Efeito separado para convites - reage ao filtro de período
     useEffect(() => {
         if (condoId) {
             fetchPendingInvites();
         }
-    }, [condoId, invitePeriodFilter]);
+    }, [condoId, timeFilter]);
 
     const fetchVisitors = async () => {
-        const today = new Date().toISOString().split('T')[0];
+        // const today = new Date().toISOString().split('T')[0];
         const { data } = await supabase
             .from('visitors')
             .select('*, unidade:units(bloco, numero_unidade), registrado_por:users!registrado_por_user_id(nome)')
             .eq('condo_id', condoId)
-            .gte('data_hora_entrada', today)
-            .order('data_hora_entrada', { ascending: false });
+            .order('data_hora_entrada', { ascending: false })
+            .limit(100);
 
-        setVisitors(data || []);
-        setActiveVisitors((data || []).filter(v => !v.data_hora_saida));
+        if (data) {
+            setVisitors(data);
+            setActiveVisitors(data.filter(v => !v.data_hora_saida));
+        }
         setLoading(false);
     };
 
@@ -118,28 +118,30 @@ export default function PortariaProfissionalPage() {
         const today = new Date();
         const todayStr = today.toISOString().split('T')[0];
 
-        // Calcular datas baseadas no filtro
         let startDate = todayStr;
         let endDate = todayStr;
 
-        if (invitePeriodFilter === 'semana') {
+        if (timeFilter === 'Semana') {
             const weekEnd = new Date(today);
             weekEnd.setDate(today.getDate() + 7);
             endDate = weekEnd.toISOString().split('T')[0];
-        } else if (invitePeriodFilter === 'mes') {
+        } else if (timeFilter === 'Mês') {
             const monthEnd = new Date(today);
             monthEnd.setMonth(today.getMonth() + 1);
             endDate = monthEnd.toISOString().split('T')[0];
+        } else if (timeFilter === 'Todos') {
+            startDate = '2000-01-01';
+            endDate = '2100-01-01';
         }
 
         let query = supabase
             .from('guest_invites')
             .select('*, unit:units(bloco, numero_unidade), creator:users!created_by(nome)')
             .eq('condo_id', condoId)
-            .in('status', ['pending', 'used']) // Mostrar pendentes e liberados
+            .in('status', ['pending', 'used'])
             .gte('visit_date', startDate)
             .lte('visit_date', endDate)
-            .order('status', { ascending: false }) // pending primeiro, depois used
+            .order('status', { ascending: false })
             .order('visit_date', { ascending: true })
             .order('visit_time_start', { ascending: true });
 
@@ -191,250 +193,48 @@ export default function PortariaProfissionalPage() {
         fetchVisitors();
     };
 
-    const handleQuickSearch = async () => {
-        if (!searchTerm) return;
-
-        const { data } = await supabase
-            .from('visitors')
-            .select('*, unidade:units(bloco, numero_unidade)')
-            .eq('condo_id', condoId)
-            .or(`documento.ilike.%${searchTerm}%,placa_veiculo.ilike.%${searchTerm}%,nome.ilike.%${searchTerm}%`)
-            .order('data_hora_entrada', { ascending: false })
-            .limit(20);
-
-        setVisitors(data || []);
-    };
-
-    const startCamera = async () => {
-        setShowCameraModal(true);
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-            if (videoRef.current) {
-                videoRef.current.srcObject = stream;
-            }
-        } catch (err) {
-            alert('Não foi possível acessar a câmera');
+    const filteredVisitors = visitors.filter(v => {
+        if (searchTerm) {
+            const term = searchTerm.toLowerCase();
+            const matchName = v.nome?.toLowerCase().includes(term);
+            const matchDoc = v.documento?.toLowerCase().includes(term);
+            const matchPlaca = v.placa_veiculo?.toLowerCase().includes(term);
+            return matchName || matchDoc || matchPlaca;
         }
-    };
+        return true;
+    });
 
-    const capturePhoto = () => {
-        if (videoRef.current && canvasRef.current) {
-            const ctx = canvasRef.current.getContext('2d');
-            canvasRef.current.width = videoRef.current.videoWidth;
-            canvasRef.current.height = videoRef.current.videoHeight;
-            ctx?.drawImage(videoRef.current, 0, 0);
-            setCapturedPhoto(canvasRef.current.toDataURL('image/jpeg'));
-
-            // Stop camera
-            const stream = videoRef.current.srcObject as MediaStream;
-            stream?.getTracks().forEach(track => track.stop());
-            setShowCameraModal(false);
-        }
-    };
-
-    // Regex patterns para documentos brasileiros - MELHORADO
-    const extractCPF = (text: string): string | null => {
-        // CPF: XXX.XXX.XXX-XX ou variações
-        const patterns = [
-            /(\d{3}[.\s]?\d{3}[.\s]?\d{3}[-.\s]?\d{2})/g,
-            /CPF[:\s]*(\d{3}[.\s]?\d{3}[.\s]?\d{3}[-.\s]?\d{2})/gi,
-            /(\d{11})/g, // 11 dígitos seguidos
-        ];
-
-        for (const pattern of patterns) {
-            const matches = text.match(pattern);
-            if (matches) {
-                for (const match of matches) {
-                    const digits = match.replace(/\D/g, '');
-                    if (digits.length === 11) {
-                        return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-                    }
-                }
-            }
-        }
-        return null;
-    };
-
-    const extractRG = (text: string): string | null => {
-        // RG: XX.XXX.XXX-X ou variações
-        const patterns = [
-            /RG[:\s]*(\d{1,2}[.\s]?\d{3}[.\s]?\d{3}[-.\s]?[\dXx]?)/gi,
-            /(\d{1,2}[.\s]\d{3}[.\s]\d{3}[-.\s]?[\dXx])/g,
-            /(\d{7,9})/g, // 7-9 dígitos seguidos
-        ];
-
-        for (const pattern of patterns) {
-            const matches = text.match(pattern);
-            if (matches) {
-                for (const match of matches) {
-                    const digits = match.replace(/\D/g, '');
-                    if (digits.length >= 7 && digits.length <= 9) {
-                        return match.replace(/[.\s-]/g, '').toUpperCase();
-                    }
-                }
-            }
-        }
-        return null;
-    };
-
-    const extractCNH = (text: string): string | null => {
-        // CNH: 9-11 dígitos
-        const patterns = [
-            /CNH[:\s]*(\d{9,11})/gi,
-            /REGISTRO[:\s]*(\d{9,11})/gi,
-            /N[°º]?\s*REGISTRO[:\s]*(\d{9,11})/gi,
-        ];
-
-        for (const pattern of patterns) {
-            const match = text.match(pattern);
-            if (match && match[1]) {
-                return match[1];
-            }
-        }
-        return null;
-    };
-
-    const extractName = (text: string): string | null => {
-        // Função auxiliar para validar se parece um nome real (não ruído de OCR)
-        const isLikelyRealName = (candidate: string): boolean => {
-            // Rejeita se tiver muitas consoantes seguidas (ex: "VWLNPTRD" = lixo)
-            if (/[BCDFGHJKLMNPQRSTVWXYZ]{4,}/i.test(candidate)) return false;
-
-            // Rejeita se tiver padrões estranhos de caracteres
-            if (/[ÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÄËÏÖÜÇ]{2,}/i.test(candidate)) return false; // Acentos consecutivos = lixo
-
-            // Verifica proporção vogais/consoantes (nomes reais têm ~40% vogais)
-            const vowels = (candidate.match(/[AEIOUÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÄËÏÖÜÇ]/gi) || []).length;
-            const consonants = (candidate.match(/[BCDFGHJKLMNPQRSTVWXYZ]/gi) || []).length;
-            if (consonants > 0 && vowels / consonants < 0.25) return false; // Menos de 25% vogais = lixo
-
-            // Verifica se tem pelo menos um "pedaço" que parece nome (2+ letras, vogal, consoante)
-            const words = candidate.split(/\s+/);
-            const validWords = words.filter(w => w.length >= 2 && /[AEIOU]/i.test(w) && /[BCDFGHJKLMNPQRSTVWXYZ]/i.test(w));
-            if (validWords.length < 2) return false; // Nome precisa de 2+ palavras válidas
-
-            return true;
-        };
-
-        // Primeiro tenta encontrar nome após labels
-        const labelPatterns = [
-            /NOME[:\s]+([A-ZÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÄËÏÖÜÇ][A-ZÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÄËÏÖÜÇa-záéíóúâêîôûàèìòùäëïöüç\s]+)/i,
-            /NOME\s*:\s*([^\n]+)/i,
-            /MOTORISTA[:\s]+([A-ZÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÄËÏÖÜÇ][A-ZÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÄËÏÖÜÇa-záéíóúâêîôûàèìòùäëïöüç\s]+)/i,
-        ];
-
-        for (const pattern of labelPatterns) {
-            const match = text.match(pattern);
-            if (match && match[1]) {
-                const name = match[1].trim().split('\n')[0].trim();
-                if (name.length >= 5 && name.includes(' ') && isLikelyRealName(name)) {
-                    return name.toUpperCase();
-                }
-            }
-        }
-
-        // Fallback: procura linhas que parecem nomes
-        const lines = text.split('\n');
-        const excludeWords = ['REPÚBLICA', 'FEDERATIVA', 'BRASIL', 'REGISTRO', 'IDENTIDADE',
-            'CARTEIRA', 'NACIONAL', 'HABILITAÇÃO', 'MINISTÉRIO', 'SECRETARIA', 'DETRAN',
-            'VÁLIDA', 'DATA', 'NASCIMENTO', 'FILIAÇÃO', 'LOCAL', 'EMISSÃO', 'ASSINATURA',
-            'PERMISSÃO', 'CATEGORIA', 'OBSERVAÇÕES', 'PRIMEIRA', 'VALIDADE', 'EXPEDIÇÃO'];
-
-        for (const line of lines) {
-            const cleanLine = line.trim();
-            const hasLettersOnly = /^[A-ZÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÄËÏÖÜÇa-záéíóúâêîôûàèìòùäëïöüç\s]+$/.test(cleanLine);
-            const hasSpace = cleanLine.includes(' ');
-            const goodLength = cleanLine.length >= 8 && cleanLine.length <= 50;
-            const notExcluded = !excludeWords.some(word => cleanLine.toUpperCase().includes(word));
-            const isReal = isLikelyRealName(cleanLine);
-
-            if (hasLettersOnly && hasSpace && goodLength && notExcluded && isReal) {
-                return cleanLine.toUpperCase();
-            }
-        }
-
-        return null;
-    };
-
-    // OCR Híbrido: Groq Vision (primário) → Tesseract Client-Side (fallback)
-    const handleScanDocument = async (imageData: string) => {
-        setIsScanning(true);
-
-        try {
-            console.log('[OCR] Tentando Groq Vision (/api/ai/ocr-document)...');
-
-            // 1. Tenta Groq Vision (API rápida)
-            const response = await fetch('/api/ai/ocr-document', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ image: imageData }),
-            });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Groq Error (${response.status}): ${errorText.substring(0, 100)}`);
-            }
-
-            const data = await response.json();
-            console.log('[OCR] Sucesso Groq:', data);
-
-            if (data.name) setNome(data.name);
-            if (data.doc) setDocumento(data.doc);
-
-            if (!data.name && !data.doc) {
-                throw new Error('Groq não encontrou dados - tentando fallback');
-            }
-
-        } catch (error: any) {
-            console.error('[OCR] Servidor falhou:', error);
-            console.log('[OCR] Iniciando Fallback: Tesseract Client-Side (Navegador)...');
-
+    const startCamera = async (mode: 'doc' | 'qr' = 'doc') => {
+        setScanMode(mode);
+        if (mode === 'doc') {
+            setShowCameraModal(true);
             try {
-                // FALLBACK CLIENT-SIDE (ROBUSTEZ TOTAL)
-                const result = await Tesseract.recognize(
-                    imageData,
-                    'por',
-                    {
-                        logger: m => {
-                            if (m.status === 'recognizing text') {
-                                console.log(`[OCR Client] ${Math.round(m.progress * 100)}%`);
-                            }
+                setTimeout(async () => {
+                    try {
+                        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+                        if (videoRef.current) {
+                            videoRef.current.srcObject = stream;
                         }
+                    } catch (e) {
+                        // Camera error or permission
                     }
-                );
-
-                const text = result.data.text;
-                console.log('[OCR Client] Texto bruto:', text);
-
-                // Reutilizando as regex functions que já existem no componente
-                const name = extractName(text);
-                const cpf = extractCPF(text);
-                const rg = extractRG(text);
-                const cnh = extractCNH(text); // Função que também já existe
-                const doc = cpf || cnh || rg;
-
-                console.log('[OCR Client] Extraído:', { name, doc });
-
-                if (name) setNome(name);
-                if (doc) setDocumento(doc);
-
-                if (!name && !doc) {
-                    alert('Falha total no OCR (Servidor e Client). Tente uma foto mais clara.');
-                } else {
-                    // Sucesso no fallback - silencioso ou aviso discreto
-                    console.log('Dados recuperados via Fallback Client-Side');
-                }
-
-            } catch (clientError) {
-                console.error('Erro Fatal OCR Client:', clientError);
-                alert(`Erro ao processar documento: ${error.message}. Tente novamente.`);
+                }, 100);
+            } catch (err) {
+                alert('Não foi possível acessar a câmera');
             }
-        } finally {
-            setIsScanning(false);
+        } else {
+            setShowCameraModal(true);
+            // QRCodeScanner handles its own camera start
         }
     };
 
-    // Captura foto e inicia OCR automaticamente
+    const stopCamera = () => {
+        if (videoRef.current && videoRef.current.srcObject) {
+            const stream = videoRef.current.srcObject as MediaStream;
+            stream.getTracks().forEach(track => track.stop());
+        }
+    };
+
     const captureAndScanDocument = () => {
         if (videoRef.current && canvasRef.current) {
             const ctx = canvasRef.current.getContext('2d');
@@ -444,44 +244,88 @@ export default function PortariaProfissionalPage() {
             const photoData = canvasRef.current.toDataURL('image/jpeg');
             setCapturedPhoto(photoData);
 
-            // Stop camera
-            const stream = videoRef.current.srcObject as MediaStream;
-            stream?.getTracks().forEach(track => track.stop());
+            stopCamera();
             setShowCameraModal(false);
-
-            // Inicia o OCR automaticamente
             handleScanDocument(photoData);
+
+            setTipo('visitante');
+            setShowModal(true);
         }
     };
 
-    const printVisitorBadge = (visitor: Visitor) => {
-        const printWindow = window.open('', '_blank');
-        if (printWindow) {
-            printWindow.document.write(`
-                <html>
-                <head><title>Crachá Visitante</title>
-                <style>
-                    body { font-family: Arial; text-align: center; padding: 20px; }
-                    .badge { border: 2px solid #10b981; border-radius: 10px; padding: 20px; max-width: 300px; margin: 0 auto; }
-                    h1 { color: #10b981; margin: 0; }
-                    .photo { width: 100px; height: 100px; border-radius: 50%; margin: 10px auto; background: #e5e7eb; }
-                    .info { margin: 5px 0; }
-                    .label { color: #6b7280; font-size: 12px; }
-                </style>
-                </head>
-                <body>
-                    <div class="badge">
-                        <h1>VISITANTE</h1>
-                        ${visitor.foto_url ? `<img src="${visitor.foto_url}" class="photo" />` : '<div class="photo"></div>'}
-                        <div class="info"><strong>${visitor.nome}</strong></div>
-                        <div class="info"><span class="label">Documento:</span> ${visitor.documento || 'N/A'}</div>
-                        <div class="info"><span class="label">Destino:</span> ${visitor.unidade ? `${visitor.unidade.bloco} ${visitor.unidade.numero_unidade}` : 'N/A'}</div>
-                        <div class="info"><span class="label">Entrada:</span> ${new Date(visitor.data_hora_entrada).toLocaleString('pt-BR')}</div>
-                    </div>
-                    <script>window.print(); setTimeout(() => window.close(), 500);</script>
-                </body>
-                </html>
-            `);
+    const isLikelyRealName = (candidate: string): boolean => {
+        if (/[BCDFGHJKLMNPQRSTVWXYZ]{4,}/i.test(candidate)) return false;
+        if (/[ÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÄËÏÖÜÇ]{2,}/i.test(candidate)) return false;
+        const vowels = (candidate.match(/[AEIOUÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÄËÏÖÜÇ]/gi) || []).length;
+        const consonants = (candidate.match(/[BCDFGHJKLMNPQRSTVWXYZ]/gi) || []).length;
+        if (consonants > 0 && vowels / consonants < 0.25) return false;
+        return true;
+    };
+
+    const extractName = (text: string): string | null => {
+        const labelPatterns = [
+            /NOME[:\s]+([A-ZÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÄËÏÖÜÇ][A-ZÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÄËÏÖÜÇa-záéíóúâêîôûàèìòùäëïöüç\s]+)/i,
+            /NOME\s*:\s*([^\n]+)/i,
+        ];
+        for (const pattern of labelPatterns) {
+            const match = text.match(pattern);
+            if (match && match[1]) {
+                const name = match[1].trim().split('\n')[0].trim();
+                if (name.length >= 5 && isLikelyRealName(name)) return name.toUpperCase();
+            }
+        }
+        const lines = text.split('\n');
+        for (const line of lines) {
+            const clean = line.trim();
+            if (/^[A-Z\s]+$/.test(clean) && clean.length > 8 && isLikelyRealName(clean)) {
+                return clean.toUpperCase();
+            }
+        }
+        return null;
+    };
+
+    const extractCPF = (text: string): string | null => {
+        const match = text.match(/(\d{3}[.\s]?\d{3}[.\s]?\d{3}[-.\s]?\d{2})/);
+        return match ? match[0] : null;
+    };
+
+    const handleScanDocument = async (imageData: string) => {
+        setIsScanning(true);
+        try {
+            const response = await fetch('/api/ai/ocr-document', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: imageData }),
+            });
+
+            let data = null;
+            if (response.ok) {
+                data = await response.json();
+            }
+
+            if (data?.name || data?.doc) {
+                if (data.name) setNome(data.name);
+                if (data.doc) setDocumento(data.doc);
+            } else {
+                throw new Error('Groq no result');
+            }
+
+        } catch (error) {
+            console.log('Falling back to Tesseract...');
+            try {
+                const result = await Tesseract.recognize(imageData, 'por');
+                const text = result.data.text;
+                const name = extractName(text);
+                const doc = extractCPF(text);
+                if (name) setNome(name);
+                if (doc) setDocumento(doc);
+                if (!name && !doc) alert('OCR não identificou dados claros. Preencha manualmente.');
+            } catch (err) {
+                console.error(err);
+                alert('Erro no OCR.');
+            }
+        } finally {
+            setIsScanning(false);
         }
     };
 
@@ -506,526 +350,407 @@ export default function PortariaProfissionalPage() {
         }
     };
 
-    const filteredVisitors = visitors.filter(v => {
-        if (filterType && v.tipo !== filterType) return false;
-        return true;
-    });
-
-    const getTipoBadge = (tipo: string) => {
-        switch (tipo) {
-            case 'visitante': return <Badge variant="primary">Visitante</Badge>;
-            case 'prestador_servico': return <Badge variant="warning">Prestador</Badge>;
-            case 'entrega': return <Badge variant="success">Veículo</Badge>;
-            default: return <Badge>{tipo}</Badge>;
-        }
-    };
-
-    // Configurações de estilo por tipo
-    const getTipoConfig = () => {
-        switch (tipo) {
-            case 'visitante':
-                return {
-                    title: 'Registrar Visitante',
-                    buttonText: 'Registrar Visitante',
-                    borderColor: 'border-blue-500',
-                    bgColor: 'bg-blue-500',
-                    bgLight: 'bg-blue-50',
-                    textColor: 'text-blue-700',
-                    tipoLabel: 'Visitante'
-                };
-            case 'prestador_servico':
-                return {
-                    title: 'Registrar Prestador',
-                    buttonText: 'Registrar Prestador',
-                    borderColor: 'border-orange-500',
-                    bgColor: 'bg-orange-500',
-                    bgLight: 'bg-orange-50',
-                    textColor: 'text-orange-700',
-                    tipoLabel: 'Prestador de Serviço'
-                };
-            case 'entrega':
-                return {
-                    title: 'Registrar Veículo',
-                    buttonText: 'Registrar Veículo',
-                    borderColor: 'border-green-500',
-                    bgColor: 'bg-green-500',
-                    bgLight: 'bg-green-50',
-                    textColor: 'text-green-700',
-                    tipoLabel: 'Entrega / Veículo'
-                };
-            default:
-                return {
-                    title: 'Registrar Entrada',
-                    buttonText: 'Registrar Entrada',
-                    borderColor: 'border-emerald-500',
-                    bgColor: 'bg-emerald-500',
-                    bgLight: 'bg-emerald-50',
-                    textColor: 'text-emerald-700',
-                    tipoLabel: 'Selecione o tipo'
-                };
-        }
-    };
-
-    const tipoConfig = getTipoConfig();
-
     return (
-        <div className={`min-h-screen ${isFullscreen ? 'bg-gray-900 text-white p-4' : 'space-y-4'}`}>
-            {/* Header */}
-            <div className={`flex items-center justify-between ${isFullscreen ? 'mb-4' : ''}`}>
-                <div className="flex items-center gap-4">
-                    <Shield className={`h-8 w-8 ${isFullscreen ? 'text-emerald-400' : 'text-emerald-500'}`} />
+        <div className={`min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 ${isFullscreen ? 'p-4' : ''}`}>
+            <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-emerald-100 rounded-lg">
+                        <Shield className="w-8 h-8 text-emerald-600" />
+                    </div>
                     <div>
-                        <h1 className={`text-2xl font-bold ${isFullscreen ? '' : 'text-gray-900'}`}>Portaria</h1>
-                        <p className={`text-lg ${isFullscreen ? 'text-emerald-400' : 'text-gray-500'}`}>
+                        <h2 className="text-2xl font-bold text-slate-900">Portaria</h2>
+                        <p className="text-sm text-slate-500">
                             {currentTime.toLocaleDateString('pt-BR')} - {currentTime.toLocaleTimeString('pt-BR')}
                         </p>
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant={isFullscreen ? 'secondary' : 'outline'} size="sm" onClick={fetchVisitors}>
-                        <RefreshCw className="h-4 w-4" />
-                    </Button>
-                    <Button variant={isFullscreen ? 'secondary' : 'outline'} size="sm" onClick={toggleFullscreen}>
-                        {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
-                    </Button>
+                    <button onClick={fetchVisitors} className="p-2.5 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors" title="Atualizar">
+                        <RefreshCw className="w-5 h-5 text-slate-600" />
+                    </button>
+                    <button onClick={toggleFullscreen} className="p-2.5 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors" title="Tela Cheia">
+                        {isFullscreen ? <Minimize2 className="w-5 h-5 text-slate-600" /> : <Maximize2 className="w-5 h-5 text-slate-600" />}
+                    </button>
                 </div>
             </div>
 
-            {/* Quick Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <button
-                    onClick={() => { setTipo('visitante'); setTipoFixo(true); setShowModal(true); }}
-                    className="group relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
+                    onClick={() => { setTipo('visitante'); setTipoFixo(false); setShowModal(true); }}
+                    className="group relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all hover:scale-[1.02] text-left"
                 >
-                    <div className="flex flex-col items-center gap-4">
-                        <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center group-hover:bg-white/30 transition-colors">
-                            <Users className="h-8 w-8" />
+                    <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="relative z-10">
+                        <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center mb-4">
+                            <Users className="w-8 h-8" />
                         </div>
-                        <div className="text-center">
-                            <h3 className="text-xl font-bold mb-1">Visitante</h3>
-                            <p className="text-blue-100 text-xs">Registrar morador</p>
-                        </div>
+                        <h3 className="text-2xl font-bold mb-2">Novo Registro</h3>
+                        <p className="text-blue-100 text-sm">Visitante, Prestador ou Veículo</p>
                     </div>
+                    <ChevronRight className="absolute bottom-6 right-6 w-6 h-6 opacity-60" />
                 </button>
 
                 <button
-                    onClick={() => { setTipo('prestador_servico'); setTipoFixo(true); setShowModal(true); }}
-                    className="group relative overflow-hidden bg-gradient-to-br from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
+                    onClick={() => startCamera('doc')}
+                    className="group relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all hover:scale-[1.02] text-left"
                 >
-                    <div className="flex flex-col items-center gap-4">
-                        <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center group-hover:bg-white/30 transition-colors">
-                            <Shield className="h-8 w-8" />
+                    <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="relative z-10">
+                        <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center mb-4">
+                            <QrCode className="w-8 h-8" />
                         </div>
-                        <div className="text-center">
-                            <h3 className="text-xl font-bold mb-1">Prestador</h3>
-                            <p className="text-orange-100 text-xs">Manutenção</p>
+                        <h3 className="text-2xl font-bold mb-2">Scan Inteligente</h3>
+                        <p className="text-purple-100 text-sm">QR Code, Placa ou Face ID</p>
+                        <div className="flex gap-2 mt-3">
+                            <span className="px-2 py-1 bg-white/20 rounded text-xs font-medium">OCR</span>
+                            <span className="px-2 py-1 bg-white/20 rounded text-xs font-medium">AI</span>
                         </div>
                     </div>
-                </button>
-
-                <button
-                    onClick={() => { setTipo('entrega'); setTipoFixo(true); setShowModal(true); }}
-                    className="group relative overflow-hidden bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
-                >
-                    <div className="flex flex-col items-center gap-4">
-                        <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center group-hover:bg-white/30 transition-colors">
-                            <Car className="h-8 w-8" />
-                        </div>
-                        <div className="text-center">
-                            <h3 className="text-xl font-bold mb-1">Veículo</h3>
-                            <p className="text-emerald-100 text-xs">Entregas</p>
-                        </div>
-                    </div>
-                </button>
-
-                <button
-                    onClick={() => setShowQRScanner(true)}
-                    className="group relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
-                >
-                    <div className="flex flex-col items-center gap-4">
-                        <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center group-hover:bg-white/30 transition-colors">
-                            <QrCode className="h-8 w-8" />
-                        </div>
-                        <div className="text-center">
-                            <h3 className="text-xl font-bold mb-1">Ler QR Code</h3>
-                            <p className="text-purple-100 text-xs">Validar convite</p>
-                        </div>
-                    </div>
+                    <ChevronRight className="absolute bottom-6 right-6 w-6 h-6 opacity-60" />
                 </button>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Card className={isFullscreen ? 'bg-emerald-600 border-0' : 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0'}>
-                    <CardContent className="py-4 text-center text-white">
-                        <p className="text-3xl font-bold">{activeVisitors.length}</p>
-                        <p className="text-sm opacity-80">No Condomínio</p>
-                    </CardContent>
-                </Card>
-                <Card className={isFullscreen ? 'bg-blue-600 border-0' : 'bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0'}>
-                    <CardContent className="py-4 text-center text-white">
-                        <p className="text-3xl font-bold">{visitors.length}</p>
-                        <p className="text-sm opacity-80">Entradas Hoje</p>
-                    </CardContent>
-                </Card>
-                <Card className={isFullscreen ? 'bg-purple-600 border-0' : 'bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0'}>
-                    <CardContent className="py-4 text-center text-white">
-                        <p className="text-3xl font-bold">{visitors.filter(v => v.tipo === 'prestador_servico').length}</p>
-                        <p className="text-sm opacity-80">Prestadores</p>
-                    </CardContent>
-                </Card>
-                <Card className={isFullscreen ? 'bg-orange-600 border-0' : 'bg-gradient-to-br from-orange-500 to-orange-600 text-white border-0'}>
-                    <CardContent className="py-4 text-center text-white">
-                        <p className="text-3xl font-bold">{visitors.filter(v => v.tipo === 'entrega').length}</p>
-                        <p className="text-sm opacity-80">Entregas</p>
-                    </CardContent>
-                </Card>
-            </div>
-
-            {/* Search */}
-            <div className="flex gap-4">
-                <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <Input
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleQuickSearch()}
-                        placeholder="Buscar por CPF, placa ou nome..."
-                        className={`pl-10 ${isFullscreen ? 'bg-gray-800 border-gray-700 text-white' : ''}`}
-                    />
-                </div>
-                <Select
-                    value={filterType}
-                    onChange={(e) => setFilterType(e.target.value)}
-                    options={[
-                        { value: '', label: 'Todos' },
-                        { value: 'visitante', label: 'Visitantes' },
-                        { value: 'prestador_servico', label: 'Prestadores' },
-                        { value: 'entrega', label: 'Entregas' },
-                    ]}
-                    className={`w-40 ${isFullscreen ? 'bg-gray-800 border-gray-700 text-white' : ''}`}
-                />
-            </div>
-
-            {/* Convites do Período */}
-            <Card className={`border-2 border-blue-200 ${isFullscreen ? 'bg-gray-800' : 'bg-blue-50'}`}>
-                <CardContent className="p-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
                     <div className="flex items-center justify-between mb-3">
-                        <h3 className={`font-semibold flex items-center gap-2 ${isFullscreen ? 'text-white' : 'text-blue-800'}`}>
-                            <Ticket className="h-5 w-5 text-blue-600" />
-                            Convites ({pendingInvites.filter(i => i.status === 'pending').length} pendentes / {pendingInvites.filter(i => i.status === 'used').length} liberados)
-                        </h3>
-                        <div className="flex gap-1">
-                            <Button
-                                variant={invitePeriodFilter === 'hoje' ? 'primary' : 'outline'}
-                                size="sm"
-                                onClick={() => setInvitePeriodFilter('hoje')}
-                                className={invitePeriodFilter === 'hoje' ? 'bg-blue-600 text-white' : ''}
-                            >
-                                Hoje
-                            </Button>
-                            <Button
-                                variant={invitePeriodFilter === 'semana' ? 'primary' : 'outline'}
-                                size="sm"
-                                onClick={() => setInvitePeriodFilter('semana')}
-                                className={invitePeriodFilter === 'semana' ? 'bg-blue-600 text-white' : ''}
-                            >
-                                Semana
-                            </Button>
-                            <Button
-                                variant={invitePeriodFilter === 'mes' ? 'primary' : 'outline'}
-                                size="sm"
-                                onClick={() => setInvitePeriodFilter('mes')}
-                                className={invitePeriodFilter === 'mes' ? 'bg-blue-600 text-white' : ''}
-                            >
-                                Mês
-                            </Button>
+                        <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                            <Shield className="w-5 h-5 text-emerald-600" />
                         </div>
+                        <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded">Agora</span>
                     </div>
-                    {pendingInvites.length === 0 ? (
-                        <p className={`text-center py-4 ${isFullscreen ? 'text-gray-400' : 'text-gray-500'}`}>
-                            Nenhum convite pendente para o período selecionado
-                        </p>
-                    ) : (
-                        <div className="grid gap-2">
-                            {pendingInvites.map(invite => (
-                                <div
-                                    key={invite.id}
-                                    className={`flex items-center justify-between p-3 rounded-lg ${isFullscreen ? 'bg-gray-700' : 'bg-white border border-blue-100'}`}
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                                            <QrCode className="h-5 w-5 text-blue-600" />
-                                        </div>
-                                        <div>
-                                            <p className={`font-medium ${isFullscreen ? 'text-white' : 'text-gray-900'}`}>
-                                                {invite.guest_name}
-                                            </p>
-                                            <p className={`text-sm ${isFullscreen ? 'text-gray-400' : 'text-gray-500'}`}>
-                                                {invite.unit ? `${invite.unit.bloco || ''} ${invite.unit.numero_unidade}` : 'Sem unidade'}
-                                                {invite.visit_time_start && ` • ${invite.visit_time_start.substring(0, 5)}`}
-                                                {invite.visit_time_end && ` - ${invite.visit_time_end.substring(0, 5)}`}
-                                            </p>
-                                            {invite.creator?.nome && (
-                                                <p className={`text-xs ${isFullscreen ? 'text-gray-500' : 'text-gray-400'}`}>
-                                                    Criado por: {invite.creator.nome}
-                                                </p>
+                    <p className="text-3xl font-bold text-slate-900 mb-1">{activeVisitors.length}</p>
+                    <p className="text-sm text-slate-500">No Condomínio</p>
+                </div>
+                <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
+                    <div className="flex items-center justify-between mb-3">
+                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <Users className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <Clock className="w-4 h-4 text-slate-400" />
+                    </div>
+                    <p className="text-3xl font-bold text-slate-900 mb-1">{visitors.length}</p>
+                    <p className="text-sm text-slate-500">Entradas Hoje</p>
+                </div>
+                <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
+                    <div className="flex items-center justify-between mb-3">
+                        <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                            <Package className="w-5 h-5 text-orange-600" />
+                        </div>
+                        <span className="text-xs font-semibold text-orange-600 bg-orange-50 px-2 py-1 rounded">Novo</span>
+                    </div>
+                    <p className="text-3xl font-bold text-slate-900 mb-1">{visitors.filter(v => v.tipo === 'entrega').length}</p>
+                    <p className="text-sm text-slate-500">Entregas</p>
+                </div>
+                <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
+                    <div className="flex items-center justify-between mb-3">
+                        <div className="w-10 h-10 bg-violet-100 rounded-lg flex items-center justify-center">
+                            <Car className="w-5 h-5 text-violet-600" />
+                        </div>
+                        <Calendar className="w-4 h-4 text-slate-400" />
+                    </div>
+                    <p className="text-3xl font-bold text-slate-900 mb-1">
+                        {visitors.filter(v => !!v.placa_veiculo).length}
+                    </p>
+                    <p className="text-sm text-slate-500">Veículos Registrados</p>
+                </div>
+            </div>
+
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm mb-6">
+                <div className="p-4 border-b border-slate-200">
+                    <div className="flex gap-3">
+                        <div className="flex-1 relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                            <input
+                                type="text"
+                                placeholder="Buscar por CPF, placa ou nome..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                            />
+                        </div>
+                        <select
+                            value={timeFilter}
+                            onChange={(e) => setTimeFilter(e.target.value)}
+                            className="px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white text-slate-700 font-medium"
+                        >
+                            <option>Hoje</option>
+                            <option>Semana</option>
+                            <option>Mês</option>
+                            <option>Todos</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div className="p-0">
+                    {filteredVisitors.length > 0 ? (
+                        <div className="divide-y divide-slate-100">
+                            {filteredVisitors.map(visitor => (
+                                <div key={visitor.id} className="p-4 hover:bg-slate-50 transition-colors flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center overflow-hidden">
+                                            {visitor.foto_url ? (
+                                                <img src={visitor.foto_url} alt="" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <User className="w-5 h-5 text-slate-400" />
                                             )}
                                         </div>
-                                    </div>
-                                    {invite.status === 'pending' ? (
-                                        <Badge className="bg-blue-100 text-blue-800">
-                                            Aguardando
-                                        </Badge>
-                                    ) : (
-                                        <Badge className="bg-green-100 text-green-800">
-                                            ✓ Liberado
-                                        </Badge>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
-            {activeVisitors.length > 0 && (
-                <Card className={isFullscreen ? 'bg-gray-800 border-gray-700' : ''}>
-                    <CardContent className="p-4">
-                        <h3 className={`font-semibold mb-3 ${isFullscreen ? 'text-white' : ''}`}>
-                            <LogIn className="inline h-4 w-4 mr-2 text-emerald-500" />
-                            Dentro do Condomínio ({activeVisitors.length})
-                        </h3>
-                        <div className="grid gap-2">
-                            {activeVisitors.map(v => (
-                                <div key={v.id} className={`flex items-center justify-between p-3 rounded-lg ${isFullscreen ? 'bg-gray-700' : 'bg-emerald-50'}`}>
-                                    <div className="flex items-center gap-3">
-                                        {v.foto_url ? (
-                                            <img src={v.foto_url} className="w-10 h-10 rounded-full object-cover" />
-                                        ) : (
-                                            <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
-                                                <Users className="h-5 w-5 text-gray-500" />
-                                            </div>
-                                        )}
                                         <div>
-                                            <p className={`font-medium ${isFullscreen ? 'text-white' : ''}`}>{v.nome}</p>
-                                            <p className={`text-sm ${isFullscreen ? 'text-gray-400' : 'text-gray-500'}`}>
-                                                {v.unidade ? `${v.unidade.bloco} ${v.unidade.numero_unidade}` : 'Sem destino'} •
-                                                Entrada: {new Date(v.data_hora_entrada).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                            <p className="text-sm font-bold text-slate-900">{visitor.nome}</p>
+                                            <p className="text-xs text-slate-500">
+                                                {visitor.documento} • {visitor.placa_veiculo ? `${visitor.placa_veiculo} • ` : ''}
+                                                {visitor.tipo.toUpperCase()}
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="flex gap-2">
-                                        <Button size="sm" variant="ghost" onClick={() => printVisitorBadge(v)}>
-                                            <Printer className="h-4 w-4" />
-                                        </Button>
-                                        <Button size="sm" onClick={() => handleExit(v.id)}>
-                                            <LogOut className="h-4 w-4 mr-1" />
-                                            Saída
-                                        </Button>
+                                    <div className="flex items-center gap-4">
+                                        <div className="text-right">
+                                            <div className="flex items-center gap-1 text-emerald-600 text-sm font-medium">
+                                                <Clock className="w-3 h-3" />
+                                                {new Date(visitor.data_hora_entrada).toLocaleTimeString('pt-BR').substring(0, 5)}
+                                            </div>
+                                            {visitor.unidade && (
+                                                <div className="flex items-center gap-1 text-slate-400 text-xs">
+                                                    <MapPin className="w-3 h-3" />
+                                                    {visitor.unidade.bloco}-{visitor.unidade.numero_unidade}
+                                                </div>
+                                            )}
+                                        </div>
+                                        {!visitor.data_hora_saida ? (
+                                            <button
+                                                onClick={() => handleExit(visitor.id)}
+                                                className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                title="Registrar Saída"
+                                            >
+                                                <LogOut className="w-5 h-5" />
+                                            </button>
+                                        ) : (
+                                            <span className="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded">Saiu</span>
+                                        )}
                                     </div>
                                 </div>
                             ))}
                         </div>
-                    </CardContent>
-                </Card>
-            )}
+                    ) : (
+                        <div className="text-center py-8 text-slate-500">
+                            Nenhum registro encontrado.
+                        </div>
+                    )}
+                </div>
+            </div>
 
-            {/* History */}
-            <Card className={isFullscreen ? 'bg-gray-800 border-gray-700' : ''}>
-                <CardContent className="p-4">
-                    <h3 className={`font-semibold mb-3 ${isFullscreen ? 'text-white' : ''}`}>
-                        <Clock className="inline h-4 w-4 mr-2" />
-                        Histórico de Hoje
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm mb-6 p-6">
+                <div className="flex items-center gap-2 mb-4">
+                    <QrCode className="w-5 h-5 text-purple-600" />
+                    <h3 className="font-semibold text-slate-900">
+                        Convites ({pendingInvites.filter(i => i.status === 'pending').length} pendentes / {pendingInvites.filter(i => i.status === 'used').length} liberados)
                     </h3>
-                    <div className="space-y-2 max-h-96 overflow-y-auto">
-                        {filteredVisitors.map(v => (
-                            <div key={v.id} className={`flex items-center justify-between p-2 rounded ${isFullscreen ? 'bg-gray-700' : 'bg-gray-50'}`}>
-                                <div className="flex items-center gap-3">
-                                    {getTipoBadge(v.tipo)}
-                                    <div>
-                                        <span className={isFullscreen ? 'text-white' : ''}>{v.nome}</span>
-                                        {v.documento && <span className="text-sm text-gray-500 ml-2">({v.documento})</span>}
-                                        {v.placa_veiculo && <span className="text-sm text-gray-500 ml-2"><Car className="inline h-3 w-3" /> {v.placa_veiculo}</span>}
-                                    </div>
+                </div>
+
+                {pendingInvites.length === 0 ? (
+                    <div className="text-center py-8">
+                        <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <QrCode className="w-8 h-8 text-slate-400" />
+                        </div>
+                        <p className="text-slate-500">Nenhum convite pendente para o período selecionado</p>
+                        <p className="text-sm text-slate-400 mt-1">Use o botão "Scan Inteligente" para validar QR Codes</p>
+                    </div>
+                ) : (
+                    <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                        {pendingInvites.map(invite => (
+                            <div key={invite.id} className="border border-slate-200 rounded-lg p-4 flex items-start gap-3 hover:border-purple-300 transition-colors">
+                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${invite.status === 'pending' ? 'bg-purple-100 text-purple-600' : 'bg-green-100 text-green-600'}`}>
+                                    <QrCode className="w-5 h-5" />
                                 </div>
-                                <div className="text-sm text-gray-500">
-                                    {new Date(v.data_hora_entrada).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                                    {v.data_hora_saida && (
-                                        <span className="text-emerald-500"> → {new Date(v.data_hora_saida).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                                <div className="overflow-hidden">
+                                    <p className="font-bold text-slate-900 truncate">{invite.guest_name}</p>
+                                    <p className="text-xs text-slate-500">
+                                        {new Date(invite.visit_date).toLocaleDateString()} • {invite.visit_time_start.substring(0, 5)}
+                                    </p>
+                                    {invite.unit && (
+                                        <p className="text-xs text-slate-400">
+                                            Apto: {invite.unit.bloco}-{invite.unit.numero_unidade}
+                                        </p>
                                     )}
+                                    <div className={`mt-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${invite.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>
+                                        {invite.status === 'pending' ? 'Aguardando' : 'Liberado'}
+                                    </div>
                                 </div>
                             </div>
                         ))}
                     </div>
-                </CardContent>
-            </Card>
+                )}
+            </div>
 
-            {/* Entry Modal - Personalizado por Tipo */}
-            <Modal isOpen={showModal} onClose={() => { setShowModal(false); resetForm(); }} title={tipoConfig.title} size="md">
+            <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-xl p-4">
+                <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Camera className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <div className="flex-1">
+                        <h4 className="font-semibold text-slate-900 mb-1">Portaria 4.0 com IA</h4>
+                        <p className="text-sm text-slate-600">
+                            Use o <span className="font-semibold">Scan Inteligente</span> para reconhecimento facial automático (AWS Rekognition / Groq),
+                            leitura de placas (OCR) ou validação de QR Codes de convites.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+
+            <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Novo Registro">
                 <form onSubmit={handleEntry} className="space-y-4">
-                    {/* Barra de tipo colorida */}
-                    <div className={`${tipoConfig.bgLight} ${tipoConfig.borderColor} border-l-4 px-4 py-2 rounded-r-lg mb-4`}>
-                        <span className={`font-semibold ${tipoConfig.textColor}`}>{tipoConfig.tipoLabel}</span>
-                    </div>
-
-                    <div className="flex gap-4 items-start">
-                        <div className="flex-shrink-0">
-                            {capturedPhoto ? (
-                                <img src={capturedPhoto} className="w-24 h-24 rounded-lg object-cover" />
-                            ) : (
-                                <button type="button" onClick={startCamera} className={`w-24 h-24 rounded-lg ${tipoConfig.bgLight} flex items-center justify-center hover:opacity-80 border-2 ${tipoConfig.borderColor}`}>
-                                    <Camera className={`h-8 w-8 ${tipoConfig.textColor}`} />
-                                </button>
-                            )}
+                    {capturedPhoto && (
+                        <div className="mb-4 text-center">
+                            <img src={capturedPhoto} alt="Captura" className="h-32 mx-auto rounded-lg border border-slate-200" />
                         </div>
-                        <div className="flex-1 space-y-3">
-                            <div className="relative">
-                                <Input label="Nome *" value={nome} onChange={(e) => setNome(e.target.value)} required disabled={isScanning} />
-                                {isScanning && (
-                                    <div className="absolute right-3 top-8">
-                                        <RefreshCw className="h-4 w-4 animate-spin text-blue-500" />
-                                    </div>
-                                )}
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="relative">
-                                    <Input label="CPF/RG" value={documento} onChange={(e) => setDocumento(e.target.value)} disabled={isScanning} />
-                                    {isScanning && (
-                                        <div className="absolute right-3 top-8">
-                                            <RefreshCw className="h-4 w-4 animate-spin text-blue-500" />
-                                        </div>
-                                    )}
-                                </div>
-                                <Input label="Placa" value={placa} onChange={(e) => setPlaca(e.target.value.toUpperCase())} placeholder="ABC-1234" />
-                            </div>
-                        </div>
-                    </div>
+                    )}
 
-                    <div className="grid grid-cols-2 gap-4">
-                        {/* Tipo fixo (não editável) */}
+                    {!tipoFixo && (
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
-                            <div className={`px-3 py-2 ${tipoConfig.bgLight} rounded-lg font-medium ${tipoConfig.textColor} border-2 ${tipoConfig.borderColor}`}>
-                                {tipoConfig.tipoLabel}
-                            </div>
+                            <label className="block text-sm font-medium text-gray-700">Tipo de Entrada</label>
+                            <select
+                                value={tipo}
+                                onChange={(e) => setTipo(e.target.value)}
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
+                            >
+                                <option value="visitante">Visitante</option>
+                                <option value="prestador_servico">Prestador de Serviço</option>
+                                <option value="entrega">Entrega / Veículo</option>
+                            </select>
                         </div>
-                        <Select
-                            label="Destino (Unidade)"
-                            value={unidadeId}
-                            onChange={(e) => setUnidadeId(e.target.value)}
-                            options={[
-                                { value: '', label: 'Selecione...' },
-                                ...units.map(u => ({ value: u.id, label: `${u.bloco || ''} ${u.numero_unidade}` }))
-                            ]}
+                    )}
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Nome Completo</label>
+                        <input
+                            type="text"
+                            value={nome}
+                            onChange={(e) => setNome(e.target.value)}
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
+                            required
                         />
                     </div>
 
-                    <Input label="Observações" value={observacoes} onChange={(e) => setObservacoes(e.target.value)} />
-
-                    {/* Toggle Notificar via WhatsApp */}
-                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
-                        <div className="flex items-center gap-3">
-                            <MessageSquare className="h-5 w-5 text-green-600" />
-                            <div>
-                                <p className="font-medium text-gray-700">Notificar via WhatsApp</p>
-                                <p className="text-xs text-gray-500">Enviar aviso ao morador</p>
-                            </div>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                if (!whatsAppContratado) {
-                                    setShowWhatsAppModal(true);
-                                } else {
-                                    setNotificarWhatsApp(!notificarWhatsApp);
-                                }
-                            }}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${notificarWhatsApp && whatsAppContratado ? 'bg-green-500' : 'bg-gray-300'
-                                }`}
-                        >
-                            <span
-                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${notificarWhatsApp && whatsAppContratado ? 'translate-x-6' : 'translate-x-1'
-                                    }`}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Documento (CPF/RG)</label>
+                            <input
+                                type="text"
+                                value={documento}
+                                onChange={(e) => setDocumento(e.target.value)}
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
                             />
-                        </button>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Placa Veículo</label>
+                            <input
+                                type="text"
+                                value={placa}
+                                onChange={(e) => setPlaca(e.target.value)}
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
+                            />
+                        </div>
                     </div>
 
-                    <div className="flex gap-3 justify-end pt-4">
-                        <Button type="button" variant="ghost" onClick={() => setShowModal(false)}>Cancelar</Button>
-                        <Button type="submit" loading={saving} className={`${tipoConfig.bgColor} hover:opacity-90`}>
-                            <LogIn className="h-4 w-4 mr-2" />
-                            {tipoConfig.buttonText}
-                        </Button>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Unidade de Destino</label>
+                        <select
+                            value={unidadeId}
+                            onChange={(e) => setUnidadeId(e.target.value)}
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
+                        >
+                            <option value="">Selecione...</option>
+                            {units.map(u => (
+                                <option key={u.id} value={u.id}>
+                                    {u.bloco} - {u.numero_unidade}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Observações</label>
+                        <textarea
+                            value={observacoes}
+                            onChange={(e) => setObservacoes(e.target.value)}
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
+                            rows={2}
+                        />
+                    </div>
+
+                    <div className="pt-4 flex justify-end gap-3">
+                        <button
+                            type="button"
+                            onClick={() => setShowModal(false)}
+                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 from-slate-50"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={saving}
+                            className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-md hover:bg-emerald-700 focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50"
+                        >
+                            {saving ? 'Salvando...' : 'Registrar Entrada'}
+                        </button>
                     </div>
                 </form>
             </Modal>
 
-            {/* Camera Modal */}
-            <Modal isOpen={showCameraModal} onClose={() => setShowCameraModal(false)} title="Capturar Foto" size="md">
+            <Modal isOpen={showCameraModal} onClose={() => { setShowCameraModal(false); stopCamera(); }} title="Scan Inteligente">
                 <div className="space-y-4">
-                    <video ref={videoRef} autoPlay playsInline className="w-full rounded-lg bg-black" />
-                    <canvas ref={canvasRef} className="hidden" />
-                    <div className="flex justify-center gap-3">
-                        <Button variant="outline" onClick={capturePhoto}>
-                            <Camera className="h-4 w-4 mr-2" />
-                            Apenas Foto
-                        </Button>
-                        <Button onClick={captureAndScanDocument} disabled={isScanning}>
-                            {isScanning ? (
-                                <>
-                                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                                    Escaneando...
-                                </>
-                            ) : (
-                                <>
-                                    <CreditCard className="h-4 w-4 mr-2" />
-                                    Escanear Documento
-                                </>
-                            )}
-                        </Button>
+                    <div className="flex p-1 bg-slate-100 rounded-lg">
+                        <button
+                            onClick={() => startCamera('doc')}
+                            className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${scanMode === 'doc' ? 'bg-white shadow text-emerald-600' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            Facial / Documento
+                        </button>
+                        <button
+                            onClick={() => setScanMode('qr')}
+                            className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${scanMode === 'qr' ? 'bg-white shadow text-purple-600' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            QR Code
+                        </button>
                     </div>
-                </div>
-            </Modal>
 
-            {/* WhatsApp Contratação Modal */}
-            <Modal isOpen={showWhatsAppModal} onClose={() => setShowWhatsAppModal(false)} title="WhatsApp não contratado" size="sm">
-                <div className="space-y-4">
-                    <div className="flex items-center gap-3 p-4 bg-orange-50 border border-orange-200 rounded-lg">
-                        <AlertCircle className="h-6 w-6 text-orange-500 flex-shrink-0" />
-                        <p className="text-orange-800 text-sm">
-                            A integração com WhatsApp ainda não foi contratada para este condomínio.
-                        </p>
-                    </div>
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                        <h4 className="font-semibold text-gray-800 mb-2">O que está incluso:</h4>
-                        <ul className="space-y-1 text-sm text-gray-600">
-                            <li>• Notificação automática de visitantes</li>
-                            <li>• Lembretes de cobrança</li>
-                            <li>• Avisos de encomendas</li>
-                            <li>• Servidor dedicado + suporte</li>
-                        </ul>
-                        <div className="mt-3 pt-3 border-t border-gray-200">
-                            <p className="text-sm text-gray-500">Implantação: <strong className="text-gray-800">R$ 697</strong></p>
-                            <p className="text-sm text-gray-500">Mensalidade: <strong className="text-gray-800">R$ 149/mês</strong></p>
+                    {scanMode === 'doc' ? (
+                        <>
+                            <div className="relative rounded-lg overflow-hidden bg-black aspect-video">
+                                <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
+                                <canvas ref={canvasRef} className="hidden" />
+
+                                <div className="absolute inset-0 border-2 border-emerald-500/50 pointer-events-none">
+                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-40 border-2 border-emerald-400 rounded-lg shadow-[0_0_15px_rgba(16,185,129,0.5)]"></div>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col gap-2">
+                                <button
+                                    onClick={captureAndScanDocument}
+                                    disabled={isScanning}
+                                    className="w-full py-3 bg-emerald-600 text-white rounded-lg font-bold hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2"
+                                >
+                                    {isScanning ? (
+                                        <>Processing...</>
+                                    ) : (
+                                        <>
+                                            <Camera className="w-5 h-5" />
+                                            Capturar e Analisar
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                            <p className="text-xs text-center text-slate-500">
+                                O sistema irá extrair automaticamente Nome e CPF do documento usando IA (Groq/NVIDIA).
+                            </p>
+                        </>
+                    ) : (
+                        <div className="py-4">
+                            <QRCodeScanner />
                         </div>
-                    </div>
-                    <div className="flex gap-3">
-                        <Button variant="ghost" className="flex-1" onClick={() => setShowWhatsAppModal(false)}>
-                            Fechar
-                        </Button>
-                        <Button className="flex-1 bg-green-500 hover:bg-green-600" onClick={() => {
-                            setShowWhatsAppModal(false);
-                            window.open('/contato?assunto=whatsapp', '_blank');
-                        }}>
-                            <MessageSquare className="h-4 w-4 mr-2" />
-                            Contratar
-                        </Button>
-                    </div>
+                    )}
                 </div>
-            </Modal>
-            {/* QR Scanner Modal */}
-            <Modal isOpen={showQRScanner} onClose={() => setShowQRScanner(false)} title="" size="md">
-                <QRCodeScanner onClose={() => { setShowQRScanner(false); fetchVisitors(); }} />
             </Modal>
         </div>
     );
