@@ -1,5 +1,6 @@
 
 import { BankIntegration } from './base';
+import { SUPPORTED_BANKS } from './constants';
 import { BancoBrasilIntegration } from './banco-brasil';
 import { ItauIntegration } from './itau';
 import { BradescoIntegration } from './bradesco';
@@ -31,8 +32,6 @@ export class BankFactory {
     }
 
     static getSupportedBanks(): Array<{ code: string; name: string; logo: string }> {
-    static getSupportedBanks(): Array<{ code: string; name: string; logo: string }> {
         return SUPPORTED_BANKS;
     }
-}
 }
