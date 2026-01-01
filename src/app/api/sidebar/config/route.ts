@@ -52,8 +52,8 @@ export async function POST(request: NextRequest) {
             .eq('id', user.id)
             .single();
 
-        if (!profile?.condo_id || profile.role !== 'sindico') {
-            return NextResponse.json({ error: 'Only administrators can change sidebar configuration' }, { status: 403 });
+        if (!profile?.condo_id || !['sindico', 'superadmin'].includes(profile.role)) {
+            return NextResponse.json({ error: 'Only administrators or superadmins can change sidebar configuration' }, { status: 403 });
         }
 
         const body = await request.json();
