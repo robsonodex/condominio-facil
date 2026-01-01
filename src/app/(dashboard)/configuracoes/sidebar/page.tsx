@@ -24,7 +24,7 @@ export default function SidebarConfigPage() {
 
     const fetchConfig = async () => {
         try {
-            const res = await fetch('/api/sidebar/config');
+            const res = await fetch(`/api/sidebar/config?t=${Date.now()}`, { cache: 'no-store' });
             const data = await res.json();
 
             // Merge defaults with saved config

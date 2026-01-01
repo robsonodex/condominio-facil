@@ -135,7 +135,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     }, [profile?.condo_id]);
 
     useEffect(() => {
-        fetch('/api/sidebar/config')
+        // Cache bust with timestamp
+        fetch(`/api/sidebar/config?t=${Date.now()}`, { cache: 'no-store' })
             .then(res => res.json())
             .then(data => {
                 if (data?.menu_items) setMenuConfig(data.menu_items);
