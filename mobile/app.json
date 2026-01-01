@@ -1,60 +1,31 @@
 {
-    "expo": {
-        "name": "Meu Condomínio Fácil",
-        "slug": "condominio-facil-mobile",
-        "version": "1.0.0",
-        "sdkVersion": "54.0.0",
-        "orientation": "portrait",
-        "icon": "./assets/icon.png",
-        "splash": {
-            "image": "./assets/splash.png",
-            "resizeMode": "contain",
-            "backgroundColor": "#10b981"
-        },
-        "platforms": [
-            "ios",
-            "android",
-            "web"
-        ],
-        "assetBundlePatterns": [
-            "**/*"
-        ],
-        "web": {
-            "bundler": "metro",
-            "favicon": "./assets/favicon.png"
-        },
-        "android": {
-            "package": "com.condominiofacil.app",
-            "adaptiveIcon": {
-                "foregroundImage": "./assets/adaptive-icon.png",
-                "backgroundColor": "#10b981"
-            },
-            "permissions": [
-                "android.permission.VIBRATE",
-                "android.permission.RECEIVE_BOOT_COMPLETED"
-            ],
-            "useNextNotificationsApi": true
-        },
-        "ios": {
-            "bundleIdentifier": "com.condominiofacil.app",
-            "icon": "./assets/icon.png"
-        },
-        "plugins": [
-            [
-                "expo-notifications",
-                {
-                    "icon": "./assets/icon.png",
-                    "color": "#10b981",
-                    "sounds": [],
-                    "mode": "production"
-                }
-            ]
-        ],
-        "notification": {
-            "icon": "./assets/icon.png",
-            "color": "#10b981",
-            "androidMode": "default",
-            "androidCollapsedTitle": "Meu Condomínio Fácil"
-        }
+  "expo": {
+    "name": "mobile",
+    "slug": "mobile",
+    "scheme": "condominio-facil",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": false,
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
     }
+  }
 }

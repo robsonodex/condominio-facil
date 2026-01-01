@@ -47,11 +47,14 @@ self.addEventListener('fetch', (event) => {
                 // Clone the response
                 const responseClone = response.clone();
 
-                // Cache successful responses
+                // Cache successful responses - only for http/https to avoid chrome-extension errors
                 if (response.status === 200) {
-                    caches.open(CACHE_NAME).then((cache) => {
-                        cache.put(event.request, responseClone);
-                    });
+                    const protocol = new URL(event.request.url).protocol;
+                    if (protocol.startsWith('http')) {
+                        caches.open(CACHE_NAME).then((cache) => {
+                            cache.put(event.request, responseClone);
+                        });
+                    }
                 }
 
                 return response;
