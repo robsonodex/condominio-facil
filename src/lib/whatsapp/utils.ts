@@ -1,5 +1,5 @@
 /**
- * Utilitário para geração de links e mensagens WhatsApp
+ * Utilitário para geração de links e mensagens WhatsApp (Client-side)
  */
 
 const WHATSAPP_BASE_URL = 'https://wa.me';
@@ -32,7 +32,7 @@ export function generateWhatsAppLink(config: WhatsAppConfig): string {
     return `${WHATSAPP_BASE_URL}/${phone}?text=${encodedMessage}`;
 }
 
-// Templates de mensagens
+// Templates de mensagens (Texto puro)
 export const WhatsAppTemplates = {
     // Cobrança
     cobranca: (params: { nome: string; valor: string; vencimento: string; linkPagamento: string }) =>
@@ -128,7 +128,9 @@ _Condomínio Fácil_`,
 // Abrir WhatsApp com mensagem
 export function openWhatsApp(phone: string, message: string): void {
     const link = generateWhatsAppLink({ phone, message });
-    window.open(link, '_blank');
+    if (typeof window !== 'undefined') {
+        window.open(link, '_blank');
+    }
 }
 
 // Criar link de cobrança PIX

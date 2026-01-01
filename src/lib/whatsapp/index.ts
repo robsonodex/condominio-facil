@@ -59,3 +59,6 @@ export const Templates = {
     PAGAMENTO_CONFIRMADO: 'pagamento_confirmado', // {{1}} = valor, {{2}} = data
     LEMBRETE_VENCIMENTO: 'lembrete_vencimento', // {{1}} = valor, {{2}} = dias
 };
+
+export * from './utils';
+
