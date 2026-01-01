@@ -2,8 +2,8 @@
 
 ## Parte 1: Visão Geral e Arquitetura
 
-**Versão:** 8.3  
-**Última Atualização:** 27/12/2024  
+**Versão:** 9.0 (Unified AI)  
+**Última Atualização:** 01/01/2026  
 **CNPJ:** 57.444.727/0001-85
 
 ---
@@ -77,7 +77,7 @@ Cobrança mensal automática
 | Expo SDK 50 | Ambiente de desenvolvimento |
 | Expo Router | Navegação file-based |
 | Zustand | Estado global |
-| TanStack Query | Data fetching e cache |
+| TanStack Query v5 | Data fetching e cache |
 
 ### Backend
 
@@ -111,8 +111,8 @@ Cobrança mensal automática
 |---------|-----|
 | Mercado Pago | Pagamentos |
 | Evolution API | WhatsApp |
-| OpenAI GPT-4 | Assistente IA |
-| SMTP (configurável) | E-mail |
+| Groq (Llama 3) | Inteligência Artificial (OCR, Chat, Auditor) |
+| OpenAI/Gemini | Fallbacks e Embeddings |
 
 ---
 
@@ -145,10 +145,10 @@ Cobrança mensal automática
 │           CAMADA DE DADOS E SERVIÇOS                  │
 │  ┌────────────────┐  ┌──────────────────────────┐    │
 │  │   Supabase     │  │  Serviços Externos       │    │
-│  │  - PostgreSQL  │  │  - Mercado Pago          │    │
-│  │  - Auth        │  │  - Evolution API         │    │
-│  │  - Storage     │  │  - OpenAI (GPT)          │    │
-│  │  - Realtime    │  │  - SMTP (Nodemailer)     │    │
+│  │  - PostgreSQL  │  │  - Groq (Llama 3)        │    │
+│  │  - Auth        │  │  - Mercado Pago          │    │
+│  │  - Storage     │  │  - Evolution API         │    │
+│  │  - Realtime    │  │  - OpenAI (Embeddings)   │    │
 │  └────────────────┘  └──────────────────────────┘    │
 └──────────────────────────────────────────────────────┘
 ```

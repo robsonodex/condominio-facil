@@ -2,8 +2,8 @@
 
 ## Parte 4: Integrações
 
-**Versão:** 8.3  
-**Última Atualização:** 27/12/2024
+**Versão:** 9.0 (Unified AI)  
+**Última Atualização:** 01/01/2026
 
 ---
 
@@ -215,55 +215,30 @@ SMTP_ENCRYPTION_KEY=chave-para-criptografia
 
 ---
 
-## 4. OpenAI GPT (Assistente IA)
+## 4. Groq / Llama 3 (Assistente e OCR)
 
 ### 4.1 Configuração
 
 ```env
-OPENAI_API_KEY=sk-xxx
+GROQ_API_KEY=gsk-xxx
 ```
 
 ### 4.2 Funcionalidades
 
-- ✅ Assistente IA para moradores (24h)
-- ✅ Auditor de orçamentos
-- ✅ Embeddings de documentos
-- ✅ Respostas contextualizadas
-- ✅ **OCR de Documentos** (GPT-4o Vision)
-  - Leitura de RG, CNH, CPF
-  - Extração de nome e número do documento
-  - Preenchimento automático na portaria
+- ✅ **Assistente IA**: Llama 3.1 70B para respostas rápidas e contextuais.
+- ✅ **Auditor de Orçamentos**: Llama 3.2 Vision para análise de PDF/Imagens.
+- ✅ **OCR de Documentos**: Llama 3.2 Vision para leitura de RG/CNH/CPF.
+- ✅ **Fallback Tesseract**: Processamento local se a API falhar.
 
-### 4.3 Uso
+### 4.3 Diferenciais Groq
 
-```typescript
-import OpenAI from 'openai';
+- **Latência Ultra-baixa**: Respostas em milissegundos.
+- **Custo-Benefício**: Plano gratuito generoso.
+- **Open-Source Power**: Baseado nos modelos Llama da Meta.
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+### 4.4 Embeddings (OpenAI)
 
-const completion = await openai.chat.completions.create({
-  model: 'gpt-4',
-  messages: [
-    { role: 'system', content: 'Você é um assistente de condomínio.' },
-    { role: 'user', content: userMessage }
-  ]
-});
-```
-
-### 4.4 Contexto Fornecido
-
-- Informações do condomínio
-- Histórico de cobranças
-- Regras específicas (regimento, convenção)
-- Documentos embedados
-
-### 4.5 Taxas
-
-| Item | Valor |
-|------|-------|
-| Implantação | R$ 997,00 (único) |
-| Mensalidade | R$ 149,00/mês |
-| Disponível | Apenas plano Premium |
+O sistema continua usando OpenAI `text-embedding-3-small` para busca semântica em documentos (RAG), garantindo a melhor recuperação de contexto.
 
 ---
 
@@ -380,8 +355,9 @@ EVOLUTION_API_URL=https://evolution.yourserver.com
 EVOLUTION_API_KEY=your-api-key
 
 # ============================================
-# OPENAI
+# OPENAI / GROQ
 # ============================================
+GROQ_API_KEY=gsk-xxx
 OPENAI_API_KEY=sk-xxx
 
 # ============================================

@@ -2,9 +2,9 @@
 
 ## Parte 2: Banco de Dados
 
-**Versão:** 8.3  
-**Última Atualização:** 27/12/2024  
-**Total de Migrations:** 41+
+**Versão:** 9.0 (Unified AI)  
+**Última Atualização:** 01/01/2026  
+**Total de Migrations:** 45+
 
 ---
 
@@ -15,6 +15,7 @@ O sistema utiliza **Supabase PostgreSQL** com:
 - Multi-tenancy por condomínio
 - Triggers automáticos para `updated_at`
 - Funções `SECURITY DEFINER` para operações críticas
+18: - **Soft Delete** implementado via coluna `deleted_at` em tabelas críticas (prevenindo timeouts em deletes em cascata).
 
 ---
 

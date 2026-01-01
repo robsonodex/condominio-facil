@@ -2,8 +2,8 @@
 
 ## Parte 5: Manual do Usuário, Vendas e Deploy
 
-**Versão:** 8.3  
-**Última Atualização:** 27/12/2024  
+**Versão:** 9.0 (Unified AI)  
+**Última Atualização:** 01/01/2026  
 **CNPJ:** 57.444.727/0001-85
 
 ---
@@ -382,37 +382,35 @@ npx eas build -p ios --profile production
 
 ---
 
-## 7. Changelog v8.3
+## 7. Changelog v9.0 (Unified AI Update)
 
-### Novidades
+### Novidades e Melhorias
 
-- ✅ **OCR de Documentos na Portaria**
-  - Scan de RG/CNH/CPF via câmera
-  - Leitura automática via GPT-4o Vision
-  - Preenchimento automático de nome e documento
-  - API: `/api/ai/ocr-document`
+- ✅ **Unificação AI via Groq (Llama 3)**
+  - OCR de Documentos: Muito mais rápido e preciso com Llama 3.2 Vision.
+  - Chat Assistente: Migrado para Llama 3.1 70B (Respostas inteligentes).
+  - Auditor de Orçamentos: Análise visual 100% via Groq.
+  - Redução de dependência de APIs pagas (OpenAI/Gemini).
 
-- ✅ **Sistema de E-mail Reformulado** (v8.2)
-  - Envio direto via nodemailer
-  - Detecção automática SSL/TLS por porta
-  - Criptografia de senha SMTP (AES-256-GCM)
-  - Teste de conexão envia e-mail real
+- ✅ **Performance de Dados (v9.0)**
+  - **TanStack Query v5**: Migração completa de `useEffect` para queries/mutations com cache global.
+  - UI muito mais fluida e sem "flashing" de carregamento.
 
-- ✅ **Páginas de Emergência** (v8.2)
-  - `/reset-emergencia` - Reset de senha sem login
-  - `/emergency-repair` - Ferramentas admin
+- ✅ **Segurança e Conformidade (v9.0)**
+  - **Soft Delete**: Sistema de lixeira para evitar perda acidental de dados e acelerar exclusões.
+  - **Compliance Predial**: Novo módulo de semáforo para certificados (Venceu/A vencer).
 
-- ✅ **Correções Críticas** (v8.2)
-  - Loop infinito no logout corrigido
-  - APIs de superadmin sem condoId corrigidas
-  - Criptografia SMTP funcionando
+- ✅ **Novos Módulos (v8.5)**
+  - **Marketplace e Indicações**: Anúncios internos entre moradores e profissionais recomendados.
+  - **Convites QR**: Moradores geram acesso rápido para visitantes.
+  - **Multitenant SMTP**: Cada condomínio pode disparar e-mails pelo seu próprio domínio.
 
-### Add-ons Disponíveis
+### Correções Recentes
 
-| Add-on | Preço | Descrição |
-|--------|-------|-----------|
-| Mensageria/Entregas | Incluso | Registro e notificação |
-| Chat Morador↔Síndico | R$ 29,90/mês | Canal direto |
+- ✅ Correção no fluxo de logout (loop infinito resolvido).
+- ✅ Padronização de autenticação via `id` (fim dos erros 400 no login).
+- ✅ Criptografia AES de alta segurança para senhas SMTP.
+- ✅ Melhoria radical no OCR: Priorização inteligente de CPF.
 
 ---
 

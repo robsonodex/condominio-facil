@@ -2,8 +2,8 @@
 
 ## Parte 3: APIs (110+ Endpoints)
 
-**Versão:** 8.3  
-**Última Atualização:** 27/12/2024
+**Versão:** 9.0 (Unified AI)  
+**Última Atualização:** 01/01/2026
 
 ---
 
@@ -386,7 +386,8 @@ Chat com IA.
 Upload documentos para IA.
 
 ### POST `/api/ai/ocr-document`
-Extrai nome e documento de foto de RG/CNH/CPF usando GPT-4o Vision.
+Extrai nome e documento (CPF/RG) de fotos de documentos brasileiros usando **Groq (Llama 3.2 Vision)** com fallback local via **Tesseract.js**.
+Prioriza CPF sobre RG e limpa ruídos visuais automaticamente.
 
 **Body:**
 ```json
