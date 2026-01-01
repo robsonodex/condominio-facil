@@ -18,7 +18,7 @@ export class ItauIntegration extends BankIntegration {
     protected bankName = 'Itaú';
     private api: AxiosInstance;
     // @ts-ignore
-    private credentials: ItauCredentials;
+    protected credentials: ItauCredentials;
 
     constructor(credentials: ItauCredentials) {
         super(credentials);

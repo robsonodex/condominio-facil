@@ -16,7 +16,7 @@ export class BancoBrasilIntegration extends BankIntegration {
     protected bankName = 'Banco do Brasil';
     private api: AxiosInstance;
     // @ts-ignore
-    private credentials: BBCredentials;
+    protected credentials: BBCredentials;
 
     constructor(credentials: BBCredentials) {
         super(credentials);

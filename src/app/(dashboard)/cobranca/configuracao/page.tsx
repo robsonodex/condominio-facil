@@ -16,7 +16,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { toast } from 'sonner';
 import { Loader2, Plus, Building2, CreditCard, Key } from 'lucide-react';
 import { useFeature } from '@/hooks/useFeature';
-import { BankFactory } from '@/lib/banking/factory';
+import { SUPPORTED_BANKS } from '@/lib/banking/constants';
 
 const bankAccountSchema = z.object({
     bank_code: z.string().min(3, 'Selecione um banco'),
@@ -76,7 +76,7 @@ export default function BankingConfigPage() {
         }
     };
 
-    const supportedBanks = BankFactory.getSupportedBanks();
+    const supportedBanks = SUPPORTED_BANKS;
 
     const handleBankChange = (code: string) => {
         const bank = supportedBanks.find(b => b.code === code);
