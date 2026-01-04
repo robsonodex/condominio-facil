@@ -5,6 +5,7 @@ import { Card, CardContent, Button, Select, Input, Badge } from '@/components/ui
 import { Modal } from '@/components/ui/modal';
 import { useAuth } from '@/hooks/useAuth';
 import { useUser } from '@/hooks/useUser';
+import { createClient } from '@/lib/supabase/client';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Calendar, Plus, CheckCircle, XCircle, Clock, MapPin, Users, ChevronLeft, ChevronRight, Edit2 } from 'lucide-react';
 
@@ -77,6 +78,39 @@ export default function ReservasPage() {
             fetchReservations();
         }
     }, [session, selectedArea, currentDate]);
+
+    // Realtime subscription for reservation status updates
+    useEffect(() => {
+        if (!condoId) return;
+
+        const supabase = createClient();
+
+        const channel = supabase
+            .channel('reservas-realtime')
+            .on(
+                'postgres_changes',
+                {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'reservations',
+                    filter: `condo_id=eq.${condoId}`
+                },
+                (payload) => {
+                    console.log('[RESERVAS] Realtime update:', payload.new);
+                    setReservations(prev =>
+                        prev.map(r => r.id === payload.new.id
+                            ? { ...r, ...payload.new } as Reservation
+                            : r
+                        )
+                    );
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [condoId]);
 
     const fetchAreas = async () => {
         try {

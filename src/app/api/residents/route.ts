@@ -237,7 +237,7 @@ export async function PUT(request: NextRequest) {
 
 /**
  * DELETE /api/residents
- * Delete a resident
+ * Delete a resident and associated user/auth
  */
 export async function DELETE(request: NextRequest) {
     try {
@@ -258,13 +258,54 @@ export async function DELETE(request: NextRequest) {
             return NextResponse.json({ error: 'ID obrigatório' }, { status: 400 });
         }
 
+        // Get resident's user_id for auth deletion
+        const { data: resident } = await supabaseAdmin
+            .from('residents')
+            .select('user_id, condo_id')
+            .eq('id', id)
+            .single();
+
+        if (!resident) {
+            return NextResponse.json({ error: 'Morador não encontrado' }, { status: 404 });
+        }
+
+        // Validate síndico can only delete from their own condo
+        if (session.isSindico && resident.condo_id !== session.condoId) {
+            return NextResponse.json({ error: 'Acesso negado ao condomínio' }, { status: 403 });
+        }
+
+        // Delete from Supabase Auth first (prevents email conflict on re-registration)
+        if (resident.user_id) {
+            try {
+                const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(resident.user_id);
+                if (authError) {
+                    console.error('[RESIDENTS] Auth deletion error:', authError);
+                } else {
+                    console.log('[RESIDENTS] Auth user deleted:', resident.user_id);
+                }
+            } catch (authErr) {
+                console.error('[RESIDENTS] Auth deletion exception:', authErr);
+                // Continue with deletion even if auth fails
+            }
+
+            // Delete from users table
+            await supabaseAdmin.from('users').delete().eq('id', resident.user_id);
+            console.log('[RESIDENTS] User record deleted:', resident.user_id);
+        }
+
+        // Delete resident record
         const { error } = await supabaseAdmin.from('residents').delete().eq('id', id);
 
         if (error) {
+            console.error('[RESIDENTS] Delete error:', error);
             return NextResponse.json({ error: error.message }, { status: 500 });
         }
 
-        await logEvent('RESIDENT_DELETED', 'info', { residentId: id, deletedBy: session.userId });
+        await logEvent('RESIDENT_DELETED', 'info', {
+            residentId: id,
+            userId: resident.user_id,
+            deletedBy: session.userId
+        });
 
         return NextResponse.json({ success: true });
 

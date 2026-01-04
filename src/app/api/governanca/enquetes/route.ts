@@ -19,6 +19,19 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
 
+    // Validation: require titulo and at least 2 options
+    if (!body.titulo || !body.titulo.trim()) {
+        return NextResponse.json({
+            error: 'Título é obrigatório'
+        }, { status: 400 });
+    }
+
+    if (!body.opcoes || !Array.isArray(body.opcoes) || body.opcoes.length < 2) {
+        return NextResponse.json({
+            error: 'Pelo menos 2 opções são obrigatórias'
+        }, { status: 400 });
+    }
+
     try {
         const enquete = await GovernanceService.createEnquete({
             condo_id: profile.condo_id,
@@ -27,6 +40,7 @@ export async function POST(req: NextRequest) {
         });
         return NextResponse.json({ status: 'created', enquete });
     } catch (e: any) {
+        console.error('[ENQUETES] Error creating poll:', e);
         return NextResponse.json({ error: e.message }, { status: 500 });
     }
 }

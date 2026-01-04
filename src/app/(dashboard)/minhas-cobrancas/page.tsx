@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, Button, Table, Badge } from '@/components/ui';
 import { useUser } from '@/hooks/useUser';
 import { useAuth } from '@/hooks/useAuth';
+import { createClient } from '@/lib/supabase/client';
 import { CreditCard, ExternalLink, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 
 interface Invoice {
@@ -26,6 +27,41 @@ export default function MinhasCobrancasPage() {
     useEffect(() => {
         if (!userLoading && session?.access_token) fetchInvoices();
     }, [userLoading, session?.access_token]);
+
+    // Realtime subscription for billing updates
+    useEffect(() => {
+        if (!profile?.unidade_id) return;
+
+        const supabase = createClient();
+
+        const channel = supabase
+            .channel('billing-realtime')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*', // INSERT, UPDATE, DELETE
+                    schema: 'public',
+                    table: 'resident_invoices',
+                },
+                (payload) => {
+                    console.log('[COBRANCAS] Realtime event:', payload.eventType, payload.new);
+                    if (payload.eventType === 'INSERT') {
+                        setInvoices(prev => [payload.new as Invoice, ...prev]);
+                    } else if (payload.eventType === 'UPDATE') {
+                        setInvoices(prev =>
+                            prev.map(inv => inv.id === payload.new.id ? payload.new as Invoice : inv)
+                        );
+                    } else if (payload.eventType === 'DELETE') {
+                        setInvoices(prev => prev.filter(inv => inv.id !== payload.old.id));
+                    }
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [profile?.unidade_id]);
 
     const fetchInvoices = async () => {
         setLoading(true);
